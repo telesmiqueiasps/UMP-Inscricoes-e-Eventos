@@ -25,11 +25,45 @@ async def webhook_infinitepay(
     except Exception:
         raise HTTPException(status_code=400, detail="Payload JSON inválido")
 
-    order_nsu = data.get("order_nsu")
-    invoice_slug = data.get("invoice_slug")
-    transaction_nsu = data.get("transaction_nsu")
-    receipt_url = data.get("receipt_url")
-    payment_status = str(data.get("status", "")).lower()
+    # Tenta extrair dados com flexibilidade para suportar diferentes payloads da InfinitePay
+    inner_data = data.get("data", {}) if isinstance(data.get("data"), dict) else {}
+    inner_metadata = inner_data.get("metadata", {}) if isinstance(inner_data.get("metadata"), dict) else {}
+    flat_metadata = data.get("metadata", {}) if isinstance(data.get("metadata"), dict) else {}
+
+    order_nsu = (
+        data.get("order_nsu")
+        or inner_data.get("order_nsu")
+        or flat_metadata.get("order_nsu")
+        or inner_metadata.get("order_nsu")
+    )
+    
+    invoice_slug = (
+        data.get("invoice_slug")
+        or inner_data.get("invoice_slug")
+        or data.get("slug")
+        or inner_data.get("slug")
+    )
+    
+    transaction_nsu = (
+        data.get("transaction_nsu")
+        or inner_data.get("transaction_nsu")
+        or data.get("id")
+        or inner_data.get("id")
+    )
+    
+    receipt_url = (
+        data.get("receipt_url")
+        or inner_data.get("receipt_url")
+    )
+    
+    # Determinar status
+    status_raw = (
+        data.get("status")
+        or inner_data.get("status")
+        or data.get("event")
+        or ""
+    )
+    payment_status = str(status_raw).lower()
 
     if not order_nsu and not invoice_slug:
         return {"message": "Identificador de ordem não fornecido, ignorado."}
@@ -50,8 +84,11 @@ async def webhook_infinitepay(
     if invoice_slug:
         pagamento.invoice_slug = str(invoice_slug)
 
+    is_approved = any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
+    is_cancelled = any(s in payment_status for s in ["failed", "cancel", "refund"])
+
     # Verificar status do pagamento
-    if payment_status in ["paid", "approved", "completed", "pago"]:
+    if is_approved:
         pagamento.status = "PAGO"
         
         # Atualizar status das parcelas se houver
@@ -73,7 +110,7 @@ async def webhook_infinitepay(
                     nome_evento=pagamento.inscricao.evento.titulo
                 )
 
-    elif payment_status in ["failed", "canceled", "cancelled", "refunded"]:
+    elif is_cancelled:
         pagamento.status = "CANCELADO"
         for p in pagamento.parcelas:
             p.status = "CANCELADO"

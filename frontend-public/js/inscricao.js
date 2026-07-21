@@ -286,10 +286,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (forma === 'INFINITEPAY') {
       paymentResult.innerHTML = `
         <div style="text-align: center; padding: 2rem;">
-          <div class="badge badge-success" style="margin-bottom: 1rem;">Checkout Mercado Pago Gerado</div>
+          <div class="badge badge-success" style="margin-bottom: 1rem;">Checkout InfinitePay Gerado</div>
           <h3>Clique no botão abaixo para concluir o pagamento no cartão:</h3>
           <a href="${pagamento.receipt_url}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem;">
-            💳 Pagar no Mercado Pago
+            💳 Pagar na InfinitePay
           </a>
           <br>
           <a href="${userAreaUrl}" class="btn btn-outline">Ir para Minha Área</a>
