@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (pag.parcelas && pag.parcelas.length > 0) {
             const parcelasRows = pag.parcelas.map(parc => {
               const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-              const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf`;
+              const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
 
               return `
                 <tr>

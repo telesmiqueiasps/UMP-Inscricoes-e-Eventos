@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td>R$ ${parseFloat(p.valor).toFixed(2).replace('.', ',')}</td>
           <td><span class="badge badge-warning">${p.status}</span></td>
           <td>
-            <a href="${API_BASE_URL}/pagamentos/parcelas/${p.id}/pdf" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+            <a href="${API_BASE_URL}/pagamentos/parcelas/${p.id}/pdf?token=${API.getToken()}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
               📄 Baixar PDF
             </a>
           </td>

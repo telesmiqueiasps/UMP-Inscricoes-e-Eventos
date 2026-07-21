@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -146,11 +146,44 @@ def obter_pagamento_inscricao(
     return pagamento
 
 
+def obter_usuario_por_token_ou_query(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Usuario:
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = request.query_params.get("token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Não autenticado."
+        )
+
+    try:
+        from jose import jwt
+        from app.core.config import settings
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Token inválido.")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido.")
+
+    user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado.")
+    return user
+
+
 @router.get("/parcelas/{parcela_id}/pdf")
 def baixar_pdf_parcela(
     parcela_id: int,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(get_current_user)
+    current_user: Usuario = Depends(obter_usuario_por_token_ou_query)
 ):
     parcela = db.query(Parcela).filter(Parcela.id == parcela_id).first()
     if not parcela:
