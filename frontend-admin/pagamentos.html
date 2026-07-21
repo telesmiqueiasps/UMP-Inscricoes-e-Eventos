@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciamento de Pagamentos & Parcelas - Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="admin-layout" id="admin-pagamentos">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">⚡ Admin Hub</div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html" class="sidebar-link">📊 Dashboard & Eventos</a></li>
+        <li><a href="inscricoes.html" class="sidebar-link">📝 Inscrições</a></li>
+        <li><a href="pagamentos.html" class="sidebar-link active">💳 Pagamentos & Parcelas</a></li>
+        <li><a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;">🚪 Sair</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem;">Gerenciar Pagamentos e Parcelas</h1>
+        <p style="color: var(--text-muted);">Confirmação manual e controle financeiro de parcelas emitidas</p>
+      </div>
+
+      <!-- Tabela -->
+      <div class="card">
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Cód. Pagamento</th>
+                <th>Inscrição</th>
+                <th>Forma de Pagamento</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="pagamentos-table-body">
+              <tr><td colspan="7">Carregando pagamentos e parcelas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

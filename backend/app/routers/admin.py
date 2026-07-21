@@ -1,0 +1,230 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
+from typing import List, Optional
+from decimal import Decimal
+
+from app.core.database import get_db
+from app.core.security import get_current_admin, get_current_user
+from app.models.evento import Evento
+from app.models.inscricao import Inscricao
+from app.models.usuario import Usuario
+from app.models.pagamento import Pagamento
+from app.models.parcela import Parcela
+from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
+from app.schemas.inscricao import InscricaoResponse
+from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
+
+router = APIRouter(tags=["Administração e Eventos"])
+
+
+# --- Rota Pública para Listar Eventos Ativos ---
+@router.get("/eventos/publico", response_model=List[EventoResponse])
+def listar_eventos_publico(db: Session = Depends(get_db)):
+    eventos = db.query(Evento).filter(Evento.ativo == True).order_by(Evento.data_inicio.asc()).all()
+    return eventos
+
+
+@router.get("/eventos/publico/{id}", response_model=EventoResponse)
+def obter_evento_publico(id: int, db: Session = Depends(get_db)):
+    evento = db.query(Evento).filter(Evento.id == id, Evento.ativo == True).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado ou inativo.")
+    return evento
+
+
+# --- Painel Administrativo ---
+
+@router.get("/admin/metrics")
+def obter_metricas_admin(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    total_eventos = db.query(Evento).count()
+    total_usuarios = db.query(Usuario).filter(Usuario.is_admin == False).count()
+    total_inscricoes = db.query(Inscricao).count()
+    inscricoes_confirmadas = db.query(Inscricao).filter(Inscricao.status == "CONFIRMADA").count()
+    inscricoes_pendentes = db.query(Inscricao).filter(Inscricao.status == "PENDENTE").count()
+    
+    receita_total = db.query(func.sum(Pagamento.valor)).filter(Pagamento.status == "PAGO").scalar() or 0.0
+
+    return {
+        "total_eventos": total_eventos,
+        "total_usuarios": total_usuarios,
+        "total_inscricoes": total_inscricoes,
+        "inscricoes_confirmadas": inscricoes_confirmadas,
+        "inscricoes_pendentes": inscricoes_pendentes,
+        "receita_total": float(receita_total)
+    }
+
+
+# --- Eventos (CRUD Admin) ---
+
+@router.get("/admin/eventos", response_model=List[EventoResponse])
+def listar_eventos_admin(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    return db.query(Evento).order_by(Evento.created_at.desc()).all()
+
+
+@router.post("/admin/eventos", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
+def criar_evento_admin(
+    evento_in: EventoCreate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    db_evento = Evento(**evento_in.model_dump())
+    db.add(db_evento)
+    db.commit()
+    db.refresh(db_evento)
+    return db_evento
+
+
+@router.get("/admin/eventos/{id}", response_model=EventoResponse)
+def obter_evento_admin(
+    id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    evento = db.query(Evento).filter(Evento.id == id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    return evento
+
+
+@router.put("/admin/eventos/{id}", response_model=EventoResponse)
+def atualizar_evento_admin(
+    id: int,
+    evento_in: EventoUpdate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    evento = db.query(Evento).filter(Evento.id == id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    
+    update_data = evento_in.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(evento, field, value)
+        
+    db.commit()
+    db.refresh(evento)
+    return evento
+
+
+@router.delete("/admin/eventos/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_evento_admin(
+    id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    evento = db.query(Evento).filter(Evento.id == id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    db.delete(evento)
+    db.commit()
+    return None
+
+
+@router.put("/admin/eventos/{id}/toggle-status", response_model=EventoResponse)
+def toggle_status_evento_admin(
+    id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    evento = db.query(Evento).filter(Evento.id == id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    evento.ativo = not evento.ativo
+    db.commit()
+    db.refresh(evento)
+    return evento
+
+
+# --- Gerenciamento de Inscrições ---
+
+@router.get("/admin/inscricoes", response_model=List[InscricaoResponse])
+def listar_inscricoes_admin(
+    evento_id: Optional[int] = Query(None),
+    status_filtro: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    query = db.query(Inscricao).join(Usuario).join(Evento)
+
+    if evento_id:
+        query = query.filter(Inscricao.evento_id == evento_id)
+    if status_filtro:
+        query = query.filter(Inscricao.status == status_filtro)
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                Usuario.nome.ilike(search_pattern),
+                Usuario.email.ilike(search_pattern),
+                Usuario.cpf.ilike(search_pattern)
+            )
+        )
+
+    offset = (page - 1) * limit
+    inscricoes = query.order_by(Inscricao.created_at.desc()).offset(offset).limit(limit).all()
+    return inscricoes
+
+
+@router.put("/admin/inscricoes/{id}/status", response_model=InscricaoResponse)
+def atualizar_status_inscricao_admin(
+    id: int,
+    novo_status: str = Query(..., description="PENDENTE, CONFIRMADA, CANCELADA"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    inscricao = db.query(Inscricao).filter(Inscricao.id == id).first()
+    if not inscricao:
+        raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
+    
+    inscricao.status = novo_status.upper()
+    db.commit()
+    db.refresh(inscricao)
+    return inscricao
+
+
+# --- Gerenciamento de Pagamentos e Parcelas ---
+
+@router.get("/admin/pagamentos", response_model=List[PagamentoResponse])
+def listar_pagamentos_admin(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    return db.query(Pagamento).order_by(Pagamento.created_at.desc()).all()
+
+
+@router.put("/admin/parcelas/{id}/status", response_model=ParcelaResponse)
+def atualizar_status_parcela_admin(
+    id: int,
+    novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    parcela = db.query(Parcela).filter(Parcela.id == id).first()
+    if not parcela:
+        raise HTTPException(status_code=404, detail="Parcela não encontrada.")
+    
+    parcela.status = novo_status.upper()
+    db.commit()
+    db.refresh(parcela)
+
+    # Verificar se todas as parcelas do pagamento foram pagas
+    pagamento = db.query(Pagamento).filter(Pagamento.id == parcela.pagamento_id).first()
+    if pagamento:
+        todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
+        if todas_pagas:
+            pagamento.status = "PAGO"
+            # Confirmar inscrição automaticamente
+            pagamento.inscricao.status = "CONFIRMADA"
+            db.commit()
+
+    return parcela

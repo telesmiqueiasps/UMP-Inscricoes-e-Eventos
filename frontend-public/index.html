@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma de Inscrições e Eventos</title>
+  <meta name="description" content="Garanta sua vaga nos melhores eventos de forma rápida, segura e parcelada.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">E</div>
+      <span>EventosHub</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Início</a></li>
+      <li><a href="../frontend-area-usuario/login.html" class="nav-link">Área do Participante</a></li>
+      <li><a href="../frontend-admin/index.html" class="nav-link">Painel Admin</a></li>
+      <li><a href="#eventos-section" class="btn btn-primary">Ver Eventos</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-title">Inscrições Online Rápida e Segura</div>
+    <p class="hero-subtitle">Gerencie suas inscrições, escolha sua forma de pagamento preferida (Pix, Cartão InfinitePay ou Parcelado) e receba seus comprovantes na hora.</p>
+    <a href="#eventos-section" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem;">
+      Explorar Eventos Disponíveis
+    </a>
+  </section>
+
+  <!-- Main Content -->
+  <main class="container" id="eventos-section">
+    <div style="margin-bottom: 2rem; text-align: center;">
+      <h2 style="font-size: 2rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">Eventos em Destaque</h2>
+      <p style="color: var(--text-muted);">Selecione o evento desejado para realizar sua inscrição</p>
+    </div>
+
+    <!-- Dynamic Events Grid -->
+    <div class="grid-3" id="events-container">
+      <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        Carregando eventos disponíveis...
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 Plataforma de Inscrições para Eventos. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/public.js"></script>
+</body>
+</html>

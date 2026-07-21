@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Área do Participante - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--light-bg);">
+
+  <main class="card" style="width: 100%; max-width: 440px; padding: 2.5rem;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--dark);">Área do Participante</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Acesse suas inscrições e parcelas</p>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+      <button id="tab-login-btn" class="btn btn-primary" style="flex: 1;" onclick="toggleAuthTab('login')">Entrar</button>
+      <button id="tab-reg-btn" class="btn btn-outline" style="flex: 1;" onclick="toggleAuthTab('register')">Cadastrar</button>
+    </div>
+
+    <!-- Form Login -->
+    <div id="box-login">
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="login-email" class="form-control" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" id="login-senha" class="form-control" placeholder="******" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Acessar Painel
+        </button>
+      </form>
+    </div>
+
+    <!-- Form Cadastro -->
+    <div id="box-register" style="display: none;">
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" id="reg-nome" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="reg-email" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CPF</label>
+          <input type="text" id="reg-cpf" class="form-control" placeholder="000.000.000-00">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Telefone / WhatsApp</label>
+          <input type="text" id="reg-telefone" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" id="reg-senha" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Criar Minha Conta
+        </button>
+      </form>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <a href="../frontend-public/index.html" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: none;">&larr; Voltar para o site público</a>
+    </div>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

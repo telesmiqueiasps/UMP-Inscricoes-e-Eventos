@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Participante - EventosHub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">⚡ Área do Participante</div>
+      
+      <ul class="sidebar-menu">
+        <li><a href="dashboard.html" class="sidebar-link active">🏠 Meu Painel</a></li>
+        <li><a href="../frontend-public/index.html" class="sidebar-link">🌐 Ver Eventos</a></li>
+        <li><a href="javascript:void(0)" onclick="logout()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;">🚪 Sair</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div class="top-header">
+        <div>
+          <h1 class="welcome-title" id="welcome-user">Olá, Participante!</h1>
+          <p style="color: var(--text-muted);">Acompanhe o status de suas inscrições e parcelas de pagamento.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" id="registration-card">
+          Carregando dados da sua inscrição...
+        </div>
+
+        <div class="card" id="user-info-card">
+          Carregando dados cadastrais...
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem;">
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Histórico de Pagamentos & Parcelas</h2>
+        <div id="payments-container">
+          Carregando pagamentos...
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
