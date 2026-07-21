@@ -18,6 +18,8 @@ class Evento(Base):
     max_participantes = Column(Integer, nullable=True)
     max_parcelas = Column(Integer, default=1, nullable=False)
     ativo = Column(Boolean, default=True, nullable=False)
+    link_pagamento_cartao = Column(String(500), nullable=True)
+    link_pagamento_pix = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

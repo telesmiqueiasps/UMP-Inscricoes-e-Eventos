@@ -74,8 +74,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <td>${valorParcFmt}</td>
                   <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
                   <td>
-                    ${parc.copia_cola_pix ? `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>` : ''}
-                    <a href="${pdfUrl}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">
+                    ${parc.copia_cola_pix ? 
+                      (parc.copia_cola_pix.startsWith('http') ? 
+                        `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Pix</a>` : 
+                        `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
+                      ) : ''
+                    }
+                    <a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">
                       📄 Carnê PDF
                     </a>
                   </td>

@@ -121,7 +121,9 @@ async function salvarEvento(e) {
     valor: parseFloat(document.getElementById('ev-valor').value),
     max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
     max_parcelas: parseInt(document.getElementById('ev-max-parc').value) || 1,
-    ativo: document.getElementById('ev-ativo').checked
+    ativo: document.getElementById('ev-ativo').checked,
+    link_pagamento_cartao: document.getElementById('ev-link-cartao').value || null,
+    link_pagamento_pix: document.getElementById('ev-link-pix').value || null
   };
 
   try {
@@ -136,6 +138,32 @@ async function salvarEvento(e) {
     loadEventosTable();
   } catch (err) {}
 }
+
+window.editarEvento = async function(id) {
+  try {
+    const ev = await API.request(`/eventos/publico/${id}`);
+    document.getElementById('evento-id').value = ev.id;
+    document.getElementById('ev-titulo').value = ev.titulo;
+    document.getElementById('ev-descricao').value = ev.descricao || '';
+    
+    const formatDt = (isoStr) => isoStr ? isoStr.substring(0, 16) : '';
+    document.getElementById('ev-inicio').value = formatDt(ev.data_inicio);
+    document.getElementById('ev-fim').value = formatDt(ev.data_fim);
+    
+    document.getElementById('ev-local').value = ev.local || '';
+    document.getElementById('ev-valor').value = ev.valor;
+    document.getElementById('ev-max-part').value = ev.max_participantes || '';
+    document.getElementById('ev-max-parc').value = ev.max_parcelas;
+    document.getElementById('ev-link-cartao').value = ev.link_pagamento_cartao || '';
+    document.getElementById('ev-link-pix').value = ev.link_pagamento_pix || '';
+    document.getElementById('ev-ativo').checked = ev.ativo;
+
+    document.getElementById('modal-evento-title').textContent = 'Editar Evento';
+    document.getElementById('evento-modal').style.display = 'flex';
+  } catch (err) {
+    showToast('Erro ao carregar detalhes do evento.', 'error');
+  }
+};
 
 async function toggleStatusEvento(id) {
   try {

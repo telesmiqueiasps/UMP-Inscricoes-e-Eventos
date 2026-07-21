@@ -24,6 +24,16 @@ async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=engine)
         logging.info("Tabelas do banco de dados verificadas/criadas com sucesso.")
+        # Executar migração dinâmica para adicionar as novas colunas
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_cartao VARCHAR(500);"))
+                conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_pix VARCHAR(500);"))
+                conn.commit()
+                logging.info("Colunas de links personalizados de eventos verificadas/criadas.")
+            except Exception as err:
+                logging.warning(f"Erro ao criar colunas adicionais de eventos: {err}")
     except Exception as e:
         logging.error(f"Erro na conexão com o banco de dados durante a inicialização: {e}")
     yield

@@ -251,21 +251,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
 
     if (forma === 'PIX') {
-      paymentResult.innerHTML = `
-        <div style="text-align: center;">
-          <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
-          <h3>Escaneie o QR Code abaixo para pagar via Pix:</h3>
-          <img src="${pagamento.qr_code_pix}" alt="QR Code Pix" style="max-width: 240px; margin: 1.5rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
-          
-          <div class="form-group" style="text-align: left;">
-            <label class="form-label">Pix Copia e Cola:</label>
-            <input type="text" readonly class="form-control" value="${pagamento.copia_cola_pix}" id="pix-input" />
-            <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPix()">Copiar Código Pix</button>
+      const isUrl = pagamento.copia_cola_pix && (pagamento.copia_cola_pix.startsWith('http://') || pagamento.copia_cola_pix.startsWith('https://'));
+      if (isUrl) {
+        paymentResult.innerHTML = `
+          <div style="text-align: center; padding: 1.5rem;">
+            <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
+            <h3>Conclua seu pagamento Pix clicando no link abaixo:</h3>
+            <a href="${pagamento.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; display: inline-block;">
+              💸 Abrir Link do Pix
+            </a>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Ou escaneie o QR Code abaixo:</p>
+            <img src="${pagamento.qr_code_pix}" alt="QR Code" style="max-width: 200px; margin: 1rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
+            <br>
+            <a href="${userAreaUrl}" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-block;">Ir para Minha Área</a>
           </div>
+        `;
+      } else {
+        paymentResult.innerHTML = `
+          <div style="text-align: center;">
+            <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
+            <h3>Escaneie o QR Code abaixo para pagar via Pix:</h3>
+            <img src="${pagamento.qr_code_pix}" alt="QR Code Pix" style="max-width: 240px; margin: 1.5rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
+            
+            <div class="form-group" style="text-align: left;">
+              <label class="form-label">Pix Copia e Cola:</label>
+              <input type="text" readonly class="form-control" value="${pagamento.copia_cola_pix}" id="pix-input" />
+              <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPix()">Copiar Código Pix</button>
+            </div>
 
-          <a href="${userAreaUrl}" class="btn btn-primary" style="margin-top: 1rem;">Ir para Minha Área</a>
-        </div>
-      `;
+            <a href="${userAreaUrl}" class="btn btn-primary" style="margin-top: 1rem;">Ir para Minha Área</a>
+          </div>
+        `;
+      }
     } else if (forma === 'INFINITEPAY') {
       paymentResult.innerHTML = `
         <div style="text-align: center; padding: 2rem;">

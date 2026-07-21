@@ -67,27 +67,33 @@ def processar_pagamento(
     db.refresh(db_pagamento)
 
     if forma_pag == "PIX":
-        # Tentar criar pagamento Pix dinâmico no Mercado Pago
-        mp_pagamento = mercadopago_service.criar_pagamento_pix(
-            valor=float(inscricao.valor_total),
-            descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
-            email_pagador=current_user.email,
-            nome_pagador=current_user.nome,
-            cpf_pagador=current_user.cpf
-        )
-
-        if mp_pagamento:
-            copia_cola = mp_pagamento["copia_cola"]
-            qr_code_b64 = mp_pagamento["qr_code_base64"]
-            db_pagamento.transaction_nsu = mp_pagamento["id_transacao"] # Salvar ID do Mercado Pago
-        else:
-            # Fallback seguro: Gerar Pix estático local
-            logger.warning("Falha na geração do Pix Mercado Pago. Usando Pix local estático como fallback.")
-            copia_cola = gerar_copia_cola_pix(
-                valor=inscricao.valor_total,
-                txid=f"INS{inscricao.id}"
-            )
+        # Se o evento tiver um link de pagamento Pix pré-configurado pelo admin, usa ele diretamente
+        if inscricao.evento.link_pagamento_pix:
+            copia_cola = inscricao.evento.link_pagamento_pix
             qr_code_b64 = gerar_qr_code_base64(copia_cola)
+            db_pagamento.receipt_url = copia_cola
+        else:
+            # Tentar criar pagamento Pix dinâmico no Mercado Pago
+            mp_pagamento = mercadopago_service.criar_pagamento_pix(
+                valor=float(inscricao.valor_total),
+                descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
+                email_pagador=current_user.email,
+                nome_pagador=current_user.nome,
+                cpf_pagador=current_user.cpf
+            )
+
+            if mp_pagamento:
+                copia_cola = mp_pagamento["copia_cola"]
+                qr_code_b64 = mp_pagamento["qr_code_base64"]
+                db_pagamento.transaction_nsu = mp_pagamento["id_transacao"] # Salvar ID do Mercado Pago
+            else:
+                # Fallback seguro: Gerar Pix estático local
+                logger.warning("Falha na geração do Pix Mercado Pago. Usando Pix local estático como fallback.")
+                copia_cola = gerar_copia_cola_pix(
+                    valor=inscricao.valor_total,
+                    txid=f"INS{inscricao.id}"
+                )
+                qr_code_b64 = gerar_qr_code_base64(copia_cola)
 
         db_pagamento.copia_cola_pix = copia_cola
         db_pagamento.qr_code_pix = qr_code_b64
@@ -106,23 +112,29 @@ def processar_pagamento(
 
     elif forma_pag == "INFINITEPAY":
         order_nsu = f"ORD-{inscricao.id}-{db_pagamento.id}"
-        # Chamar Mercado Pago para gerar o link do checkout do cartão
-        result = mercadopago_service.criar_preferencia_checkout(
-            valor=float(inscricao.valor_total),
-            descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
-            email_pagador=current_user.email,
-            nome_pagador=current_user.nome,
-            external_reference=order_nsu
-        )
-
-        if result:
+        
+        # Se o evento tiver um link de pagamento de cartão pré-configurado pelo admin, usa ele diretamente
+        if inscricao.evento.link_pagamento_cartao:
             db_pagamento.order_nsu = order_nsu
-            db_pagamento.receipt_url = result.get("checkout_url")
-            db_pagamento.invoice_slug = result.get("preference_id") # Armazenar ID da preferência
+            db_pagamento.receipt_url = inscricao.evento.link_pagamento_cartao
         else:
-            logger.warning("Falha ao gerar checkout do Mercado Pago. Usando dashboard como fallback.")
-            db_pagamento.order_nsu = order_nsu
-            db_pagamento.receipt_url = "https://usuariosinodalpb.netlify.app/dashboard.html"
+            # Chamar Mercado Pago para gerar o link do checkout do cartão
+            result = mercadopago_service.criar_preferencia_checkout(
+                valor=float(inscricao.valor_total),
+                descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
+                email_pagador=current_user.email,
+                nome_pagador=current_user.nome,
+                external_reference=order_nsu
+            )
+
+            if result:
+                db_pagamento.order_nsu = order_nsu
+                db_pagamento.receipt_url = result.get("checkout_url")
+                db_pagamento.invoice_slug = result.get("preference_id") # Armazenar ID da preferência
+            else:
+                logger.warning("Falha ao gerar checkout do Mercado Pago. Usando dashboard como fallback.")
+                db_pagamento.order_nsu = order_nsu
+                db_pagamento.receipt_url = "https://usuariosinodalpb.netlify.app/dashboard.html"
 
     elif forma_pag == "PARCELADO":
         # Validar número de parcelas permitido pelo evento

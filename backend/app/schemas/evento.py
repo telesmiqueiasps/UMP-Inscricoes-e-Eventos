@@ -14,6 +14,8 @@ class EventoBase(BaseModel):
     max_participantes: Optional[int] = None
     max_parcelas: int = 1
     ativo: bool = True
+    link_pagamento_cartao: Optional[str] = None
+    link_pagamento_pix: Optional[str] = None
 
 
 class EventoCreate(EventoBase):
@@ -30,6 +32,8 @@ class EventoUpdate(BaseModel):
     max_participantes: Optional[int] = None
     max_parcelas: Optional[int] = None
     ativo: Optional[bool] = None
+    link_pagamento_cartao: Optional[str] = None
+    link_pagamento_pix: Optional[str] = None
 
 
 class EventoResponse(EventoBase):
