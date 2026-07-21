@@ -14,6 +14,7 @@ from app.routers import (
     inscricoes,
     pagamentos,
     webhook_infinitepay,
+    webhook_mercadopago,
     usuario_area
 )
 
@@ -75,6 +76,7 @@ app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(inscricoes.router, prefix=settings.API_V1_STR)
 app.include_router(pagamentos.router, prefix=settings.API_V1_STR)
 app.include_router(webhook_infinitepay.router, prefix=settings.API_V1_STR)
+app.include_router(webhook_mercadopago.router, prefix=settings.API_V1_STR)
 app.include_router(usuario_area.router, prefix=settings.API_V1_STR)
 
 

@@ -15,6 +15,10 @@ from app.services.parcelamento import gerar_parcelas
 from app.services.pix import gerar_copia_cola_pix, gerar_qr_code_base64
 from app.services.infinitepay import infinitepay_service
 from app.services.pdf_generator import gerar_pdf_parcela
+from app.services.mercadopago import mercadopago_service
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/pagamentos", tags=["Pagamentos"])
 
@@ -63,11 +67,27 @@ def processar_pagamento(
     db.refresh(db_pagamento)
 
     if forma_pag == "PIX":
-        copia_cola = gerar_copia_cola_pix(
-            valor=inscricao.valor_total,
-            txid=f"INS{inscricao.id}"
+        # Tentar criar pagamento Pix dinâmico no Mercado Pago
+        mp_pagamento = mercadopago_service.criar_pagamento_pix(
+            valor=float(inscricao.valor_total),
+            descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
+            email_pagador=current_user.email,
+            nome_pagador=current_user.nome,
+            cpf_pagador=current_user.cpf
         )
-        qr_code_b64 = gerar_qr_code_base64(copia_cola)
+
+        if mp_pagamento:
+            copia_cola = mp_pagamento["copia_cola"]
+            qr_code_b64 = mp_pagamento["qr_code_base64"]
+            db_pagamento.transaction_nsu = mp_pagamento["id_transacao"] # Salvar ID do Mercado Pago
+        else:
+            # Fallback seguro: Gerar Pix estático local
+            logger.warning("Falha na geração do Pix Mercado Pago. Usando Pix local estático como fallback.")
+            copia_cola = gerar_copia_cola_pix(
+                valor=inscricao.valor_total,
+                txid=f"INS{inscricao.id}"
+            )
+            qr_code_b64 = gerar_qr_code_base64(copia_cola)
 
         db_pagamento.copia_cola_pix = copia_cola
         db_pagamento.qr_code_pix = qr_code_b64

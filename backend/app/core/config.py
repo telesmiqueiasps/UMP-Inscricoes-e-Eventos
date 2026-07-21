@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     BREVO_SENDER_EMAIL: str = "sinodalumppb@gmail.com"
     BREVO_SENDER_NAME: str = "Sinodal UMP PB"
 
+    # Mercado Pago Config
+    MERCADO_PAGO_PUBLIC_KEY: str = Field(default="")
+    MERCADO_PAGO_ACCESS_TOKEN: str = Field(default="")
+
     class Config:
         case_sensitive = True
         env_file = ".env"
