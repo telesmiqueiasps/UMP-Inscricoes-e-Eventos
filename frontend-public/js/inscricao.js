@@ -144,6 +144,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderPaymentResult(pagamento, forma) {
+    const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
+
     if (forma === 'PIX') {
       paymentResult.innerHTML = `
         <div style="text-align: center;">
@@ -157,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPix()">Copiar Código Pix</button>
           </div>
 
-          <a href="../frontend-area-usuario/dashboard.html" class="btn btn-primary" style="margin-top: 1rem;">Ir para Minha Área</a>
+          <a href="${userAreaUrl}" class="btn btn-primary" style="margin-top: 1rem;">Ir para Minha Área</a>
         </div>
       `;
     } else if (forma === 'INFINITEPAY') {
@@ -169,18 +171,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             💳 Pagar na InfinitePay
           </a>
           <br>
-          <a href="../frontend-area-usuario/dashboard.html" class="btn btn-outline">Ir para Minha Área</a>
+          <a href="${userAreaUrl}" class="btn btn-outline">Ir para Minha Área</a>
         </div>
       `;
     } else if (forma === 'PARCELADO') {
       const parcelasHtml = pagamento.parcelas.map(p => `
         <tr>
           <td>Parcela ${p.numero}</td>
-          <td>${new Date(p.vencimento).toLocaleDateString('pt-BR')}</td>
+          <td>${new Date(p.vencimento + (p.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
           <td>R$ ${parseFloat(p.valor).toFixed(2).replace('.', ',')}</td>
           <td><span class="badge badge-warning">${p.status}</span></td>
           <td>
-            <a href="http://localhost:8000/api/v1/pagamentos/parcelas/${p.id}/pdf" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
+            <a href="${API_BASE_URL}/pagamentos/parcelas/${p.id}/pdf" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
               📄 Baixar PDF
             </a>
           </td>
@@ -207,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </table>
           </div>
 
-          <a href="../frontend-area-usuario/dashboard.html" class="btn btn-primary" style="width: 100%;">Acessar Área do Participante</a>
+          <a href="${userAreaUrl}" class="btn btn-primary" style="width: 100%;">Acessar Área do Participante</a>
         </div>
       `;
     }
