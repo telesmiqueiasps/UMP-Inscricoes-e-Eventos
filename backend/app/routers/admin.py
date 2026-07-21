@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import List, Optional
@@ -14,6 +14,7 @@ from app.models.parcela import Parcela
 from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
 from app.schemas.inscricao import InscricaoResponse
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
+from app.services.email import enviar_email_confirmacao
 
 router = APIRouter(tags=["Administração e Eventos"])
 
@@ -178,6 +179,7 @@ def listar_inscricoes_admin(
 @router.put("/admin/inscricoes/{id}/status", response_model=InscricaoResponse)
 def atualizar_status_inscricao_admin(
     id: int,
+    background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, CONFIRMADA, CANCELADA"),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
@@ -186,9 +188,20 @@ def atualizar_status_inscricao_admin(
     if not inscricao:
         raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
     
+    status_anterior = inscricao.status
     inscricao.status = novo_status.upper()
     db.commit()
     db.refresh(inscricao)
+
+    # Se a inscrição foi confirmada e antes não era confirmada, enviar e-mail
+    if inscricao.status == "CONFIRMADA" and status_anterior != "CONFIRMADA":
+        background_tasks.add_task(
+            enviar_email_confirmacao,
+            destinatario_email=inscricao.usuario.email,
+            destinatario_nome=inscricao.usuario.nome,
+            nome_evento=inscricao.evento.titulo
+        )
+
     return inscricao
 
 
@@ -205,6 +218,7 @@ def listar_pagamentos_admin(
 @router.put("/admin/parcelas/{id}/status", response_model=ParcelaResponse)
 def atualizar_status_parcela_admin(
     id: int,
+    background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
@@ -222,9 +236,19 @@ def atualizar_status_parcela_admin(
     if pagamento:
         todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
         if todas_pagas:
+            status_anterior = pagamento.inscricao.status
             pagamento.status = "PAGO"
             # Confirmar inscrição automaticamente
             pagamento.inscricao.status = "CONFIRMADA"
             db.commit()
+
+            # Se antes não estava confirmada, enviar e-mail
+            if status_anterior != "CONFIRMADA":
+                background_tasks.add_task(
+                    enviar_email_confirmacao,
+                    destinatario_email=pagamento.inscricao.usuario.email,
+                    destinatario_nome=pagamento.inscricao.usuario.nome,
+                    nome_evento=pagamento.inscricao.evento.titulo
+                )
 
     return parcela

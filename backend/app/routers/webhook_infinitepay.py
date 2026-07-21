@@ -1,15 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.pagamento import Pagamento
 from app.models.inscricao import Inscricao
 from app.schemas.pagamento import WebhookInfinitePaySchema
+from app.services.email import enviar_email_confirmacao
 
 router = APIRouter(prefix="/webhook", tags=["Webhooks"])
 
 
 @router.post("/infinitepay", status_code=status.HTTP_200_OK)
-async def webhook_infinitepay(request: Request, db: Session = Depends(get_db)):
+async def webhook_infinitepay(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """
     Webhook para receber notificações de pagamentos efetuados via InfinitePay.
     Atualiza o pagamento, salva transaction_nsu, receipt_url, order_nsu e invoice_slug,
@@ -55,12 +60,23 @@ async def webhook_infinitepay(request: Request, db: Session = Depends(get_db)):
 
         # Confirmar inscrição do participante
         if pagamento.inscricao:
+            status_anterior = pagamento.inscricao.status
             pagamento.inscricao.status = "CONFIRMADA"
+            db.commit()
+
+            # Enviar e-mail em background se antes não estava confirmada
+            if status_anterior != "CONFIRMADA":
+                background_tasks.add_task(
+                    enviar_email_confirmacao,
+                    destinatario_email=pagamento.inscricao.usuario.email,
+                    destinatario_nome=pagamento.inscricao.usuario.nome,
+                    nome_evento=pagamento.inscricao.evento.titulo
+                )
 
     elif payment_status in ["failed", "canceled", "cancelled", "refunded"]:
         pagamento.status = "CANCELADO"
         for p in pagamento.parcelas:
             p.status = "CANCELADO"
+        db.commit()
 
-    db.commit()
     return {"message": "Webhook processado com sucesso.", "status": pagamento.status}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -8,6 +8,7 @@ from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.inscricao import Inscricao
 from app.schemas.inscricao import InscricaoCreate, InscricaoResponse
+from app.services.email import enviar_email_inscricao
 
 router = APIRouter(prefix="/inscricoes", tags=["Inscrições"])
 
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/inscricoes", tags=["Inscrições"])
 @router.post("", response_model=InscricaoResponse, status_code=status.HTTP_201_CREATED)
 def criar_inscricao(
     inscricao_in: InscricaoCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
@@ -63,6 +65,16 @@ def criar_inscricao(
     db.add(db_inscricao)
     db.commit()
     db.refresh(db_inscricao)
+
+    # Enviar e-mail de notificação de inscrição recebida em background
+    background_tasks.add_task(
+        enviar_email_inscricao,
+        destinatario_email=current_user.email,
+        destinatario_nome=current_user.nome,
+        nome_evento=evento.titulo,
+        valor=float(evento.valor),
+        forma_pagamento=db_inscricao.forma_pagamento or "Não informada"
+    )
 
     return db_inscricao
 

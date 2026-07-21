@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     PIX_NOME_RECEBEDOR: str = Field(default="ORGANIZACAO DO EVENTO")
     PIX_CIDADE_RECEBEDOR: str = Field(default="SAO PAULO")
 
+    # Brevo Email
+    BREVO_API_KEY: str = Field(default="")
+    BREVO_SENDER_EMAIL: str = "sinodalumppb@gmail.com"
+    BREVO_SENDER_NAME: str = "Sinodal UMP PB"
+
     class Config:
         case_sensitive = True
         env_file = ".env"
