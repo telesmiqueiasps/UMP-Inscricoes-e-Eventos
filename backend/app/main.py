@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import logging
 
 from app.core.config import settings
 from app.core.database import engine, Base
@@ -19,8 +20,11 @@ from app.routers import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Criar tabelas se não existirem (ideal para dev e auto-setup)
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        logging.info("Tabelas do banco de dados verificadas/criadas com sucesso.")
+    except Exception as e:
+        logging.error(f"Erro na conexão com o banco de dados durante a inicialização: {e}")
     yield
 
 
@@ -33,13 +37,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configuração de CORS permissiva para desenvolvimento e produção (Netlify/Render)
+# Configuração global de CORS permissiva para desenvolvimento e produção
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Registrar Routers na API v1
@@ -54,6 +59,7 @@ app.include_router(usuario_area.router, prefix=settings.API_V1_STR)
 @app.get("/")
 def root():
     return {
+        "status": "online",
         "message": "Plataforma Web de Inscrições para Eventos - API Online",
         "docs": "/docs",
         "version": "1.0.0"
