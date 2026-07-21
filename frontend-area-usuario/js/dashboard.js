@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         registrationCard.innerHTML = `
           <h3 class="card-title">Inscrições</h3>
           <p style="color: var(--text-muted);">Você ainda não possui inscrições realizadas.</p>
-          <a href="https://eventosinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1rem;">Ver Eventos Disponíveis</a>
+          <a href="https://inscricoessinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1rem;">Ver Eventos Disponíveis</a>
         `;
       } else {
         const ins = data.inscricoes[0];
