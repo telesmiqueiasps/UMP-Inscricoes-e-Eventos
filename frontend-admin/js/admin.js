@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
   if (!token) {
+    const path = window.location.pathname;
+    const isIndex = path.endsWith('index.html') || path === '/' || path.endsWith('/');
+    if (!isIndex) {
+      window.location.href = 'index.html';
+      return;
+    }
     promptAdminLogin();
     return;
   }
@@ -49,7 +55,7 @@ function promptAdminLogin() {
 
 function logoutAdmin() {
   API.removeToken();
-  window.location.reload();
+  window.location.href = 'index.html';
 }
 
 // --- Dashboard & Event CRUD ---
@@ -214,7 +220,7 @@ async function loadPagamentos() {
               <td>Inscrição #${pag.inscricao_id}</td>
               <td>${pag.forma_pagamento}</td>
               <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
-              <td>${new Date(parc.vencimento).toLocaleDateString('pt-BR')}</td>
+              <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
               <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
               <td>
                 ${parc.status !== 'PAGO' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>` : '<span style="color:#059669;">Quitada</span>'}
