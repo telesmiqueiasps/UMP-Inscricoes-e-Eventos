@@ -11,6 +11,12 @@ from app.schemas.usuario import UsuarioCreate, UsuarioResponse
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 
+@router.get("/check-email")
+def check_email(email: str, db: Session = Depends(get_db)):
+    user = db.query(Usuario).filter(Usuario.email == email).first()
+    return {"exists": user is not None}
+
+
 @router.post("/register", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def register(user_in: UsuarioCreate, db: Session = Depends(get_db)):
     # Verificar email único

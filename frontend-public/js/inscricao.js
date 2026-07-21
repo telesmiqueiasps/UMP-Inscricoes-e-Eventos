@@ -6,8 +6,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const step2 = document.getElementById('step-2');
   const step3 = document.getElementById('step-3');
 
+  const loggedUserBanner = document.getElementById('logged-user-banner');
+  const loggedUserMsg = document.getElementById('logged-user-msg');
+
   const eventSummary = document.getElementById('event-summary');
-  const formAuth = document.getElementById('form-auth-wizard');
+  
+  // Formulários da Etapa 1
+  const formEmailCheck = document.getElementById('form-email-check');
+  const formAuthLogin = document.getElementById('form-auth-login');
+  const formAuthRegister = document.getElementById('form-auth-register');
+
+  // Formulário da Etapa 2
   const formPagamento = document.getElementById('form-pagamento');
   const numParcelasSelect = document.getElementById('num_parcelas');
   const parcelasGroup = document.getElementById('parcelas-group');
@@ -20,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   let eventoAtual = null;
+  let emailDigitado = '';
 
   // 1. Carregar detalhes do Evento
   try {
@@ -44,17 +54,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // 2. Verificar Autenticação
-  const user = API.getUser();
-  if (user) {
-    step1.style.display = 'none';
-    step2.style.display = 'block';
-  } else {
-    step1.style.display = 'block';
-    step2.style.display = 'none';
-  }
+  // 2. Atualizar UI baseada em login ativo
+  atualizarEstadoUsuario();
 
-  // Alternar visualização de parcelas no formulário
+  // Alternar visualização de parcelas no formulário de pagamento
   document.querySelectorAll('input[name="forma_pagamento"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       if (e.target.value === 'PARCELADO') {
@@ -65,45 +68,99 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Cadastro/Login Wizard
-  if (formAuth) {
-    formAuth.addEventListener('submit', async (e) => {
+  // --- FLUXO ETAPA 1 ---
+
+  // Formulário A: Verificar E-mail
+  if (formEmailCheck) {
+    formEmailCheck.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const nome = document.getElementById('nome').value;
-      const email = document.getElementById('email').value;
-      const cpf = document.getElementById('cpf').value;
-      const telefone = document.getElementById('telefone').value;
-      const senha = document.getElementById('senha').value;
+      emailDigitado = document.getElementById('email-verify').value.trim();
+      if (!emailDigitado) return;
 
       try {
-        // Tentar Cadastrar ou Logar
-        try {
-          await API.request('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify({ nome, email, cpf, telefone, senha })
-          });
-        } catch (res) {
-          // Se já existir, faz login
+        const res = await API.request(`/auth/check-email?email=${encodeURIComponent(emailDigitado)}`);
+        
+        formEmailCheck.style.display = 'none';
+        if (res.exists) {
+          // E-mail cadastrado: Exibir login
+          formAuthLogin.style.display = 'block';
+          formAuthRegister.style.display = 'none';
+          document.getElementById('senha-login').focus();
+        } else {
+          // Novo cadastro: Exibir campos adicionais
+          formAuthLogin.style.display = 'none';
+          formAuthRegister.style.display = 'block';
+          document.getElementById('nome-reg').focus();
         }
+      } catch (err) {
+        showToast('Erro ao validar e-mail.', 'error');
+      }
+    });
+  }
 
+  // Formulário B: Login
+  if (formAuthLogin) {
+    formAuthLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const senha = document.getElementById('senha-login').value;
+
+      try {
+        const res = await API.request('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: emailDigitado, senha: senha })
+        });
+
+        API.setToken(res.access_token);
+        API.setUser(res.user);
+
+        showToast('Login efetuado com sucesso!', 'success');
+        atualizarEstadoUsuario();
+      } catch (err) {
+        showToast('Senha incorreta ou erro ao entrar.', 'error');
+      }
+    });
+  }
+
+  // Formulário C: Cadastro
+  if (formAuthRegister) {
+    formAuthRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome-reg').value;
+      const cpf = document.getElementById('cpf-reg').value;
+      const telefone = document.getElementById('telefone-reg').value;
+      const senha = document.getElementById('senha-reg').value;
+
+      try {
+        // Criar usuário
+        await API.request('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            nome,
+            email: emailDigitado,
+            cpf,
+            telefone,
+            senha
+          })
+        });
+
+        // Autenticar automaticamente
         const loginRes = await API.request('/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ email, senha })
+          body: JSON.stringify({ email: emailDigitado, senha })
         });
 
         API.setToken(loginRes.access_token);
         API.setUser(loginRes.user);
 
-        showToast('Login realizado com sucesso!', 'success');
-        step1.style.display = 'none';
-        step2.style.display = 'block';
+        showToast('Conta criada com sucesso!', 'success');
+        atualizarEstadoUsuario();
       } catch (err) {
-        showToast('Erro ao realizar autenticação.', 'error');
+        showToast(err.message || 'Erro ao realizar cadastro.', 'error');
       }
     });
   }
 
-  // Submeter Pagamento
+  // --- SUBMETER INSCRIÇÃO & PAGAMENTO (ETAPA 2) ---
   if (formPagamento) {
     formPagamento.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -133,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         step2.style.display = 'none';
         step3.style.display = 'block';
+        if (loggedUserBanner) loggedUserBanner.style.display = 'none';
 
         renderPaymentResult(pagamento, formaPagamento);
         showToast('Inscrição e pagamento gerados com sucesso!', 'success');
@@ -142,6 +200,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  function atualizarEstadoUsuario() {
+    const user = API.getUser();
+    const token = API.getToken();
+
+    if (user && token) {
+      if (loggedUserBanner) {
+        loggedUserBanner.style.display = 'flex';
+        loggedUserMsg.innerHTML = `Participante ativo: <strong>${user.nome}</strong> (${user.email})`;
+      }
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+    } else {
+      if (loggedUserBanner) {
+        loggedUserBanner.style.display = 'none';
+      }
+      step1.style.display = 'block';
+      step2.style.display = 'none';
+      
+      // Resetar visibilidade dos formulários
+      if (formEmailCheck) formEmailCheck.style.display = 'block';
+      if (formAuthLogin) formAuthLogin.style.display = 'none';
+      if (formAuthRegister) formAuthRegister.style.display = 'none';
+      
+      // Limpar campos
+      if (formEmailCheck) formEmailCheck.reset();
+      if (formAuthLogin) formAuthLogin.reset();
+      if (formAuthRegister) formAuthRegister.reset();
+    }
+  }
+
+  // Permite deslogar para cadastrar outra pessoa
+  window.deslogarWizard = function () {
+    API.removeToken();
+    showToast('Sessão encerrada para novo participante.', 'info');
+    atualizarEstadoUsuario();
+  };
+
+  window.voltarParaEmail = function () {
+    if (formAuthLogin) formAuthLogin.style.display = 'none';
+    if (formAuthRegister) formAuthRegister.style.display = 'none';
+    if (formEmailCheck) {
+      formEmailCheck.style.display = 'block';
+      document.getElementById('email-verify').focus();
+    }
+  };
 
   function renderPaymentResult(pagamento, forma) {
     const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
