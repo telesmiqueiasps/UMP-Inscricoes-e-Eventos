@@ -106,16 +106,23 @@ def processar_pagamento(
 
     elif forma_pag == "INFINITEPAY":
         order_nsu = f"ORD-{inscricao.id}-{db_pagamento.id}"
-        result = infinitepay_service.criar_checkout_link(
-            order_nsu=order_nsu,
-            valor=inscricao.valor_total,
+        # Chamar Mercado Pago para gerar o link do checkout do cartão
+        result = mercadopago_service.criar_preferencia_checkout(
+            valor=float(inscricao.valor_total),
             descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo}",
-            customer_email=current_user.email,
-            customer_name=current_user.nome
+            email_pagador=current_user.email,
+            nome_pagador=current_user.nome,
+            external_reference=order_nsu
         )
-        db_pagamento.order_nsu = order_nsu
-        db_pagamento.receipt_url = result.get("checkout_url")
-        db_pagamento.invoice_slug = result.get("invoice_slug")
+
+        if result:
+            db_pagamento.order_nsu = order_nsu
+            db_pagamento.receipt_url = result.get("checkout_url")
+            db_pagamento.invoice_slug = result.get("preference_id") # Armazenar ID da preferência
+        else:
+            logger.warning("Falha ao gerar checkout do Mercado Pago. Usando dashboard como fallback.")
+            db_pagamento.order_nsu = order_nsu
+            db_pagamento.receipt_url = "https://usuariosinodalpb.netlify.app/dashboard.html"
 
     elif forma_pag == "PARCELADO":
         # Validar número de parcelas permitido pelo evento

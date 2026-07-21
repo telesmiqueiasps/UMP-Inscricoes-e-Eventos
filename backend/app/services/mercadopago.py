@@ -117,5 +117,63 @@ class MercadoPagoService:
             logger.error(f"Exceção ao consultar pagamento Mercado Pago {payment_id}: {e}")
             return None
 
+    def criar_preferencia_checkout(
+        self,
+        valor: float,
+        descricao: str,
+        email_pagador: str,
+        nome_pagador: str,
+        external_reference: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Cria uma preferência de checkout (Checkout Pro) no Mercado Pago.
+        Retorna o link de redirecionamento do checkout (init_point) e o ID da preferência.
+        """
+        url = "https://api.mercadopago.com/checkout/preferences"
+        
+        # URL de retorno após o pagamento
+        back_url = "https://usuariosinodalpb.netlify.app/dashboard.html"
+
+        payload = {
+            "items": [
+                {
+                    "title": descricao[:250],
+                    "quantity": 1,
+                    "unit_price": float(valor),
+                    "currency_id": "BRL"
+                }
+            ],
+            "payer": {
+                "name": nome_pagador,
+                "email": email_pagador
+            },
+            "back_urls": {
+                "success": back_url,
+                "failure": back_url,
+                "pending": back_url
+            },
+            "auto_return": "approved",
+            "notification_url": "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/mercadopago",
+            "external_reference": external_reference
+        }
+
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                logger.info(f"Criando preferencia de checkout Mercado Pago para ref {external_reference} no valor de R$ {valor}")
+                response = client.post(url, json=payload, headers=self.headers)
+                
+                if response.status_code not in [200, 201]:
+                    logger.error(f"Erro ao criar checkout Mercado Pago ({response.status_code}): {response.text}")
+                    return None
+
+                data = response.json()
+                return {
+                    "checkout_url": data.get("init_point"),
+                    "preference_id": data.get("id")
+                }
+        except Exception as e:
+            logger.error(f"Exceção ao criar preferência de checkout Mercado Pago: {e}")
+            return None
+
 
 mercadopago_service = MercadoPagoService()
