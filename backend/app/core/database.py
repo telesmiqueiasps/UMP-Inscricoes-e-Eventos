@@ -8,6 +8,11 @@ database_url = settings.DATABASE_URL
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
+# Se conectar ao Supabase e não tiver sslmode, adicionar sslmode=require
+if "supabase.com" in database_url and "sslmode" not in database_url:
+    separator = "&" if "?" in database_url else "?"
+    database_url = f"{database_url}{separator}sslmode=require"
+
 # Se for SQLite para dev/testes, precisa de check_same_thread
 connect_args = {}
 if database_url.startswith("sqlite"):
