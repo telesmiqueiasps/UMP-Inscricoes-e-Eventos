@@ -33,15 +33,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configuração de CORS
-if settings.CORS_ORIGINS:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.CORS_ORIGINS],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# Configuração de CORS permissiva para desenvolvimento e produção (Netlify/Render)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Registrar Routers na API v1
 app.include_router(auth.router, prefix=settings.API_V1_STR)
