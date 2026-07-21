@@ -258,10 +258,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
             <h3>Conclua seu pagamento Pix clicando no link abaixo:</h3>
             <a href="${pagamento.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; display: inline-block;">
-              💸 Abrir Link do Pix
+              💸 Pagar via Pix (InfinitePay)
             </a>
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Ou escaneie o QR Code abaixo:</p>
-            <img src="${pagamento.qr_code_pix}" alt="QR Code" style="max-width: 200px; margin: 1rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
+            ${pagamento.qr_code_pix ? `
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Ou escaneie o QR Code abaixo:</p>
+              <img src="${pagamento.qr_code_pix}" alt="QR Code" style="max-width: 200px; margin: 1rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
+            ` : `
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Você será redirecionado para a página segura da InfinitePay.</p>
+            `}
             <br>
             <a href="${userAreaUrl}" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-block;">Ir para Minha Área</a>
           </div>
