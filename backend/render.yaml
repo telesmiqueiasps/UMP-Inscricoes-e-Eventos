@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: inscricoes-evento-backend
+    name: ump-inscricoes-e-eventos
     env: python
     region: oregon
     buildCommand: pip install -r requirements.txt && alembic upgrade head
