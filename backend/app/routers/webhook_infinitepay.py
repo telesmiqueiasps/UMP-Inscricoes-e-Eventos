@@ -26,7 +26,7 @@ async def webhook_infinitepay(
     """
     try:
         data = await request.json()
-        logger.info(f"Webhook InfinitePay Payload Recebido: {data}")
+        logger.warning(f"Webhook InfinitePay Payload Recebido: {data}")
     except Exception as e:
         logger.error(f"Erro ao ler json do webhook: {e}")
         raise HTTPException(status_code=400, detail="Payload JSON inválido")
@@ -86,7 +86,7 @@ async def webhook_infinitepay(
         or inner_data.get("email")
     )
 
-    logger.info(
+    logger.warning(
         f"Webhook InfinitePay Parsed: order_nsu={order_nsu}, invoice_slug={invoice_slug}, "
         f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
     )
@@ -98,10 +98,10 @@ async def webhook_infinitepay(
             (Pagamento.order_nsu == order_nsu) | (Pagamento.invoice_slug == invoice_slug)
         ).first()
         if pagamento:
-            logger.info(f"Pagamento encontrado por ID/NSU: {pagamento.id}")
+            logger.warning(f"Pagamento encontrado por ID/NSU: {pagamento.id}")
 
     if not pagamento and customer_email:
-        logger.info(f"Tentando localizar pagamento por e-mail do cliente: {customer_email}")
+        logger.warning(f"Tentando localizar pagamento por e-mail do cliente: {customer_email}")
         usuario = db.query(Usuario).filter(Usuario.email.ilike(customer_email)).first()
         if usuario:
             # Buscar inscrição pendente mais recente
@@ -116,7 +116,7 @@ async def webhook_infinitepay(
                     Pagamento.status == "PENDENTE"
                 ).first()
                 if pagamento:
-                    logger.info(f"Pagamento encontrado por e-mail: ID={pagamento.id}, Inscricao={inscricao.id}")
+                    logger.warning(f"Pagamento encontrado por e-mail: ID={pagamento.id}, Inscricao={inscricao.id}")
 
     if not pagamento:
         logger.warning("Pagamento correspondente não encontrado. Ignorando webhook.")
@@ -134,7 +134,7 @@ async def webhook_infinitepay(
     is_approved = any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
     is_cancelled = any(s in payment_status for s in ["failed", "cancel", "refund"])
 
-    logger.info(f"Verificação de status: is_approved={is_approved}, is_cancelled={is_cancelled}")
+    logger.warning(f"Verificação de status: is_approved={is_approved}, is_cancelled={is_cancelled}")
 
     # Verificar status do pagamento
     if is_approved:
@@ -149,7 +149,7 @@ async def webhook_infinitepay(
             status_anterior = pagamento.inscricao.status
             pagamento.inscricao.status = "CONFIRMADA"
             db.commit()
-            logger.info(f"Inscrição ID={pagamento.inscricao_id} alterada para CONFIRMADA.")
+            logger.warning(f"Inscrição ID={pagamento.inscricao_id} alterada para CONFIRMADA.")
 
             # Enviar e-mail em background se antes não estava confirmada
             if status_anterior != "CONFIRMADA":
@@ -159,13 +159,13 @@ async def webhook_infinitepay(
                     destinatario_nome=pagamento.inscricao.usuario.nome,
                     nome_evento=pagamento.inscricao.evento.titulo
                 )
-                logger.info(f"E-mail de confirmação agendado para {pagamento.inscricao.usuario.email}")
+                logger.warning(f"E-mail de confirmação agendado para {pagamento.inscricao.usuario.email}")
 
     elif is_cancelled:
         pagamento.status = "CANCELADO"
         for p in pagamento.parcelas:
             p.status = "CANCELADO"
         db.commit()
-        logger.info(f"Pagamento ID={pagamento.id} cancelado via webhook.")
+        logger.warning(f"Pagamento ID={pagamento.id} cancelado via webhook.")
 
     return {"message": "Webhook processado com sucesso.", "status": pagamento.status}
