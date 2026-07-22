@@ -31,6 +31,8 @@ class PagamentoResponse(BaseModel):
     receipt_url: Optional[str] = None
     order_nsu: Optional[str] = None
     invoice_slug: Optional[str] = None
+    paid_amount: Optional[Decimal] = None
+    capture_method: Optional[str] = None
     created_at: datetime
     parcelas: List[ParcelaResponse] = []
 

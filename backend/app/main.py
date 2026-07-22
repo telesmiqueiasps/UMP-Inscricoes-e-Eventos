@@ -29,13 +29,26 @@ async def lifespan(app: FastAPI):
             try:
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_cartao VARCHAR(500);"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_pix VARCHAR(500);"))
+                conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(10,2);"))
+                conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS capture_method VARCHAR(50);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_pagamentos_order_nsu ON pagamentos(order_nsu);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_pagamentos_transaction_nsu ON pagamentos(transaction_nsu);"))
                 conn.commit()
-                logging.info("Colunas de links personalizados de eventos verificadas/criadas.")
+                logging.info("Colunas e índices da tabela pagamentos verificados/criados com sucesso.")
             except Exception as err:
-                logging.warning(f"Erro ao criar colunas adicionais de eventos: {err}")
+                logging.warning(f"Erro ao criar colunas/índices adicionais de eventos/pagamentos: {err}")
     except Exception as e:
         logging.error(f"Erro na conexão com o banco de dados durante a inicialização: {e}")
+
+    # Inicializar o loop periódico de reconciliação de pagamentos em background
+    import asyncio
+    from app.services.reconciliation import reconciliation_loop
+    reconciliation_task = asyncio.create_task(reconciliation_loop())
+
     yield
+
+    # Cancelar a task em background no encerramento da aplicação
+    reconciliation_task.cancel()
 
 
 app = FastAPI(

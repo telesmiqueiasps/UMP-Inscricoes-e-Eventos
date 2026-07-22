@@ -118,7 +118,10 @@ async def webhook_infinitepay(
                 if pagamento:
                     logger.warning(f"Pagamento encontrado por e-mail: ID={pagamento.id}, Inscricao={inscricao.id}")
 
-    if not pagamento:
+    # A heurística de valor só é aplicada para checkouts manuais (sem order_nsu ou com order_nsu gerado pelo app que não segue o padrão ORD-)
+    is_manual_checkout = not order_nsu or not str(order_nsu).startswith("ORD-")
+    
+    if not pagamento and is_manual_checkout:
         # Tentar buscar qualquer pagamento pendente com o mesmo valor criado nos últimos 60 minutos
         from datetime import datetime, timedelta
         from decimal import Decimal
@@ -137,8 +140,13 @@ async def webhook_infinitepay(
                 logger.warning(f"Pagamento correspondente encontrado por heuristica de valor e tempo: ID={pagamento.id}, Usuario={pagamento.inscricao.usuario.email}")
 
     if not pagamento:
-        logger.warning("Pagamento correspondente não encontrado. Ignorando webhook.")
-        return {"message": "Pagamento correspondente não encontrado.", "status": "ignored"}
+        logger.warning(f"Pagamento correspondente não encontrado. Ignorando webhook e respondendo 400. Payload bruto: {data}")
+        raise HTTPException(status_code=400, detail="Pagamento correspondente não encontrado.")
+
+    # Idempotência: Se o pagamento já constar como PAGO, responde 200 OK imediatamente
+    if pagamento.status == "PAGO":
+        logger.warning(f"Pagamento ID={pagamento.id} já consta como PAGO no banco. Retornando 200 imediatamente (idempotência).")
+        return {"message": "Webhook processado anteriormente.", "status": pagamento.status}
 
     # Atualizar campos adicionais
     if transaction_nsu:
@@ -148,10 +156,21 @@ async def webhook_infinitepay(
     if invoice_slug:
         pagamento.invoice_slug = str(invoice_slug)
 
-    # Considerar tanto "paid" quanto "approved" como pago, ou se houver paid_amount > 0 no webhook
+    # Determinar valores e comparar paid_amount com esperado
     amount_raw = data.get("amount") or data.get("paid_amount") or inner_data.get("amount") or 0
     paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
     
+    from decimal import Decimal
+    paid_amount_reais = Decimal(str(paid_amount_raw)) / 100
+    amount_expected = pagamento.valor
+
+    pagamento.paid_amount = paid_amount_reais
+    pagamento.capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+
+    if paid_amount_reais < amount_expected:
+        logger.warning(f"Divergência de valor no pagamento ID={pagamento.id}: Pago R$ {paid_amount_reais:.2f}, Esperado R$ {amount_expected:.2f}!")
+
+    # Considerar tanto "paid" quanto "approved" como pago, ou se houver paid_amount > 0 no webhook
     is_approved = (
         any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
         or (float(paid_amount_raw) > 0 and float(paid_amount_raw) >= float(amount_raw))

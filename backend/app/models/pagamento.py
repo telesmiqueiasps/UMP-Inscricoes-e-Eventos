@@ -21,6 +21,8 @@ class Pagamento(Base):
     receipt_url = Column(String(500), nullable=True)
     order_nsu = Column(String(100), nullable=True)
     invoice_slug = Column(String(250), nullable=True)
+    paid_amount = Column(Numeric(10, 2), nullable=True)
+    capture_method = Column(String(50), nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

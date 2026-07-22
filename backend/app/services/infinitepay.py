@@ -57,17 +57,50 @@ class InfinitePayService:
                     return {
                         "checkout_url": data.get("url") or data.get("checkout_url") or checkout_url,
                         "order_nsu": order_nsu,
-                        "invoice_slug": data.get("invoice_slug") or order_nsu
+                        "invoice_slug": data.get("invoice_slug") or data.get("slug") or order_nsu
                     }
         except Exception:
             # Fallback para o formato padrão do InfinitePay Smart Link
             pass
 
+        # Formatar valor em reais com vírgula para o link amigável estático
+        valor_str = f"{valor_reais:.2f}".replace(".", ",")
+        checkout_url_fallback = f"https://pay.infinitepay.io/{self.handle}/{valor_str}?order_nsu={order_nsu}"
+
         return {
-            "checkout_url": checkout_url,
+            "checkout_url": checkout_url_fallback,
             "order_nsu": order_nsu,
             "invoice_slug": order_nsu
         }
+
+    def consultar_status_pagamento(
+        self,
+        order_nsu: str,
+        transaction_nsu: Optional[str] = None,
+        slug: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Consulta o status do pagamento na InfinitePay usando o endpoint de payment_check.
+        """
+        payload = {
+            "handle": self.handle,
+            "order_nsu": order_nsu,
+            "transaction_nsu": transaction_nsu or "",
+            "slug": slug or ""
+        }
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
+                "Content-Type": "application/json"
+            }
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post("https://api.checkout.infinitepay.io/payment_check", json=payload, headers=headers)
+                if resp.status_code == 200:
+                    return resp.json()
+        except Exception as e:
+            # Silencioso, retorna vazio
+            pass
+        return {}
 
 
 infinitepay_service = InfinitePayService()
