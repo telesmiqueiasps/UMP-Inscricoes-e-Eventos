@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.pagamento import Pagamento
 from app.models.inscricao import Inscricao
+from app.models.usuario import Usuario
 from app.schemas.pagamento import WebhookInfinitePaySchema
 from app.services.email import enviar_email_confirmacao
 
@@ -65,13 +66,35 @@ async def webhook_infinitepay(
     )
     payment_status = str(status_raw).lower()
 
-    if not order_nsu and not invoice_slug:
-        return {"message": "Identificador de ordem não fornecido, ignorado."}
+    pagamento = None
+    if order_nsu or invoice_slug:
+        # Buscar pagamento no banco por order_nsu ou invoice_slug
+        pagamento = db.query(Pagamento).filter(
+            (Pagamento.order_nsu == order_nsu) | (Pagamento.invoice_slug == invoice_slug)
+        ).first()
 
-    # Buscar pagamento no banco por order_nsu ou invoice_slug
-    pagamento = db.query(Pagamento).filter(
-        (Pagamento.order_nsu == order_nsu) | (Pagamento.invoice_slug == invoice_slug)
-    ).first()
+    # Se não encontrar por order_nsu, tentar buscar pelo e-mail do cliente (útil para links manuais do app)
+    if not pagamento:
+        customer_data = data.get("customer", {}) if isinstance(data.get("customer"), dict) else {}
+        if not customer_data:
+            customer_data = inner_data.get("customer", {}) if isinstance(inner_data.get("customer"), dict) else {}
+        
+        customer_email = customer_data.get("email")
+        if customer_email:
+            # Buscar usuário pelo e-mail
+            usuario = db.query(Usuario).filter(Usuario.email.ilike(customer_email)).first()
+            if usuario:
+                # Buscar inscrição pendente mais recente
+                inscricao = db.query(Inscricao).filter(
+                    Inscricao.usuario_id == usuario.id,
+                    Inscricao.status == "PENDENTE"
+                ).order_by(Inscricao.created_at.desc()).first()
+                
+                if inscricao:
+                    pagamento = db.query(Pagamento).filter(
+                        Pagamento.inscricao_id == inscricao.id,
+                        Pagamento.status == "PENDENTE"
+                    ).first()
 
     if not pagamento:
         return {"message": "Pagamento correspondente não encontrado.", "status": "ignored"}
