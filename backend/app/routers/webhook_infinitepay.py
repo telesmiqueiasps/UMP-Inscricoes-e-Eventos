@@ -6,6 +6,9 @@ from app.models.inscricao import Inscricao
 from app.models.usuario import Usuario
 from app.schemas.pagamento import WebhookInfinitePaySchema
 from app.services.email import enviar_email_confirmacao
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/webhook", tags=["Webhooks"])
 
@@ -23,7 +26,9 @@ async def webhook_infinitepay(
     """
     try:
         data = await request.json()
-    except Exception:
+        logger.info(f"Webhook InfinitePay Payload Recebido: {data}")
+    except Exception as e:
+        logger.error(f"Erro ao ler json do webhook: {e}")
         raise HTTPException(status_code=400, detail="Payload JSON inválido")
 
     # Tenta extrair dados com flexibilidade para suportar diferentes payloads da InfinitePay
@@ -61,10 +66,30 @@ async def webhook_infinitepay(
     status_raw = (
         data.get("status")
         or inner_data.get("status")
+        or data.get("state")
+        or inner_data.get("state")
         or data.get("event")
         or ""
     )
     payment_status = str(status_raw).lower()
+
+    # Se não encontrar por order_nsu, tentar buscar pelo e-mail do cliente (útil para links manuais do app)
+    customer_data = data.get("customer", {}) if isinstance(data.get("customer"), dict) else {}
+    if not customer_data:
+        customer_data = inner_data.get("customer", {}) if isinstance(inner_data.get("customer"), dict) else {}
+    
+    customer_email = (
+        customer_data.get("email")
+        or data.get("customer_email")
+        or inner_data.get("customer_email")
+        or data.get("email")
+        or inner_data.get("email")
+    )
+
+    logger.info(
+        f"Webhook InfinitePay Parsed: order_nsu={order_nsu}, invoice_slug={invoice_slug}, "
+        f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
+    )
 
     pagamento = None
     if order_nsu or invoice_slug:
@@ -72,31 +97,29 @@ async def webhook_infinitepay(
         pagamento = db.query(Pagamento).filter(
             (Pagamento.order_nsu == order_nsu) | (Pagamento.invoice_slug == invoice_slug)
         ).first()
+        if pagamento:
+            logger.info(f"Pagamento encontrado por ID/NSU: {pagamento.id}")
 
-    # Se não encontrar por order_nsu, tentar buscar pelo e-mail do cliente (útil para links manuais do app)
-    if not pagamento:
-        customer_data = data.get("customer", {}) if isinstance(data.get("customer"), dict) else {}
-        if not customer_data:
-            customer_data = inner_data.get("customer", {}) if isinstance(inner_data.get("customer"), dict) else {}
-        
-        customer_email = customer_data.get("email")
-        if customer_email:
-            # Buscar usuário pelo e-mail
-            usuario = db.query(Usuario).filter(Usuario.email.ilike(customer_email)).first()
-            if usuario:
-                # Buscar inscrição pendente mais recente
-                inscricao = db.query(Inscricao).filter(
-                    Inscricao.usuario_id == usuario.id,
-                    Inscricao.status == "PENDENTE"
-                ).order_by(Inscricao.created_at.desc()).first()
-                
-                if inscricao:
-                    pagamento = db.query(Pagamento).filter(
-                        Pagamento.inscricao_id == inscricao.id,
-                        Pagamento.status == "PENDENTE"
-                    ).first()
+    if not pagamento and customer_email:
+        logger.info(f"Tentando localizar pagamento por e-mail do cliente: {customer_email}")
+        usuario = db.query(Usuario).filter(Usuario.email.ilike(customer_email)).first()
+        if usuario:
+            # Buscar inscrição pendente mais recente
+            inscricao = db.query(Inscricao).filter(
+                Inscricao.usuario_id == usuario.id,
+                Inscricao.status == "PENDENTE"
+            ).order_by(Inscricao.created_at.desc()).first()
+            
+            if inscricao:
+                pagamento = db.query(Pagamento).filter(
+                    Pagamento.inscricao_id == inscricao.id,
+                    Pagamento.status == "PENDENTE"
+                ).first()
+                if pagamento:
+                    logger.info(f"Pagamento encontrado por e-mail: ID={pagamento.id}, Inscricao={inscricao.id}")
 
     if not pagamento:
+        logger.warning("Pagamento correspondente não encontrado. Ignorando webhook.")
         return {"message": "Pagamento correspondente não encontrado.", "status": "ignored"}
 
     # Atualizar campos adicionais
@@ -107,8 +130,11 @@ async def webhook_infinitepay(
     if invoice_slug:
         pagamento.invoice_slug = str(invoice_slug)
 
+    # Considerar tanto "paid" quanto "approved" como pago
     is_approved = any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
     is_cancelled = any(s in payment_status for s in ["failed", "cancel", "refund"])
+
+    logger.info(f"Verificação de status: is_approved={is_approved}, is_cancelled={is_cancelled}")
 
     # Verificar status do pagamento
     if is_approved:
@@ -123,6 +149,7 @@ async def webhook_infinitepay(
             status_anterior = pagamento.inscricao.status
             pagamento.inscricao.status = "CONFIRMADA"
             db.commit()
+            logger.info(f"Inscrição ID={pagamento.inscricao_id} alterada para CONFIRMADA.")
 
             # Enviar e-mail em background se antes não estava confirmada
             if status_anterior != "CONFIRMADA":
@@ -132,11 +159,13 @@ async def webhook_infinitepay(
                     destinatario_nome=pagamento.inscricao.usuario.nome,
                     nome_evento=pagamento.inscricao.evento.titulo
                 )
+                logger.info(f"E-mail de confirmação agendado para {pagamento.inscricao.usuario.email}")
 
     elif is_cancelled:
         pagamento.status = "CANCELADO"
         for p in pagamento.parcelas:
             p.status = "CANCELADO"
         db.commit()
+        logger.info(f"Pagamento ID={pagamento.id} cancelado via webhook.")
 
     return {"message": "Webhook processado com sucesso.", "status": pagamento.status}
