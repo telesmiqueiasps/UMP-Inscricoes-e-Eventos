@@ -32,30 +32,32 @@ class InfinitePayService:
         payload = {
             "handle": self.handle,
             "order_nsu": order_nsu,
-            "amount": valor_cents,
-            "description": descricao,
-            "customer": {
-                "name": customer_name,
-                "email": customer_email
-            },
-            "redirect_url": redirect_url or ""
+            "redirect_url": "https://inscricoessinodalpb.netlify.app/confirmacao.html",
+            "webhook_url": "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/infinitepay",
+            "items": [
+                {
+                    "name": descricao,
+                    "price": valor_cents,
+                    "quantity": 1
+                }
+            ]
         }
 
         try:
             # Caso a API de checkout da InfinitePay seja chamada diretamente via HTTP
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
                 "Content-Type": "application/json"
             }
-            # Tentativa de chamada HTTP externa
+            # Tentativa de chamada HTTP externa para o endpoint de Links do Checkout Integrado
             with httpx.Client(timeout=10.0) as client:
-                resp = client.post(f"{self.api_url}/v2/checkouts", json=payload, headers=headers)
+                resp = client.post("https://api.checkout.infinitepay.io/links", json=payload, headers=headers)
                 if resp.status_code in [200, 201]:
                     data = resp.json()
                     return {
-                        "checkout_url": data.get("checkout_url", checkout_url),
+                        "checkout_url": data.get("url") or data.get("checkout_url") or checkout_url,
                         "order_nsu": order_nsu,
-                        "invoice_slug": data.get("invoice_slug", order_nsu)
+                        "invoice_slug": data.get("invoice_slug") or order_nsu
                     }
         except Exception:
             # Fallback para o formato padrão do InfinitePay Smart Link
