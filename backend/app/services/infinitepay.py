@@ -24,9 +24,10 @@ class InfinitePayService:
         Retorna URL de checkout e identificadores.
         """
         valor_cents = int(Decimal(str(valor)) * 100)
+        valor_reais = float(valor)
         
-        # Link amigável de checkout InfinitePay
-        checkout_url = f"https://pay.infinitepay.io/{self.handle}/{valor_cents}?order_nsu={order_nsu}"
+        # Link amigável de checkout InfinitePay (usando valor em Reais na URL de pagamento)
+        checkout_url = f"https://pay.infinitepay.io/{self.handle}/{valor_reais:.2f}?order_nsu={order_nsu}"
 
         payload = {
             "handle": self.handle,
