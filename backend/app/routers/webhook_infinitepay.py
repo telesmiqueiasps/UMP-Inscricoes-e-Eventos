@@ -119,6 +119,24 @@ async def webhook_infinitepay(
                     logger.warning(f"Pagamento encontrado por e-mail: ID={pagamento.id}, Inscricao={inscricao.id}")
 
     if not pagamento:
+        # Tentar buscar qualquer pagamento pendente com o mesmo valor criado nos últimos 60 minutos
+        from datetime import datetime, timedelta
+        from decimal import Decimal
+        amount_raw = data.get("amount") or data.get("paid_amount") or inner_data.get("amount") or 0
+        amount_reais = Decimal(str(amount_raw)) / 100
+        if amount_reais > 0:
+            logger.warning(f"Tentando localizar pagamento por heuristica de valor ({amount_reais}) nos ultimos 60 min")
+            uma_hora_atras = datetime.utcnow() - timedelta(minutes=60)
+            pagamento = db.query(Pagamento).join(Inscricao).filter(
+                Pagamento.status == "PENDENTE",
+                Pagamento.valor == amount_reais,
+                Inscricao.status == "PENDENTE",
+                Inscricao.created_at >= uma_hora_atras
+            ).order_by(Inscricao.created_at.desc()).first()
+            if pagamento:
+                logger.warning(f"Pagamento correspondente encontrado por heuristica de valor e tempo: ID={pagamento.id}, Usuario={pagamento.inscricao.usuario.email}")
+
+    if not pagamento:
         logger.warning("Pagamento correspondente não encontrado. Ignorando webhook.")
         return {"message": "Pagamento correspondente não encontrado.", "status": "ignored"}
 
@@ -130,11 +148,17 @@ async def webhook_infinitepay(
     if invoice_slug:
         pagamento.invoice_slug = str(invoice_slug)
 
-    # Considerar tanto "paid" quanto "approved" como pago
-    is_approved = any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
+    # Considerar tanto "paid" quanto "approved" como pago, ou se houver paid_amount > 0 no webhook
+    amount_raw = data.get("amount") or data.get("paid_amount") or inner_data.get("amount") or 0
+    paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
+    
+    is_approved = (
+        any(s in payment_status for s in ["paid", "approved", "completed", "pago"])
+        or (float(paid_amount_raw) > 0 and float(paid_amount_raw) >= float(amount_raw))
+    )
     is_cancelled = any(s in payment_status for s in ["failed", "cancel", "refund"])
 
-    logger.warning(f"Verificação de status: is_approved={is_approved}, is_cancelled={is_cancelled}")
+    logger.warning(f"Verificação de status: is_approved={is_approved}, is_cancelled={is_cancelled}, amount={amount_raw}, paid_amount={paid_amount_raw}")
 
     # Verificar status do pagamento
     if is_approved:
