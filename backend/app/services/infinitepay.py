@@ -36,7 +36,7 @@ class InfinitePayService:
             "webhook_url": "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/infinitepay",
             "items": [
                 {
-                    "name": descricao,
+                    "description": descricao,
                     "price": valor_cents,
                     "quantity": 1
                 }
