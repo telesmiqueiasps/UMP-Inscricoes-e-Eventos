@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
           <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
             📍 Local: ${ins.evento_local || 'A definir'}<br>
-            💳 Forma de Pagamento: <strong>${ins.forma_pagamento || 'A definir'}</strong>
+            💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
           </p>
         `;
       }
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const valorPagFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             return `
               <div class="card">
-                <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${pag.forma_pagamento}</h3>
+                <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h3>
                 <p>Valor: ${valorPagFmt} | Status: <span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></p>
                 ${pag.receipt_url ? `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem;">Link de Pagamento</a>` : ''}
               </div>
@@ -136,4 +136,18 @@ function copiarPixString(pixCode) {
     navigator.clipboard.writeText(pixCode);
     showToast('Código Pix copiado!', 'success');
   }
+}
+
+function formatarFormaPagamento(forma, captureMethod) {
+  if (forma === 'INFINITEPAY') {
+    if (captureMethod === 'pix') {
+      return 'InfinitePay (Pix)';
+    } else if (captureMethod === 'credit_card' || captureMethod === 'card') {
+      return 'InfinitePay (Cartão)';
+    }
+    return 'InfinitePay';
+  }
+  if (forma === 'PIX') return 'Pix à Vista';
+  if (forma === 'PARCELADO') return 'Parcelado (Carnê)';
+  return forma || 'N/A';
 }

@@ -201,20 +201,24 @@ async function loadInscricoes() {
 
   try {
     const data = await API.request(`/admin/inscricoes${queryStr}`);
-    container.innerHTML = data.map(ins => `
-      <tr>
-        <td>#${ins.id}</td>
-        <td><strong>${ins.usuario ? ins.usuario.nome : 'N/A'}</strong><br><small style="color:var(--text-muted);">${ins.usuario ? ins.usuario.email : ''}</small></td>
-        <td>${ins.evento ? ins.evento.titulo : 'N/A'}</td>
-        <td>${ins.forma_pagamento || 'N/A'}</td>
-        <td>R$ ${parseFloat(ins.valor_total).toFixed(2).replace('.', ',')}</td>
-        <td><span class="badge ${ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger'}">${ins.status}</span></td>
-        <td>
-          ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">Confirmar</button>` : ''}
-          ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">Cancelar</button>` : ''}
-        </td>
-      </tr>
-    `).join('');
+    container.innerHTML = data.map(ins => {
+      const firstPag = ins.pagamentos && ins.pagamentos[0];
+      const captureMethod = firstPag ? firstPag.capture_method : null;
+      return `
+        <tr>
+          <td>#${ins.id}</td>
+          <td><strong>${ins.usuario ? ins.usuario.nome : 'N/A'}</strong><br><small style="color:var(--text-muted);">${ins.usuario ? ins.usuario.email : ''}</small></td>
+          <td>${ins.evento ? ins.evento.titulo : 'N/A'}</td>
+          <td>${formatarFormaPagamento(ins.forma_pagamento, captureMethod)}</td>
+          <td>R$ ${parseFloat(ins.valor_total).toFixed(2).replace('.', ',')}</td>
+          <td><span class="badge ${ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger'}">${ins.status}</span></td>
+          <td>
+            ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">Confirmar</button>` : ''}
+            ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">Cancelar</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
   } catch (err) {}
 }
 
@@ -246,7 +250,7 @@ async function loadPagamentos() {
             <tr>
               <td>Pag #${pag.id} (Parc ${parc.numero})</td>
               <td>Inscrição #${pag.inscricao_id}</td>
-              <td>${pag.forma_pagamento}</td>
+              <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
               <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
               <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
               <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
@@ -261,7 +265,7 @@ async function loadPagamentos() {
           <tr>
             <td>Pag #${pag.id}</td>
             <td>Inscrição #${pag.inscricao_id}</td>
-            <td>${pag.forma_pagamento}</td>
+            <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
             <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
             <td>N/A</td>
             <td><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
@@ -282,4 +286,18 @@ async function alterarStatusParcela(id, novoStatus) {
     showToast(`Parcela #${id} atualizada para ${novoStatus}!`, 'success');
     loadPagamentos();
   } catch (err) {}
+}
+
+function formatarFormaPagamento(forma, captureMethod) {
+  if (forma === 'INFINITEPAY') {
+    if (captureMethod === 'pix') {
+      return 'InfinitePay (Pix)';
+    } else if (captureMethod === 'credit_card' || captureMethod === 'card') {
+      return 'InfinitePay (Cartão)';
+    }
+    return 'InfinitePay';
+  }
+  if (forma === 'PIX') return 'Pix à Vista';
+  if (forma === 'PARCELADO') return 'Parcelado (Carnê)';
+  return forma || 'N/A';
 }

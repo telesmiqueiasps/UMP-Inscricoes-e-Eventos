@@ -42,6 +42,7 @@ def obter_dashboard_usuario(
     pagamentos_data = []
 
     for ins in inscricoes:
+        first_pag = ins.pagamentos[0] if ins.pagamentos else None
         ins_dict = {
             "id": ins.id,
             "evento_id": ins.evento_id,
@@ -51,6 +52,7 @@ def obter_dashboard_usuario(
             "evento_data_fim": ins.evento.data_fim.isoformat() if ins.evento else "",
             "status": ins.status,
             "forma_pagamento": ins.forma_pagamento,
+            "capture_method": first_pag.capture_method if first_pag else None,
             "valor_total": float(ins.valor_total),
             "dados_extras": ins.dados_extras,
             "created_at": ins.created_at.isoformat()
@@ -77,6 +79,7 @@ def obter_dashboard_usuario(
                 "inscricao_id": ins.id,
                 "evento_titulo": ins.evento.titulo if ins.evento else "",
                 "forma_pagamento": pag.forma_pagamento,
+                "capture_method": pag.capture_method,
                 "valor": float(pag.valor),
                 "status": pag.status,
                 "copia_cola_pix": pag.copia_cola_pix,

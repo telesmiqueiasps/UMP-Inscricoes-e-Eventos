@@ -1,9 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from decimal import Decimal
 from app.schemas.usuario import UsuarioResponse
 from app.schemas.evento import EventoResponse
+from app.schemas.pagamento import PagamentoResponse
 
 
 class InscricaoCreate(BaseModel):
@@ -29,6 +30,7 @@ class InscricaoResponse(BaseModel):
 
     usuario: Optional[UsuarioResponse] = None
     evento: Optional[EventoResponse] = None
+    pagamentos: Optional[List[PagamentoResponse]] = []
 
     class Config:
         from_attributes = True
