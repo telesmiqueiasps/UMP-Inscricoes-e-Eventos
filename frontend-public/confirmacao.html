@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscrição e Pagamento Confirmados - EventosHub</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background-color: var(--bg-main);
+    }
+    .success-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    .success-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 3rem 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      animation: fadeInUp 0.6s ease-out;
+    }
+    .success-icon-wrapper {
+      margin-bottom: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.1);
+      color: #10B981;
+    }
+    .success-icon-wrapper svg {
+      width: 40px;
+      height: 40px;
+    }
+    .success-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 1rem;
+    }
+    .success-description {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+    }
+    .btn-action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">E</div>
+      <span>EventosHub</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Início</a></li>
+      <li><a href="https://usuariosinodalpb.netlify.app/login.html" class="nav-link">Área do Participante</a></li>
+    </ul>
+  </nav>
+
+  <!-- Confirmacao Content -->
+  <div class="success-container">
+    <div class="success-card">
+      <div class="success-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      <h1 class="success-title">Pagamento Recebido!</h1>
+      <p class="success-description">
+        Sua inscrição foi processada com sucesso e a confirmação está sendo homologada pelo sistema. Em instantes você receberá o e-mail de boas-vindas do evento!
+      </p>
+
+      <div class="btn-action-group">
+        <a href="https://usuariosinodalpb.netlify.app/dashboard.html" class="btn btn-primary" style="padding: 0.85rem; font-size: 1rem; text-decoration: none;">
+          ⚡ Ir para Minha Área do Participante
+        </a>
+        <a href="index.html" class="btn btn-outline" style="padding: 0.85rem; font-size: 1rem;">
+          Voltar para a Página Inicial
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="margin-top: auto;">
+    <p>&copy; 2026 Plataforma de Inscrições para Eventos. Todos os direitos reservados.</p>
+  </footer>
+
+</body>
+</html>
