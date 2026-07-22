@@ -74,21 +74,12 @@ def processar_pagamento(
             db_pagamento.copia_cola_pix = copia_cola
             db_pagamento.qr_code_pix = qr_code_b64
         else:
-            # Gerar link do checkout da InfinitePay para o Pix
-            order_nsu = f"ORD-{inscricao.id}-{db_pagamento.id}"
-            result = infinitepay_service.criar_checkout_link(
-                order_nsu=order_nsu,
+            # Gerar Pix estático local (usando chave pix miqueiasteles9@gmail.com configurada no .env)
+            copia_cola = gerar_copia_cola_pix(
                 valor=inscricao.valor_total,
-                descricao=f"Inscrição Evento #{inscricao.evento_id} - {inscricao.evento.titulo} (Pix)",
-                customer_email=current_user.email,
-                customer_name=current_user.nome
+                txid=f"INS{inscricao.id}"
             )
-            db_pagamento.order_nsu = order_nsu
-            db_pagamento.receipt_url = result.get("checkout_url")
-            db_pagamento.invoice_slug = result.get("invoice_slug")
-            
-            copia_cola = result.get("checkout_url")
-            qr_code_b64 = "" # Sem QR code local já que usará o checkout da InfinitePay
+            qr_code_b64 = gerar_qr_code_base64(copia_cola)
             
             db_pagamento.copia_cola_pix = copia_cola
             db_pagamento.qr_code_pix = qr_code_b64
