@@ -44,9 +44,8 @@ class InfinitePayService:
         }
 
         try:
-            # Caso a API de checkout da InfinitePay seja chamada diretamente via HTTP
+            # Caso a API de checkout da InfinitePay seja chamada diretamente via HTTP (não precisa de token de autorização)
             headers = {
-                "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
                 "Content-Type": "application/json"
             }
             # Tentativa de chamada HTTP externa para o endpoint de Links do Checkout Integrado
@@ -90,7 +89,6 @@ class InfinitePayService:
         }
         try:
             headers = {
-                "Authorization": f"Bearer {self.api_key}" if self.api_key else "",
                 "Content-Type": "application/json"
             }
             with httpx.Client(timeout=10.0) as client:
