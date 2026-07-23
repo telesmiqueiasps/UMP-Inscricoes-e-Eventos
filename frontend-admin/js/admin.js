@@ -572,8 +572,38 @@ async function salvarConfiguracoes(e) {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    showToast('Configurações atualizadas com sucesso!', 'success');
+    showToast('Configurações updated successfully!', 'success');
   } catch (err) {
     showToast('Erro ao salvar as configurações.', 'error');
   }
 }
+
+window.uploadImageToField = async function(inputElement, targetFieldId) {
+  const file = inputElement.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const label = inputElement.parentElement;
+  const originalText = label.innerHTML;
+  
+  label.innerHTML = '⏳ ...';
+  label.style.pointerEvents = 'none';
+
+  try {
+    const res = await API.request('/admin/eventos/upload', {
+      method: 'POST',
+      body: formData
+    });
+    
+    document.getElementById(targetFieldId).value = res.url;
+    showToast('Imagem enviada com sucesso para o Supabase Storage!', 'success');
+  } catch (err) {
+    showToast(err.message || 'Erro ao enviar imagem.', 'error');
+  } finally {
+    label.innerHTML = originalText;
+    label.style.pointerEvents = 'auto';
+    inputElement.value = '';
+  }
+};

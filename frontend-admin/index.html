@@ -175,15 +175,39 @@
           </div>
         </div>
 
-        <!-- Fotos do Evento (Links da Web) -->
+        <!-- Fotos do Evento (Links da Web ou Upload) -->
         <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-          <label class="form-label" style="font-weight: 700; color: var(--primary);">Fotos / Imagens do Evento (Links da Web)</label>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Insira o endereço (URL) de imagens da internet (ex: do Imgur, Unsplash ou redes sociais) para exibir no site:</p>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <input type="url" class="ev-image-url form-control" id="ev-foto-1" placeholder="Link da Imagem 1 (Principal / Banner)">
-            <input type="url" class="ev-image-url form-control" id="ev-foto-2" placeholder="Link da Imagem 2">
-            <input type="url" class="ev-image-url form-control" id="ev-foto-3" placeholder="Link da Imagem 3">
-            <input type="url" class="ev-image-url form-control" id="ev-foto-4" placeholder="Link da Imagem 4">
+          <label class="form-label" style="font-weight: 700; color: var(--primary);">Fotos / Imagens do Evento (Links ou Upload)</label>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Insira o link das fotos ou selecione um arquivo para fazer upload no Supabase Storage:</p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+              <input type="url" class="ev-image-url form-control" id="ev-foto-1" placeholder="Link da Imagem 1 (Principal / Banner)">
+              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
+                📤 Upload
+                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-1')">
+              </label>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+              <input type="url" class="ev-image-url form-control" id="ev-foto-2" placeholder="Link da Imagem 2">
+              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
+                📤 Upload
+                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-2')">
+              </label>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+              <input type="url" class="ev-image-url form-control" id="ev-foto-3" placeholder="Link da Imagem 3">
+              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
+                📤 Upload
+                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-3')">
+              </label>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+              <input type="url" class="ev-image-url form-control" id="ev-foto-4" placeholder="Link da Imagem 4">
+              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
+                📤 Upload
+                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-4')">
+              </label>
+            </div>
           </div>
         </div>
 

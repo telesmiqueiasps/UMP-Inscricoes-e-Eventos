@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, File, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import List, Optional
 from decimal import Decimal
 from pydantic import BaseModel
+import httpx
+import uuid
+import os
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_admin, get_current_user
 from app.models.evento import Evento
@@ -334,3 +338,42 @@ def atualizar_configuracoes_admin(
                 config.valor = valor
     db.commit()
     return {"message": "Configurações salvas com sucesso!"}
+
+
+@router.post("/admin/eventos/upload")
+async def upload_foto_evento(
+    file: UploadFile = File(...),
+    admin: Usuario = Depends(get_current_admin)
+):
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="Configuração do Supabase Storage ausente no arquivo .env (SUPABASE_URL e SUPABASE_KEY)."
+        )
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp", ".gif"]:
+        raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Apenas imagens são permitidas.")
+
+    filename = f"{uuid.uuid4()}{ext}"
+    clean_url = settings.SUPABASE_URL.rstrip('/')
+    upload_url = f"{clean_url}/storage/v1/object/{settings.SUPABASE_BUCKET}/{filename}"
+    
+    headers = {
+        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+        "Content-Type": file.content_type
+    }
+    
+    file_content = await file.read()
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(upload_url, headers=headers, content=file_content)
+        
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Erro ao enviar arquivo para o Supabase Storage: {response.text}"
+        )
+        
+    public_url = f"{clean_url}/storage/v1/object/public/{settings.SUPABASE_BUCKET}/{filename}"
+    return {"url": public_url}

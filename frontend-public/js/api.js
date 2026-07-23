@@ -27,9 +27,11 @@ const API = {
 
   async request(endpoint, options = {}) {
     const headers = {
-      'Content-Type': 'application/json',
       ...options.headers
     };
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     const token = this.getToken();
     if (token) {

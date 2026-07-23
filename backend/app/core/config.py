@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     BREVO_SENDER_EMAIL: str = "sinodalumppb@gmail.com"
     BREVO_SENDER_NAME: str = "Sinodal UMP PB"
 
+    # Supabase Storage Config
+    SUPABASE_URL: str = Field(default="")
+    SUPABASE_KEY: str = Field(default="")
+    SUPABASE_BUCKET: str = Field(default="eventos")
+
     class Config:
         case_sensitive = True
         env_file = ".env"
