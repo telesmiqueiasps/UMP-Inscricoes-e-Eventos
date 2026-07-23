@@ -74,9 +74,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <td>${valorParcFmt}</td>
                   <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
                   <td>
-                    ${parc.copia_cola_pix ? 
+                    ${parc.status !== 'PAGO' && parc.copia_cola_pix ? 
                       (parc.copia_cola_pix.startsWith('http') ? 
-                        `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Pix</a>` : 
+                        `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Parcela</a>` : 
                         `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
                       ) : ''
                     }
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </tr>
               `;
             }).join('');
-
+ 
             return `
               <div class="card">
                 <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Parcelamento (${pag.evento_titulo || 'Evento'})</h3>
@@ -113,7 +113,12 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="card">
                 <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h3>
                 <p>Valor: ${valorPagFmt} | Status: <span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></p>
-                ${pag.receipt_url ? `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem;">Link de Pagamento</a>` : ''}
+                ${pag.receipt_url ? 
+                  (pag.status === 'PAGO' ? 
+                    `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline" style="margin-top: 0.5rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-md);">📄 Comprovante de Pagamento</a>` :
+                    `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block;">Pagar Inscrição</a>`
+                  ) : ''
+                }
               </div>
             `;
           }

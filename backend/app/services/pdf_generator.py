@@ -179,14 +179,29 @@ def gerar_pdf_parcela(
     
     qr_image_flowable = Image(qr_img_buffer, width=4.5 * cm, height=4.5 * cm)
 
-    # 4. Tabela com QR Code e Pix Copia e Cola
+    # 4. Tabela com QR Code e Pix/Checkout Link
+    is_link = str(copia_cola_pix).startswith("http")
+    
+    if is_link:
+        titulo_instrucoes = "<b>INSTRUÇÕES DE PAGAMENTO (ONLINE / CHECKOUT)</b>"
+        item_1 = "1. Escaneie o QR Code ao lado usando a <b>câmera do seu celular</b> (não use o app do banco)."
+        item_2 = "2. Você será redirecionado para a página de pagamento seguro da InfinitePay."
+        item_3 = "3. Na página, escolha a forma de pagamento desejada (Pix ou Cartão de Crédito)."
+        item_4 = "4. Se preferir, copie o endereço do link abaixo e acesse no seu navegador:"
+    else:
+        titulo_instrucoes = "<b>INSTRUÇÕES DE PAGAMENTO VIA PIX</b>"
+        item_1 = "1. Abra o aplicativo do seu banco ou instituição financeira."
+        item_2 = "2. Escolha a opção <b>Pix Copia e Cola</b> ou <b>Ler QR Code</b>."
+        item_3 = "3. Escaneie o QR Code ao lado usando o aplicativo do banco."
+        item_4 = "4. Se preferir, copie a chave de pagamento abaixo e cole no seu banco:"
+
     pix_instructions = [
-        Paragraph("<b>INSTRUÇÕES DE PAGAMENTO VIA PIX</b>", ParagraphStyle('PixHead', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#0F172A'))),
+        Paragraph(titulo_instrucoes, ParagraphStyle('PixHead', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#0F172A'))),
         Spacer(1, 6),
-        Paragraph("1. Abra o aplicativo do seu banco ou instituição financeira.", value_style),
-        Paragraph("2. Escolha a opção <b>Pix Copia e Cola</b> ou <b>Ler QR Code</b>.", value_style),
-        Paragraph("3. Se utilizar o celular para pagar, escaneie o QR Code ao lado.", value_style),
-        Paragraph("4. Se preferir, copie a chave de pagamento abaixo e cole no seu banco:", value_style),
+        Paragraph(item_1, value_style),
+        Paragraph(item_2, value_style),
+        Paragraph(item_3, value_style),
+        Paragraph(item_4, value_style),
         Spacer(1, 6),
         Paragraph(copia_cola_pix, pix_code_style)
     ]
