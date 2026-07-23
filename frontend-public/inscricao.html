@@ -97,20 +97,35 @@
       </form>
     </div>
 
-    <!-- Etapa 2: Escolha de Pagamento -->
+    <!-- Etapa 2: Formulário de Inscrição (Dados Extras) -->
     <div class="card" id="step-2" style="display: none;">
-      <h3 class="card-title">2. Escolha a Forma de Pagamento</h3>
-      <p class="card-desc">Selecione como deseja efetuar o pagamento da sua inscrição.</p>
+      <h3 class="card-title">2. Dados da Inscrição</h3>
+      <p class="card-desc">Por favor, preencha as informações necessárias para sua participação no evento.</p>
 
-      <form id="form-pagamento">
-        
-        <!-- Campos Dinâmicos do Formulário de Inscrição -->
+      <form id="form-dados-extras">
         <div id="dynamic-fields-container" style="display: none; border: 1.5px solid var(--border-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; background: #fafafa;">
-          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Dados Adicionais da Inscrição</h4>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Preencha as informações adicionais exigidas para este evento:</p>
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Dados Adicionais</h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Preencha as informações solicitadas:</p>
           <div id="dynamic-fields-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
         </div>
 
+        <div id="no-fields-msg" style="display: none; padding: 1.5rem; border: 1px dashed var(--border-color); border-radius: var(--radius-md); text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">
+          Este evento não exige campos adicionais. Você pode prosseguir.
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline" onclick="voltarParaIdentificacao()" style="flex: 1;">Voltar</button>
+          <button type="submit" class="btn btn-primary" style="flex: 2;">Avançar para o Pagamento &rarr;</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Etapa 3: Escolha de Pagamento -->
+    <div class="card" id="step-3" style="display: none;">
+      <h3 class="card-title">3. Escolha a Forma de Pagamento</h3>
+      <p class="card-desc">Selecione como deseja efetuar o pagamento da sua inscrição.</p>
+
+      <form id="form-pagamento">
         <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
           <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer;">
             <input type="radio" name="forma_pagamento" value="INFINITEPAY" checked>
@@ -140,14 +155,17 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">
-          Finalizar Inscrição
-        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-outline" onclick="voltarParaDados()" style="flex: 1;">Voltar</button>
+          <button type="submit" class="btn btn-primary" style="flex: 2; font-size: 1.05rem;">
+            Finalizar Inscrição & Pagar
+          </button>
+        </div>
       </form>
     </div>
 
-    <!-- Etapa 3: Resultado / Qr Code / PDF -->
-    <div class="card" id="step-3" style="display: none;">
+    <!-- Etapa 4: Resultado / Qr Code / PDF -->
+    <div class="card" id="step-4" style="display: none;">
       <div id="payment-result"></div>
     </div>
 

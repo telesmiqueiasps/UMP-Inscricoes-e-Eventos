@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const step1 = document.getElementById('step-1');
   const step2 = document.getElementById('step-2');
   const step3 = document.getElementById('step-3');
+  const step4 = document.getElementById('step-4');
 
   const loggedUserBanner = document.getElementById('logged-user-banner');
   const loggedUserMsg = document.getElementById('logged-user-msg');
@@ -19,6 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const formAuthRegister = document.getElementById('form-auth-register');
 
   // Formulário da Etapa 2
+  const formDadosExtras = document.getElementById('form-dados-extras');
+
+  // Formulário da Etapa 3
   const formPagamento = document.getElementById('form-pagamento');
   const numParcelasSelect = document.getElementById('num_parcelas');
   const parcelasGroup = document.getElementById('parcelas-group');
@@ -31,6 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   let emailDigitado = '';
+  let dadosExtrasSalvos = {};
 
   // 1. Carregar detalhes do Evento
   try {
@@ -242,19 +247,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- SUBMETER INSCRIÇÃO & PAGAMENTO (ETAPA 2) ---
+  // --- SUBMETER DADOS DA INSCRIÇÃO (ETAPA 2) ---
+  if (formDadosExtras) {
+    formDadosExtras.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // Coletar campos dinâmicos e salvar localmente
+      dadosExtrasSalvos = {};
+      document.querySelectorAll('.dyn-input').forEach(input => {
+        const name = input.name.replace('dyn_', '');
+        dadosExtrasSalvos[name] = input.value;
+      });
+
+      // Avançar para Etapa 3 (Pagamento)
+      step2.style.display = 'none';
+      step3.style.display = 'block';
+    });
+  }
+
+  // --- SUBMETER INSCRIÇÃO & PAGAMENTO (ETAPA 3) ---
   if (formPagamento) {
     formPagamento.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked').value;
       const numParcelas = parseInt(numParcelasSelect.value) || 1;
-
-      // Coletar campos dinâmicos para enviar em dados_extras
-      const dadosExtras = {};
-      document.querySelectorAll('.dyn-input').forEach(input => {
-        const name = input.name.replace('dyn_', '');
-        dadosExtras[name] = input.value;
-      });
 
       try {
         // 1. Criar Inscrição
@@ -264,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             evento_id: parseInt(eventoId),
             forma_pagamento: formaPagamento,
             num_parcelas: numParcelas,
-            dados_extras: dadosExtras
+            dados_extras: dadosExtrasSalvos
           })
         });
 
@@ -279,8 +295,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           })
         });
 
-        step2.style.display = 'none';
-        step3.style.display = 'block';
+        step3.style.display = 'none';
+        step4.style.display = 'block';
         if (loggedUserBanner) loggedUserBanner.style.display = 'none';
 
         renderPaymentResult(pagamento, formaPagamento);
@@ -291,6 +307,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  // --- NAVEGAÇÃO DO WIZARD ---
+  window.voltarParaIdentificacao = function() {
+    deslogarWizard();
+  };
+
+  window.voltarParaDados = function() {
+    step3.style.display = 'none';
+    step2.style.display = 'block';
+  };
 
   function atualizarEstadoUsuario() {
     const user = API.getUser();
@@ -303,6 +329,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       step1.style.display = 'none';
       step2.style.display = 'block';
+      step3.style.display = 'none';
+      step4.style.display = 'none';
       renderDynamicFormFields();
     } else {
       if (loggedUserBanner) {
@@ -310,6 +338,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       step1.style.display = 'block';
       step2.style.display = 'none';
+      step3.style.display = 'none';
+      step4.style.display = 'none';
       
       // Resetar visibilidade dos formulários
       if (formEmailCheck) formEmailCheck.style.display = 'block';
@@ -445,12 +475,14 @@ function copiarPix() {
 function renderDynamicFormFields() {
   const listContainer = document.getElementById('dynamic-fields-list');
   const container = document.getElementById('dynamic-fields-container');
+  const noFieldsMsg = document.getElementById('no-fields-msg');
   if (!listContainer || !container || !eventoAtual) return;
 
   const fieldsStr = eventoAtual.campos_formulario;
   if (!fieldsStr) {
     container.style.display = 'none';
     listContainer.innerHTML = '';
+    if (noFieldsMsg) noFieldsMsg.style.display = 'block';
     return;
   }
 
@@ -458,10 +490,12 @@ function renderDynamicFormFields() {
   if (fields.length === 0) {
     container.style.display = 'none';
     listContainer.innerHTML = '';
+    if (noFieldsMsg) noFieldsMsg.style.display = 'block';
     return;
   }
 
   container.style.display = 'block';
+  if (noFieldsMsg) noFieldsMsg.style.display = 'none';
   
   // Mapeia cada campo dinâmico habilitado para seu HTML correspondente
   listContainer.innerHTML = fields.map(field => {

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes do Evento - Plataforma de Eventos</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 768px) {
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .gallery-container {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .main-image {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+      display: block;
+      background-color: #f1f5f9;
+    }
+    .thumbnails-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-color);
+    }
+    .thumbnail {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .thumbnail:hover {
+      opacity: 0.8;
+    }
+    .thumbnail.active {
+      border-color: var(--primary);
+    }
+    .info-card {
+      position: sticky;
+      top: 2rem;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .meta-icon {
+      font-size: 1.25rem;
+      width: 28px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">E</div>
+      <span>EventosHub</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Voltar para Início</a></li>
+      <li><a href="https://usuariosinodalpb.netlify.app/login.html" class="nav-link">Área do Participante</a></li>
+    </ul>
+  </nav>
+
+  <main class="container">
+    
+    <div id="loading-container" style="text-align: center; padding: 4rem 0;">
+      <p style="color: var(--text-muted); font-size: 1.1rem;">Carregando detalhes do evento...</p>
+    </div>
+
+    <div id="event-detail-content" class="detail-layout" style="display: none;">
+      
+      <!-- Coluna da Esquerda (Imagens e Descrição) -->
+      <div>
+        <div class="gallery-container">
+          <img id="event-main-img" src="" alt="Banner do Evento" class="main-image">
+          <div id="event-thumbnails" class="thumbnails-grid" style="display: none;"></div>
+        </div>
+
+        <div class="card" style="padding: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.5rem;">Sobre o Evento</h2>
+          <div id="event-description" style="line-height: 1.7; color: #334155; white-space: pre-wrap;"></div>
+        </div>
+      </div>
+
+      <!-- Coluna da Direita (Painel de Inscrição e Detalhes) -->
+      <div>
+        <div class="card info-card" style="padding: 1.75rem;">
+          <div id="event-badge-container"></div>
+          
+          <h1 id="event-title" style="font-size: 1.75rem; font-weight: 800; margin: 0.75rem 0 1.5rem 0; line-height: 1.25;"></h1>
+
+          <div style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color); margin-bottom: 1.5rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Valor da Inscrição</div>
+            <div id="event-price" style="font-size: 2rem; font-weight: 900; color: var(--primary); margin-top: 0.25rem;"></div>
+          </div>
+
+          <div style="margin-bottom: 2rem;">
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <div>
+                <strong style="display: block; font-size: 0.85rem; color: var(--text-muted);">Data e Horário</strong>
+                <span id="event-date"></span>
+              </div>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">📍</span>
+              <div>
+                <strong style="display: block; font-size: 0.85rem; color: var(--text-muted);">Localização</strong>
+                <span id="event-location"></span>
+              </div>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-icon">👥</span>
+              <div>
+                <strong style="display: block; font-size: 0.85rem; color: var(--text-muted);">Vagas Disponíveis</strong>
+                <span id="event-vacancies"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="event-cta-container"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer style="margin-top: 4rem;">
+    <p>&copy; 2026 Plataforma de Inscrições para Eventos. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/evento.js"></script>
+</body>
+</html>
