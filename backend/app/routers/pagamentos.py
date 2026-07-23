@@ -26,6 +26,7 @@ class ProcessarPagamentoRequest(BaseModel):
     inscricao_id: int
     forma_pagamento: str  # PIX, INFINITEPAY, PARCELADO
     num_parcelas: Optional[int] = 1
+    data_primeira_parcela: Optional[str] = None  # Formato YYYY-MM-DD
 
 
 @router.post("/processar", response_model=PagamentoResponse)
@@ -127,21 +128,62 @@ def processar_pagamento(
             db_pagamento.invoice_slug = result.get("invoice_slug")
 
     elif forma_pag == "PARCELADO":
-        # Validar número de parcelas permitido pelo evento
-        max_parc = inscricao.evento.max_parcelas or 1
-        n_parcelas = min(max(req.num_parcelas or 1, 1), max_parc)
+        from datetime import datetime, date
+        from app.services.parcelamento import calcular_max_parcelas
+        
+        # 1. Resolver data da primeira parcela
+        if req.data_primeira_parcela:
+            try:
+                data_primeira_parcela = datetime.strptime(req.data_primeira_parcela, "%Y-%m-%d").date()
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Formato de data inválido. Use AAAA-MM-DD.")
+        else:
+            data_primeira_parcela = date.today() + timedelta(days=30)
+
+        # A data da primeira parcela não pode ser anterior a hoje
+        if data_primeira_parcela < date.today():
+            data_primeira_parcela = date.today()
+
+        data_limite = inscricao.evento.data_inicio.date()
+
+        # 2. Calcular máximo de parcelas permitidas
+        max_permitido = calcular_max_parcelas(data_primeira_parcela, data_limite)
+        if max_permitido < 1:
+            raise HTTPException(
+                status_code=400,
+                detail="A data de vencimento selecionada é posterior ao início do evento. Parcelamento indisponível."
+            )
+            
+        n_parcelas = min(max(req.num_parcelas or 1, 1), max_permitido)
 
         parcelas_calculadas = gerar_parcelas(
             valor_total=inscricao.valor_total,
-            num_parcelas=n_parcelas
+            num_parcelas=n_parcelas,
+            data_primeira_parcela=data_primeira_parcela,
+            data_limite_evento=data_limite
         )
 
         for item in parcelas_calculadas:
-            copia_cola_parc = gerar_copia_cola_pix(
-                valor=item["valor"],
-                txid=f"INS{inscricao.id}P{item['numero']}"
-            )
-            qr_b64_parc = gerar_qr_code_base64(copia_cola_parc)
+            order_nsu_parc = f"ORD-{inscricao.id}-PARC-{item['numero']}"
+            
+            # Tentar gerar checkout link dinâmico na InfinitePay para cada parcela
+            try:
+                res = infinitepay_service.criar_checkout_link(
+                    order_nsu=order_nsu_parc,
+                    valor=item["valor"],
+                    descricao=f"Inscrição Evento #{inscricao.evento_id} - Parcela {item['numero']}/{n_parcelas}",
+                    customer_email=current_user.email,
+                    customer_name=current_user.nome
+                )
+                copia_cola_parc = res.get("checkout_url")
+            except Exception:
+                # Fallback para Pix estático local caso a API falhe
+                copia_cola_parc = gerar_copia_cola_pix(
+                    valor=item["valor"],
+                    txid=f"INS{inscricao.id}P{item['numero']}"
+                )
+
+            qr_b64_parc = gerar_qr_code_base64(copia_cola_parc) if not copia_cola_parc.startswith("http") else ""
 
             parc = Parcela(
                 pagamento_id=db_pagamento.id,

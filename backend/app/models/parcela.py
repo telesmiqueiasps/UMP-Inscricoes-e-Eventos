@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, Date, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, Date, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -16,6 +16,8 @@ class Parcela(Base):
     qr_code_pix = Column(Text, nullable=True)
     copia_cola_pix = Column(Text, nullable=True)
     status = Column(String(50), default="PENDENTE", nullable=False)  # PENDENTE, PAGO, CANCELADO
+    alerta_previo_enviado = Column(Boolean, default=False, nullable=False)
+    alerta_atraso_enviado = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

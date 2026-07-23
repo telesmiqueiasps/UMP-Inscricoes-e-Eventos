@@ -121,9 +121,15 @@
           </label>
         </div>
 
-        <div class="form-group" id="parcelas-group" style="display: none;">
-          <label class="form-label">Quantidade de Parcelas</label>
-          <select id="num_parcelas" class="form-control"></select>
+        <div class="form-group" id="parcelas-group" style="display: none; border: 1.5px solid var(--border-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+          <div class="form-group">
+            <label class="form-label">Data de Vencimento da 1ª Parcela</label>
+            <input type="date" id="data_primeira_parcela" class="form-control" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Quantidade de Parcelas</label>
+            <select id="num_parcelas" class="form-control"></select>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.05rem;">

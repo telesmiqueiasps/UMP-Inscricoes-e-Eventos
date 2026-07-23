@@ -42,13 +42,69 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
-    // Preencher opções de parcelas
-    numParcelasSelect.innerHTML = '';
-    const maxParc = eventoAtual.max_parcelas || 1;
-    for (let i = 1; i <= maxParc; i++) {
-      const valParc = (eventoAtual.valor / i).toFixed(2).replace('.', ',');
-      numParcelasSelect.innerHTML += `<option value="${i}">${i}x de R$ ${valParc}</option>`;
+    // Configurar inicial da data da primeira parcela
+    const inputDataPrimeira = document.getElementById('data_primeira_parcela');
+    const hojeStr = new Date().toISOString().split('T')[0];
+    inputDataPrimeira.min = hojeStr;
+    if (eventoAtual.data_inicio) {
+      inputDataPrimeira.max = new Date(eventoAtual.data_inicio).toISOString().split('T')[0];
     }
+    
+    let dataPadrao = new Date(Date.now() + 86400000 * 5); // 5 dias no futuro
+    const dataLimite = new Date(eventoAtual.data_inicio);
+    if (dataPadrao > dataLimite) {
+      dataPadrao = dataLimite;
+    }
+    inputDataPrimeira.value = dataPadrao.toISOString().split('T')[0];
+
+    // Função para recalcular parcelas
+    window.recalcularDropdownParcelas = function() {
+      const dataSelStr = inputDataPrimeira.value;
+      if (!dataSelStr) return;
+
+      const d1 = new Date(dataSelStr + 'T00:00:00');
+      const limit = new Date(eventoAtual.data_inicio);
+      d1.setHours(0,0,0,0);
+      limit.setHours(0,0,0,0);
+
+      let maxParc = 1;
+      if (d1 > limit) {
+        maxParc = 0;
+      } else if (d1.getTime() === limit.getTime()) {
+        maxParc = 1;
+      } else {
+        let count = 0;
+        let current = new Date(d1);
+        while (true) {
+          count++;
+          let next = new Date(d1);
+          next.setMonth(d1.getMonth() + count);
+          
+          if (next > limit) {
+            if (current.getTime() < limit.getTime()) {
+              count++;
+            }
+            break;
+          }
+          current = next;
+        }
+        maxParc = count;
+      }
+
+      numParcelasSelect.innerHTML = '';
+      if (maxParc < 1) {
+        numParcelasSelect.innerHTML = '<option value="0">Indisponível (Excede a data do evento)</option>';
+        return;
+      }
+
+      for (let i = 1; i <= maxParc; i++) {
+        const valParc = (eventoAtual.valor / i).toFixed(2).replace('.', ',');
+        numParcelasSelect.innerHTML += `<option value="${i}">${i}x de R$ ${valParc}</option>`;
+      }
+    };
+
+    inputDataPrimeira.addEventListener('change', window.recalcularDropdownParcelas);
+    window.recalcularDropdownParcelas();
   } catch (err) {
     eventSummary.innerHTML = `<p style="color:red">Erro ao carregar evento.</p>`;
     return;
@@ -62,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     radio.addEventListener('change', (e) => {
       if (e.target.value === 'PARCELADO') {
         parcelasGroup.style.display = 'block';
+        window.recalcularDropdownParcelas();
       } else {
         parcelasGroup.style.display = 'none';
       }
@@ -184,7 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify({
             inscricao_id: inscricao.id,
             forma_pagamento: formaPagamento,
-            num_parcelas: numParcelas
+            num_parcelas: numParcelas,
+            data_primeira_parcela: formaPagamento === 'PARCELADO' ? document.getElementById('data_primeira_parcela').value : null
           })
         });
 

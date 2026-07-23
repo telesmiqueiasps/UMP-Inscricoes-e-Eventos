@@ -91,6 +91,71 @@ async def webhook_infinitepay(
         f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
     )
 
+    # --- LÓGICA DE WEBHOOK PARA PARCELA INDIVIDUAL DO CARNÊ ---
+    if order_nsu and "-PARC-" in str(order_nsu):
+        try:
+            parts = str(order_nsu).split("-")
+            inscricao_id = int(parts[1])
+            parcela_num = int(parts[3])
+            
+            from app.models.parcela import Parcela
+            from decimal import Decimal
+
+            # Localizar a parcela correspondente
+            parcela = db.query(Parcela).join(Pagamento).filter(
+                Pagamento.inscricao_id == inscricao_id,
+                Parcela.numero == parcela_num
+            ).first()
+
+            if not parcela:
+                logger.error(f"Parcela #{parcela_num} da Inscrição #{inscricao_id} não encontrada!")
+                raise HTTPException(status_code=400, detail="Parcela correspondente não encontrada.")
+
+            # Verificar se já foi processada anteriormente
+            if parcela.status == "PAGO":
+                logger.warning(f"Parcela ID={parcela.id} (Nº {parcela_num}) já consta como PAGA. Retornando 200 (idempotência).")
+                return {"message": "Webhook processado anteriormente para esta parcela."}
+
+            # Marcar parcela como PAGA
+            parcela.status = "PAGO"
+            db.commit()
+            logger.warning(f"Parcela ID={parcela.id} (Nº {parcela_num}) atualizada para PAGO.")
+
+            # Incrementar paid_amount e salvar capture_method no Pagamento pai
+            pagamento = parcela.pagamento
+            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
+            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+
+            if paid_amount_raw:
+                pagamento.paid_amount = (pagamento.paid_amount or Decimal("0.00")) + Decimal(str(paid_amount_raw)) / 100
+            if capture_method:
+                pagamento.capture_method = capture_method
+            db.commit()
+
+            # Se todas as parcelas do carnê estiverem pagas, damos baixa no pagamento completo
+            todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
+            if todas_pagas:
+                status_anterior = pagamento.status
+                pagamento.status = "PAGO"
+                pagamento.inscricao.status = "CONFIRMADA"
+                db.commit()
+                logger.warning(f"Todas as parcelas pagas! Pagamento ID={pagamento.id} e Inscrição ID={pagamento.inscricao_id} CONFIRMADA.")
+
+                # Agendar e-mail de confirmação global se o pagamento não estava confirmado
+                if status_anterior != "PAGO":
+                    background_tasks.add_task(
+                        enviar_email_confirmacao,
+                        destinatario_email=pagamento.inscricao.usuario.email,
+                        destinatario_nome=pagamento.inscricao.usuario.nome,
+                        nome_evento=pagamento.inscricao.evento.titulo
+                    )
+            return {"message": f"Parcela #{parcela_num} paga com sucesso."}
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            logger.error(f"Erro ao processar webhook de parcela: {e}")
+            raise HTTPException(status_code=400, detail="Erro interno ao processar parcela.")
+
     pagamento = None
     if order_nsu or invoice_slug:
         # Buscar pagamento no banco por order_nsu ou invoice_slug
