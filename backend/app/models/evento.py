@@ -21,6 +21,7 @@ class Evento(Base):
     link_pagamento_cartao = Column(String(500), nullable=True)
     link_pagamento_pix = Column(String(500), nullable=True)
     campos_formulario = Column(Text, nullable=True)
+    fotos = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

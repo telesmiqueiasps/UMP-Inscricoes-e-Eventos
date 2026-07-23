@@ -17,6 +17,7 @@ class EventoBase(BaseModel):
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
+    fotos: Optional[str] = None
 
 
 class EventoCreate(EventoBase):
@@ -36,6 +37,7 @@ class EventoUpdate(BaseModel):
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
+    fotos: Optional[str] = None
 
 
 class EventoResponse(EventoBase):

@@ -29,16 +29,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         `<button class="btn btn-outline" style="width: 100%; border-color: #EF4444; color: #EF4444; cursor: not-allowed;" disabled>Vagas Esgotadas</button>` : 
         `<a href="inscricao.html?evento_id=${ev.id}" class="btn btn-primary" style="width: 100%;">Garantir Minha Vaga</a>`;
 
+      const fotosList = ev.fotos ? ev.fotos.split(',').filter(f => f.trim() !== '') : [];
+      const imageHTML = fotosList.length > 0 ? 
+        `<img src="${fotosList[0]}" alt="${ev.titulo}" style="width: calc(100% + 3rem); height: 180px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1rem -1.5rem; display: block;" />` : 
+        '';
+
       return `
-        <div class="card">
-          ${badgeHTML}
-          <h3 class="card-title">${ev.titulo}</h3>
-          <p class="card-desc">${ev.descricao || 'Sem descrição cadastrada.'}</p>
-          
-          <div style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
-            <div><strong>📅 Data:</strong> ${dataInicio} até ${dataFim}</div>
-            <div><strong>📍 Local:</strong> ${ev.local || 'A definir'}</div>
-            <div><strong>👥 Vagas:</strong> ${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} restantes` : 'Ilimitadas'}</div>
+        <div class="card" style="display: flex; flex-direction: column;">
+          ${imageHTML}
+          <div style="flex-grow: 1;">
+            ${badgeHTML}
+            <h3 class="card-title">${ev.titulo}</h3>
+            <p class="card-desc">${ev.descricao || 'Sem descrição cadastrada.'}</p>
+            
+            <div style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+              <div><strong>📅 Data:</strong> ${dataInicio} até ${dataFim}</div>
+              <div><strong>📍 Local:</strong> ${ev.local || 'A definir'}</div>
+              <div><strong>👥 Vagas:</strong> ${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} restantes` : 'Ilimitadas'}</div>
+            </div>
           </div>
 
           <div class="price-tag">${valorFmt}</div>

@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_cartao VARCHAR(500);"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS link_pagamento_pix VARCHAR(500);"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS campos_formulario TEXT;"))
+                conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fotos TEXT;"))
                 conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(10,2);"))
                 conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS capture_method VARCHAR(50);"))
                 conn.execute(text("ALTER TABLE parcelas ADD COLUMN IF NOT EXISTS alerta_previo_enviado BOOLEAN DEFAULT FALSE;"))

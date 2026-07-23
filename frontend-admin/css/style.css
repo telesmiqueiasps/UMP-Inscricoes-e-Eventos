@@ -157,4 +157,6 @@ td { padding: 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 550px;
+  max-height: 85vh;
+  overflow-y: auto;
 }

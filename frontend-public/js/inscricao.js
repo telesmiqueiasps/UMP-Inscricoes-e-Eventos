@@ -48,11 +48,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    const fotosList = eventoAtual.fotos ? eventoAtual.fotos.split(',').filter(f => f.trim() !== '') : [];
+    const imageHTML = fotosList.length > 0 ? 
+      `<img src="${fotosList[0]}" alt="${eventoAtual.titulo}" style="width: calc(100% + 3rem); height: 220px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1.5rem -1.5rem; display: block;" />` : 
+      '';
+
     eventSummary.innerHTML = `
-      <h2 style="font-size: 1.5rem; font-weight: 700;">${eventoAtual.titulo}</h2>
-      <p style="color: var(--text-muted); margin-bottom: 0.5rem;">${eventoAtual.descricao || ''}</p>
-      <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
-        Valor Total: R$ ${parseFloat(eventoAtual.valor).toFixed(2).replace('.', ',')}
+      ${imageHTML}
+      <div style="padding: 0 0.5rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">${eventoAtual.titulo}</h2>
+        <p style="color: var(--text-muted); margin-bottom: 0.75rem;">${eventoAtual.descricao || ''}</p>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+          Valor Total: R$ ${parseFloat(eventoAtual.valor).toFixed(2).replace('.', ',')}
+        </div>
       </div>
     `;
 
