@@ -17,7 +17,8 @@ def add_months(sourcedate: date, months: int) -> date:
 
 def calcular_max_parcelas(data_primeira_parcela: date, data_limite_evento: date) -> int:
     """
-    Calcula dinamicamente a quantidade máxima de parcelas baseada na data da 1ª parcela e data limite do evento.
+    Calcula dinamicamente a quantidade máxima de parcelas baseada na data da 1ª parcela e data limite do evento,
+    garantindo que haja no máximo 1 parcela por mês calendário.
     """
     if not data_primeira_parcela or not data_limite_evento:
         return 1
@@ -26,16 +27,18 @@ def calcular_max_parcelas(data_primeira_parcela: date, data_limite_evento: date)
     if data_primeira_parcela == data_limite_evento:
         return 1
 
-    count = 0
+    count = 1
     current = data_primeira_parcela
     while True:
-        count += 1
         next_date = add_months(data_primeira_parcela, count)
         if next_date > data_limite_evento:
+            # Só adicionamos a parcela final do dia do evento se ela não colidir no mesmo mês/ano com a anterior
             if current < data_limite_evento:
-                count += 1
+                if not (data_limite_evento.year == current.year and data_limite_evento.month == current.month):
+                    count += 1
             break
         current = next_date
+        count += 1
     return count
 
 
@@ -47,7 +50,7 @@ def gerar_parcelas(
 ) -> List[Dict[str, Any]]:
     """
     Gera as parcelas dividindo o valor_total em num_parcelas com vencimentos mensais e limite no evento.
-    Eventuais diferenças de centavos na divisão são ajustadas na última parcela.
+    Garante no máximo 1 parcela por mês calendário.
     """
     if isinstance(valor_total, (float, int, str)):
         valor_total = Decimal(str(valor_total)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -57,6 +60,11 @@ def gerar_parcelas(
 
     if not data_primeira_parcela:
         data_primeira_parcela = date.today() + timedelta(days=30)
+
+    # Citar limite máximo de parcelas permitidas
+    if data_limite_evento:
+        max_permitido = calcular_max_parcelas(data_primeira_parcela, data_limite_evento)
+        num_parcelas = min(num_parcelas, max_permitido)
 
     # Valor base truncado/arredondado em 2 casas
     valor_base = (valor_total / Decimal(num_parcelas)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)

@@ -73,20 +73,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (d1.getTime() === limit.getTime()) {
         maxParc = 1;
       } else {
-        let count = 0;
+        let count = 1;
         let current = new Date(d1);
         while (true) {
-          count++;
           let next = new Date(d1);
           next.setMonth(d1.getMonth() + count);
           
           if (next > limit) {
             if (current.getTime() < limit.getTime()) {
-              count++;
+              // Só adicionamos se o mês da data limite for diferente do mês da parcela anterior
+              if (!(limit.getFullYear() === current.getFullYear() && limit.getMonth() === current.getMonth())) {
+                count++;
+              }
             }
             break;
           }
           current = next;
+          count++;
         }
         maxParc = count;
       }
