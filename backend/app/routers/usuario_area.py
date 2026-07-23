@@ -104,3 +104,40 @@ def obter_dashboard_usuario(
         "pagamentos": pagamentos_data,
         "comunicados": comunicados
     }
+
+
+from app.schemas.usuario import UsuarioUpdate
+
+@router.put("/perfil")
+def atualizar_perfil(
+    req: UsuarioUpdate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Atualiza as informações cadastrais do participante logado.
+    """
+    if req.email and req.email != current_user.email:
+        existente = db.query(Usuario).filter(Usuario.email == req.email).first()
+        if existente:
+            raise HTTPException(status_code=400, detail="Este e-mail já está sendo utilizado por outro participante.")
+            
+    if req.cpf and req.cpf != current_user.cpf:
+        existente_cpf = db.query(Usuario).filter(Usuario.cpf == req.cpf).first()
+        if existente_cpf:
+            raise HTTPException(status_code=400, detail="Este CPF já está cadastrado para outro participante.")
+            
+    if req.nome:
+        current_user.nome = req.nome
+    if req.email:
+        current_user.email = req.email
+    if req.cpf:
+        current_user.cpf = req.cpf
+    if req.telefone:
+        current_user.telefone = req.telefone
+    if req.senha:
+        from app.core.security import get_password_hash
+        current_user.senha_hash = get_password_hash(req.senha)
+        
+    db.commit()
+    return {"message": "Perfil atualizado com sucesso!"}

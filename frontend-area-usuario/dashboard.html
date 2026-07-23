@@ -15,8 +15,8 @@
       <div class="sidebar-brand">⚡ Área do Participante</div>
       
       <ul class="sidebar-menu">
-        <li><a href="dashboard.html" class="sidebar-link active">🏠 Meu Painel</a></li>
-        <li><a href="https://inscricoessinodalpb.netlify.app/" class="sidebar-link">🌐 Ver Eventos</a></li>
+        <li><a href="javascript:void(0)" onclick="switchTab('tab-painel')" id="menu-painel" class="sidebar-link active">🏠 Meu Painel</a></li>
+        <li><a href="javascript:void(0)" onclick="switchTab('tab-eventos')" id="menu-eventos" class="sidebar-link">📅 Minhas Inscrições</a></li>
         <li><a href="javascript:void(0)" onclick="logout()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;">🚪 Sair</a></li>
       </ul>
     </aside>
@@ -31,25 +31,69 @@
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card" id="registration-card">
-          Carregando dados da sua inscrição...
+      <!-- Aba 1: Meu Painel (Evento Mais Recente) -->
+      <div id="tab-painel" class="tab-content">
+        <div class="grid-2">
+          <div class="card" id="registration-card">
+            Carregando dados da sua inscrição...
+          </div>
+
+          <div class="card" id="user-info-card">
+            Carregando dados cadastrais...
+          </div>
         </div>
 
-        <div class="card" id="user-info-card">
-          Carregando dados cadastrais...
+        <div style="margin-top: 2rem;">
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Pagamentos & Parcelas do Evento Recente</h2>
+          <div id="payments-container">
+            Carregando pagamentos...
+          </div>
         </div>
       </div>
 
-      <div style="margin-top: 2rem;">
-        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Histórico de Pagamentos & Parcelas</h2>
-        <div id="payments-container">
-          Carregando pagamentos...
+      <!-- Aba 2: Minhas Inscrições (Histórico Completo) -->
+      <div id="tab-eventos" class="tab-content" style="display: none;">
+        <div class="card">
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Meus Eventos & Inscrições</h2>
+          <p class="card-desc">Lista completa de todos os eventos em que você realizou inscrição.</p>
+          <div id="all-registrations-container" style="margin-top: 1.5rem;">
+            Carregando histórico de inscrições...
+          </div>
         </div>
       </div>
 
     </main>
 
+  </div>
+
+  <!-- Modal de Edição de Perfil -->
+  <div id="edit-profile-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+    <div class="card" style="max-width: 450px; margin: 10% auto; padding: 2rem; position: relative; background: #FFF; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+      <span onclick="closeEditModal()" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 1.75rem; cursor: pointer; color: var(--text-muted); font-weight: bold;">&times;</span>
+      <h3 class="card-title" style="margin-bottom: 1.5rem; font-size: 1.25rem;">Editar Meus Dados</h3>
+      
+      <form id="form-edit-profile" onsubmit="salvarPerfil(event)">
+        <div class="form-group">
+          <label class="form-label">Nome Completo</label>
+          <input type="text" id="edit-nome" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="edit-email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefone / WhatsApp</label>
+          <input type="text" id="edit-telefone" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+          <input type="password" id="edit-senha" class="form-control" placeholder="******">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+          Salvar Alterações
+        </button>
+      </form>
+    </div>
   </div>
 
   <script src="js/api.js"></script>
