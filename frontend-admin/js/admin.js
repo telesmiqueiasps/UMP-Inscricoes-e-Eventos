@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initInscricoes();
   } else if (document.getElementById('admin-pagamentos')) {
     initPagamentos();
+  } else if (document.getElementById('admin-configuracoes')) {
+    initConfiguracoes();
   }
 });
 
@@ -300,4 +302,36 @@ function formatarFormaPagamento(forma, captureMethod) {
   if (forma === 'PIX') return 'Pix à Vista';
   if (forma === 'PARCELADO') return 'Parcelado (Carnê)';
   return forma || 'N/A';
+}
+
+async function initConfiguracoes() {
+  try {
+    const data = await API.request('/admin/configuracoes');
+    document.getElementById('config-infinitepay-handle').value = data.infinitepay_handle || '';
+    document.getElementById('config-pix-chave').value = data.pix_chave || '';
+    document.getElementById('config-pix-nome').value = data.pix_nome_recebedor || '';
+    document.getElementById('config-pix-cidade').value = data.pix_cidade_recebedor || '';
+  } catch (err) {
+    showToast('Erro ao carregar configurações do sistema.', 'error');
+  }
+}
+
+async function salvarConfiguracoes(e) {
+  e.preventDefault();
+  const payload = {
+    infinitepay_handle: document.getElementById('config-infinitepay-handle').value.trim(),
+    pix_chave: document.getElementById('config-pix-chave').value.trim(),
+    pix_nome_recebedor: document.getElementById('config-pix-nome').value.trim(),
+    pix_cidade_recebedor: document.getElementById('config-pix-cidade').value.trim()
+  };
+
+  try {
+    await API.request('/admin/configuracoes', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+    showToast('Configurações atualizadas com sucesso!', 'success');
+  } catch (err) {
+    showToast('Erro ao salvar as configurações.', 'error');
+  }
 }

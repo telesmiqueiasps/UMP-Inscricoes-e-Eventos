@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import List, Optional
 from decimal import Decimal
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.core.security import get_current_admin, get_current_user
@@ -252,3 +253,54 @@ def atualizar_status_parcela_admin(
                 )
 
     return parcela
+
+
+# --- Configurações do Sistema (Admin) ---
+from app.models.configuracao import Configuracao
+
+class AtualizarConfiguracoesRequest(BaseModel):
+    infinitepay_handle: Optional[str] = None
+    pix_chave: Optional[str] = None
+    pix_nome_recebedor: Optional[str] = None
+    pix_cidade_recebedor: Optional[str] = None
+
+@router.get("/admin/configuracoes")
+def obter_configuracoes_admin(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    from app.services.config import (
+        get_infinitepay_handle,
+        get_pix_chave,
+        get_pix_nome_recebedor,
+        get_pix_cidade_recebedor
+    )
+    return {
+        "infinitepay_handle": get_infinitepay_handle(),
+        "pix_chave": get_pix_chave(),
+        "pix_nome_recebedor": get_pix_nome_recebedor(),
+        "pix_cidade_recebedor": get_pix_cidade_recebedor()
+    }
+
+@router.put("/admin/configuracoes")
+def atualizar_configuracoes_admin(
+    req: AtualizarConfiguracoesRequest,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    updates = {
+        "infinitepay_handle": req.infinitepay_handle,
+        "pix_chave": req.pix_chave,
+        "pix_nome_recebedor": req.pix_nome_recebedor,
+        "pix_cidade_recebedor": req.pix_cidade_recebedor
+    }
+    for chave, valor in updates.items():
+        if valor is not None:
+            config = db.query(Configuracao).filter(Configuracao.chave == chave).first()
+            if not config:
+                config = Configuracao(chave=chave, valor=valor)
+                db.add(config)
+            else:
+                config.valor = valor
+    db.commit()
+    return {"message": "Configurações salvas com sucesso!"}

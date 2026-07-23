@@ -20,9 +20,10 @@ def gerar_copia_cola_pix(
     """
     Gera a string de Pix Copia e Cola de acordo com a especificação do Bacen (EMV QRCPS).
     """
-    chave = chave_pix or settings.PIX_CHAVE
-    nome = (nome_recebedor or settings.PIX_NOME_RECEBEDOR)[:25].upper()
-    cidade = (cidade_recebedor or settings.PIX_CIDADE_RECEBEDOR)[:15].upper()
+    from app.services.config import get_pix_chave, get_pix_nome_recebedor, get_pix_cidade_recebedor
+    chave = chave_pix or get_pix_chave()
+    nome = (nome_recebedor or get_pix_nome_recebedor())[:25].upper()
+    cidade = (cidade_recebedor or get_pix_cidade_recebedor())[:15].upper()
     
     val_str = f"{float(valor):.2f}"
 

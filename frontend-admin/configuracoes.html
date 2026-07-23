@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações do Sistema - Admin</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="admin-layout" id="admin-configuracoes">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">⚡ Admin Hub</div>
+      <ul class="sidebar-menu">
+        <li><a href="index.html" class="sidebar-link">📊 Dashboard & Eventos</a></li>
+        <li><a href="inscricoes.html" class="sidebar-link">📝 Inscrições</a></li>
+        <li><a href="pagamentos.html" class="sidebar-link">💳 Pagamentos & Parcelas</a></li>
+        <li><a href="configuracoes.html" class="sidebar-link active">⚙️ Configurações</a></li>
+        <li><a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;">🚪 Sair</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem;">Configurações Globais</h1>
+        <p style="color: var(--text-muted);">Gerencie as credenciais de pagamento por Pix e InfinitePay em tempo real</p>
+      </div>
+
+      <div class="card" style="max-width: 600px; padding: 2rem;">
+        <form id="form-configuracoes" onsubmit="salvarConfiguracoes(event)">
+          
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary);">💳 Integração InfinitePay (Link de Pagamento)</h3>
+          
+          <div class="form-group">
+            <label class="form-label">InfinitePay Tag (Handle)</label>
+            <input type="text" id="config-infinitepay-handle" class="form-control" placeholder="ex: miqueiasteles" required>
+            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Esta é a tag que identifica seu estabelecimento no checkout/links da InfinitePay.</small>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary);">🔑 Pix Estático (Carnês / Parcelas)</h3>
+
+          <div class="form-group">
+            <label class="form-label">Chave Pix</label>
+            <input type="text" id="config-pix-chave" class="form-control" placeholder="E-mail, CPF, CNPJ, Telefone ou Chave Aleatória" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nome do Recebedor</label>
+            <input type="text" id="config-pix-nome" class="form-control" placeholder="ex: MIQUEIAS TELES" required maxlength="25">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Cidade do Recebedor</label>
+            <input type="text" id="config-pix-cidade" class="form-control" placeholder="ex: SOUSA" required maxlength="15">
+          </div>
+
+          <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="width: 100%; height: 46px; font-weight: 600;">💾 Salvar Configurações</button>
+          </div>
+        </form>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

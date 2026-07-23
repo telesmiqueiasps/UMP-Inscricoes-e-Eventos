@@ -6,9 +6,13 @@ from app.core.config import settings
 
 class InfinitePayService:
     def __init__(self):
-        self.handle = settings.INFINITEPAY_HANDLE
         self.api_url = settings.INFINITEPAY_API_URL
         self.api_key = settings.INFINITEPAY_API_KEY
+
+    @property
+    def handle(self) -> str:
+        from app.services.config import get_infinitepay_handle
+        return get_infinitepay_handle()
 
     def criar_checkout_link(
         self,
