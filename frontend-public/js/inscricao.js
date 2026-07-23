@@ -1,3 +1,5 @@
+let eventoAtual = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const eventoId = urlParams.get('evento_id');
@@ -28,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  let eventoAtual = null;
   let emailDigitado = '';
 
   // 1. Carregar detalhes do Evento
