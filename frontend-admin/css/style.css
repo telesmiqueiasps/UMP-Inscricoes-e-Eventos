@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 :root {
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
+  --primary: #1D4ED8;
+  --primary-hover: #1E40AF;
   --dark: #0F172A;
-  --light-bg: #F1F5F9;
+  --light-bg: #F0F4F8;
   --card-bg: #FFFFFF;
   --text-main: #0F172A;
   --text-muted: #64748B;
@@ -31,17 +31,23 @@ body {
 
 .sidebar {
   width: 260px;
-  background: var(--dark);
-  color: white;
+  background: white;
+  color: var(--text-main);
   padding: 2rem 1.5rem;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-brand {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 800;
   margin-bottom: 2rem;
-  color: #38BDF8;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .sidebar-menu { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -50,7 +56,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  color: #94A3B8;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
   border-radius: var(--radius-md);
@@ -58,8 +64,8 @@ body {
 }
 
 .sidebar-link.active, .sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: #EFF6FF;
+  color: var(--primary);
 }
 
 .main-content {
@@ -159,4 +165,31 @@ td { padding: 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 
   max-width: 550px;
   max-height: 85vh;
   overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+  }
+  .sidebar-brand {
+    margin-bottom: 1rem;
+  }
+  .sidebar-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .sidebar-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  .main-content {
+    padding: 1.5rem;
+  }
 }
