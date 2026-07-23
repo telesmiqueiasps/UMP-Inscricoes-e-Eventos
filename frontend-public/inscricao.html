@@ -103,6 +103,14 @@
       <p class="card-desc">Selecione como deseja efetuar o pagamento da sua inscrição.</p>
 
       <form id="form-pagamento">
+        
+        <!-- Campos Dinâmicos do Formulário de Inscrição -->
+        <div id="dynamic-fields-container" style="display: none; border: 1.5px solid var(--border-color); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; background: #fafafa;">
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Dados Adicionais da Inscrição</h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Preencha as informações adicionais exigidas para este evento:</p>
+          <div id="dynamic-fields-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
           <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer;">
             <input type="radio" name="forma_pagamento" value="INFINITEPAY" checked>

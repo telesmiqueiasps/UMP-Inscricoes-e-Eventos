@@ -16,6 +16,7 @@ class EventoBase(BaseModel):
     ativo: bool = True
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
+    campos_formulario: Optional[str] = None
 
 
 class EventoCreate(EventoBase):
@@ -34,10 +35,12 @@ class EventoUpdate(BaseModel):
     ativo: Optional[bool] = None
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
+    campos_formulario: Optional[str] = None
 
 
 class EventoResponse(EventoBase):
     id: int
+    vagas_restantes: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

@@ -76,7 +76,6 @@ async function initDashboard() {
 async function loadEventosTable() {
   const tableBody = document.getElementById('eventos-table-body');
   if (!tableBody) return;
-
   try {
     const eventos = await API.request('/admin/eventos');
     tableBody.innerHTML = eventos.map(ev => `
@@ -85,7 +84,7 @@ async function loadEventosTable() {
         <td><strong>${ev.titulo}</strong></td>
         <td>${new Date(ev.data_inicio).toLocaleDateString('pt-BR')}</td>
         <td>R$ ${parseFloat(ev.valor).toFixed(2).replace('.', ',')}</td>
-        <td>Até ${ev.max_parcelas}x</td>
+        <td>${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} / ${ev.max_participantes}` : 'Ilimitado'}</td>
         <td>
           <button class="btn ${ev.ativo ? 'btn-success' : 'btn-danger'}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleStatusEvento(${ev.id})">
             ${ev.ativo ? 'Ativo' : 'Inativo'}
@@ -103,6 +102,7 @@ async function loadEventosTable() {
 function abrirModalEvento() {
   document.getElementById('evento-id').value = '';
   document.getElementById('form-evento').reset();
+  document.querySelectorAll('.ev-form-field').forEach(cb => cb.checked = false);
   document.getElementById('modal-evento-title').textContent = 'Novo Evento';
   document.getElementById('evento-modal').style.display = 'flex';
 }
@@ -114,6 +114,8 @@ function fecharModalEvento() {
 async function salvarEvento(e) {
   e.preventDefault();
   const id = document.getElementById('evento-id').value;
+  const fieldsSelected = Array.from(document.querySelectorAll('.ev-form-field:checked')).map(cb => cb.value).join(',');
+  
   const payload = {
     titulo: document.getElementById('ev-titulo').value,
     descricao: document.getElementById('ev-descricao').value,
@@ -122,19 +124,17 @@ async function salvarEvento(e) {
     local: document.getElementById('ev-local').value,
     valor: parseFloat(document.getElementById('ev-valor').value),
     max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
-    max_parcelas: parseInt(document.getElementById('ev-max-parc').value) || 1,
     ativo: document.getElementById('ev-ativo').checked,
-    link_pagamento_cartao: document.getElementById('ev-link-cartao').value || null,
-    link_pagamento_pix: document.getElementById('ev-link-pix').value || null
+    campos_formulario: fieldsSelected || null
   };
 
   try {
     if (id) {
       await API.request(`/admin/eventos/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-      showToast('Evento atualizado com sucesso!', 'success');
+      showToast('Evento updated successfully!', 'success');
     } else {
       await API.request('/admin/eventos', { method: 'POST', body: JSON.stringify(payload) });
-      showToast('Evento criado com sucesso!', 'success');
+      showToast('Evento created successfully!', 'success');
     }
     fecharModalEvento();
     loadEventosTable();
@@ -155,10 +155,11 @@ window.editarEvento = async function(id) {
     document.getElementById('ev-local').value = ev.local || '';
     document.getElementById('ev-valor').value = ev.valor;
     document.getElementById('ev-max-part').value = ev.max_participantes || '';
-    document.getElementById('ev-max-parc').value = ev.max_parcelas;
-    document.getElementById('ev-link-cartao').value = ev.link_pagamento_cartao || '';
-    document.getElementById('ev-link-pix').value = ev.link_pagamento_pix || '';
     document.getElementById('ev-ativo').checked = ev.ativo;
+
+    document.querySelectorAll('.ev-form-field').forEach(cb => {
+      cb.checked = ev.campos_formulario ? ev.campos_formulario.split(',').includes(cb.value) : false;
+    });
 
     document.getElementById('modal-evento-title').textContent = 'Editar Evento';
     document.getElementById('evento-modal').style.display = 'flex';

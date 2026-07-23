@@ -65,7 +65,7 @@
                 <th>Título</th>
                 <th>Data Início</th>
                 <th>Valor</th>
-                <th>Max Parcelas</th>
+                <th>Vagas Restantes</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -115,36 +115,64 @@
             <input type="number" step="0.01" id="ev-valor" class="form-control" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Máx. Parcelas (Pix/Carnê)</label>
-            <input type="number" id="ev-max-parc" class="form-control" value="1" min="1">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Link de Pagamento Cartão (Opcional)</label>
-            <input type="url" id="ev-link-cartao" class="form-control" placeholder="https://link.mercadopago.com...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Link de Pagamento Pix (Opcional)</label>
-            <input type="url" id="ev-link-pix" class="form-control" placeholder="https://link.mercadopago.com...">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
             <label class="form-label">Local</label>
             <input type="text" id="ev-local" class="form-control">
           </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <div class="form-group">
             <label class="form-label">Máx. Vagas (Opcional)</label>
             <input type="number" id="ev-max-part" class="form-control">
           </div>
+          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+            <input type="checkbox" id="ev-ativo" checked>
+            <label for="ev-ativo">Evento Ativo (Inscrições Abertas)</label>
+          </div>
         </div>
 
-        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
-          <input type="checkbox" id="ev-ativo" checked>
-          <label for="ev-ativo">Evento Ativo (Inscrições Abertas)</label>
+        <!-- Checkboxes de Seleção dos Campos do Formulário -->
+        <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+          <label class="form-label" style="font-weight: 700; color: var(--primary);">Campos do Formulário de Inscrição</label>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Selecione quais informações extras os participantes devem preencher no momento da inscrição:</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="cpf"> CPF
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="telefone"> Telefone
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="data_nascimento"> Data de Nascimento
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="genero"> Gênero
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="tamanho_camiseta"> Tamanho da Camiseta
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="tipo_sanguineo"> Tipo Sanguíneo
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="alergias"> Alergias
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="medicamento_continuo"> Medicamento Contínuo
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="contato_emergencia"> Contatos de Emergência
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="restricao_alimentar"> Restrição Alimentar
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="igreja"> Igreja / Congregação
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <input type="checkbox" class="ev-form-field" value="cargo_ump"> Federação / Cargo na UMP
+            </label>
+          </div>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">

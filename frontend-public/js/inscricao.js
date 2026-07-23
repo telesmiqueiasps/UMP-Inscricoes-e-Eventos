@@ -34,6 +34,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 1. Carregar detalhes do Evento
   try {
     eventoAtual = await API.request(`/eventos/publico/${eventoId}`);
+
+    const isSoldOut = eventoAtual.max_participantes && eventoAtual.vagas_restantes === 0;
+    if (isSoldOut) {
+      eventSummary.innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #EF4444;">Vagas Esgotadas!</h2>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">As vagas para o evento <strong>${eventoAtual.titulo}</strong> já foram preenchidas.</p>
+          <a href="index.html" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-block;">Voltar para Página Inicial</a>
+        </div>
+      `;
+      return;
+    }
+
     eventSummary.innerHTML = `
       <h2 style="font-size: 1.5rem; font-weight: 700;">${eventoAtual.titulo}</h2>
       <p style="color: var(--text-muted); margin-bottom: 0.5rem;">${eventoAtual.descricao || ''}</p>
@@ -227,6 +240,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked').value;
       const numParcelas = parseInt(numParcelasSelect.value) || 1;
 
+      // Coletar campos dinâmicos para enviar em dados_extras
+      const dadosExtras = {};
+      document.querySelectorAll('.dyn-input').forEach(input => {
+        const name = input.name.replace('dyn_', '');
+        dadosExtras[name] = input.value;
+      });
+
       try {
         // 1. Criar Inscrição
         const inscricao = await API.request('/inscricoes', {
@@ -234,7 +254,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify({
             evento_id: parseInt(eventoId),
             forma_pagamento: formaPagamento,
-            num_parcelas: numParcelas
+            num_parcelas: numParcelas,
+            dados_extras: dadosExtras
           })
         });
 
@@ -273,6 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       step1.style.display = 'none';
       step2.style.display = 'block';
+      renderDynamicFormFields();
     } else {
       if (loggedUserBanner) {
         loggedUserBanner.style.display = 'none';
@@ -408,5 +430,173 @@ function copiarPix() {
     input.select();
     navigator.clipboard.writeText(input.value);
     showToast('Código Pix copiado para a área de transferência!', 'success');
+  }
+}
+
+function renderDynamicFormFields() {
+  const listContainer = document.getElementById('dynamic-fields-list');
+  const container = document.getElementById('dynamic-fields-container');
+  if (!listContainer || !container || !eventoAtual) return;
+
+  const fieldsStr = eventoAtual.campos_formulario;
+  if (!fieldsStr) {
+    container.style.display = 'none';
+    listContainer.innerHTML = '';
+    return;
+  }
+
+  const fields = fieldsStr.split(',').filter(f => f.trim() !== '');
+  if (fields.length === 0) {
+    container.style.display = 'none';
+    listContainer.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'block';
+  
+  // Mapeia cada campo dinâmico habilitado para seu HTML correspondente
+  listContainer.innerHTML = fields.map(field => {
+    let fieldHTML = '';
+    
+    switch (field) {
+      case 'cpf':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">CPF *</label>
+            <input type="text" name="dyn_cpf" class="form-control dyn-input" placeholder="000.000.000-00" required>
+          </div>
+        `;
+        break;
+      case 'telefone':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Telefone / WhatsApp *</label>
+            <input type="text" name="dyn_telefone" class="form-control dyn-input" placeholder="(83) 99999-9999" required>
+          </div>
+        `;
+        break;
+      case 'data_nascimento':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Data de Nascimento *</label>
+            <input type="date" name="dyn_data_nascimento" class="form-control dyn-input" required>
+          </div>
+        `;
+        break;
+      case 'genero':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Gênero *</label>
+            <select name="dyn_genero" class="form-control dyn-input" required>
+              <option value="">Selecione...</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'tamanho_camiseta':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Tamanho da Camiseta *</label>
+            <select name="dyn_tamanho_camiseta" class="form-control dyn-input" required>
+              <option value="">Selecione...</option>
+              <option value="PP">PP</option>
+              <option value="P">P</option>
+              <option value="M">M</option>
+              <option value="G">G</option>
+              <option value="GG">GG</option>
+              <option value="XG">XG</option>
+              <option value="XXG">XXG</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'tipo_sanguineo':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Tipo Sanguíneo *</label>
+            <select name="dyn_tipo_sanguineo" class="form-control dyn-input" required>
+              <option value="">Selecione...</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'alergias':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Possui Alergias? (Se sim, descreva) *</label>
+            <input type="text" name="dyn_alergias" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Dipirona)" required>
+          </div>
+        `;
+        break;
+      case 'medicamento_continuo':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Toma algum Medicamento Contínuo? (Se sim, descreva) *</label>
+            <input type="text" name="dyn_medicamento_continuo" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Rivotril)" required>
+          </div>
+        `;
+        break;
+      case 'contato_emergencia':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Contato de Emergência (Nome e Telefone) *</label>
+            <input type="text" name="dyn_contato_emergencia" class="form-control dyn-input" placeholder="Ex: Maria (Mãe) - (83) 99999-9999" required>
+          </div>
+        `;
+        break;
+      case 'restricao_alimentar':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Restrição Alimentar *</label>
+            <select name="dyn_restricao_alimentar" class="form-control dyn-input" required>
+              <option value="Nenhuma">Nenhuma</option>
+              <option value="Vegetariano">Vegetariano</option>
+              <option value="Vegano">Vegano</option>
+              <option value="Sem Glúten">Sem Glúten</option>
+              <option value="Sem Lactose">Sem Lactose</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'igreja':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Igreja / Congregação *</label>
+            <input type="text" name="dyn_igreja" class="form-control dyn-input" placeholder="Ex: IPB Sousa" required>
+          </div>
+        `;
+        break;
+      case 'cargo_ump':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Federação / Cargo na UMP *</label>
+            <input type="text" name="dyn_cargo_ump" class="form-control dyn-input" placeholder="Ex: Federação Oeste / Membro" required>
+          </div>
+        `;
+        break;
+    }
+
+    return fieldHTML;
+  }).join('');
+
+  // Pré-preenchimento
+  const user = API.getUser();
+  if (user) {
+    const cpfInput = document.querySelector('input[name="dyn_cpf"]');
+    if (cpfInput) cpfInput.value = user.cpf || '';
+    const foneInput = document.querySelector('input[name="dyn_telefone"]');
+    if (foneInput) foneInput.value = user.telefone || '';
   }
 }

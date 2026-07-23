@@ -24,6 +24,12 @@ router = APIRouter(tags=["Administração e Eventos"])
 @router.get("/eventos/publico", response_model=List[EventoResponse])
 def listar_eventos_publico(db: Session = Depends(get_db)):
     eventos = db.query(Evento).filter(Evento.ativo == True).order_by(Evento.data_inicio.asc()).all()
+    for ev in eventos:
+        total_inscritos = db.query(Inscricao).filter(
+            Inscricao.evento_id == ev.id,
+            Inscricao.status != "CANCELADA"
+        ).count()
+        ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
     return eventos
 
 
@@ -32,6 +38,11 @@ def obter_evento_publico(id: int, db: Session = Depends(get_db)):
     evento = db.query(Evento).filter(Evento.id == id, Evento.ativo == True).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado ou inativo.")
+    total_inscritos = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento.id,
+        Inscricao.status != "CANCELADA"
+    ).count()
+    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 
 
@@ -67,7 +78,14 @@ def listar_eventos_admin(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
 ):
-    return db.query(Evento).order_by(Evento.created_at.desc()).all()
+    eventos = db.query(Evento).order_by(Evento.created_at.desc()).all()
+    for ev in eventos:
+        total_inscritos = db.query(Inscricao).filter(
+            Inscricao.evento_id == ev.id,
+            Inscricao.status != "CANCELADA"
+        ).count()
+        ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
+    return eventos
 
 
 @router.post("/admin/eventos", response_model=EventoResponse, status_code=status.HTTP_201_CREATED)
@@ -80,6 +98,7 @@ def criar_evento_admin(
     db.add(db_evento)
     db.commit()
     db.refresh(db_evento)
+    db_evento.vagas_restantes = db_evento.max_participantes
     return db_evento
 
 
@@ -92,6 +111,11 @@ def obter_evento_admin(
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    total_inscritos = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento.id,
+        Inscricao.status != "CANCELADA"
+    ).count()
+    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 
 
@@ -112,6 +136,12 @@ def atualizar_evento_admin(
         
     db.commit()
     db.refresh(evento)
+    
+    total_inscritos = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento.id,
+        Inscricao.status != "CANCELADA"
+    ).count()
+    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 
 
