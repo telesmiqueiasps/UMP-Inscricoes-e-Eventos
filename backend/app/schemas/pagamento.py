@@ -36,6 +36,10 @@ class PagamentoResponse(BaseModel):
     created_at: datetime
     parcelas: List[ParcelaResponse] = []
 
+    usuario_nome: Optional[str] = None
+    usuario_cpf: Optional[str] = None
+    usuario_email: Optional[str] = None
+
     class Config:
         from_attributes = True
 

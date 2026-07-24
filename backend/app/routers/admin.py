@@ -149,15 +149,44 @@ def atualizar_evento_admin(
     return evento
 
 
+def deletar_fotos_supabase_task(fotos_str: Optional[str]):
+    if not fotos_str or not settings.SUPABASE_URL or not settings.SUPABASE_KEY or not settings.SUPABASE_BUCKET:
+        return
+    clean_url = settings.SUPABASE_URL.rstrip('/')
+    bucket_prefix = f"{clean_url}/storage/v1/object/public/{settings.SUPABASE_BUCKET}/"
+    
+    fotos_urls = [f.strip() for f in fotos_str.split(',') if f.strip()]
+    headers = {"Authorization": f"Bearer {settings.SUPABASE_KEY}"}
+    
+    import httpx
+    with httpx.Client() as client:
+        for url in fotos_urls:
+            if url.startswith(bucket_prefix):
+                filename = url.replace(bucket_prefix, '')
+                delete_url = f"{clean_url}/storage/v1/object/{settings.SUPABASE_BUCKET}/{filename}"
+                try:
+                    res = client.delete(delete_url, headers=headers)
+                    if res.status_code != 200:
+                        print(f"Erro ao deletar imagem {filename} do Supabase: {res.text}")
+                except Exception as e:
+                    print(f"Erro de conexão ao deletar imagem {filename}: {e}")
+
+
 @router.delete("/admin/eventos/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def deletar_evento_admin(
     id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
 ):
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
+    
+    # Agendar exclusão das fotos do storage
+    if evento.fotos:
+        background_tasks.add_task(deletar_fotos_supabase_task, evento.fotos)
+
     db.delete(evento)
     db.commit()
     return None
@@ -251,7 +280,13 @@ def listar_pagamentos_admin(
     query = db.query(Pagamento)
     if evento_id is not None:
         query = query.join(Pagamento.inscricao).filter(Inscricao.evento_id == evento_id)
-    return query.order_by(Pagamento.created_at.desc()).all()
+    pagamentos = query.order_by(Pagamento.created_at.desc()).all()
+    for pag in pagamentos:
+        if pag.inscricao and pag.inscricao.usuario:
+            pag.usuario_nome = pag.inscricao.usuario.nome
+            pag.usuario_cpf = pag.inscricao.usuario.cpf
+            pag.usuario_email = pag.inscricao.usuario.email
+    return pagamentos
 
 
 @router.put("/admin/parcelas/{id}/status", response_model=ParcelaResponse)

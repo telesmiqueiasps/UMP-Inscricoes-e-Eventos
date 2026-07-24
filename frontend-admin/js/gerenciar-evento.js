@@ -126,12 +126,13 @@ window.loadInscricoes = async function() {
     container.innerHTML = data.map(ins => {
       const valorFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
-      const userMail = ins.usuario_email ? ` (${ins.usuario_email})` : '';
+      const user = ins.usuario || {};
+      const userMail = user.email ? ` (${user.email})` : '';
 
       let rowHTML = `
         <tr>
           <td>#${ins.id}</td>
-          <td><strong>${ins.usuario_nome || 'N/A'}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${userMail}</div></td>
+          <td><strong>${user.nome || 'N/A'}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${userMail}</div></td>
           <td>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</td>
           <td>${valorFmt}</td>
       `;
@@ -169,56 +170,93 @@ window.alterarStatusInscricao = async function(id, novoStatus) {
 };
 
 // --- Carregar Pagamentos ---
+let allPagamentosCached = [];
+
 async function loadPagamentos() {
   const container = document.getElementById('pagamentos-table-body');
   if (!container) return;
 
   try {
     const pagamentos = await API.request(`/admin/pagamentos?evento_id=${selectedEventoId}`);
-    
-    if (pagamentos.length === 0) {
-      container.innerHTML = `<tr><td colspan="7" style="text-align:center;">Nenhum pagamento registrado para este evento.</td></tr>`;
-      return;
-    }
-
-    let rowsHtml = '';
-    pagamentos.forEach(pag => {
-      if (pag.parcelas && pag.parcelas.length > 0) {
-        pag.parcelas.forEach(parc => {
-          rowsHtml += `
-            <tr>
-              <td>Pag #${pag.id} (Parc ${parc.numero})</td>
-              <td>Inscrição #${pag.inscricao_id}</td>
-              <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
-              <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
-              <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-              <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
-              <td>
-                ${parc.status !== 'PAGO' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>` : '<span style="color:#059669;">Quitada</span>'}
-              </td>
-            </tr>
-          `;
-        });
-      } else {
-        rowsHtml += `
-          <tr>
-            <td>Pag #${pag.id}</td>
-            <td>Inscrição #${pag.inscricao_id}</td>
-            <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
-            <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
-            <td>N/A</td>
-            <td><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
-            <td>-</td>
-          </tr>
-        `;
-      }
-    });
-
-    container.innerHTML = rowsHtml;
+    allPagamentosCached = pagamentos;
+    renderPagamentosList(pagamentos);
   } catch (err) {
-    container.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-danger);">Erro ao carregar pagamentos.</td></tr>`;
+    container.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-danger);">Erro ao carregar pagamentos.</td></tr>`;
   }
 }
+
+function renderPagamentosList(pagamentos) {
+  const container = document.getElementById('pagamentos-table-body');
+  if (!container) return;
+
+  if (pagamentos.length === 0) {
+    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento registrado para este evento.</td></tr>`;
+    return;
+  }
+
+  let rowsHtml = '';
+  pagamentos.forEach(pag => {
+    const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
+    
+    if (pag.parcelas && pag.parcelas.length > 0) {
+      pag.parcelas.forEach(parc => {
+        rowsHtml += `
+          <tr>
+            <td>Pag #${pag.id} (Parc ${parc.numero})</td>
+            <td>${userDisplay}</td>
+            <td>Inscrição #${pag.inscricao_id}</td>
+            <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
+            <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
+            <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
+            <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
+            <td>
+              ${parc.status !== 'PAGO' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>` : '<span style="color:#059669;">Quitada</span>'}
+            </td>
+          </tr>
+        `;
+      });
+    } else {
+      rowsHtml += `
+        <tr>
+          <td>Pag #${pag.id}</td>
+          <td>${userDisplay}</td>
+          <td>Inscrição #${pag.inscricao_id}</td>
+          <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
+          <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
+          <td>N/A</td>
+          <td><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
+          <td>-</td>
+        </tr>
+      `;
+    }
+  });
+
+  container.innerHTML = rowsHtml;
+}
+
+window.filterPagamentosLocal = function() {
+  const searchVal = document.getElementById('pay-filter-search').value.toLowerCase().trim();
+  const methodVal = document.getElementById('pay-filter-method').value;
+
+  const filtered = allPagamentosCached.filter(pag => {
+    if (searchVal) {
+      const nameMatch = pag.usuario_nome && pag.usuario_nome.toLowerCase().includes(searchVal);
+      const emailMatch = pag.usuario_email && pag.usuario_email.toLowerCase().includes(searchVal);
+      const cpfMatch = pag.usuario_cpf && pag.usuario_cpf.toLowerCase().includes(searchVal);
+      if (!nameMatch && !emailMatch && !cpfMatch) {
+        return false;
+      }
+    }
+    if (methodVal) {
+      if (pag.forma_pagamento !== methodVal) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  renderPagamentosList(filtered);
+};
 
 window.alterarStatusParcela = async function(id, novoStatus) {
   try {
