@@ -192,28 +192,30 @@ function renderAllInscricoes(inscricoes, pagamentos) {
       pagamentosHTML = `
         <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
           <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Histórico Financeiro da Inscrição:</h4>
-          <table style="font-size: 0.85rem; width: 100%;">
-            <thead>
-              <tr style="background: #f1f5f9;">
-                <th style="padding: 0.25rem 0.5rem;">Forma</th>
-                <th style="padding: 0.25rem 0.5rem;">Valor</th>
-                <th style="padding: 0.25rem 0.5rem;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${insPags.map(pag => {
-                const valFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                const desc = pag.forma_pagamento === 'PARCELADO' ? `Parcelado (${pag.parcelas.length}x)` : formatarFormaPagamento(pag.forma_pagamento, pag.capture_method);
-                return `
-                  <tr>
-                    <td style="padding: 0.25rem 0.5rem;">${desc}</td>
-                    <td style="padding: 0.25rem 0.5rem;">${valFmt}</td>
-                    <td style="padding: 0.25rem 0.5rem;"><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
+          <div style="overflow-x: auto;">
+            <table style="font-size: 0.85rem; width: 100%;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 0.25rem 0.5rem;">Forma</th>
+                  <th style="padding: 0.25rem 0.5rem;">Valor</th>
+                  <th style="padding: 0.25rem 0.5rem;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${insPags.map(pag => {
+                  const valFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                  const desc = pag.forma_pagamento === 'PARCELADO' ? `Parcelado (${pag.parcelas.length}x)` : formatarFormaPagamento(pag.forma_pagamento, pag.capture_method);
+                  return `
+                    <tr>
+                      <td style="padding: 0.25rem 0.5rem;">${desc}</td>
+                      <td style="padding: 0.25rem 0.5rem;">${valFmt}</td>
+                      <td style="padding: 0.25rem 0.5rem;"><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
       `;
     }
