@@ -74,32 +74,51 @@ async function initDashboard() {
 }
 
 async function loadEventosTable() {
-  const tableBody = document.getElementById('eventos-table-body');
-  if (!tableBody) return;
+  const cardsContainer = document.getElementById('eventos-cards-container');
+  if (!cardsContainer) return;
   try {
     const eventos = await API.request('/admin/eventos');
-    tableBody.innerHTML = eventos.map(ev => `
-      <tr>
-        <td>#${ev.id}</td>
-        <td><strong>${ev.titulo}</strong></td>
-        <td>${new Date(ev.data_inicio).toLocaleDateString('pt-BR')}</td>
-        <td>R$ ${parseFloat(ev.valor).toFixed(2).replace('.', ',')}</td>
-        <td>${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} / ${ev.max_participantes}` : 'Ilimitado'}</td>
-        <td>
-          <button class="btn ${ev.ativo ? 'btn-success' : 'btn-danger'}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="toggleStatusEvento(${ev.id})">
-            ${ev.ativo ? 'Ativo' : 'Inativo'}
-          </button>
-        </td>
-        <td>
-          <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-            <a href="inscricoes.html?evento_id=${ev.id}" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">📝 Inscrições</a>
-            <a href="pagamentos.html?evento_id=${ev.id}" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">💳 Pagamentos</a>
-            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editarEvento(${ev.id})">Editar</button>
-            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deletarEvento(${ev.id})">Excluir</button>
+    if (eventos.length === 0) {
+      cardsContainer.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 3rem 0;">Nenhum evento cadastrado no sistema.</p>`;
+      return;
+    }
+    cardsContainer.innerHTML = eventos.map(ev => {
+      const bannerUrl = ev.fotos ? ev.fotos.split(',')[0].trim() : '';
+      return `
+        <div class="card" style="padding:0; overflow:hidden; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="location.href='gerenciar-evento.html?evento_id=${ev.id}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
+          <!-- Imagem de Banner do Evento -->
+          <div style="height: 160px; background: #EFF6FF; position: relative; overflow:hidden;">
+            <img src="${bannerUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';">
+            <span class="badge ${ev.ativo ? 'badge-success' : 'badge-danger'}" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem;">
+              ${ev.ativo ? 'Ativo' : 'Inativo'}
+            </span>
           </div>
-        </td>
-      </tr>
-    `).join('');
+          
+          <!-- Detalhes do Evento -->
+          <div style="padding: 1.5rem; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--dark); line-height: 1.3;">
+                ${ev.titulo}
+              </h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
+                📍 Local: ${ev.local || 'A definir'}<br>
+                📅 Início: ${new Date(ev.data_inicio).toLocaleDateString('pt-BR')}<br>
+                👥 Vagas: ${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} / ${ev.max_participantes}` : 'Ilimitadas'}
+              </p>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
+              <span style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">
+                R$ ${parseFloat(ev.valor).toFixed(2).replace('.', ',')}
+              </span>
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.25rem;">
+                Gerenciar &rarr;
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
   } catch (err) {}
 }
 
