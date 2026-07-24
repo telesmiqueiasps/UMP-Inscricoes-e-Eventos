@@ -91,8 +91,12 @@ async function loadEventosTable() {
           </button>
         </td>
         <td>
-          <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editarEvento(${ev.id})">Editar</button>
-          <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deletarEvento(${ev.id})">Excluir</button>
+          <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+            <a href="inscricoes.html?evento_id=${ev.id}" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">📝 Inscrições</a>
+            <a href="pagamentos.html?evento_id=${ev.id}" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">💳 Pagamentos</a>
+            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editarEvento(${ev.id})">Editar</button>
+            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deletarEvento(${ev.id})">Excluir</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -216,6 +220,12 @@ async function initInscricoes() {
       allEventsList = eventos;
       filterEventoSelect.innerHTML = '<option value="">Todos os Eventos</option>' + 
         eventos.map(ev => `<option value="${ev.id}">${ev.titulo}</option>`).join('');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryEventoId = urlParams.get('evento_id');
+      if (queryEventoId) {
+        filterEventoSelect.value = queryEventoId;
+      }
     } catch (err) {
       console.error("Erro ao carregar lista de eventos para filtro:", err);
     }
@@ -475,7 +485,11 @@ async function alterarStatusInscricao(id, novoStatus) {
 }
 
 // --- Gerenciamento de Pagamentos ---
+let selectedPaymentEventoId = null;
+
 async function initPagamentos() {
+  const urlParams = new URLSearchParams(window.location.search);
+  selectedPaymentEventoId = urlParams.get('evento_id');
   loadPagamentos();
 }
 
@@ -484,7 +498,11 @@ async function loadPagamentos() {
   if (!container) return;
 
   try {
-    const pagamentos = await API.request('/admin/pagamentos');
+    let url = '/admin/pagamentos';
+    if (selectedPaymentEventoId) {
+      url += `?evento_id=${selectedPaymentEventoId}`;
+    }
+    const pagamentos = await API.request(url);
     
     let rowsHtml = '';
     pagamentos.forEach(pag => {

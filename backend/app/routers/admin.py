@@ -244,10 +244,14 @@ def atualizar_status_inscricao_admin(
 
 @router.get("/admin/pagamentos", response_model=List[PagamentoResponse])
 def listar_pagamentos_admin(
+    evento_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
 ):
-    return db.query(Pagamento).order_by(Pagamento.created_at.desc()).all()
+    query = db.query(Pagamento)
+    if evento_id is not None:
+        query = query.join(Pagamento.inscricao).filter(Inscricao.evento_id == evento_id)
+    return query.order_by(Pagamento.created_at.desc()).all()
 
 
 @router.put("/admin/parcelas/{id}/status", response_model=ParcelaResponse)
