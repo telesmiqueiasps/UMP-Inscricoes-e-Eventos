@@ -123,13 +123,7 @@ async function loadEventosTable() {
 }
 
 function abrirModalEvento() {
-  document.getElementById('evento-id').value = '';
   document.getElementById('form-evento').reset();
-  document.querySelectorAll('.ev-form-field').forEach(cb => cb.checked = false);
-  document.getElementById('ev-foto-1').value = '';
-  document.getElementById('ev-foto-2').value = '';
-  document.getElementById('ev-foto-3').value = '';
-  document.getElementById('ev-foto-4').value = '';
   document.getElementById('modal-evento-title').textContent = 'Novo Evento';
   document.getElementById('evento-modal').style.display = 'flex';
 }
@@ -140,40 +134,20 @@ function fecharModalEvento() {
 
 async function salvarEvento(e) {
   e.preventDefault();
-  const id = document.getElementById('evento-id').value;
-  const fieldsSelected = Array.from(document.querySelectorAll('.ev-form-field:checked')).map(cb => cb.value).join(',');
-  
-  const fotosUrls = [
-    document.getElementById('ev-foto-1').value.trim(),
-    document.getElementById('ev-foto-2').value.trim(),
-    document.getElementById('ev-foto-3').value.trim(),
-    document.getElementById('ev-foto-4').value.trim()
-  ].filter(url => url !== '').join(',');
-
   const payload = {
-    titulo: document.getElementById('ev-titulo').value,
-    descricao: document.getElementById('ev-descricao').value,
-    data_inicio: new Date(document.getElementById('ev-inicio').value).toISOString(),
-    data_fim: new Date(document.getElementById('ev-fim').value).toISOString(),
-    local: document.getElementById('ev-local').value,
-    valor: parseFloat(document.getElementById('ev-valor').value),
-    max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
-    ativo: document.getElementById('ev-ativo').checked,
-    campos_formulario: fieldsSelected || null,
-    fotos: fotosUrls || null
+    titulo: document.getElementById('ev-titulo').value.trim()
   };
 
   try {
-    if (id) {
-      await API.request(`/admin/eventos/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
-      showToast('Evento updated successfully!', 'success');
-    } else {
-      await API.request('/admin/eventos', { method: 'POST', body: JSON.stringify(payload) });
-      showToast('Evento created successfully!', 'success');
-    }
+    const res = await API.request('/admin/eventos', { method: 'POST', body: JSON.stringify(payload) });
+    showToast('Evento criado com sucesso! Direcionando para configurações...', 'success');
     fecharModalEvento();
-    loadEventosTable();
-  } catch (err) {}
+    setTimeout(() => {
+      window.location.href = `gerenciar-evento.html?evento_id=${res.id}`;
+    }, 1000);
+  } catch (err) {
+    showToast('Erro ao criar evento.', 'error');
+  }
 }
 
 window.editarEvento = async function(id) {
@@ -354,7 +328,13 @@ function formatarLabelCampo(field) {
     contato_emergencia: 'Emergência',
     restricao_alimentar: 'Alimentação',
     igreja: 'Igreja',
-    cargo_ump: 'Cargo UMP'
+    presbiterio: 'Presbitério',
+    cidade: 'Cidade',
+    estado_civil: 'Estado Civil',
+    nome_pastor: 'Nome Pastor',
+    contato_pastor: 'Contato Pastor',
+    cargo_federacao: 'Cargo Federação',
+    dias_estadia: 'Estadia'
   };
   return map[field] || field.toUpperCase();
 }
@@ -593,6 +573,7 @@ async function initConfiguracoes() {
   } catch (err) {
     showToast('Erro ao carregar configurações do sistema.', 'error');
   }
+  loadPresbiterios();
 }
 
 async function salvarConfiguracoes(e) {
@@ -642,5 +623,88 @@ window.uploadImageToField = async function(inputElement, targetFieldId) {
     label.innerHTML = originalText;
     label.style.pointerEvents = 'auto';
     inputElement.value = '';
+  }
+};
+
+// --- Gerenciamento de Presbitérios ---
+let cachedPresbiterios = [];
+
+async function loadPresbiterios() {
+  const container = document.getElementById('presbiterios-table-body');
+  if (!container) return;
+
+  try {
+    const data = await API.request('/presbiterios');
+    cachedPresbiterios = data;
+    if (data.length === 0) {
+      container.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">Nenhum presbitério cadastrado.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = data.map(p => `
+      <tr>
+        <td><strong>${p.nome}</strong></td>
+        <td style="text-align: right;">
+          <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editarPresbiterio(${p.id}, '${p.nome}')">✏️ Editar</button>
+          <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deletarPresbiterio(${p.id})">❌ Excluir</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-danger);">Erro ao carregar presbitérios.</td></tr>`;
+  }
+}
+
+window.editarPresbiterio = function(id, nome) {
+  document.getElementById('presbiterio-id').value = id;
+  document.getElementById('presbiterio-nome').value = nome;
+  document.getElementById('btn-salvar-presbiterio').textContent = 'Salvar';
+  document.getElementById('btn-cancelar-presbiterio').style.display = 'inline-block';
+};
+
+window.resetFormPresbiterio = function() {
+  document.getElementById('presbiterio-id').value = '';
+  document.getElementById('presbiterio-nome').value = '';
+  document.getElementById('btn-salvar-presbiterio').textContent = 'Adicionar';
+  document.getElementById('btn-cancelar-presbiterio').style.display = 'none';
+};
+
+window.salvarPresbiterio = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('presbiterio-id').value;
+  const nome = document.getElementById('presbiterio-nome').value.trim();
+
+  try {
+    if (id) {
+      await API.request(`/admin/presbiterios/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ nome })
+      });
+      showToast('Presbitério atualizado com sucesso!', 'success');
+    } else {
+      await API.request('/admin/presbiterios', {
+        method: 'POST',
+        body: JSON.stringify({ nome })
+      });
+      showToast('Presbitério adicionado com sucesso!', 'success');
+    }
+    resetFormPresbiterio();
+    loadPresbiterios();
+  } catch (err) {
+    showToast(err.message || 'Erro ao salvar presbitério.', 'error');
+  }
+};
+
+window.deletarPresbiterio = async function(id) {
+  if (confirm('Deseja realmente excluir este presbitério?')) {
+    try {
+      await API.request(`/admin/presbiterios/${id}`, {
+        method: 'DELETE'
+      });
+      showToast('Presbitério excluído!', 'success');
+      loadPresbiterios();
+    } catch (err) {
+      showToast('Erro ao excluir presbitério.', 'error');
+    }
   }
 };

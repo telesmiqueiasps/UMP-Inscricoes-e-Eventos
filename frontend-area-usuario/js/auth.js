@@ -69,3 +69,29 @@ function toggleAuthTab(tab) {
     btnReg.className = 'btn btn-primary';
   }
 }
+
+function formatarCPF(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .substring(0, 14);
+}
+
+function formatarTelefone(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/g, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .substring(0, 15);
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'reg-cpf') {
+    e.target.value = formatarCPF(e.target.value);
+  }
+  if (e.target.id === 'reg-telefone') {
+    e.target.value = formatarTelefone(e.target.value);
+  }
+});

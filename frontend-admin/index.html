@@ -69,139 +69,19 @@
 
   </div>
 
-  <!-- Modal Criar / Editar Evento -->
+  <!-- Modal Criar Evento -->
   <div class="modal" id="evento-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 440px;">
       <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;" id="modal-evento-title">Novo Evento</h3>
       <form id="form-evento" onsubmit="salvarEvento(event)">
-        <input type="hidden" id="evento-id">
-
         <div class="form-group">
           <label class="form-label">Título do Evento</label>
-          <input type="text" id="ev-titulo" class="form-control" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Descrição</label>
-          <textarea id="ev-descricao" class="form-control" rows="2"></textarea>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Data de Início</label>
-            <input type="datetime-local" id="ev-inicio" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Data de Término</label>
-            <input type="datetime-local" id="ev-fim" class="form-control" required>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Valor (R$)</label>
-            <input type="number" step="0.01" id="ev-valor" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Local</label>
-            <input type="text" id="ev-local" class="form-control">
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div class="form-group">
-            <label class="form-label">Máx. Vagas (Opcional)</label>
-            <input type="number" id="ev-max-part" class="form-control">
-          </div>
-          <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
-            <input type="checkbox" id="ev-ativo" checked>
-            <label for="ev-ativo">Evento Ativo (Inscrições Abertas)</label>
-          </div>
-        </div>
-
-        <!-- Checkboxes de Seleção dos Campos do Formulário -->
-        <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-          <label class="form-label" style="font-weight: 700; color: var(--primary);">Campos do Formulário de Inscrição</label>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Selecione quais informações extras os participantes devem preencher no momento da inscrição:</p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="cpf"> CPF
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="telefone"> Telefone
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="data_nascimento"> Data de Nascimento
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="genero"> Gênero
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="tamanho_camiseta"> Tamanho da Camiseta
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="tipo_sanguineo"> Tipo Sanguíneo
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="alergias"> Alergias
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="medicamento_continuo"> Medicamento Contínuo
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="contato_emergencia"> Contatos de Emergência
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="restricao_alimentar"> Restrição Alimentar
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="igreja"> Igreja / Congregação
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-              <input type="checkbox" class="ev-form-field" value="cargo_ump"> Federação / Cargo na UMP
-            </label>
-          </div>
-        </div>
-
-        <!-- Fotos do Evento (Links da Web ou Upload) -->
-        <div class="form-group" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-          <label class="form-label" style="font-weight: 700; color: var(--primary);">Fotos / Imagens do Evento (Links ou Upload)</label>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Insira o link das fotos ou selecione um arquivo para fazer upload no Supabase Storage:</p>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-              <input type="url" class="ev-image-url form-control" id="ev-foto-1" placeholder="Link da Imagem 1 (Principal / Banner)">
-              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                📤 Upload
-                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-1')">
-              </label>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-              <input type="url" class="ev-image-url form-control" id="ev-foto-2" placeholder="Link da Imagem 2">
-              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                📤 Upload
-                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-2')">
-              </label>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-              <input type="url" class="ev-image-url form-control" id="ev-foto-3" placeholder="Link da Imagem 3">
-              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                📤 Upload
-                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-3')">
-              </label>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-              <input type="url" class="ev-image-url form-control" id="ev-foto-4" placeholder="Link da Imagem 4">
-              <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                📤 Upload
-                <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-4')">
-              </label>
-            </div>
-          </div>
+          <input type="text" id="ev-titulo" class="form-control" required placeholder="Digite o nome do evento...">
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
           <button type="button" class="btn btn-outline" onclick="fecharModalEvento()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Salvar Evento</button>
+          <button type="submit" class="btn btn-primary">Salvar e Continuar</button>
         </div>
       </form>
     </div>

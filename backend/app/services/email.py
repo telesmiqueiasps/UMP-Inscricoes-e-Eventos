@@ -1,5 +1,6 @@
 import httpx
 import logging
+from typing import Optional
 from app.core.config import settings
 
 
@@ -43,19 +44,30 @@ def enviar_email_brevo(destinatario_email: str, destinatario_nome: str, assunto:
         return False
 
 
-def enviar_email_inscricao(destinatario_email: str, destinatario_nome: str, nome_evento: str, valor: float, forma_pagamento: str) -> bool:
+def enviar_email_inscricao(destinatario_email: str, destinatario_nome: str, nome_evento: str, valor: float, forma_pagamento: str, whatsapp_grupo_link: Optional[str] = None) -> bool:
     """
     Envia e-mail notificando a realização de uma nova inscrição.
     """
     assunto = f"Inscrição Recebida! - {nome_evento}"
     valor_fmt = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     
+    whatsapp_html = ""
+    if whatsapp_grupo_link:
+        whatsapp_html = f"""
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 15px; border-radius: 6px; margin: 20px 0; color: #065f46; text-align: center;">
+            <p style="margin: 0 0 10px 0; font-weight: bold;">📢 Entre no grupo de WhatsApp oficial deste evento:</p>
+            <a href="{whatsapp_grupo_link}" target="_blank" style="background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Entrar no Grupo de WhatsApp</a>
+        </div>
+        """
+
     conteudo_html = f"""
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
         <h2 style="color: #4F46E5; margin-bottom: 20px; text-align: center;">Inscrição Realizada com Sucesso!</h2>
         <p>Olá, <strong>{destinatario_nome}</strong>,</p>
         <p>Recebemos o seu pedido de inscrição para o evento <strong>{nome_evento}</strong>.</p>
         
+        {whatsapp_html}
+
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 5px 0;"><strong>Forma de Pagamento:</strong> {forma_pagamento}</p>
             <p style="margin: 5px 0;"><strong>Valor Total:</strong> {valor_fmt}</p>

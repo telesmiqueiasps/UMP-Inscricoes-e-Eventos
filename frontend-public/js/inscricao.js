@@ -252,6 +252,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     formDadosExtras.addEventListener('submit', (e) => {
       e.preventDefault();
       
+      const estadiaHidden = document.getElementById('hidden-dias-estadia');
+      if (estadiaHidden) {
+        const selectedDays = Array.from(document.querySelectorAll('.estadia-day:checked')).map(cb => cb.value).join(', ');
+        estadiaHidden.value = selectedDays;
+        if (!selectedDays) {
+          showToast('Por favor, selecione pelo menos um dia de estadia.', 'error');
+          return;
+        }
+      }
+
       // Coletar campos dinâmicos e salvar localmente
       dadosExtrasSalvos = {};
       document.querySelectorAll('.dyn-input').forEach(input => {
@@ -472,6 +482,32 @@ function copiarPix() {
   }
 }
 
+function formatarCPF(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .substring(0, 14);
+}
+
+function formatarTelefone(value) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/g, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .substring(0, 15);
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'cpf-reg' || e.target.name === 'dyn_cpf') {
+    e.target.value = formatarCPF(e.target.value);
+  }
+  if (e.target.id === 'telefone-reg' || e.target.name === 'dyn_telefone' || e.target.name === 'dyn_contato_pastor') {
+    e.target.value = formatarTelefone(e.target.value);
+  }
+});
+
 function renderDynamicFormFields() {
   const listContainer = document.getElementById('dynamic-fields-list');
   const container = document.getElementById('dynamic-fields-container');
@@ -497,7 +533,6 @@ function renderDynamicFormFields() {
   container.style.display = 'block';
   if (noFieldsMsg) noFieldsMsg.style.display = 'none';
   
-  // Mapeia cada campo dinâmico habilitado para seu HTML correspondente
   listContainer.innerHTML = fields.map(field => {
     let fieldHTML = '';
     
@@ -506,7 +541,7 @@ function renderDynamicFormFields() {
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">CPF *</label>
-            <input type="text" name="dyn_cpf" class="form-control dyn-input" placeholder="000.000.000-00" required>
+            <input type="text" name="dyn_cpf" class="form-control dyn-input" placeholder="000.000.000-00" required pattern="^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$" title="Digite o CPF no formato 000.000.000-00">
           </div>
         `;
         break;
@@ -514,7 +549,7 @@ function renderDynamicFormFields() {
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Telefone / WhatsApp *</label>
-            <input type="text" name="dyn_telefone" class="form-control dyn-input" placeholder="(83) 99999-9999" required>
+            <input type="text" name="dyn_telefone" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
           </div>
         `;
         break;
@@ -594,7 +629,7 @@ function renderDynamicFormFields() {
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Contato de Emergência (Nome e Telefone) *</label>
-            <input type="text" name="dyn_contato_emergencia" class="form-control dyn-input" placeholder="Ex: Maria (Mãe) - (83) 99999-9999" required>
+            <input type="text" name="dyn_contato_emergencia" class="form-control dyn-input" placeholder="Ex: Maria (Mãe) - (00) 00000-0000" required>
           </div>
         `;
         break;
@@ -621,11 +656,88 @@ function renderDynamicFormFields() {
           </div>
         `;
         break;
-      case 'cargo_ump':
+      case 'presbiterio':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Federação / Cargo na UMP *</label>
-            <input type="text" name="dyn_cargo_ump" class="form-control dyn-input" placeholder="Ex: Federação Oeste / Membro" required>
+            <label class="form-label">Presbitério *</label>
+            <select name="dyn_presbiterio" id="dyn-select-presbiterio" class="form-control dyn-input" required>
+              <option value="">Carregando presbitérios...</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'cidade':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Cidade *</label>
+            <input type="text" name="dyn_cidade" class="form-control dyn-input" placeholder="Sua cidade" required>
+          </div>
+        `;
+        break;
+      case 'estado_civil':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Estado Civil *</label>
+            <select name="dyn_estado_civil" class="form-control dyn-input" required>
+              <option value="">Selecione...</option>
+              <option value="Solteiro(a)">Solteiro(a)</option>
+              <option value="Casado(a)">Casado(a)</option>
+              <option value="Divorciado(a)">Divorciado(a)</option>
+              <option value="Viúvo(a)">Viúvo(a)</option>
+            </select>
+          </div>
+        `;
+        break;
+      case 'nome_pastor':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Nome do seu Pastor *</label>
+            <input type="text" name="dyn_nome_pastor" class="form-control dyn-input" placeholder="Nome completo do pastor" required>
+          </div>
+        `;
+        break;
+      case 'contato_pastor':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Contato do seu Pastor *</label>
+            <input type="text" name="dyn_contato_pastor" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+          </div>
+        `;
+        break;
+      case 'cargo_federacao':
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Cargo na Federação *</label>
+            <input type="text" name="dyn_cargo_federacao" class="form-control dyn-input" placeholder="Ex: Membro, Presidente..." required>
+          </div>
+        `;
+        break;
+      case 'dias_estadia':
+        let startDate = new Date(eventoAtual.data_inicio);
+        let endDate = new Date(eventoAtual.data_fim);
+        let days = [];
+        let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        let last = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        while (current <= last) {
+          days.push(new Date(current));
+          current.setDate(current.getDate() + 1);
+        }
+        let daysCheckboxes = days.map((day) => {
+          let dayStr = day.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
+          return `
+            <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
+              <input type="checkbox" class="estadia-day" value="${dayStr}"> ${dayStr}
+            </label>
+          `;
+        }).join('');
+        
+        fieldHTML = `
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Dias de Estadia *</label>
+            <div style="display:flex; flex-direction:column; gap:0.35rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: white;">
+              ${daysCheckboxes}
+            </div>
+            <input type="hidden" name="dyn_dias_estadia" class="dyn-input" id="hidden-dias-estadia" required>
           </div>
         `;
         break;
@@ -633,6 +745,17 @@ function renderDynamicFormFields() {
 
     return fieldHTML;
   }).join('');
+
+  // Carregar Presbitérios se houver o campo presbiterio
+  const selectPresb = document.getElementById('dyn-select-presbiterio');
+  if (selectPresb) {
+    API.request('/presbiterios').then(data => {
+      selectPresb.innerHTML = '<option value="">Selecione...</option>' + 
+        data.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+    }).catch(err => {
+      selectPresb.innerHTML = '<option value="">Erro ao carregar presbitérios</option>';
+    });
+  }
 
   // Pré-preenchimento
   const user = API.getUser();

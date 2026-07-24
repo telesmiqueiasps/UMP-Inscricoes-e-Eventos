@@ -18,10 +18,24 @@ class EventoBase(BaseModel):
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
     fotos: Optional[str] = None
+    whatsapp_grupo_link: Optional[str] = None
 
 
-class EventoCreate(EventoBase):
-    pass
+class EventoCreate(BaseModel):
+    titulo: str
+    descricao: Optional[str] = None
+    data_inicio: Optional[datetime] = None
+    data_fim: Optional[datetime] = None
+    local: Optional[str] = None
+    valor: Optional[Decimal] = None
+    max_participantes: Optional[int] = None
+    max_parcelas: int = 1
+    ativo: bool = True
+    link_pagamento_cartao: Optional[str] = None
+    link_pagamento_pix: Optional[str] = None
+    campos_formulario: Optional[str] = None
+    fotos: Optional[str] = None
+    whatsapp_grupo_link: Optional[str] = None
 
 
 class EventoUpdate(BaseModel):
@@ -38,6 +52,7 @@ class EventoUpdate(BaseModel):
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
     fotos: Optional[str] = None
+    whatsapp_grupo_link: Optional[str] = None
 
 
 class EventoResponse(EventoBase):

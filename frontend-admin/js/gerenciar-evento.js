@@ -60,6 +60,7 @@ async function loadEventoInfo() {
     document.getElementById('ev-valor').value = eventoAtual.valor;
     document.getElementById('ev-max-part').value = eventoAtual.max_participantes || '';
     document.getElementById('ev-ativo').checked = eventoAtual.ativo;
+    document.getElementById('ev-whatsapp-link').value = eventoAtual.whatsapp_grupo_link || '';
 
     document.querySelectorAll('.ev-form-field').forEach(cb => {
       cb.checked = eventoAtual.campos_formulario ? eventoAtual.campos_formulario.split(',').includes(cb.value) : false;
@@ -288,7 +289,8 @@ window.salvarEvento = async function(e) {
     max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
     ativo: document.getElementById('ev-ativo').checked,
     campos_formulario: fieldsSelected || null,
-    fotos: fotosUrls || null
+    fotos: fotosUrls || null,
+    whatsapp_grupo_link: document.getElementById('ev-whatsapp-link').value.trim() || null
   };
 
   try {
@@ -327,7 +329,13 @@ function formatarLabelCampo(field) {
     contato_emergencia: 'Emergência',
     restricao_alimentar: 'Alimentação',
     igreja: 'Igreja',
-    cargo_ump: 'Cargo UMP'
+    presbiterio: 'Presbitério',
+    cidade: 'Cidade',
+    estado_civil: 'Estado Civil',
+    nome_pastor: 'Nome Pastor',
+    contato_pastor: 'Contato Pastor',
+    cargo_federacao: 'Cargo Federação',
+    dias_estadia: 'Estadia'
   };
   return map[field] || field.toUpperCase();
 }

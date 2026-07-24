@@ -5,5 +5,6 @@ from app.models.inscricao import Inscricao
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.models.configuracao import Configuracao
+from app.models.presbiterio import Presbiterio
 
-__all__ = ["Base", "Usuario", "Evento", "Inscricao", "Pagamento", "Parcela", "Configuracao"]
+__all__ = ["Base", "Usuario", "Evento", "Inscricao", "Pagamento", "Parcela", "Configuracao", "Presbiterio"]

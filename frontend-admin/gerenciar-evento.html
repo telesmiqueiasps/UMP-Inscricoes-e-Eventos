@@ -233,15 +233,20 @@
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Link do Grupo do WhatsApp (Opcional)</label>
+                <input type="url" id="ev-whatsapp-link" class="form-control" placeholder="https://chat.whatsapp.com/...">
+              </div>
               <div class="form-group">
                 <label class="form-label">Máx. Vagas (Opcional)</label>
                 <input type="number" id="ev-max-part" class="form-control">
               </div>
-              <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
-                <input type="checkbox" id="ev-ativo" checked>
-                <label for="ev-ativo">Evento Ativo (Inscrições Abertas)</label>
-              </div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem;">
+              <input type="checkbox" id="ev-ativo" checked>
+              <label for="ev-ativo">Evento Ativo (Inscrições Abertas)</label>
             </div>
 
             <!-- Checkboxes de Seleção dos Campos do Formulário -->
@@ -283,7 +288,25 @@
                   <input type="checkbox" class="ev-form-field" value="igreja"> Igreja / Congregação
                 </label>
                 <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                  <input type="checkbox" class="ev-form-field" value="cargo_ump"> Federação / Cargo na UMP
+                  <input type="checkbox" class="ev-form-field" value="presbiterio"> Presbitério
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="cidade"> Cidade
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="estado_civil"> Estado Civil
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="nome_pastor"> Nome do seu Pastor
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="contato_pastor"> Contato do seu Pastor
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="cargo_federacao"> Cargo na Federação
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="ev-form-field" value="dias_estadia"> Dias de Estadia
                 </label>
               </div>
             </div>

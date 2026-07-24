@@ -73,7 +73,8 @@ def criar_inscricao(
         destinatario_nome=current_user.nome,
         nome_evento=evento.titulo,
         valor=float(evento.valor),
-        forma_pagamento=db_inscricao.forma_pagamento or "Não informada"
+        forma_pagamento=db_inscricao.forma_pagamento or "Não informada",
+        whatsapp_grupo_link=evento.whatsapp_grupo_link
     )
 
     return db_inscricao

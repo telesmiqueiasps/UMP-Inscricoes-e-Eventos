@@ -98,7 +98,16 @@ def criar_evento_admin(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(get_current_admin)
 ):
-    db_evento = Evento(**evento_in.model_dump())
+    from datetime import datetime, timedelta
+    event_data = evento_in.model_dump()
+    if event_data.get("data_inicio") is None:
+        event_data["data_inicio"] = datetime.utcnow()
+    if event_data.get("data_fim") is None:
+        event_data["data_fim"] = datetime.utcnow() + timedelta(days=1)
+    if event_data.get("valor") is None:
+        event_data["valor"] = Decimal("0.00")
+        
+    db_evento = Evento(**event_data)
     db.add(db_evento)
     db.commit()
     db.refresh(db_evento)
