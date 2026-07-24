@@ -186,3 +186,9 @@ td { padding: 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 
     gap: 1rem;
   }
 }
+
+@media (max-width: 480px) {
+  main.card {
+    padding: 1.5rem !important;
+  }
+}
