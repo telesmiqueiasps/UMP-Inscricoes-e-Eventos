@@ -146,12 +146,26 @@ body {
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  background: linear-gradient(-45deg, #1E40AF, #1D4ED8, #0F172A, #2563EB);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
   color: white;
-  padding: 5rem 2rem;
+  padding: 5.5rem 2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .hero::before {
@@ -161,7 +175,7 @@ body {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(29,78,216,0.2) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -171,14 +185,12 @@ body {
   font-weight: 800;
   margin-bottom: 1rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #FFFFFF, #C7D2FE);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #FFFFFF;
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
-  color: #94A3B8;
+  font-size: 1.25rem;
+  color: #E2E8F0;
   max-width: 650px;
   margin: 0 auto 2rem auto;
 }
@@ -354,10 +366,10 @@ tr:last-child td {
 /* Footer */
 footer {
   margin-top: auto;
-  background: var(--dark);
-  color: #94A3B8;
+  background: #FFFFFF;
+  color: var(--text-muted);
   text-align: center;
   padding: 2rem;
   font-size: 0.9rem;
-  border-top: 1px solid var(--dark-surface);
+  border-top: 1px solid var(--border-color);
 }

@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `<div class="badge badge-danger" style="margin-bottom: 1rem;">Vagas Esgotadas</div>` : 
         `<div class="badge badge-success" style="margin-bottom: 1rem;">Inscrições Abertas</div>`;
 
-      const buttonHTML = `<a href="evento.html?id=${ev.id}" class="btn btn-primary" style="width: 100%; text-align: center;">Garantir Minha Vaga</a>`;
+      const buttonHTML = `<a href="evento.html?id=${ev.id}" class="btn btn-primary" style="width: 100%; text-align: center;">Ver Evento</a>`;
 
       const fotosList = ev.fotos ? ev.fotos.split(',').filter(f => f.trim() !== '') : [];
       const imageHTML = fotosList.length > 0 ? 
