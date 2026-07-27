@@ -260,6 +260,13 @@ def atualizar_status_inscricao_admin(
     
     status_anterior = inscricao.status
     inscricao.status = novo_status.upper()
+    
+    if inscricao.status == "CANCELADA":
+        for pag in inscricao.pagamentos:
+            pag.status = "CANCELADO"
+            for parc in pag.parcelas:
+                parc.status = "CANCELADO"
+
     db.commit()
     db.refresh(inscricao)
 
@@ -288,10 +295,12 @@ def listar_pagamentos_admin(
         query = query.join(Pagamento.inscricao).filter(Inscricao.evento_id == evento_id)
     pagamentos = query.order_by(Pagamento.created_at.desc()).all()
     for pag in pagamentos:
-        if pag.inscricao and pag.inscricao.usuario:
-            pag.usuario_nome = pag.inscricao.usuario.nome
-            pag.usuario_cpf = pag.inscricao.usuario.cpf
-            pag.usuario_email = pag.inscricao.usuario.email
+        if pag.inscricao:
+            pag.inscricao_status = pag.inscricao.status
+            if pag.inscricao.usuario:
+                pag.usuario_nome = pag.inscricao.usuario.nome
+                pag.usuario_cpf = pag.inscricao.usuario.cpf
+                pag.usuario_email = pag.inscricao.usuario.email
     return pagamentos
 
 

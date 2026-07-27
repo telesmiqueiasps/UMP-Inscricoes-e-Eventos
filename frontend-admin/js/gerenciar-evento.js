@@ -192,7 +192,7 @@ async function loadPagamentos() {
     let totalPendente = 0;
 
     pagamentos.forEach(pag => {
-      if (pag.status === 'CANCELADO' || pag.status === 'CANCELADA') return;
+      if (pag.status === 'CANCELADO' || pag.status === 'CANCELADA' || pag.inscricao_status === 'CANCELADA') return;
 
       const valorTotal = parseFloat(pag.valor);
       totalInscricoes += valorTotal;

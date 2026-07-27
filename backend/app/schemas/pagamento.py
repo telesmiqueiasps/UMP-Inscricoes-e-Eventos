@@ -39,6 +39,7 @@ class PagamentoResponse(BaseModel):
     usuario_nome: Optional[str] = None
     usuario_cpf: Optional[str] = None
     usuario_email: Optional[str] = None
+    inscricao_status: Optional[str] = None
 
     class Config:
         from_attributes = True
