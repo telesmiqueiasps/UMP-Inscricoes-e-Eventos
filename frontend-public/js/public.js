@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div style="flex-grow: 1;">
             ${badgeHTML}
             <h3 class="card-title">${ev.titulo}</h3>
-            <p class="card-desc">${ev.descricao || 'Sem descrição cadastrada.'}</p>
+            <div class="card-desc">${ev.descricao || 'Sem descrição cadastrada.'}</div>
             
             <div style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
               <div><strong>📅 Data:</strong> ${dataInicio} até ${dataFim}</div>

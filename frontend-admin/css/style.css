@@ -193,3 +193,32 @@ td { padding: 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 
     padding: 1.5rem;
   }
 }
+
+/* Rich Editor content styling */
+#ev-descricao-editor h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+#ev-descricao-editor h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 0.85rem;
+  margin-bottom: 0.4rem;
+  color: var(--dark);
+}
+#ev-descricao-editor p {
+  margin-bottom: 0.75rem;
+}
+#ev-descricao-editor ul {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  list-style-type: disc;
+}
+#ev-descricao-editor ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  list-style-type: decimal;
+}

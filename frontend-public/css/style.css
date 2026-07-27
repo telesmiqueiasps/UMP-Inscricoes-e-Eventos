@@ -234,6 +234,11 @@ body {
   color: var(--text-muted);
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 4.8em; /* Fallback for line-clamp */
 }
 
 .price-tag {
@@ -402,4 +407,43 @@ footer {
   .container {
     padding: 1.5rem 1rem;
   }
+}
+
+/* Rich Text / Description Formatting Rules */
+.event-desc-content h1, #event-description h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--dark);
+}
+
+.event-desc-content h2, #event-description h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: var(--dark);
+}
+
+.event-desc-content p, #event-description p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.event-desc-content ul, #event-description ul {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  list-style-type: disc;
+}
+
+.event-desc-content ol, #event-description ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  list-style-type: decimal;
+}
+
+.event-desc-content li, #event-description li {
+  margin-bottom: 0.25rem;
 }

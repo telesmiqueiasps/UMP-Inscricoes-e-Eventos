@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1. Título e Descrição
     document.getElementById('event-title').textContent = ev.titulo;
-    document.getElementById('event-description').textContent = ev.descricao || 'Sem descrição detalhada disponível.';
+    document.getElementById('event-description').innerHTML = ev.descricao || 'Sem descrição detalhada disponível.';
 
     // 2. Preço
     const valor = parseFloat(ev.valor);

@@ -3,6 +3,11 @@ let eventoAtual = null;
 let cachedInscricoesList = [];
 let allEventsList = [];
 
+window.execEditorCommand = function(command, arg = null) {
+  document.execCommand(command, false, arg);
+  document.getElementById('ev-descricao-editor').focus();
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
   if (!token) {
@@ -50,7 +55,7 @@ async function loadEventoInfo() {
     // Preencher Formulário de Edição (Tab 3)
     document.getElementById('evento-id').value = eventoAtual.id;
     document.getElementById('ev-titulo').value = eventoAtual.titulo;
-    document.getElementById('ev-descricao').value = eventoAtual.descricao || '';
+    document.getElementById('ev-descricao-editor').innerHTML = eventoAtual.descricao || '';
     
     const formatDt = (isoStr) => isoStr ? isoStr.substring(0, 16) : '';
     document.getElementById('ev-inicio').value = formatDt(eventoAtual.data_inicio);
@@ -281,7 +286,7 @@ window.salvarEvento = async function(e) {
 
   const payload = {
     titulo: document.getElementById('ev-titulo').value,
-    descricao: document.getElementById('ev-descricao').value,
+    descricao: document.getElementById('ev-descricao-editor').innerHTML,
     data_inicio: new Date(document.getElementById('ev-inicio').value).toISOString(),
     data_fim: new Date(document.getElementById('ev-fim').value).toISOString(),
     local: document.getElementById('ev-local').value,
