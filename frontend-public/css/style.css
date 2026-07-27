@@ -234,11 +234,23 @@ body {
   color: var(--text-muted);
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-height: 4.8em; /* Fallback for line-clamp */
+  line-height: 1.6;
+}
+
+.card-desc h1 {
+  font-size: 1.25rem;
+  margin: 0.5rem 0;
+  color: var(--dark);
+}
+
+.card-desc h2 {
+  font-size: 1.15rem;
+  margin: 0.4rem 0;
+  color: var(--dark);
+}
+
+.card-desc p {
+  margin-bottom: 0.5rem;
 }
 
 .price-tag {
