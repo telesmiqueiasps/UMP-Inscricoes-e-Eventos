@@ -297,11 +297,41 @@ def listar_pagamentos_admin(
     for pag in pagamentos:
         if pag.inscricao:
             pag.inscricao_status = pag.inscricao.status
+            if pag.inscricao.status == "CANCELADA":
+                pag.status = "CANCELADO"
+                for parc in pag.parcelas:
+                    parc.status = "CANCELADO"
             if pag.inscricao.usuario:
                 pag.usuario_nome = pag.inscricao.usuario.nome
                 pag.usuario_cpf = pag.inscricao.usuario.cpf
                 pag.usuario_email = pag.inscricao.usuario.email
     return pagamentos
+
+
+@router.put("/admin/pagamentos/{id}/status", response_model=PagamentoResponse)
+def atualizar_status_pagamento_admin(
+    id: int,
+    novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    pagamento = db.query(Pagamento).filter(Pagamento.id == id).first()
+    if not pagamento:
+        raise HTTPException(status_code=404, detail="Pagamento não encontrado.")
+    
+    pagamento.status = novo_status.upper()
+    if pagamento.status == "CANCELADO":
+        for parc in pagamento.parcelas:
+            parc.status = "CANCELADO"
+    elif pagamento.status == "PAGO":
+        for parc in pagamento.parcelas:
+            parc.status = "PAGO"
+        if pagamento.inscricao:
+            pagamento.inscricao.status = "CONFIRMADA"
+
+    db.commit()
+    db.refresh(pagamento)
+    return pagamento
 
 
 @router.put("/admin/parcelas/{id}/status", response_model=ParcelaResponse)
@@ -320,10 +350,12 @@ def atualizar_status_parcela_admin(
     db.commit()
     db.refresh(parcela)
 
-    # Verificar se todas as parcelas do pagamento foram pagas
+    # Verificar status do pagamento pai
     pagamento = db.query(Pagamento).filter(Pagamento.id == parcela.pagamento_id).first()
     if pagamento:
         todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
+        todas_canceladas = all(p.status == "CANCELADO" for p in pagamento.parcelas)
+        
         if todas_pagas:
             status_anterior = pagamento.inscricao.status
             pagamento.status = "PAGO"
@@ -339,6 +371,9 @@ def atualizar_status_parcela_admin(
                     destinatario_nome=pagamento.inscricao.usuario.nome,
                     nome_evento=pagamento.inscricao.evento.titulo
                 )
+        elif todas_canceladas:
+            pagamento.status = "CANCELADO"
+            db.commit()
 
     return parcela
 

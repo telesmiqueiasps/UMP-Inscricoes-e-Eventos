@@ -94,28 +94,35 @@ function renderRecentPayments(pagamentos) {
     return;
   }
 
+  const getStatusBadge = (st) => {
+    if (st === 'PAGO') return 'badge-success';
+    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
+    return 'badge-warning';
+  };
+
   paymentsContainer.innerHTML = pagamentos.map(pag => {
     if (pag.parcelas && pag.parcelas.length > 0) {
       const parcelasRows = pag.parcelas.map(parc => {
         const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
+        const isCancelled = parc.status === 'CANCELADO' || parc.status === 'CANCELADA' || pag.status === 'CANCELADO';
 
         return `
           <tr>
             <td>Parcela ${parc.numero}</td>
             <td>${parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A'}</td>
             <td>${valorParcFmt}</td>
-            <td><span class="badge ${parc.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${parc.status}</span></td>
+            <td><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
             <td>
-              ${parc.status !== 'PAGO' && parc.copia_cola_pix ? 
+              {!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
                 (parc.copia_cola_pix.startsWith('http') ? 
                   `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Parcela</a>` : 
                   `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
                 ) : ''
               }
-              <a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">
-                📄 Carnê PDF
-              </a>
+              ${!isCancelled ? 
+                `<a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem;">📄 Carnê PDF</a>` : ''
+              }
             </td>
           </tr>
         `;
@@ -142,11 +149,12 @@ function renderRecentPayments(pagamentos) {
       `;
     } else {
       const valorPagFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const isCancelled = pag.status === 'CANCELADO' || pag.status === 'CANCELADA';
       return `
         <div class="card">
           <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h3>
-          <p>Valor: ${valorPagFmt} | Status: <span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></p>
-          ${pag.receipt_url ? 
+          <p>Valor: ${valorPagFmt} | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></p>
+          ${pag.receipt_url && !isCancelled ? 
             (pag.status === 'PAGO' ? 
               `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline" style="margin-top: 0.5rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-md);">📄 Comprovante de Pagamento</a>` :
               `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block;">Pagar Inscrição</a>`
@@ -166,6 +174,12 @@ function renderAllInscricoes(inscricoes, pagamentos) {
     container.innerHTML = `<p style="color: var(--text-muted);">Nenhum histórico de inscrições encontrado.</p>`;
     return;
   }
+
+  const getStatusBadge = (st) => {
+    if (st === 'PAGO') return 'badge-success';
+    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
+    return 'badge-warning';
+  };
 
   container.innerHTML = inscricoes.map(ins => {
     const insPags = pagamentos.filter(pag => pag.inscricao_id === ins.id);
@@ -209,7 +223,7 @@ function renderAllInscricoes(inscricoes, pagamentos) {
                     <tr>
                       <td style="padding: 0.25rem 0.5rem;">${desc}</td>
                       <td style="padding: 0.25rem 0.5rem;">${valFmt}</td>
-                      <td style="padding: 0.25rem 0.5rem;"><span class="badge ${pag.status === 'PAGO' ? 'badge-success' : 'badge-warning'}">${pag.status}</span></td>
+                      <td style="padding: 0.25rem 0.5rem;"><span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></td>
                     </tr>
                   `;
                 }).join('')}

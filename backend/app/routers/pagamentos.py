@@ -42,6 +42,9 @@ def processar_pagamento(
     if inscricao.usuario_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Acesso negado a esta inscrição.")
 
+    if inscricao.status == "CANCELADA":
+        raise HTTPException(status_code=400, detail="Esta inscrição está cancelada. Não é possível processar pagamentos.")
+
     forma_pag = req.forma_pagamento.upper()
     if forma_pag not in ["PIX", "INFINITEPAY", "PARCELADO"]:
         raise HTTPException(status_code=400, detail="Forma de pagamento inválida.")
@@ -213,6 +216,11 @@ def obter_pagamento_inscricao(
 
     if pagamento.inscricao.usuario_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Acesso negado a este pagamento.")
+
+    if pagamento.inscricao.status == "CANCELADA":
+        pagamento.status = "CANCELADO"
+        for parc in pagamento.parcelas:
+            parc.status = "CANCELADO"
 
     return pagamento
 

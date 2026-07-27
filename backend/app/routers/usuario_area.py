@@ -61,14 +61,16 @@ def obter_dashboard_usuario(
 
         # Buscar pagamentos associados
         for pag in ins.pagamentos:
+            pag_status = "CANCELADO" if ins.status == "CANCELADA" else pag.status
             parcelas_list = []
             for parc in pag.parcelas:
+                parc_status = "CANCELADO" if ins.status == "CANCELADA" else parc.status
                 parcelas_list.append({
                     "id": parc.id,
                     "numero": parc.numero,
                     "vencimento": parc.vencimento.isoformat() if parc.vencimento else "",
                     "valor": float(parc.valor),
-                    "status": parc.status,
+                    "status": parc_status,
                     "copia_cola_pix": parc.copia_cola_pix,
                     "qr_code_pix": parc.qr_code_pix,
                     "pdf_url": f"/api/v1/pagamentos/parcelas/{parc.id}/pdf"
@@ -81,7 +83,7 @@ def obter_dashboard_usuario(
                 "forma_pagamento": pag.forma_pagamento,
                 "capture_method": pag.capture_method,
                 "valor": float(pag.valor),
-                "status": pag.status,
+                "status": pag_status,
                 "copia_cola_pix": pag.copia_cola_pix,
                 "qr_code_pix": pag.qr_code_pix,
                 "receipt_url": pag.receipt_url,

@@ -244,18 +244,21 @@ function renderPagamentosList(pagamentos) {
   let rowsHtml = '';
   pagamentos.forEach(pag => {
     const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
+    const isInsCancelled = pag.inscricao_status === 'CANCELADA' || pag.status === 'CANCELADO' || pag.status === 'CANCELADA';
+    
     const statusBadgeClass = (status) => {
       if (status === 'PAGO') return 'badge-success';
-      if (status === 'CANCELADO' || status === 'CANCELADA') return 'badge-danger';
+      if (status === 'CANCELADO' || status === 'CANCELADA' || isInsCancelled) return 'badge-danger';
       return 'badge-warning';
     };
 
     if (pag.parcelas && pag.parcelas.length > 0) {
       pag.parcelas.forEach(parc => {
+        const effectiveStatus = isInsCancelled ? 'CANCELADO' : parc.status;
         let actionHTML = '';
-        if (parc.status === 'PAGO') {
+        if (effectiveStatus === 'PAGO') {
           actionHTML = '<span style="color:#059669; font-weight:600;">Quitada</span>';
-        } else if (parc.status === 'CANCELADO' || parc.status === 'CANCELADA') {
+        } else if (effectiveStatus === 'CANCELADO' || effectiveStatus === 'CANCELADA') {
           actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelada</span>';
         } else {
           actionHTML = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>`;
@@ -269,12 +272,18 @@ function renderPagamentosList(pagamentos) {
             <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
             <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
             <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-            <td><span class="badge ${statusBadgeClass(parc.status)}">${parc.status}</span></td>
+            <td><span class="badge ${statusBadgeClass(effectiveStatus)}">${effectiveStatus}</span></td>
             <td>${actionHTML}</td>
           </tr>
         `;
       });
     } else {
+      const effectivePagStatus = isInsCancelled ? 'CANCELADO' : pag.status;
+      let actionHTML = '-';
+      if (effectivePagStatus === 'CANCELADO' || effectivePagStatus === 'CANCELADA') {
+        actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelado</span>';
+      }
+
       rowsHtml += `
         <tr>
           <td>Pag #${pag.id}</td>
@@ -283,8 +292,8 @@ function renderPagamentosList(pagamentos) {
           <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
           <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
           <td>N/A</td>
-          <td><span class="badge ${statusBadgeClass(pag.status)}">${pag.status}</span></td>
-          <td>-</td>
+          <td><span class="badge ${statusBadgeClass(effectivePagStatus)}">${effectivePagStatus}</span></td>
+          <td>${actionHTML}</td>
         </tr>
       `;
     }
