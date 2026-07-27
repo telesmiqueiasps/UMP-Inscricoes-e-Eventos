@@ -1,3 +1,9 @@
+function stripHtml(html) {
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const eventsContainer = document.getElementById('events-container');
   if (!eventsContainer) return;
@@ -32,13 +38,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         `<img src="${fotosList[0]}" alt="${ev.titulo}" style="width: calc(100% + 3rem); height: 180px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1rem -1.5rem; display: block;" />` : 
         '';
 
+      const cleanDesc = ev.descricao ? stripHtml(ev.descricao) : 'Sem descrição cadastrada.';
+
       return `
         <div class="card" style="display: flex; flex-direction: column;">
           ${imageHTML}
           <div style="flex-grow: 1;">
             ${badgeHTML}
             <h3 class="card-title">${ev.titulo}</h3>
-            <div class="card-desc">${ev.descricao || 'Sem descrição cadastrada.'}</div>
+            <div class="card-desc">${cleanDesc}</div>
             
             <div style="margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
               <div><strong>📅 Data:</strong> ${dataInicio} até ${dataFim}</div>
