@@ -33,6 +33,22 @@ function promptAdminLogin() {
       const email = document.getElementById('admin-email').value;
       const senha = document.getElementById('admin-senha').value;
 
+      const submitBtn = document.getElementById('admin-login-submit-btn');
+      const errorDiv = document.getElementById('admin-login-error');
+
+      // Reset state
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+      }
+
+      let originalText = 'Entrar no Painel';
+      if (submitBtn) {
+        originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = `<span class="spinner" style="display:inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem;"></span> Entrando...`;
+        submitBtn.disabled = true;
+      }
+
       try {
         const res = await API.request('/auth/login', {
           method: 'POST',
@@ -40,8 +56,7 @@ function promptAdminLogin() {
         });
 
         if (!res.user.is_admin) {
-          showToast('Usuário não possui privilégios de administrador.', 'error');
-          return;
+          throw new Error('Usuário não possui privilégios de administrador.');
         }
 
         API.setToken(res.access_token);
@@ -49,7 +64,14 @@ function promptAdminLogin() {
         modal.style.display = 'none';
         window.location.reload();
       } catch (err) {
-        showToast('Credenciais de admin inválidas.', 'error');
+        if (errorDiv) {
+          errorDiv.textContent = err.message || 'Credenciais de admin inválidas. Por favor, tente novamente.';
+          errorDiv.style.display = 'block';
+        }
+        if (submitBtn) {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
       }
     });
   }

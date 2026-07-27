@@ -8,6 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('login-email').value;
       const senha = document.getElementById('login-senha').value;
 
+      const submitBtn = document.getElementById('login-submit-btn');
+      const errorDiv = document.getElementById('login-error');
+
+      // Reset state
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+      }
+
+      let originalText = 'Acessar Painel';
+      if (submitBtn) {
+        originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = `<span class="spinner" style="display:inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem;"></span> Entrando...`;
+        submitBtn.disabled = true;
+      }
+
       try {
         const res = await API.request('/auth/login', {
           method: 'POST',
@@ -22,7 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
           window.location.href = 'dashboard.html';
         }, 1000);
       } catch (err) {
-        // Trato pelo API.request
+        if (errorDiv) {
+          errorDiv.textContent = err.message || 'E-mail ou senha incorretos. Por favor, tente novamente.';
+          errorDiv.style.display = 'block';
+        }
+        if (submitBtn) {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
       }
     });
   }
