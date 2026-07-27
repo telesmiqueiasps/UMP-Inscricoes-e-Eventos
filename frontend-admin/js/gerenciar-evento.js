@@ -185,6 +185,47 @@ async function loadPagamentos() {
   try {
     const pagamentos = await API.request(`/admin/pagamentos?evento_id=${selectedEventoId}`);
     allPagamentosCached = pagamentos;
+
+    // Calcular Métricas
+    let totalInscricoes = 0;
+    let totalRecebido = 0;
+    let totalPendente = 0;
+
+    pagamentos.forEach(pag => {
+      if (pag.status === 'CANCELADO' || pag.status === 'CANCELADA') return;
+
+      const valorTotal = parseFloat(pag.valor);
+      totalInscricoes += valorTotal;
+
+      if (pag.forma_pagamento === 'PARCELADO') {
+        let pagRec = 0;
+        let pagPend = 0;
+        if (pag.parcelas && pag.parcelas.length > 0) {
+          pag.parcelas.forEach(p => {
+            const valParc = parseFloat(p.valor);
+            if (p.status === 'PAGO') {
+              pagRec += valParc;
+            } else if (p.status === 'PENDENTE') {
+              pagPend += valParc;
+            }
+          });
+        }
+        totalRecebido += pagRec;
+        totalPendente += pagPend;
+      } else {
+        if (pag.status === 'PAGO') {
+          totalRecebido += valorTotal;
+        } else if (pag.status === 'PENDENTE') {
+          totalPendente += valorTotal;
+        }
+      }
+    });
+
+    const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('evt-total-inscricoes').textContent = formatBRL(totalInscricoes);
+    document.getElementById('evt-total-recebido').textContent = formatBRL(totalRecebido);
+    document.getElementById('evt-total-pendente').textContent = formatBRL(totalPendente);
+
     renderPagamentosList(pagamentos);
   } catch (err) {
     container.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-danger);">Erro ao carregar pagamentos.</td></tr>`;

@@ -58,20 +58,17 @@ def obter_metricas_admin(
     admin: Usuario = Depends(get_current_admin)
 ):
     total_eventos = db.query(Evento).count()
-    total_usuarios = db.query(Usuario).filter(Usuario.is_admin == False).count()
-    total_inscricoes = db.query(Inscricao).count()
-    inscricoes_confirmadas = db.query(Inscricao).filter(Inscricao.status == "CONFIRMADA").count()
-    inscricoes_pendentes = db.query(Inscricao).filter(Inscricao.status == "PENDENTE").count()
+    total_eventos_ativos = db.query(Evento).filter(Evento.ativo == True).count()
+    total_eventos_inativos = db.query(Evento).filter(Evento.ativo == False).count()
     
-    receita_total = db.query(func.sum(Pagamento.valor)).filter(Pagamento.status == "PAGO").scalar() or 0.0
+    total_inscritos = db.query(Inscricao).filter(Inscricao.status != "CANCELADA").count()
+    media_participantes = (total_inscritos / total_eventos) if total_eventos > 0 else 0.0
 
     return {
         "total_eventos": total_eventos,
-        "total_usuarios": total_usuarios,
-        "total_inscricoes": total_inscricoes,
-        "inscricoes_confirmadas": inscricoes_confirmadas,
-        "inscricoes_pendentes": inscricoes_pendentes,
-        "receita_total": float(receita_total)
+        "total_eventos_ativos": total_eventos_ativos,
+        "total_eventos_inativos": total_eventos_inativos,
+        "media_participantes": float(round(media_participantes, 2))
     }
 
 

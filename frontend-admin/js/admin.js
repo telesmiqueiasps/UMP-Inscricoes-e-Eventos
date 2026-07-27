@@ -87,9 +87,9 @@ async function initDashboard() {
   try {
     const metrics = await API.request('/admin/metrics');
     document.getElementById('m-eventos').textContent = metrics.total_eventos;
-    document.getElementById('m-usuarios').textContent = metrics.total_usuarios;
-    document.getElementById('m-inscricoes').textContent = metrics.total_inscricoes;
-    document.getElementById('m-receita').textContent = `R$ ${metrics.receita_total.toFixed(2).replace('.', ',')}`;
+    document.getElementById('m-eventos-ativos').textContent = metrics.total_eventos_ativos;
+    document.getElementById('m-eventos-inativos').textContent = metrics.total_eventos_inativos;
+    document.getElementById('m-media-participantes').textContent = metrics.media_participantes.toFixed(2).replace('.', ',');
 
     loadEventosTable();
   } catch (err) {}
