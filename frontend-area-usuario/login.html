@@ -91,11 +91,7 @@
   <script src="js/auth.js"></script>
   <script>
     function voltarParaSitePublico() {
-      if (document.referrer && document.referrer.includes('netlify.app')) {
-        window.location.href = document.referrer;
-      } else {
-        window.location.href = 'https://inscricoessinodalpb.netlify.app/';
-      }
+      window.location.href = 'https://inscricoessinodalpb.netlify.app/';
     }
   </script>
 </body>
