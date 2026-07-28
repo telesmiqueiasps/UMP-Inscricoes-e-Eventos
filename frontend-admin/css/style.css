@@ -141,6 +141,7 @@ td { padding: 0.85rem; border-bottom: 1px solid var(--border-color); font-size: 
 .badge-success { background: #D1FAE5; color: #065F46; }
 .badge-warning { background: #FEF3C7; color: #92400E; }
 .badge-danger { background: #FEE2E2; color: #991B1B; }
+.badge-info { background: #E0F2FE; color: #0369A1; }
 
 /* Modal */
 .modal {

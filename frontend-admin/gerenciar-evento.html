@@ -180,7 +180,7 @@
 
         <!-- Filtros de Pagamentos -->
         <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-          <div style="display: grid; grid-template-columns: 2fr 1.5fr; gap: 1rem; align-items: end;">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: end;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label">Buscar por Participante (Nome ou CPF)</label>
               <input type="text" id="pay-filter-search" class="form-control" placeholder="Nome ou CPF..." onkeyup="filterPagamentosLocal()">
@@ -193,6 +193,17 @@
                 <option value="PIX">Pix Direto</option>
                 <option value="INFINITEPAY">InfinitePay</option>
                 <option value="PARCELADO">Parcelado (Carnê)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Filtrar por Status</label>
+              <select id="pay-filter-status" class="form-control" onchange="filterPagamentosLocal()">
+                <option value="">Todos os Status</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="PAGO">Pago / Quitado</option>
+                <option value="VENCIDO">Vencido</option>
+                <option value="CANCELADO">Cancelado</option>
               </select>
             </div>
           </div>

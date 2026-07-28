@@ -234,33 +234,32 @@ async function loadPagamentos() {
   }
 }
 
-function renderPagamentosList(pagamentos) {
+function renderPagamentosList(pagamentos, statusFilter = '') {
   const container = document.getElementById('pagamentos-table-body');
   if (!container) return;
 
-  if (pagamentos.length === 0) {
-    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento registrado para este evento.</td></tr>`;
-    return;
-  }
-
+  // Se o filtro de status estiver ativo, filtrar antes de verificar se está vazio
+  let hasAnyRow = false;
+  
   let rowsHtml = '';
   pagamentos.forEach(pag => {
     const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
-    const isInsCancelled = pag.inscricao_status === 'CANCELADA' || pag.status === 'CANCELADO' || pag.status === 'CANCELADA';
-    
     const statusBadgeClass = (status) => {
       if (status === 'PAGO') return 'badge-success';
-      if (status === 'CANCELADO' || status === 'CANCELADA' || isInsCancelled) return 'badge-danger';
+      if (status === 'CANCELADO' || status === 'CANCELADA') return 'badge-info';
+      if (status === 'VENCIDO' || status === 'VENCIDA') return 'badge-danger';
       return 'badge-warning';
     };
 
     if (pag.parcelas && pag.parcelas.length > 0) {
       pag.parcelas.forEach(parc => {
-        const effectiveStatus = isInsCancelled ? 'CANCELADO' : parc.status;
+        if (statusFilter && parc.status !== statusFilter) return;
+        hasAnyRow = true;
+
         let actionHTML = '';
-        if (effectiveStatus === 'PAGO') {
+        if (parc.status === 'PAGO') {
           actionHTML = '<span style="color:#059669; font-weight:600;">Quitada</span>';
-        } else if (effectiveStatus === 'CANCELADO' || effectiveStatus === 'CANCELADA') {
+        } else if (parc.status === 'CANCELADO' || parc.status === 'CANCELADA') {
           actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelada</span>';
         } else {
           actionHTML = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>`;
@@ -274,17 +273,14 @@ function renderPagamentosList(pagamentos) {
             <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
             <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
             <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-            <td><span class="badge ${statusBadgeClass(effectiveStatus)}">${effectiveStatus}</span></td>
+            <td><span class="badge ${statusBadgeClass(parc.status)}">${parc.status}</span></td>
             <td>${actionHTML}</td>
           </tr>
         `;
       });
     } else {
-      const effectivePagStatus = isInsCancelled ? 'CANCELADO' : pag.status;
-      let actionHTML = '-';
-      if (effectivePagStatus === 'CANCELADO' || effectivePagStatus === 'CANCELADA') {
-        actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelado</span>';
-      }
+      if (statusFilter && pag.status !== statusFilter) return;
+      hasAnyRow = true;
 
       rowsHtml += `
         <tr>
@@ -294,12 +290,17 @@ function renderPagamentosList(pagamentos) {
           <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
           <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
           <td>N/A</td>
-          <td><span class="badge ${statusBadgeClass(effectivePagStatus)}">${effectivePagStatus}</span></td>
-          <td>${actionHTML}</td>
+          <td><span class="badge ${statusBadgeClass(pag.status)}">${pag.status}</span></td>
+          <td>-</td>
         </tr>
       `;
     }
   });
+
+  if (!hasAnyRow) {
+    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento correspondente aos filtros.</td></tr>`;
+    return;
+  }
 
   container.innerHTML = rowsHtml;
 }
@@ -307,6 +308,7 @@ function renderPagamentosList(pagamentos) {
 window.filterPagamentosLocal = function() {
   const searchVal = document.getElementById('pay-filter-search').value.toLowerCase().trim();
   const methodVal = document.getElementById('pay-filter-method').value;
+  const statusVal = document.getElementById('pay-filter-status').value;
 
   const filtered = allPagamentosCached.filter(pag => {
     if (searchVal) {
@@ -322,10 +324,18 @@ window.filterPagamentosLocal = function() {
         return false;
       }
     }
+    if (statusVal) {
+      if (pag.forma_pagamento === 'PARCELADO') {
+        const hasStatus = pag.parcelas.some(parc => parc.status === statusVal);
+        if (!hasStatus) return false;
+      } else {
+        if (pag.status !== statusVal) return false;
+      }
+    }
     return true;
   });
 
-  renderPagamentosList(filtered);
+  renderPagamentosList(filtered, statusVal);
 };
 
 window.alterarStatusParcela = async function(id, novoStatus) {
