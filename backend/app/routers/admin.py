@@ -456,8 +456,19 @@ async def upload_foto_evento(
         )
 
     ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in [".jpg", ".jpeg", ".png", ".webp", ".gif"]:
-        raise HTTPException(status_code=400, detail="Formato de arquivo inválido. Apenas imagens são permitidas.")
+    allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp4", ".webm", ".avi", ".mov"]
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de arquivo inválido. Apenas imagens e vídeos (.mp4, .webm, .avi, .mov) são permitidos."
+        )
+
+    file_content = await file.read()
+    if len(file_content) > 25 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Arquivo muito grande. O limite máximo permitido para upload é de 25MB."
+        )
 
     filename = f"{uuid.uuid4()}{ext}"
     clean_url = settings.SUPABASE_URL.rstrip('/')
@@ -467,8 +478,6 @@ async def upload_foto_evento(
         "Authorization": f"Bearer {settings.SUPABASE_KEY}",
         "Content-Type": file.content_type
     }
-    
-    file_content = await file.read()
     
     async with httpx.AsyncClient() as client:
         response = await client.post(upload_url, headers=headers, content=file_content)

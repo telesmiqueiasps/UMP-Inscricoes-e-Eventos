@@ -1,3 +1,26 @@
+function isVideoUrl(url) {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.avi');
+}
+
+function showMainMedia(url) {
+  const mainImg = document.getElementById('event-main-img');
+  const mainVideo = document.getElementById('event-main-video');
+  if (!mainImg || !mainVideo) return;
+
+  if (isVideoUrl(url)) {
+    mainImg.style.display = 'none';
+    mainVideo.style.display = 'block';
+    mainVideo.src = url;
+  } else {
+    mainVideo.style.display = 'none';
+    mainVideo.pause();
+    mainImg.style.display = 'block';
+    mainImg.src = url;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get('id');
@@ -72,14 +95,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fotosList = ev.fotos ? ev.fotos.split(',').filter(f => f.trim() !== '') : [];
 
     if (fotosList.length > 0) {
-      mainImg.src = fotosList[0];
+      showMainMedia(fotosList[0]);
       
       if (fotosList.length > 1) {
         if (thumbnailsContainer) {
           thumbnailsContainer.style.display = 'grid';
-          thumbnailsContainer.innerHTML = fotosList.map((url, index) => `
-            <img src="${url}" alt="Foto ${index + 1}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="selectThumbnail(this, '${url}')">
-          `).join('');
+          thumbnailsContainer.innerHTML = fotosList.map((url, index) => {
+            if (isVideoUrl(url)) {
+              return `
+                <div class="thumbnail video-thumb ${index === 0 ? 'active' : ''}" onclick="selectThumbnail(this, '${url}')" style="position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; height: 60px; border-radius: 4px; cursor: pointer;">
+                  <video src="${url}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;"></video>
+                  <span style="position: absolute; color: white; font-size: 1.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">▶️</span>
+                </div>
+              `;
+            } else {
+              return `
+                <img src="${url}" alt="Foto ${index + 1}" class="thumbnail ${index === 0 ? 'active' : ''}" onclick="selectThumbnail(this, '${url}')">
+              `;
+            }
+          }).join('');
         }
       }
     } else {
@@ -93,9 +127,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function selectThumbnail(elem, url) {
-  const mainImg = document.getElementById('event-main-img');
-  if (mainImg) mainImg.src = url;
+window.selectThumbnail = function(elem, url) {
+  showMainMedia(url);
 
   // Toggle active class on siblings
   document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));

@@ -365,38 +365,130 @@
               </div>
             </div>
 
-            <!-- Fotos do Evento -->
+            <!-- Fotos e Vídeos do Evento -->
             <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-              <label class="form-label" style="font-weight: 700; color: var(--primary); font-size: 1rem;">Fotos / Imagens do Evento (Links ou Upload)</label>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Insira o link das fotos ou selecione um arquivo para fazer upload no Supabase Storage:</p>
-              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-                  <input type="url" class="ev-image-url form-control" id="ev-foto-1" placeholder="Link da Imagem 1 (Principal / Banner)">
-                  <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                    📤 Upload
-                    <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-1')">
-                  </label>
+              <label class="form-label" style="font-weight: 700; color: var(--primary); font-size: 1rem;">Galeria de Mídia do Evento (Até 8 Imagens ou Vídeos)</label>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Insira o link das mídias ou faça o upload de imagens/vídeos (limite de 25MB) para o Supabase Storage:</p>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                <!-- Mídia 1 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 1 (Principal / Banner)</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-1" placeholder="Link da Mídia 1" onchange="onMediaUrlChange(1)" oninput="onMediaUrlChange(1)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-1')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-1" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-                  <input type="url" class="ev-image-url form-control" id="ev-foto-2" placeholder="Link da Imagem 2">
-                  <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                    📤 Upload
-                    <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-2')">
-                  </label>
+
+                <!-- Mídia 2 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 2</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-2" placeholder="Link da Mídia 2" onchange="onMediaUrlChange(2)" oninput="onMediaUrlChange(2)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-2')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-2" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-                  <input type="url" class="ev-image-url form-control" id="ev-foto-3" placeholder="Link da Imagem 3">
-                  <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                    📤 Upload
-                    <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-3')">
-                  </label>
+
+                <!-- Mídia 3 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 3</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-3" placeholder="Link da Mídia 3" onchange="onMediaUrlChange(3)" oninput="onMediaUrlChange(3)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-3')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-3" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
-                  <input type="url" class="ev-image-url form-control" id="ev-foto-4" placeholder="Link da Imagem 4">
-                  <label class="btn btn-outline" style="margin: 0; padding: 0.5rem 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px;">
-                    📤 Upload
-                    <input type="file" accept="image/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-4')">
-                  </label>
+
+                <!-- Mídia 4 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 4</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-4" placeholder="Link da Mídia 4" onchange="onMediaUrlChange(4)" oninput="onMediaUrlChange(4)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-4')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-4" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
+                </div>
+
+                <!-- Mídia 5 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 5</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-5" placeholder="Link da Mídia 5" onchange="onMediaUrlChange(5)" oninput="onMediaUrlChange(5)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-5')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-5" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
+                </div>
+
+                <!-- Mídia 6 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 6</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-6" placeholder="Link da Mídia 6" onchange="onMediaUrlChange(6)" oninput="onMediaUrlChange(6)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-6')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-6" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
+                </div>
+
+                <!-- Mídia 7 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 7</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-7" placeholder="Link da Mídia 7" onchange="onMediaUrlChange(7)" oninput="onMediaUrlChange(7)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-7')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-7" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
+                </div>
+
+                <!-- Mídia 8 -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; font-size: 0.8rem; color: var(--primary);">Mídia 8</div>
+                  <div style="display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center;">
+                    <input type="url" class="ev-image-url form-control" id="ev-foto-8" placeholder="Link da Mídia 8" onchange="onMediaUrlChange(8)" oninput="onMediaUrlChange(8)">
+                    <label class="btn btn-outline" style="margin: 0; padding: 0.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; height: 38px; font-size: 0.8rem;">
+                      📤
+                      <input type="file" accept="image/*,video/*" style="display: none;" onchange="uploadImageToField(this, 'ev-foto-8')">
+                    </label>
+                  </div>
+                  <div id="preview-foto-8" style="display: flex; align-items: center; justify-content: center; background: #e2e8f0; height: 100px; border-radius: 6px; overflow: hidden; border: 1px dashed #cbd5e1; font-size: 0.8rem; color: var(--text-muted);">
+                    Sem prévia
+                  </div>
                 </div>
               </div>
             </div>

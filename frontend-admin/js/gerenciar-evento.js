@@ -72,10 +72,14 @@ async function loadEventoInfo() {
     });
 
     const fotosArray = eventoAtual.fotos ? eventoAtual.fotos.split(',') : [];
-    document.getElementById('ev-foto-1').value = fotosArray[0] || '';
-    document.getElementById('ev-foto-2').value = fotosArray[1] || '';
-    document.getElementById('ev-foto-3').value = fotosArray[2] || '';
-    document.getElementById('ev-foto-4').value = fotosArray[3] || '';
+    for (let i = 1; i <= 8; i++) {
+      const val = fotosArray[i - 1] || '';
+      const input = document.getElementById(`ev-foto-${i}`);
+      if (input) {
+        input.value = val;
+        updateMediaPreview(i, val);
+      }
+    }
 
   } catch (err) {
     showToast('Erro ao carregar detalhes do evento.', 'error');
@@ -351,12 +355,12 @@ window.salvarEvento = async function(e) {
   e.preventDefault();
   const fieldsSelected = Array.from(document.querySelectorAll('.ev-form-field:checked')).map(cb => cb.value).join(',');
   
-  const fotosUrls = [
-    document.getElementById('ev-foto-1').value.trim(),
-    document.getElementById('ev-foto-2').value.trim(),
-    document.getElementById('ev-foto-3').value.trim(),
-    document.getElementById('ev-foto-4').value.trim()
-  ].filter(url => url !== '').join(',');
+  const fotosUrlsList = [];
+  for (let i = 1; i <= 8; i++) {
+    const val = document.getElementById(`ev-foto-${i}`).value.trim();
+    if (val) fotosUrlsList.push(val);
+  }
+  const fotosUrls = fotosUrlsList.join(',');
 
   const payload = {
     titulo: document.getElementById('ev-titulo').value,
@@ -571,12 +575,47 @@ window.uploadImageToField = async function(inputElement, targetFieldId) {
     });
     
     document.getElementById(targetFieldId).value = res.url;
-    showToast('Imagem enviada com sucesso para o Supabase Storage!', 'success');
+    
+    // Atualizar preview correspondente
+    const idx = parseInt(targetFieldId.replace('ev-foto-', ''));
+    if (!isNaN(idx)) {
+      updateMediaPreview(idx, res.url);
+    }
+    
+    showToast('Arquivo enviado com sucesso para o Supabase Storage!', 'success');
   } catch (err) {
-    showToast(err.message || 'Erro ao enviar imagem.', 'error');
+    showToast(err.message || 'Erro ao enviar arquivo.', 'error');
   } finally {
     label.innerHTML = originalText;
     label.style.pointerEvents = 'auto';
     inputElement.value = '';
   }
+};
+
+// --- Funções de Pré-visualização de Mídias ---
+function isVideoUrl(url) {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.avi');
+}
+
+window.updateMediaPreview = function(index, url) {
+  const container = document.getElementById(`preview-foto-${index}`);
+  if (!container) return;
+
+  if (!url) {
+    container.innerHTML = 'Sem prévia';
+    return;
+  }
+
+  if (isVideoUrl(url)) {
+    container.innerHTML = `<video src="${url}" controls style="max-height: 100px; max-width: 100%; border-radius: 4px; display: block; margin: 0 auto;"></video>`;
+  } else {
+    container.innerHTML = `<img src="${url}" style="max-height: 100px; max-width: 100%; border-radius: 4px; object-fit: cover; display: block; margin: 0 auto;" onerror="this.parentElement.innerHTML='Sem prévia (Link inválido)'">`;
+  }
+};
+
+window.onMediaUrlChange = function(index) {
+  const url = document.getElementById(`ev-foto-${index}`).value.trim();
+  updateMediaPreview(index, url);
 };

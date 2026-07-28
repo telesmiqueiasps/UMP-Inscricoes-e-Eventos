@@ -1,5 +1,11 @@
 let eventoAtual = null;
 
+function isVideoUrl(url) {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.webm') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.avi');
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const eventoId = urlParams.get('evento_id');
@@ -54,9 +60,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const fotosList = eventoAtual.fotos ? eventoAtual.fotos.split(',').filter(f => f.trim() !== '') : [];
-    const imageHTML = fotosList.length > 0 ? 
-      `<img src="${fotosList[0]}" alt="${eventoAtual.titulo}" style="width: calc(100% + 3rem); height: 220px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1.5rem -1.5rem; display: block;" />` : 
-      '';
+    const bannerUrl = fotosList.find(url => !isVideoUrl(url)) || fotosList[0];
+    let imageHTML = '';
+    if (bannerUrl) {
+      if (isVideoUrl(bannerUrl)) {
+        imageHTML = `<video src="${bannerUrl}" autoplay muted loop style="width: calc(100% + 3rem); height: 220px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1.5rem -1.5rem; display: block;"></video>`;
+      } else {
+        imageHTML = `<img src="${bannerUrl}" alt="${eventoAtual.titulo}" style="width: calc(100% + 3rem); height: 220px; object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0; margin: -1.5rem -1.5rem 1.5rem -1.5rem; display: block;" />`;
+      }
+    }
 
     eventSummary.innerHTML = `
       ${imageHTML}
