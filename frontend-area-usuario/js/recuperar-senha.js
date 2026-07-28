@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const emailInput = document.getElementById('recover-email');
-  const verifyBtn = document.getElementById('verify-email-btn');
+  const spinner = document.getElementById('email-check-spinner');
   const statusMsg = document.getElementById('email-status-msg');
   const recoverBtn = document.getElementById('recover-submit-btn');
   const recoverForm = document.getElementById('recover-form');
@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const successDiv = document.getElementById('recover-success');
 
   let emailVerified = false;
+  let debounceTimeout = null;
 
   const showStatus = (text, type) => {
     statusMsg.style.display = 'block';
@@ -28,46 +29,42 @@ document.addEventListener('DOMContentLoaded', () => {
     successDiv.style.display = 'none';
   };
 
-  const verifyEmail = async () => {
-    const email = emailInput.value.trim();
-    if (!email) {
-      showStatus('Por favor, informe um e-mail válido.', 'error');
-      return;
-    }
-
-    verifyBtn.disabled = true;
-    verifyBtn.innerHTML = '<span class="spinner"></span>';
-    clearMessages();
-
-    try {
-      const res = await API.request(`/auth/check-email?email=${encodeURIComponent(email)}`);
-      if (res.exists) {
-        emailVerified = true;
-        showStatus('✅ E-mail encontrado! Botão de recuperação liberado.', 'success');
-        recoverBtn.disabled = false;
-      } else {
-        emailVerified = false;
-        showStatus('❌ Este e-mail não está cadastrado em nosso sistema.', 'error');
-        recoverBtn.disabled = true;
-      }
-    } catch (err) {
-      showStatus('Erro ao verificar e-mail. Tente novamente.', 'error');
-      recoverBtn.disabled = true;
-    } finally {
-      verifyBtn.disabled = false;
-      verifyBtn.textContent = 'Verificar';
-    }
-  };
-
-  // Verificar ao clicar no botão
-  verifyBtn.addEventListener('click', verifyEmail);
-
-  // Desabilitar o botão de recuperação se o e-mail mudar
+  // Escutar digitação do e-mail com debounce para verificação automática
   emailInput.addEventListener('input', () => {
     emailVerified = false;
     recoverBtn.disabled = true;
     statusMsg.style.display = 'none';
     clearMessages();
+
+    const email = emailInput.value.trim();
+    
+    // Regra simples para evitar chamadas de API antes de um e-mail estruturado
+    if (!email || !email.includes('@') || email.length < 5) {
+      return;
+    }
+
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(async () => {
+      if (spinner) spinner.style.display = 'block';
+
+      try {
+        const res = await API.request(`/auth/check-email?email=${encodeURIComponent(email)}`);
+        if (res.exists) {
+          emailVerified = true;
+          showStatus('✅ E-mail encontrado! Botão de recuperação liberado.', 'success');
+          recoverBtn.disabled = false;
+        } else {
+          emailVerified = false;
+          showStatus('❌ Este e-mail não está cadastrado em nosso sistema.', 'error');
+          recoverBtn.disabled = true;
+        }
+      } catch (err) {
+        showStatus('Erro ao verificar e-mail. Tente novamente.', 'error');
+        recoverBtn.disabled = true;
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
+    }, 600);
   });
 
   // Enviar formulário

@@ -32,14 +32,12 @@
     </div>
 
     <form id="recover-form">
-      <div style="display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.5rem;">
-        <div class="form-group" style="flex: 1; margin-bottom: 0;">
-          <label class="form-label">E-mail Cadastrado</label>
-          <input type="email" id="recover-email" class="form-control" placeholder="seu@email.com" required>
+      <div class="form-group" style="margin-bottom: 0.5rem; position: relative;">
+        <label class="form-label">E-mail Cadastrado</label>
+        <input type="email" id="recover-email" class="form-control" placeholder="seu@email.com" required style="padding-right: 2.5rem;">
+        <div id="email-check-spinner" style="display: none; position: absolute; right: 0.85rem; bottom: 0.8rem;">
+          <div class="spinner" style="border-top-color: var(--primary); border-left-color: var(--primary); border-bottom-color: rgba(0,0,0,0.1); border-right-color: rgba(0,0,0,0.1); width: 1.15rem; height: 1.15rem;"></div>
         </div>
-        <button type="button" id="verify-email-btn" class="btn btn-outline" style="height: 44px; padding: 0 1rem; font-size: 0.85rem; font-weight: 600;">
-          Verificar
-        </button>
       </div>
 
       <div id="email-status-msg" style="display: none; font-size: 0.85rem; margin-bottom: 1.5rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px;"></div>
