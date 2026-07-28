@@ -361,8 +361,8 @@ window.salvarEvento = async function(e) {
   const payload = {
     titulo: document.getElementById('ev-titulo').value,
     descricao: document.getElementById('ev-descricao-editor').innerHTML,
-    data_inicio: new Date(document.getElementById('ev-inicio').value).toISOString(),
-    data_fim: new Date(document.getElementById('ev-fim').value).toISOString(),
+    data_inicio: document.getElementById('ev-inicio').value ? (document.getElementById('ev-inicio').value.length === 16 ? document.getElementById('ev-inicio').value + ":00" : document.getElementById('ev-inicio').value) : null,
+    data_fim: document.getElementById('ev-fim').value ? (document.getElementById('ev-fim').value.length === 16 ? document.getElementById('ev-fim').value + ":00" : document.getElementById('ev-fim').value) : null,
     local: document.getElementById('ev-local').value,
     valor: parseFloat(document.getElementById('ev-valor').value),
     max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
