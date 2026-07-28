@@ -54,7 +54,10 @@ async function loadDashboard() {
         }
       } else {
         const ins = data.inscricoes[0]; // mais recente
-        const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
+        let statusBadge = 'badge-warning';
+        if (ins.status === 'CONFIRMADA') statusBadge = 'badge-success';
+        else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') statusBadge = 'badge-info';
+        else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
         const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         
         registrationCard.innerHTML = `
@@ -96,7 +99,8 @@ function renderRecentPayments(pagamentos) {
 
   const getStatusBadge = (st) => {
     if (st === 'PAGO') return 'badge-success';
-    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
+    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-info';
+    if (st === 'VENCIDO' || st === 'VENCIDA') return 'badge-danger';
     return 'badge-warning';
   };
 
@@ -177,7 +181,8 @@ function renderAllInscricoes(inscricoes, pagamentos) {
 
   const getStatusBadge = (st) => {
     if (st === 'PAGO') return 'badge-success';
-    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
+    if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-info';
+    if (st === 'VENCIDO' || st === 'VENCIDA') return 'badge-danger';
     return 'badge-warning';
   };
 
@@ -199,7 +204,10 @@ function renderAllInscricoes(inscricoes, pagamentos) {
     const totalPagoFmt = totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const totalInscFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const dataReg = new Date(ins.created_at).toLocaleDateString('pt-BR');
-    const badgeClass = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
+    let badgeClass = 'badge-warning';
+    if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
+    else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-info';
+    else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') badgeClass = 'badge-danger';
 
     let pagamentosHTML = '';
     if (insPags.length > 0) {
