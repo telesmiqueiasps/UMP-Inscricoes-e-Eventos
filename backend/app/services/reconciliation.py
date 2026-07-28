@@ -150,11 +150,12 @@ def processar_alertas_vencimento(db):
     hoje = date.today()
     logger.warning("Verificando lembretes de vencimento de parcelas...")
 
-    # 1. Alerta prévio: 3 dias antes
+    # 1. Alerta prévio: nos próximos 3 dias (e ainda não enviado)
     data_previo = hoje + timedelta(days=3)
     parcelas_previo = db.query(Parcela).join(Pagamento).filter(
         Parcela.status == "PENDENTE",
-        Parcela.vencimento == data_previo,
+        Parcela.vencimento <= data_previo,
+        Parcela.vencimento >= hoje,
         Parcela.alerta_previo_enviado == False
     ).all()
 
@@ -177,11 +178,11 @@ def processar_alertas_vencimento(db):
         except Exception as e:
             logger.error(f"Erro ao enviar lembrete prévio para parcela ID={parc.id}: {e}")
 
-    # 2. Alerta de atraso: 1 dia após
+    # 2. Alerta de atraso: vencimento no passado há 1 dia ou mais (e ainda não enviado)
     data_atraso = hoje - timedelta(days=1)
     parcelas_atraso = db.query(Parcela).join(Pagamento).filter(
         Parcela.status == "PENDENTE",
-        Parcela.vencimento == data_atraso,
+        Parcela.vencimento <= data_atraso,
         Parcela.alerta_atraso_enviado == False
     ).all()
 

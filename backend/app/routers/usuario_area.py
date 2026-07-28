@@ -60,11 +60,16 @@ def obter_dashboard_usuario(
         inscricoes_data.append(ins_dict)
 
         # Buscar pagamentos associados
+        from datetime import date
+        hoje = date.today()
+        
         for pag in ins.pagamentos:
             pag_status = "CANCELADO" if ins.status == "CANCELADA" else pag.status
             parcelas_list = []
             for parc in pag.parcelas:
                 parc_status = "CANCELADO" if ins.status == "CANCELADA" else parc.status
+                if parc_status == "PENDENTE" and parc.vencimento < hoje:
+                    parc_status = "VENCIDO"
                 parcelas_list.append({
                     "id": parc.id,
                     "numero": parc.numero,
@@ -75,6 +80,10 @@ def obter_dashboard_usuario(
                     "qr_code_pix": parc.qr_code_pix,
                     "pdf_url": f"/api/v1/pagamentos/parcelas/{parc.id}/pdf"
                 })
+
+            if pag_status == "PENDENTE":
+                if any(p["status"] == "VENCIDO" for p in parcelas_list) or (pag.forma_pagamento in ["PIX", "INFINITEPAY"] and len(pag.parcelas) > 0 and pag.parcelas[0].vencimento < hoje):
+                    pag_status = "VENCIDO"
 
             pagamentos_data.append({
                 "id": pag.id,

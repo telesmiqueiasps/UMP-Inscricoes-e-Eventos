@@ -294,6 +294,9 @@ def listar_pagamentos_admin(
     if evento_id is not None:
         query = query.join(Pagamento.inscricao).filter(Inscricao.evento_id == evento_id)
     pagamentos = query.order_by(Pagamento.created_at.desc()).all()
+    from datetime import date
+    hoje = date.today()
+    
     for pag in pagamentos:
         if pag.inscricao:
             pag.inscricao_status = pag.inscricao.status
@@ -305,6 +308,18 @@ def listar_pagamentos_admin(
                 pag.usuario_nome = pag.inscricao.usuario.nome
                 pag.usuario_cpf = pag.inscricao.usuario.cpf
                 pag.usuario_email = pag.inscricao.usuario.email
+        
+        # Calcular status VENCIDO dinamicamente
+        any_vencida = False
+        for parc in pag.parcelas:
+            if parc.status == "PENDENTE" and parc.vencimento < hoje:
+                parc.status = "VENCIDO"
+                any_vencida = True
+        
+        if pag.status == "PENDENTE":
+            if any_vencida or (pag.forma_pagamento in ["PIX", "INFINITEPAY"] and len(pag.parcelas) > 0 and pag.parcelas[0].vencimento < hoje):
+                pag.status = "VENCIDO"
+                
     return pagamentos
 
 

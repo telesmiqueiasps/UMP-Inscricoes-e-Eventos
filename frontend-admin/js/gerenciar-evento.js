@@ -190,6 +190,7 @@ async function loadPagamentos() {
     let totalInscricoes = 0;
     let totalRecebido = 0;
     let totalPendente = 0;
+    let totalVencido = 0;
 
     pagamentos.forEach(pag => {
       if (pag.status === 'CANCELADO' || pag.status === 'CANCELADA' || pag.inscricao_status === 'CANCELADA') return;
@@ -198,25 +199,25 @@ async function loadPagamentos() {
       totalInscricoes += valorTotal;
 
       if (pag.forma_pagamento === 'PARCELADO') {
-        let pagRec = 0;
-        let pagPend = 0;
         if (pag.parcelas && pag.parcelas.length > 0) {
           pag.parcelas.forEach(p => {
             const valParc = parseFloat(p.valor);
             if (p.status === 'PAGO') {
-              pagRec += valParc;
+              totalRecebido += valParc;
             } else if (p.status === 'PENDENTE') {
-              pagPend += valParc;
+              totalPendente += valParc;
+            } else if (p.status === 'VENCIDO' || p.status === 'VENCIDA') {
+              totalVencido += valParc;
             }
           });
         }
-        totalRecebido += pagRec;
-        totalPendente += pagPend;
       } else {
         if (pag.status === 'PAGO') {
           totalRecebido += valorTotal;
         } else if (pag.status === 'PENDENTE') {
           totalPendente += valorTotal;
+        } else if (pag.status === 'VENCIDO' || pag.status === 'VENCIDA') {
+          totalVencido += valorTotal;
         }
       }
     });
@@ -225,6 +226,7 @@ async function loadPagamentos() {
     document.getElementById('evt-total-inscricoes').textContent = formatBRL(totalInscricoes);
     document.getElementById('evt-total-recebido').textContent = formatBRL(totalRecebido);
     document.getElementById('evt-total-pendente').textContent = formatBRL(totalPendente);
+    document.getElementById('evt-total-vencido').textContent = formatBRL(totalVencido);
 
     renderPagamentosList(pagamentos);
   } catch (err) {
