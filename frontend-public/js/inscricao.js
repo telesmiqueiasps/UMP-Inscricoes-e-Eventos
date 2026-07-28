@@ -635,15 +635,8 @@ function renderDynamicFormFields() {
       case 'restricao_alimentar':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Restrição Alimentar *</label>
-            <select name="dyn_restricao_alimentar" class="form-control dyn-input" required>
-              <option value="Nenhuma">Nenhuma</option>
-              <option value="Vegetariano">Vegetariano</option>
-              <option value="Vegano">Vegano</option>
-              <option value="Sem Glúten">Sem Glúten</option>
-              <option value="Sem Lactose">Sem Lactose</option>
-              <option value="Outros">Outros</option>
-            </select>
+            <label class="form-label">Restrição Alimentar (Se houver, descreva) *</label>
+            <input type="text" name="dyn_restricao_alimentar" class="form-control dyn-input" placeholder="Ex: Nenhuma, ou Alergia a glúten" required>
           </div>
         `;
         break;
@@ -712,31 +705,12 @@ function renderDynamicFormFields() {
         `;
         break;
       case 'dias_estadia':
-        let startDate = new Date(eventoAtual.data_inicio);
-        let endDate = new Date(eventoAtual.data_fim);
-        let days = [];
-        let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        let last = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        while (current <= last) {
-          days.push(new Date(current));
-          current.setDate(current.getDate() + 1);
-        }
-        let daysCheckboxes = days.map((day) => {
-          let dayStr = day.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
-          return `
-            <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer;">
-              <input type="checkbox" class="estadia-day" value="${dayStr}"> ${dayStr}
-            </label>
-          `;
-        }).join('');
-        
+        const startISO = (eventoAtual.data_inicio || '').split('T')[0];
+        const endISO = (eventoAtual.data_fim || '').split('T')[0];
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Dias de Estadia *</label>
-            <div style="display:flex; flex-direction:column; gap:0.35rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: white;">
-              ${daysCheckboxes}
-            </div>
-            <input type="hidden" name="dyn_dias_estadia" class="dyn-input" id="hidden-dias-estadia" required>
+            <label class="form-label">Dia da sua chegada *</label>
+            <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
           </div>
         `;
         break;

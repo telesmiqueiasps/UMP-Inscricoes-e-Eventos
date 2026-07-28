@@ -414,7 +414,7 @@ function formatarLabelCampo(field) {
     nome_pastor: 'Nome Pastor',
     contato_pastor: 'Contato Pastor',
     cargo_federacao: 'Cargo Federação',
-    dias_estadia: 'Estadia'
+    dias_estadia: 'Dia da chegada'
   };
   return map[field] || field.toUpperCase();
 }
