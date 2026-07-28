@@ -235,6 +235,14 @@ body {
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
   line-height: 1.6;
+  
+  /* Truncate text to 4 lines with ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: calc(1.6em * 4); /* Fallback */
 }
 
 .card-desc h1 {
