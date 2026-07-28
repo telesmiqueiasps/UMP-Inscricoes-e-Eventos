@@ -235,7 +235,7 @@ body {
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
   line-height: 1.6;
-  height: 105px; /* Altura fixa para manter os cards perfeitamente alinhados */
+  height: 150px; /* Altura fixa para manter os cards alinhados com mais 2 linhas visíveis */
   position: relative;
   overflow: hidden;
 }
