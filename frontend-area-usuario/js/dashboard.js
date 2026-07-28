@@ -114,7 +114,7 @@ function renderRecentPayments(pagamentos) {
             <td>${valorParcFmt}</td>
             <td><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
             <td>
-              {!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
+              ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
                 (parc.copia_cola_pix.startsWith('http') ? 
                   `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Parcela</a>` : 
                   `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
