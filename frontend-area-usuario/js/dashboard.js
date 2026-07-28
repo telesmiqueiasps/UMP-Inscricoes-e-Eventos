@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDashboard();
 });
 
+let activeInscricaoId = null;
+
 async function loadDashboard() {
   try {
     const data = await API.request('/usuario/dashboard');
@@ -41,44 +43,46 @@ async function loadDashboard() {
       `;
     }
 
-    // 3. Inscrição Recente (Aba "Meu Painel" deve mostrar apenas a mais recente)
-    if (registrationCard) {
-      if (!data.inscricoes || data.inscricoes.length === 0) {
+    // Configurar seletor de eventos se houver inscrições
+    const selectorContainer = document.getElementById('dashboard-selector-container');
+    const eventSelect = document.getElementById('dashboard-event-select');
+
+    if (data.inscricoes && data.inscricoes.length > 0) {
+      // Se tiver mais de 1 inscrição, mostra o seletor
+      if (data.inscricoes.length > 1) {
+        if (selectorContainer) selectorContainer.style.display = 'flex';
+        if (eventSelect) {
+          eventSelect.innerHTML = data.inscricoes.map(ins => `
+            <option value="${ins.id}">${ins.evento_titulo || 'Evento'}</option>
+          `).join('');
+        }
+      } else {
+        if (selectorContainer) selectorContainer.style.display = 'none';
+      }
+
+      // Definir a inscrição ativa padrão (a mais recente se não estiver selecionada ou não existir na lista)
+      const exists = data.inscricoes.some(ins => ins.id === activeInscricaoId);
+      if (!activeInscricaoId || !exists) {
+        activeInscricaoId = data.inscricoes[0].id;
+      }
+      
+      if (eventSelect) {
+        eventSelect.value = activeInscricaoId;
+      }
+
+      // Renderizar o evento ativo
+      renderActiveRegistration(activeInscricaoId);
+    } else {
+      if (selectorContainer) selectorContainer.style.display = 'none';
+      if (registrationCard) {
         registrationCard.innerHTML = `
           <h3 class="card-title">Inscrições</h3>
           <p style="color: var(--text-muted);">Você ainda não possui inscrições realizadas.</p>
           <a href="https://inscricoessinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1rem;">Ver Eventos Disponíveis</a>
         `;
-        if (paymentsContainer) {
-          paymentsContainer.innerHTML = `<p style="color: var(--text-muted);">Nenhum pagamento registrado.</p>`;
-        }
-      } else {
-        const ins = data.inscricoes[0]; // mais recente
-        let statusBadge = 'badge-warning';
-        if (ins.status === 'CONFIRMADA') statusBadge = 'badge-success';
-        else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') statusBadge = 'badge-info';
-        else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
-        const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
-        registrationCard.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <span class="badge ${statusBadge}">${ins.status}</span>
-              <h3 class="card-title" style="margin-top: 0.5rem;">${ins.evento_titulo || 'Evento'}</h3>
-            </div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
-              ${valorFmt}
-            </div>
-          </div>
-          <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
-            📍 Local: ${ins.evento_local || 'A definir'}<br>
-            💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
-          </p>
-        `;
-
-        // Renderizar apenas os pagamentos da inscrição mais recente
-        const pagamentosRecentes = data.pagamentos.filter(pag => pag.inscricao_id === ins.id);
-        renderRecentPayments(pagamentosRecentes);
+      }
+      if (paymentsContainer) {
+        paymentsContainer.innerHTML = `<p style="color: var(--text-muted);">Nenhum pagamento registrado.</p>`;
       }
     }
 
@@ -88,6 +92,48 @@ async function loadDashboard() {
   } catch (err) {
     showToast('Erro ao carregar dados do painel.', 'error');
   }
+}
+
+// Função para mudar o evento ativo no dashboard
+window.changeDashboardEvent = function(inscricaoId) {
+  activeInscricaoId = parseInt(inscricaoId);
+  renderActiveRegistration(activeInscricaoId);
+};
+
+// Renderizar dados da inscrição ativa e seus pagamentos
+function renderActiveRegistration(inscricaoId) {
+  if (!currentDashboardData) return;
+  const data = currentDashboardData;
+  const ins = data.inscricoes.find(item => item.id === inscricaoId);
+  if (!ins) return;
+
+  if (registrationCard) {
+    let statusBadge = 'badge-warning';
+    if (ins.status === 'CONFIRMADA') statusBadge = 'badge-success';
+    else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') statusBadge = 'badge-info';
+    else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
+    const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    
+    registrationCard.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span class="badge ${statusBadge}">${ins.status}</span>
+          <h3 class="card-title" style="margin-top: 0.5rem;">${ins.evento_titulo || 'Evento'}</h3>
+        </div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+          ${valorFmt}
+        </div>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+        📍 Local: ${ins.evento_local || 'A definir'}<br>
+        💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
+      </p>
+    `;
+  }
+
+  // Renderizar pagamentos associados à inscrição selecionada
+  const pagamentosFiltrados = data.pagamentos.filter(pag => pag.inscricao_id === ins.id);
+  renderRecentPayments(pagamentosFiltrados);
 }
 
 function renderRecentPayments(pagamentos) {
@@ -211,35 +257,76 @@ function renderAllInscricoes(inscricoes, pagamentos) {
 
     let pagamentosHTML = '';
     if (insPags.length > 0) {
-      pagamentosHTML = `
-        <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-          <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Histórico Financeiro da Inscrição:</h4>
-          <div style="overflow-x: auto;">
-            <table style="font-size: 0.85rem; width: 100%;">
-              <thead>
-                <tr style="background: #f1f5f9;">
-                  <th style="padding: 0.25rem 0.5rem;">Forma</th>
-                  <th style="padding: 0.25rem 0.5rem;">Valor</th>
-                  <th style="padding: 0.25rem 0.5rem;">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${insPags.map(pag => {
-                  const valFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                  const desc = pag.forma_pagamento === 'PARCELADO' ? `Parcelado (${pag.parcelas.length}x)` : formatarFormaPagamento(pag.forma_pagamento, pag.capture_method);
-                  return `
-                    <tr>
-                      <td style="padding: 0.25rem 0.5rem;">${desc}</td>
-                      <td style="padding: 0.25rem 0.5rem;">${valFmt}</td>
-                      <td style="padding: 0.25rem 0.5rem;"><span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></td>
+      pagamentosHTML = insPags.map(pag => {
+        if (pag.parcelas && pag.parcelas.length > 0) {
+          const parcelasRows = pag.parcelas.map(parc => {
+            const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
+            const isCancelled = parc.status === 'CANCELADO' || parc.status === 'CANCELADA' || pag.status === 'CANCELADO';
+
+            return `
+              <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Parcela ${parc.numero}</td>
+                <td style="padding: 0.5rem;">${parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                <td style="padding: 0.5rem;">${valorParcFmt}</td>
+                <td style="padding: 0.5rem;"><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
+                <td style="padding: 0.5rem;">
+                  ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
+                    (parc.copia_cola_pix.startsWith('http') ? 
+                      `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; text-decoration: none;">Pagar</a>` : 
+                      `<button class="btn btn-outline" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
+                    ) : ''
+                  }
+                  ${!isCancelled ? 
+                    `<a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; margin-left: 0.25rem; text-decoration: none;">📄 PDF</a>` : ''
+                  }
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          return `
+            <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+              <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Parcelamento (Carnê):</h4>
+              <div style="overflow-x: auto;">
+                <table style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background: #f1f5f9; border-bottom: 1px solid var(--border-color);">
+                      <th style="padding: 0.5rem; text-align: left;">Parcela</th>
+                      <th style="padding: 0.5rem; text-align: left;">Vencimento</th>
+                      <th style="padding: 0.5rem; text-align: left;">Valor</th>
+                      <th style="padding: 0.5rem; text-align: left;">Status</th>
+                      <th style="padding: 0.5rem; text-align: left;">Ações</th>
                     </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
+                  </thead>
+                  <tbody>${parcelasRows}</tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        } else {
+          const valorPagFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const isCancelled = pag.status === 'CANCELADO' || pag.status === 'CANCELADA';
+          return `
+            <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <h4 style="font-size: 0.9rem; font-weight: 700; margin: 0; color: var(--primary);">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h4>
+                <div style="margin-top: 0.25rem; font-size: 0.85rem; color: var(--text-muted);">
+                  Valor: ${valorPagFmt} | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span>
+                </div>
+              </div>
+              <div>
+                ${pag.receipt_url && !isCancelled ? 
+                  (pag.status === 'PAGO' ? 
+                    `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline" style="border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: var(--radius-md);">📄 Comprovante</a>` :
+                    `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; text-decoration: none; border-radius: var(--radius-md);">Pagar Inscrição</a>`
+                  ) : ''
+                }
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
     }
 
     return `

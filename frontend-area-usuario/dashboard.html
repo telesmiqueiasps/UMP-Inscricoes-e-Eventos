@@ -38,6 +38,16 @@
 
       <!-- Aba 1: Meu Painel (Evento Mais Recente) -->
       <div id="tab-painel" class="tab-content">
+        <div id="dashboard-selector-container" style="display: none; background: white; padding: 1rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.25rem;">📅</span>
+            <div>
+              <strong style="display: block; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Selecione o Evento</strong>
+              <select id="dashboard-event-select" class="form-control" onchange="changeDashboardEvent(this.value)" style="margin-top: 0.25rem; font-weight: 700; color: var(--primary); min-width: 250px; border-color: var(--primary);"></select>
+            </div>
+          </div>
+        </div>
+
         <div class="grid-2">
           <div class="card" id="registration-card">
             Carregando dados da sua inscrição...
@@ -49,7 +59,7 @@
         </div>
 
         <div style="margin-top: 2rem;">
-          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Pagamentos & Parcelas do Evento Recente</h2>
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Pagamentos & Parcelas do Evento Selecionado</h2>
           <div id="payments-container">
             Carregando pagamentos...
           </div>
