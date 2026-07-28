@@ -497,6 +497,38 @@ class CheckinRequest(BaseModel):
 
 
 # --- Endpoints de Check-in (Aba Controle do Evento) ---
+@router.get("/admin/eventos/{evento_id}/checkin/detalhes")
+def obter_detalhes_checkin(
+    evento_id: int,
+    codigo_checkin: str,
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    # Buscar inscrição
+    inscricao = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento_id,
+        Inscricao.codigo_checkin == codigo_checkin
+    ).first()
+
+    if not inscricao:
+        raise HTTPException(
+            status_code=404,
+            detail="Inscrição não encontrada para este código de check-in."
+        )
+
+    usuario = inscricao.usuario
+    return {
+        "inscricao_id": inscricao.id,
+        "nome": usuario.nome,
+        "cpf": usuario.cpf,
+        "email": usuario.email,
+        "status": inscricao.status,
+        "checkin_realizado": inscricao.checkin_realizado,
+        "checkin_data": inscricao.checkin_data.isoformat() if inscricao.checkin_data else None,
+        "codigo_checkin": inscricao.codigo_checkin
+    }
+
+
 @router.post("/admin/eventos/{evento_id}/checkin")
 def realizar_checkin(
     evento_id: int,

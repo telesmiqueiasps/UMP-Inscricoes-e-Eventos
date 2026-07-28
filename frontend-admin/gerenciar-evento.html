@@ -238,26 +238,89 @@
 
       <!-- TAB 3: CHECK-IN / CONTROLE -->
       <div class="tab-pane" id="pane-checkin">
+        
+        <!-- Grid de Métricas de Check-in -->
+        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="metric-card" style="background: white; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Inscrições Confirmadas</div>
+            <div class="metric-val" id="checkin-metric-confirmados" style="font-size: 1.55rem; font-weight: 800; color: var(--primary); margin-top: 0.25rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: white; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Presenças Confirmadas (Checked-in)</div>
+            <div class="metric-val" id="checkin-metric-presentes" style="font-size: 1.55rem; font-weight: 800; color: #10B981; margin-top: 0.25rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: white; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Ausentes Restantes</div>
+            <div class="metric-val" id="checkin-metric-ausentes" style="font-size: 1.55rem; font-weight: 800; color: #F59E0B; margin-top: 0.25rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: white; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Taxa de Comparecimento</div>
+            <div class="metric-val" id="checkin-metric-taxa" style="font-size: 1.55rem; font-weight: 800; color: var(--secondary); margin-top: 0.25rem;">0%</div>
+          </div>
+        </div>
+
         <div class="grid-2">
-          <!-- Câmera Leitora de QR Code -->
-          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 380px;">
+          <!-- Câmera Leitora de QR Code & Ficha de Triagem -->
+          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 420px; position: relative;">
             <h3 class="card-title" style="margin-bottom: 0.5rem; text-align: center;">📷 Check-in via QR Code</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">Inicie a câmera para fazer a leitura dos códigos dos crachás ou celulares.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">Aponte o QR Code do crachá ou do celular do participante para a câmera.</p>
             
-            <div id="checkin-camera-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+            <div id="checkin-camera-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; z-index: 10;">
               <button class="btn btn-primary" onclick="iniciarLeitorCheckin()">Iniciar Scanner</button>
               <button class="btn btn-outline" id="btn-stop-checkin" onclick="pararLeitorCheckin()" disabled>Parar Scanner</button>
             </div>
             
-            <div id="reader" style="width: 100%; max-width: 320px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; border: 2px dashed #cbd5e1; height: 240px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500;">
+            <!-- Leitor QR Code (Visualizador Ampliado) -->
+            <div id="reader" style="width: 100%; max-width: 480px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; border: 2px dashed #cbd5e1; height: 320px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500;">
               Leitor inativo
+            </div>
+
+            <!-- Ficha de Triagem (Aparece após escaneamento) -->
+            <div id="checkin-scanned-card" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; border-radius: var(--radius-lg); padding: 2rem; flex-direction: column; justify-content: space-between; z-index: 20; border: 2px solid var(--border-color);">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                  <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0;">📋 Ficha de Triagem</h4>
+                  <span id="triagem-status-badge" class="badge">PENDENTE</span>
+                </div>
+                
+                <div style="text-align: left; display: flex; flex-direction: column; gap: 0.75rem;">
+                  <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Nome do Participante</span>
+                    <strong id="triagem-nome" style="font-size: 1.35rem; color: var(--text-dark);">-</strong>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">CPF</span>
+                      <span id="triagem-cpf" style="font-weight: 600;">-</span>
+                    </div>
+                    <div>
+                      <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">E-mail</span>
+                      <span id="triagem-email" style="font-weight: 600; font-size: 0.85rem;">-</span>
+                    </div>
+                  </div>
+                  
+                  <div id="triagem-aviso-container" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span>⚠️</span>
+                    <span id="triagem-aviso-texto">Esta inscrição não está confirmada!</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button class="btn btn-primary" id="btn-triagem-confirmar" style="flex: 2; padding: 0.75rem 1rem;" onclick="confirmarCheckinTriagem()">
+                  ✅ Confirmar Entrada
+                </button>
+                <button class="btn btn-outline" style="flex: 1; padding: 0.75rem 1rem;" onclick="cancelarTriagem()">
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Busca Manual e Ações -->
+          <!-- Busca Manual e Ações Rápidas -->
           <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column;">
-            <h3 class="card-title" style="margin-bottom: 0.5rem;">🔍 Busca Manual & Status</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Digite o Nome, E-mail ou CPF para localizar a inscrição e realizar o check-in manualmente.</p>
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">🔍 Busca Manual de Inscrições</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Digite o Nome, E-mail ou CPF para check-in manual imediato.</p>
             
             <div class="form-group" style="margin-bottom: 1.5rem;">
               <input type="text" id="checkin-search-input" class="form-control" placeholder="Digite nome, e-mail ou CPF..." onkeyup="buscarParticipantesCheckin()">
@@ -269,9 +332,55 @@
             </div>
 
             <!-- Lista de Resultados de Busca Manual -->
-            <div style="flex-grow: 1; overflow-y: auto; max-height: 280px;" id="checkin-results-list">
-              <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Use a caixa de busca acima para listar participantes.</p>
+            <div style="flex-grow: 1; overflow-y: auto; max-height: 310px;" id="checkin-results-list">
+              <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 3rem;">Use a caixa de busca acima para listar participantes.</p>
             </div>
+          </div>
+        </div>
+
+        <!-- Lista Geral e Controle de Presença -->
+        <div class="card" style="margin-top: 2rem; padding: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <h3 class="card-title" style="margin: 0; font-size: 1.25rem;">📋 Controle de Presença & Lista de Participantes</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Gerencie o fluxo de entrada e presenças registradas no evento.</p>
+            </div>
+            
+            <!-- Barra de Busca Local na Tabela -->
+            <div style="max-width: 320px; width: 100%;">
+              <input type="text" id="presenca-table-search" class="form-control" placeholder="Filtrar por nome ou CPF..." onkeyup="filtrarTabelaPresenca()" style="height: 38px; font-size: 0.85rem;">
+            </div>
+          </div>
+
+          <!-- Abas de Filtros Rápidos -->
+          <div style="display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+            <button id="tab-presenca-todos" class="btn btn-outline" style="padding: 0.35rem 1rem; font-size: 0.85rem; border-radius: 20px; border: 1px solid var(--primary); background: var(--primary); color: white;" onclick="setPresencaFiltro('todos')">
+              Todos (<span id="count-filtro-todos">0</span>)
+            </button>
+            <button id="tab-presenca-presentes" class="btn btn-outline" style="padding: 0.35rem 1rem; font-size: 0.85rem; border-radius: 20px;" onclick="setPresencaFiltro('presentes')">
+              Presentes (<span id="count-filtro-presentes">0</span>)
+            </button>
+            <button id="tab-presenca-ausentes" class="btn btn-outline" style="padding: 0.35rem 1rem; font-size: 0.85rem; border-radius: 20px;" onclick="setPresencaFiltro('ausentes')">
+              Ausentes (<span id="count-filtro-ausentes">0</span>)
+            </button>
+          </div>
+
+          <!-- Tabela de Presenças -->
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f1f5f9; border-bottom: 1px solid var(--border-color);">
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Participante</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">CPF</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Status Inscrição</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Check-in</th>
+                  <th style="padding: 0.75rem; text-align: center; font-weight: 700;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="presenca-table-body">
+                <tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando participantes...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

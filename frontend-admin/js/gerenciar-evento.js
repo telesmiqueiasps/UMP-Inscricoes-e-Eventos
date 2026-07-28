@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadEventoInfo();
   await loadInscricoes();
   await loadPagamentos();
+  await loadListaPresenca();
 });
 
 // --- Tabs Switcher ---
@@ -678,49 +679,270 @@ window.pararLeitorCheckin = function() {
   }
 };
 
+// --- Fila e Caching de Inscrições para Controle de Presença Local ---
+let cacheCheckinParticipantes = [];
+let filtroPresencaAtivo = 'todos';
+let currentTriagemCode = null;
+
+// Carrega todos os participantes do evento para cálculo das estatísticas
+window.loadListaPresenca = async function() {
+  try {
+    const data = await API.request(`/admin/eventos/${selectedEventoId}/checkin/participantes`);
+    cacheCheckinParticipantes = data || [];
+    renderCheckinMetrics();
+    renderTabelaPresenca();
+  } catch (err) {
+    console.error("Erro ao carregar lista de presença:", err);
+  }
+};
+
+function renderCheckinMetrics() {
+  const list = cacheCheckinParticipantes;
+  const confirmados = list.filter(ins => ins.status === 'CONFIRMADA');
+  const totalConfirmados = confirmados.length;
+  const presentes = confirmados.filter(ins => ins.checkin_realizado).length;
+  const ausentes = totalConfirmados - presentes;
+  const taxa = totalConfirmados > 0 ? Math.round((presentes / totalConfirmados) * 100) : 0;
+
+  const countTodos = document.getElementById('count-filtro-todos');
+  const countPresentes = document.getElementById('count-filtro-presentes');
+  const countAusentes = document.getElementById('count-filtro-ausentes');
+  const metricConfirmados = document.getElementById('checkin-metric-confirmados');
+  const metricPresentes = document.getElementById('checkin-metric-presentes');
+  const metricAusentes = document.getElementById('checkin-metric-ausentes');
+  const metricTaxa = document.getElementById('checkin-metric-taxa');
+
+  if (metricConfirmados) metricConfirmados.textContent = totalConfirmados;
+  if (metricPresentes) metricPresentes.textContent = presentes;
+  if (metricAusentes) metricAusentes.textContent = ausentes;
+  if (metricTaxa) metricTaxa.textContent = `${taxa}%`;
+
+  if (countTodos) countTodos.textContent = list.length;
+  if (countPresentes) countPresentes.textContent = list.filter(ins => ins.checkin_realizado).length;
+  if (countAusentes) countAusentes.textContent = list.filter(ins => !ins.checkin_realizado).length;
+}
+
+function renderTabelaPresenca() {
+  const tableBody = document.getElementById('presenca-table-body');
+  if (!tableBody) return;
+
+  const searchInput = document.getElementById('presenca-table-search');
+  const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  let list = cacheCheckinParticipantes;
+
+  // Filtrar pela aba selecionada
+  if (filtroPresencaAtivo === 'presentes') {
+    list = list.filter(ins => ins.checkin_realizado);
+  } else if (filtroPresencaAtivo === 'ausentes') {
+    list = list.filter(ins => !ins.checkin_realizado);
+  }
+
+  // Filtrar pela busca de texto local
+  if (searchQuery) {
+    list = list.filter(ins => 
+      ins.nome.toLowerCase().includes(searchQuery) || 
+      (ins.cpf && ins.cpf.includes(searchQuery)) || 
+      ins.email.toLowerCase().includes(searchQuery)
+    );
+  }
+
+  if (list.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum participante correspondente encontrado.</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = list.map(ins => {
+    let badgeClass = 'badge-warning';
+    if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
+    else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
+
+    const getStatusBadge = (st) => {
+      if (st === 'PAGO' || st === 'CONFIRMADA') return 'badge-success';
+      if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
+      return 'badge-warning';
+    };
+
+    const checkinStatusHTML = ins.checkin_realizado ? 
+      `<div style="color: #10B981; font-weight: 600;">
+         ✅ Presente<br>
+         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">
+           ${ins.checkin_data ? new Date(ins.checkin_data).toLocaleString('pt-BR') : ''}
+         </span>
+       </div>` : 
+      `<span style="color: #F59E0B; font-weight: 600;">❌ Ausente</span>`;
+
+    const btnText = ins.checkin_realizado ? "Desfazer Check-in" : "Confirmar Check-in";
+    const btnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+        <td style="padding: 0.75rem;">
+          <strong style="color: var(--text-dark); display: block;">${ins.nome}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</span>
+        </td>
+        <td style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
+        <td style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
+        <td style="padding: 0.75rem;">${checkinStatusHTML}</td>
+        <td style="padding: 0.75rem; text-align: center;">
+          <button class="${btnClass}" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id})">
+            ${btnText}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.setPresencaFiltro = function(filtro) {
+  filtroPresencaAtivo = filtro;
+
+  // Toggle active tab classes
+  const tabs = ['todos', 'presentes', 'ausentes'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`tab-presenca-${t}`);
+    if (btn) {
+      if (t === filtro) {
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+        btn.style.borderColor = 'var(--primary)';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+        btn.style.borderColor = 'var(--border-color)';
+      }
+    }
+  });
+
+  renderTabelaPresenca();
+};
+
+window.filtrarTabelaPresenca = function() {
+  renderTabelaPresenca();
+};
+
 async function processarQrCodeEscaneado(codigo) {
   const alertDiv = document.getElementById('checkin-feedback-alert');
-  if (!alertDiv) return;
+  if (alertDiv) {
+    alertDiv.style.display = 'none';
+  }
 
-  // Parar scanner temporariamente ou tocar alerta sonoro se quiser
-  alertDiv.style.display = 'block';
-  alertDiv.style.background = '#f1f5f9';
-  alertDiv.style.color = '#334155';
-  alertDiv.innerHTML = '⏳ Processando check-in...';
+  // Pausar scanner
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.pause(true);
+  }
+
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/checkin/detalhes?codigo_checkin=${encodeURIComponent(codigo)}`);
+    
+    // Preencher Ficha de Triagem
+    currentTriagemCode = codigo;
+    document.getElementById('triagem-nome').textContent = res.nome;
+    document.getElementById('triagem-cpf').textContent = res.cpf || 'Não informado';
+    document.getElementById('triagem-email').textContent = res.email;
+    
+    const badge = document.getElementById('triagem-status-badge');
+    if (badge) {
+      badge.textContent = res.status;
+      badge.className = 'badge';
+      if (res.status === 'CONFIRMADA') badge.classList.add('badge-success');
+      else if (res.status === 'CANCELADA' || res.status === 'CANCELADO') badge.classList.add('badge-danger');
+      else badge.classList.add('badge-warning');
+    }
+
+    const confirmBtn = document.getElementById('btn-triagem-confirmar');
+    const avisoContainer = document.getElementById('triagem-aviso-container');
+    const avisoTexto = document.getElementById('triagem-aviso-texto');
+
+    if (res.status !== 'CONFIRMADA') {
+      if (avisoContainer && avisoTexto) {
+        avisoContainer.style.display = 'flex';
+        avisoContainer.style.background = '#fee2e2';
+        avisoContainer.style.borderColor = '#fca5a5';
+        avisoContainer.style.color = '#b91c1c';
+        avisoTexto.textContent = `Aviso: Inscrição está no status '${res.status}'. Certifique o pagamento!`;
+      }
+      if (confirmBtn) {
+        confirmBtn.textContent = '⚠️ Confirmar Mesmo Assim';
+        confirmBtn.className = 'btn btn-danger';
+        confirmBtn.style.background = '#EF4444';
+        confirmBtn.style.borderColor = '#EF4444';
+      }
+    } else if (res.checkin_realizado) {
+      if (avisoContainer && avisoTexto) {
+        avisoContainer.style.display = 'flex';
+        avisoContainer.style.background = '#fef3c7';
+        avisoContainer.style.borderColor = '#fcd34d';
+        avisoContainer.style.color = '#92400e';
+        const horaStr = res.checkin_data ? new Date(res.checkin_data).toLocaleString('pt-BR') : '';
+        avisoTexto.textContent = `Aviso: Check-in já realizado anteriormente em ${horaStr}!`;
+      }
+      if (confirmBtn) {
+        confirmBtn.textContent = '🔄 Confirmar Novamente';
+        confirmBtn.className = 'btn btn-primary';
+        confirmBtn.style.background = 'var(--primary)';
+        confirmBtn.style.borderColor = 'var(--primary)';
+      }
+    } else {
+      if (avisoContainer) avisoContainer.style.display = 'none';
+      if (confirmBtn) {
+        confirmBtn.textContent = '✅ Confirmar Entrada';
+        confirmBtn.className = 'btn btn-success';
+        confirmBtn.style.background = '#10B981';
+        confirmBtn.style.borderColor = '#10B981';
+      }
+    }
+
+    // Exibir Ficha de Triagem
+    document.getElementById('checkin-scanned-card').style.display = 'flex';
+  } catch (err) {
+    showToast(err.message || 'Código de QR Code inválido ou não cadastrado.', 'error');
+    // Retomar scanner se deu erro na leitura
+    if (html5QrcodeScanner) {
+      html5QrcodeScanner.resume();
+    }
+  }
+}
+
+window.confirmarCheckinTriagem = async function() {
+  if (!currentTriagemCode) return;
+
+  const confirmBtn = document.getElementById('btn-triagem-confirmar');
+  const origText = confirmBtn ? confirmBtn.textContent : '';
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<span class="spinner"></span> Confirmando...';
+  }
 
   try {
     const res = await API.request(`/admin/eventos/${selectedEventoId}/checkin`, {
       method: 'POST',
-      body: JSON.stringify({ codigo_checkin: codigo })
+      body: JSON.stringify({ codigo_checkin: currentTriagemCode })
     });
 
-    if (res.sucesso) {
-      alertDiv.style.background = '#d1fae5';
-      alertDiv.style.color = '#065f46';
-      alertDiv.innerHTML = `✅ <strong>Check-in Confirmado!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">Inscrição Confirmada</span>`;
-      showToast("Check-in realizado com sucesso!", "success");
-      // Atualizar lista manual se estiver preenchida
-      buscarParticipantesCheckin();
-    } else {
-      if (res.status_inscricao === 'PENDENTE') {
-        alertDiv.style.background = '#fef3c7';
-        alertDiv.style.color = '#92400e';
-        alertDiv.innerHTML = `⚠️ <strong>Inscrição Pendente de Pagamento!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">${res.mensagem}</span>`;
-        showToast("Aviso: Inscrição pendente de pagamento!", "warning");
-      } else {
-        alertDiv.style.background = '#fee2e2';
-        alertDiv.style.color = '#b91c1c';
-        alertDiv.innerHTML = `❌ <strong>Não foi possível realizar o check-in!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">${res.mensagem}</span>`;
-        showToast(res.mensagem, "error");
-      }
-    }
+    showToast(res.mensagem, res.sucesso ? "success" : "warning");
+    
+    // Fechar Ficha de Triagem e recarregar dados da lista
+    cancelarTriagem();
+    await loadListaPresenca();
   } catch (err) {
-    alertDiv.style.background = '#fee2e2';
-    alertDiv.style.color = '#b91c1c';
-    alertDiv.innerHTML = `❌ <strong>Erro no Check-in:</strong><br>${err.message || 'Código inválido ou erro de conexão.'}`;
-    showToast(err.message || 'Erro no check-in.', 'error');
+    showToast(err.message || "Erro ao realizar check-in.", "error");
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = origText;
+    }
   }
-}
+};
+
+window.cancelarTriagem = function() {
+  currentTriagemCode = null;
+  document.getElementById('checkin-scanned-card').style.display = 'none';
+  // Retomar scanner
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.resume();
+  }
+};
 
 window.buscarParticipantesCheckin = async function() {
   const searchInput = document.getElementById('checkin-search-input');
@@ -729,14 +951,14 @@ window.buscarParticipantesCheckin = async function() {
 
   const query = searchInput.value.trim();
   if (query.length < 2) {
-    resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Digite pelo menos 2 caracteres para pesquisar.</p>`;
+    resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 3rem;">Digite pelo menos 2 caracteres para pesquisar.</p>`;
     return;
   }
 
   try {
     const list = await API.request(`/admin/eventos/${selectedEventoId}/checkin/participantes?search=${encodeURIComponent(query)}`);
     if (!list || list.length === 0) {
-      resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Nenhum participante encontrado.</p>`;
+      resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 3rem;">Nenhum participante encontrado.</p>`;
       return;
     }
 
@@ -781,6 +1003,7 @@ window.realizarCheckinManual = async function(inscricaoId) {
       method: 'POST'
     });
     showToast(res.mensagem, "success");
+    await loadListaPresenca();
     buscarParticipantesCheckin();
   } catch (err) {
     showToast(err.message || "Erro ao atualizar check-in manual.", "error");
