@@ -169,3 +169,29 @@ def enviar_email_alerta_vencimento(
     </div>
     """
     return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
+
+
+def enviar_email_recuperacao_senha(destinatario_email: str, destinatario_nome: str, nova_senha: str) -> bool:
+    """
+    Envia e-mail contendo a nova senha temporária para o participante.
+    """
+    assunto = "Recuperação de Senha - UMP Eventos"
+    conteudo_html = f"""
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #1d4ed8; text-align: center; margin-bottom: 20px;">Recuperação de Senha</h2>
+        <p>Olá, <strong>{destinatario_nome}</strong>,</p>
+        <p>Você solicitou a recuperação de sua senha na plataforma UMP Eventos.</p>
+        <p>Uma nova senha temporária foi gerada com sucesso para você:</p>
+        
+        <div style="background-color: #f1f5f9; border: 1.5px dashed #cbd5e1; padding: 15px; border-radius: 6px; text-align: center; font-size: 1.5rem; font-weight: bold; letter-spacing: 0.1em; color: #1e293b; margin: 20px 0;">
+            {nova_senha}
+        </div>
+        
+        <p style="color: #ef4444; font-weight: bold; text-align: center;">🚨 Recomendamos alterar esta senha provisória imediatamente no menu do participante após efetuar o login.</p>
+        
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />
+        <p style="font-size: 0.85rem; color: #666; text-align: center;">Desenvolvido por Miquéias Teles</p>
+    </div>
+    """
+    return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
+

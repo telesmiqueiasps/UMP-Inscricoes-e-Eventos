@@ -274,6 +274,8 @@ window.switchTab = function(tabId) {
     document.getElementById('menu-painel').classList.add('active');
   } else if (tabId === 'tab-eventos') {
     document.getElementById('menu-eventos').classList.add('active');
+  } else if (tabId === 'tab-senha') {
+    document.getElementById('menu-senha').classList.add('active');
   }
 }
 
@@ -341,3 +343,53 @@ function formatarFormaPagamento(forma, captureMethod) {
   if (forma === 'PARCELADO') return 'Parcelado (Carnê)';
   return forma || 'N/A';
 }
+
+window.atualizarSenhaParticipante = async function(e) {
+  e.preventDefault();
+  
+  const senhaAtual = document.getElementById('pass-atual').value;
+  const novaSenha = document.getElementById('pass-nova').value;
+  const novaSenhaConfirm = document.getElementById('pass-nova-confirm').value;
+  
+  const errorDiv = document.getElementById('alterar-senha-error');
+  const successDiv = document.getElementById('alterar-senha-success');
+  const saveBtn = document.getElementById('btn-salvar-senha');
+  
+  errorDiv.style.display = 'none';
+  successDiv.style.display = 'none';
+  
+  if (novaSenha.length < 6) {
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = 'A nova senha deve conter pelo menos 6 caracteres.';
+    return;
+  }
+  
+  if (novaSenha !== novaSenhaConfirm) {
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = 'As novas senhas informadas não coincidem.';
+    return;
+  }
+  
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner"></span> Atualizando...';
+  
+  try {
+    await API.request('/usuario/alterar-senha', {
+      method: 'POST',
+      body: JSON.stringify({
+        senha_atual: senhaAtual,
+        nova_senha: novaSenha
+      })
+    });
+    
+    successDiv.style.display = 'block';
+    successDiv.textContent = 'Senha atualizada com sucesso!';
+    document.getElementById('form-alterar-senha').reset();
+  } catch (err) {
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = err.message || 'Erro ao alterar senha. Verifique se a senha atual está correta.';
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Atualizar Senha';
+  }
+};

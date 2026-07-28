@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token, get_current_user
 from app.models.usuario import Usuario
-from app.schemas.auth import Token, LoginRequest
+from app.schemas.auth import Token, LoginRequest, RecuperarSenhaRequest
 from app.schemas.usuario import UsuarioCreate, UsuarioResponse
+from app.services.email import enviar_email_recuperacao_senha
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -103,3 +104,34 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
 @router.get("/me", response_model=UsuarioResponse)
 def get_me(current_user: Usuario = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/recuperar-senha")
+def recuperar_senha(
+    req: RecuperarSenhaRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    user = db.query(Usuario).filter(Usuario.email == req.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
+    
+    # Gerar senha temporária aleatória de 8 caracteres alfanuméricos legíveis
+    import secrets
+    import string
+    alphabet = string.ascii_uppercase + string.digits
+    temp_pw = ''.join(secrets.choice(alphabet) for _ in range(8))
+    
+    # Atualizar senha hash
+    user.senha_hash = get_password_hash(temp_pw)
+    db.commit()
+    
+    # Enviar email com a nova senha temporária em background
+    background_tasks.add_task(
+        enviar_email_recuperacao_senha,
+        destinatario_email=user.email,
+        destinatario_nome=user.nome,
+        nova_senha=temp_pw
+    )
+    
+    return {"detail": "Uma nova senha temporária foi enviada para o seu e-mail."}

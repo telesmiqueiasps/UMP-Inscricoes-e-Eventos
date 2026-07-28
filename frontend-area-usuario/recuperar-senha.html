@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Senha - UMP Eventos</title>
+  <link rel="icon" href="img/logo.png" type="image/png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 0.8s linear infinite;
+    }
+  </style>
+</head>
+<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: var(--light-bg); padding: 2rem 1rem;">
+
+  <main class="card" style="width: 100%; max-width: 440px; padding: 2.5rem;">
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <img src="img/logo.png" alt="Logo" style="height: 54px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
+      <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--primary);">Recuperar Senha</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">Insira seu e-mail cadastrado para obter uma nova senha temporária.</p>
+    </div>
+
+    <form id="recover-form">
+      <div style="display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.5rem;">
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="form-label">E-mail Cadastrado</label>
+          <input type="email" id="recover-email" class="form-control" placeholder="seu@email.com" required>
+        </div>
+        <button type="button" id="verify-email-btn" class="btn btn-outline" style="height: 44px; padding: 0 1rem; font-size: 0.85rem; font-weight: 600;">
+          Verificar
+        </button>
+      </div>
+
+      <div id="email-status-msg" style="display: none; font-size: 0.85rem; margin-bottom: 1.5rem; font-weight: 500; padding: 0.5rem 0.75rem; border-radius: 6px;"></div>
+
+      <div id="recover-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+      <div id="recover-success" style="display: none; background: #d1fae5; color: #065f46; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #a7f3d0; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+
+      <button type="submit" id="recover-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" disabled>
+        Recuperar Senha
+      </button>
+    </form>
+
+    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+      <a href="login.html" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; font-weight: 500; text-decoration: none;">
+        Voltar para o Login
+      </a>
+    </div>
+
+  </main>
+
+  <footer style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+    <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/recuperar-senha.js"></script>
+</body>
+</html>

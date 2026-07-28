@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
+from pydantic import BaseModel
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, verify_password, get_password_hash
 from app.models.usuario import Usuario
 from app.models.inscricao import Inscricao
 from app.models.pagamento import Pagamento
@@ -152,3 +153,25 @@ def atualizar_perfil(
         
     db.commit()
     return {"message": "Perfil atualizado com sucesso!"}
+
+
+class AlterarSenhaRequest(BaseModel):
+    senha_atual: str
+    nova_senha: str
+
+
+@router.post("/alterar-senha")
+def alterar_senha(
+    req: AlterarSenhaRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Altera a senha do participante logado mediante validação da senha atual.
+    """
+    if not verify_password(req.senha_atual, current_user.senha_hash):
+        raise HTTPException(status_code=400, detail="A senha atual informada está incorreta.")
+    
+    current_user.senha_hash = get_password_hash(req.nova_senha)
+    db.commit()
+    return {"message": "Senha alterada com sucesso!"}

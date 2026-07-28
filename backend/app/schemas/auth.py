@@ -15,3 +15,7 @@ class TokenData(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
+
+
+class RecuperarSenhaRequest(BaseModel):
+    email: EmailStr
