@@ -26,6 +26,9 @@ class InscricaoResponse(BaseModel):
     forma_pagamento: Optional[str] = None
     valor_total: Decimal
     dados_extras: Optional[Dict[str, Any]] = None
+    codigo_checkin: Optional[str] = None
+    checkin_realizado: bool = False
+    checkin_data: Optional[datetime] = None
     created_at: datetime
 
     usuario: Optional[UsuarioResponse] = None

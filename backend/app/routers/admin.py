@@ -490,3 +490,145 @@ async def upload_foto_evento(
         
     public_url = f"{clean_url}/storage/v1/object/public/{settings.SUPABASE_BUCKET}/{filename}"
     return {"url": public_url}
+
+
+class CheckinRequest(BaseModel):
+    codigo_checkin: str
+
+
+# --- Endpoints de Check-in (Aba Controle do Evento) ---
+@router.post("/admin/eventos/{evento_id}/checkin")
+def realizar_checkin(
+    evento_id: int,
+    req: CheckinRequest,
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    # Buscar inscrição
+    inscricao = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento_id,
+        Inscricao.codigo_checkin == req.codigo_checkin
+    ).first()
+
+    if not inscricao:
+        raise HTTPException(
+            status_code=404,
+            detail="Inscrição não encontrada para este código de check-in."
+        )
+
+    # Obter dados do participante
+    usuario = inscricao.usuario
+    
+    # Validar status da inscrição
+    if inscricao.status != "CONFIRMADA":
+        return {
+            "sucesso": False,
+            "status_inscricao": inscricao.status,
+            "participante": {
+                "nome": usuario.nome,
+                "cpf": usuario.cpf,
+                "email": usuario.email
+            },
+            "mensagem": f"Aviso: Inscrição está no status '{inscricao.status}'. Pagamento não confirmado ou inscrição cancelada."
+        }
+
+    # Se já realizou check-in
+    if inscricao.checkin_realizado:
+        checkin_dt_str = inscricao.checkin_data.strftime("%d/%m/%Y %H:%M:%S") if inscricao.checkin_data else "Desconhecido"
+        return {
+            "sucesso": False,
+            "status_inscricao": inscricao.status,
+            "participante": {
+                "nome": usuario.nome,
+                "cpf": usuario.cpf,
+                "email": usuario.email
+            },
+            "mensagem": f"Check-in já realizado anteriormente em {checkin_dt_str}."
+        }
+
+    # Confirmar check-in
+    from datetime import datetime
+    inscricao.checkin_realizado = True
+    inscricao.checkin_data = datetime.utcnow()
+    db.commit()
+
+    return {
+        "sucesso": True,
+        "status_inscricao": inscricao.status,
+        "participante": {
+            "nome": usuario.nome,
+            "cpf": usuario.cpf,
+            "email": usuario.email
+        },
+        "mensagem": "Check-in realizado com sucesso!"
+    }
+
+
+@router.get("/admin/eventos/{evento_id}/checkin/participantes")
+def listar_participantes_checkin(
+    evento_id: int,
+    search: Optional[str] = Query(None),
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Inscricao).join(Usuario).filter(Inscricao.evento_id == evento_id)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                Usuario.nome.ilike(search_pattern),
+                Usuario.cpf.ilike(search_pattern),
+                Usuario.email.ilike(search_pattern)
+            )
+        )
+
+    inscricoes = query.order_by(Usuario.nome.asc()).all()
+
+    resultado = []
+    for ins in inscricoes:
+        resultado.append({
+            "inscricao_id": ins.id,
+            "nome": ins.usuario.nome,
+            "cpf": ins.usuario.cpf,
+            "email": ins.usuario.email,
+            "status": ins.status,
+            "codigo_checkin": ins.codigo_checkin,
+            "checkin_realizado": ins.checkin_realizado,
+            "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None
+        })
+
+    return resultado
+
+
+@router.post("/admin/eventos/{evento_id}/inscricoes/{inscricao_id}/toggle-checkin")
+def toggle_checkin_manual(
+    evento_id: int,
+    inscricao_id: int,
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    inscricao = db.query(Inscricao).filter(
+        Inscricao.id == inscricao_id,
+        Inscricao.evento_id == evento_id
+    ).first()
+
+    if not inscricao:
+        raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
+
+    from datetime import datetime
+    if inscricao.checkin_realizado:
+        inscricao.checkin_realizado = False
+        inscricao.checkin_data = None
+        mensagem = "Check-in desfeito com sucesso."
+    else:
+        inscricao.checkin_realizado = True
+        inscricao.checkin_data = datetime.utcnow()
+        mensagem = "Check-in realizado com sucesso."
+
+    db.commit()
+    return {
+        "sucesso": True,
+        "checkin_realizado": inscricao.checkin_realizado,
+        "mensagem": mensagem
+    }

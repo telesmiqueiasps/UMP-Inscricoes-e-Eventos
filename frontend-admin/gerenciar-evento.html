@@ -6,6 +6,7 @@
   <title>Gerenciar Evento - UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     /* Estilos das Sub-Abas do Evento */
     .tabs-bar {
@@ -98,6 +99,9 @@
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-pagamentos', this)">
           <img src="img/pagamentos.png" alt="💳" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='💳'"> Pagamentos
+        </button>
+        <button class="tab-btn" onclick="switchSubTab('pane-checkin', this)">
+          <img src="img/senha.png" alt="🔑" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='🔑'"> Check-in / Controle
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-editar', this)">
           <img src="img/editar.png" alt="✏️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='✏️'"> Editar Evento
@@ -232,7 +236,47 @@
         </div>
       </div>
 
-      <!-- TAB 3: EDITAR EVENTO -->
+      <!-- TAB 3: CHECK-IN / CONTROLE -->
+      <div class="tab-pane" id="pane-checkin">
+        <div class="grid-2">
+          <!-- Câmera Leitora de QR Code -->
+          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 380px;">
+            <h3 class="card-title" style="margin-bottom: 0.5rem; text-align: center;">📷 Check-in via QR Code</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">Inicie a câmera para fazer a leitura dos códigos dos crachás ou celulares.</p>
+            
+            <div id="checkin-camera-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+              <button class="btn btn-primary" onclick="iniciarLeitorCheckin()">Iniciar Scanner</button>
+              <button class="btn btn-outline" id="btn-stop-checkin" onclick="pararLeitorCheckin()" disabled>Parar Scanner</button>
+            </div>
+            
+            <div id="reader" style="width: 100%; max-width: 320px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; border: 2px dashed #cbd5e1; height: 240px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500;">
+              Leitor inativo
+            </div>
+          </div>
+
+          <!-- Busca Manual e Ações -->
+          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column;">
+            <h3 class="card-title" style="margin-bottom: 0.5rem;">🔍 Busca Manual & Status</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Digite o Nome, E-mail ou CPF para localizar a inscrição e realizar o check-in manualmente.</p>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+              <input type="text" id="checkin-search-input" class="form-control" placeholder="Digite nome, e-mail ou CPF..." onkeyup="buscarParticipantesCheckin()">
+            </div>
+
+            <!-- Feedback de Scanner QR Code -->
+            <div id="checkin-feedback-alert" style="display: none; padding: 1rem; border-radius: var(--radius-md); font-weight: 600; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">
+              Feedback do Check-in
+            </div>
+
+            <!-- Lista de Resultados de Busca Manual -->
+            <div style="flex-grow: 1; overflow-y: auto; max-height: 280px;" id="checkin-results-list">
+              <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Use a caixa de busca acima para listar participantes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: EDITAR EVENTO -->
       <div class="tab-pane" id="pane-editar">
         <div class="card" style="padding: 2rem;">
           <h3 class="card-title" style="margin-bottom: 1.5rem;">Informações Cadastrais do Evento</h3>

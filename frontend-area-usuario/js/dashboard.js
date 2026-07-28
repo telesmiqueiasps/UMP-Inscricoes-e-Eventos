@@ -113,6 +113,10 @@ function renderActiveRegistration(inscricaoId) {
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') statusBadge = 'badge-info';
     else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
     const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ? 
+      `<button class="btn btn-outline" style="margin-top: 1rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-color: var(--primary); color: var(--primary); font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${ins.evento_titulo.replace(/'/g, "\\'")}')">
+         🔑 Ver QR Code de Check-in
+       </button>` : '';
     
     registrationCard.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -128,6 +132,7 @@ function renderActiveRegistration(inscricaoId) {
         📍 Local: ${ins.evento_local || 'A definir'}<br>
         💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
       </p>
+      ${qrButtonHTML}
     `;
   }
 
@@ -479,4 +484,26 @@ window.atualizarSenhaParticipante = async function(e) {
     saveBtn.disabled = false;
     saveBtn.textContent = 'Atualizar Senha';
   }
+};
+
+window.openQrModal = function(codigo, eventoTitulo) {
+  const modal = document.getElementById('qr-code-modal');
+  const img = document.getElementById('qr-code-img');
+  const codeText = document.getElementById('qr-code-text');
+  const downloadBtn = document.getElementById('btn-download-qr');
+  const title = document.getElementById('qr-modal-title');
+
+  if (modal && img && codeText && downloadBtn) {
+    if (title) title.textContent = `Check-in: ${eventoTitulo}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${codigo}`;
+    img.src = qrUrl;
+    codeText.textContent = codigo;
+    downloadBtn.href = qrUrl;
+    modal.style.display = 'block';
+  }
+};
+
+window.closeQrModal = function() {
+  const modal = document.getElementById('qr-code-modal');
+  if (modal) modal.style.display = 'none';
 };

@@ -56,6 +56,9 @@ def obter_dashboard_usuario(
             "capture_method": first_pag.capture_method if first_pag else None,
             "valor_total": float(ins.valor_total),
             "dados_extras": ins.dados_extras,
+            "codigo_checkin": ins.codigo_checkin,
+            "checkin_realizado": ins.checkin_realizado,
+            "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None,
             "created_at": ins.created_at.isoformat()
         }
         inscricoes_data.append(ins_dict)

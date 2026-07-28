@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -60,7 +61,8 @@ def criar_inscricao(
         status="PENDENTE",
         forma_pagamento=inscricao_in.forma_pagamento,
         valor_total=evento.valor,
-        dados_extras=inscricao_in.dados_extras
+        dados_extras=inscricao_in.dados_extras,
+        codigo_checkin=f"CK-{uuid.uuid4().hex[:12].upper()}"
     )
     db.add(db_inscricao)
     db.commit()

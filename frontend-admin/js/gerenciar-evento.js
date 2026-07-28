@@ -37,6 +37,11 @@ window.switchSubTab = function(tabId, btn) {
   
   document.getElementById(tabId).classList.add('active');
   btn.classList.add('active');
+
+  // Parar scanner de QR Code caso saia da aba de check-in
+  if (tabId !== 'pane-checkin') {
+    pararLeitorCheckin();
+  }
 };
 
 // --- Carregar Detalhes do Evento ---
@@ -618,4 +623,166 @@ window.updateMediaPreview = function(index, url) {
 window.onMediaUrlChange = function(index) {
   const url = document.getElementById(`ev-foto-${index}`).value.trim();
   updateMediaPreview(index, url);
+};
+
+// --- Controle de Check-in (Leitor de Câmera & Busca Manual) ---
+let html5QrcodeScanner = null;
+
+window.iniciarLeitorCheckin = function() {
+  const readerDiv = document.getElementById('reader');
+  if (!readerDiv) return;
+
+  readerDiv.innerHTML = "";
+  readerDiv.style.border = "none";
+
+  const btnStop = document.getElementById('btn-stop-checkin');
+  if (btnStop) btnStop.disabled = false;
+
+  html5QrcodeScanner = new Html5Qrcode("reader");
+  const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+  html5QrcodeScanner.start(
+    { facingMode: "environment" },
+    config,
+    (decodedText) => {
+      // Quando ler com sucesso
+      processarQrCodeEscaneado(decodedText);
+    },
+    (errorMessage) => {
+      // Ignora logs de erro contínuos de foco para não sobrecarregar
+    }
+  ).catch(err => {
+    showToast("Erro ao acessar a câmera. Verifique as permissões.", "error");
+    readerDiv.innerHTML = "Erro ao carregar câmera";
+    readerDiv.style.border = "2px dashed #cbd5e1";
+    if (btnStop) btnStop.disabled = true;
+  });
+};
+
+window.pararLeitorCheckin = function() {
+  const btnStop = document.getElementById('btn-stop-checkin');
+  if (btnStop) btnStop.disabled = true;
+
+  if (html5QrcodeScanner) {
+    html5QrcodeScanner.stop().then(() => {
+      html5QrcodeScanner = null;
+      const readerDiv = document.getElementById('reader');
+      if (readerDiv) {
+        readerDiv.innerHTML = "Leitor inativo";
+        readerDiv.style.border = "2px dashed #cbd5e1";
+      }
+    }).catch(err => {
+      // Se der erro ao parar (já parado)
+      html5QrcodeScanner = null;
+    });
+  }
+};
+
+async function processarQrCodeEscaneado(codigo) {
+  const alertDiv = document.getElementById('checkin-feedback-alert');
+  if (!alertDiv) return;
+
+  // Parar scanner temporariamente ou tocar alerta sonoro se quiser
+  alertDiv.style.display = 'block';
+  alertDiv.style.background = '#f1f5f9';
+  alertDiv.style.color = '#334155';
+  alertDiv.innerHTML = '⏳ Processando check-in...';
+
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/checkin`, {
+      method: 'POST',
+      body: JSON.stringify({ codigo_checkin: codigo })
+    });
+
+    if (res.sucesso) {
+      alertDiv.style.background = '#d1fae5';
+      alertDiv.style.color = '#065f46';
+      alertDiv.innerHTML = `✅ <strong>Check-in Confirmado!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">Inscrição Confirmada</span>`;
+      showToast("Check-in realizado com sucesso!", "success");
+      // Atualizar lista manual se estiver preenchida
+      buscarParticipantesCheckin();
+    } else {
+      if (res.status_inscricao === 'PENDENTE') {
+        alertDiv.style.background = '#fef3c7';
+        alertDiv.style.color = '#92400e';
+        alertDiv.innerHTML = `⚠️ <strong>Inscrição Pendente de Pagamento!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">${res.mensagem}</span>`;
+        showToast("Aviso: Inscrição pendente de pagamento!", "warning");
+      } else {
+        alertDiv.style.background = '#fee2e2';
+        alertDiv.style.color = '#b91c1c';
+        alertDiv.innerHTML = `❌ <strong>Não foi possível realizar o check-in!</strong><br>${res.participante.nome}<br><span style="font-size: 0.8rem;">${res.mensagem}</span>`;
+        showToast(res.mensagem, "error");
+      }
+    }
+  } catch (err) {
+    alertDiv.style.background = '#fee2e2';
+    alertDiv.style.color = '#b91c1c';
+    alertDiv.innerHTML = `❌ <strong>Erro no Check-in:</strong><br>${err.message || 'Código inválido ou erro de conexão.'}`;
+    showToast(err.message || 'Erro no check-in.', 'error');
+  }
+}
+
+window.buscarParticipantesCheckin = async function() {
+  const searchInput = document.getElementById('checkin-search-input');
+  const resultsList = document.getElementById('checkin-results-list');
+  if (!searchInput || !resultsList) return;
+
+  const query = searchInput.value.trim();
+  if (query.length < 2) {
+    resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Digite pelo menos 2 caracteres para pesquisar.</p>`;
+    return;
+  }
+
+  try {
+    const list = await API.request(`/admin/eventos/${selectedEventoId}/checkin/participantes?search=${encodeURIComponent(query)}`);
+    if (!list || list.length === 0) {
+      resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 2rem;">Nenhum participante encontrado.</p>`;
+      return;
+    }
+
+    resultsList.innerHTML = list.map(ins => {
+      let badgeClass = 'badge-warning';
+      if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
+      else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
+
+      const checkinBadge = ins.checkin_realizado ? 
+        `<span class="badge badge-success">Checked-in</span>` : 
+        `<span class="badge badge-warning">Ausente</span>`;
+
+      const checkinBtnText = ins.checkin_realizado ? "Desfazer Check-in" : "Check-in Manual";
+      const checkinBtnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
+
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; gap: 0.5rem;">
+          <div>
+            <div style="font-weight: 700; font-size: 0.9rem;">${ins.nome}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">CPF: ${ins.cpf || 'N/A'} | Email: ${ins.email}</div>
+            <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem;">
+              <span class="badge ${badgeClass}">${ins.status}</span>
+              ${checkinBadge}
+            </div>
+          </div>
+          <div>
+            <button class="${checkinBtnClass}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id})">
+              ${checkinBtnText}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    resultsList.innerHTML = `<p style="color: #b91c1c; font-size: 0.9rem; text-align: center; margin-top: 2rem;">Erro ao carregar participantes.</p>`;
+  }
+};
+
+window.realizarCheckinManual = async function(inscricaoId) {
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/inscricoes/${inscricaoId}/toggle-checkin`, {
+      method: 'POST'
+    });
+    showToast(res.mensagem, "success");
+    buscarParticipantesCheckin();
+  } catch (err) {
+    showToast(err.message || "Erro ao atualizar check-in manual.", "error");
+  }
 };
