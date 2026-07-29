@@ -752,8 +752,8 @@ let currentTriagemCode = null;
 window.loadListaPresenca = async function() {
   try {
     const data = await API.request(`/admin/eventos/${selectedEventoId}/checkin/participantes`);
-    // Excluir permanentemente inscrições canceladas
-    cacheCheckinParticipantes = (data || []).filter(ins => ins.status !== 'CANCELADA' && ins.status !== 'CANCELADO');
+    // Manter apenas inscrições com status CONFIRMADA
+    cacheCheckinParticipantes = (data || []).filter(ins => ins.status === 'CONFIRMADA');
     currentPagePresenca = 1;
     renderCheckinMetrics();
     renderTabelaPresenca();
