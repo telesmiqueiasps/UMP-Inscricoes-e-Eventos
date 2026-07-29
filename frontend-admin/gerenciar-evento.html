@@ -101,7 +101,7 @@
           <img src="img/pagamentos.png" alt="💳" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='💳'"> Pagamentos
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-checkin', this)">
-          <img src="img/senha.png" alt="🔑" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='🔑'"> Check-in / Controle
+          <img src="img/checkin.png" alt="✔️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='✔️'"> Check-in
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-editar', this)">
           <img src="img/editar.png" alt="✏️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='✏️'"> Editar Evento
@@ -157,6 +157,8 @@
               </tbody>
             </table>
           </div>
+          <!-- Controle de Paginação -->
+          <div id="inscricoes-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;"></div>
         </div>
       </div>
 
@@ -233,6 +235,8 @@
               </tbody>
             </table>
           </div>
+          <!-- Controle de Paginação -->
+          <div id="pagamentos-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;"></div>
         </div>
       </div>
 
@@ -261,56 +265,56 @@
 
         <div class="grid-2">
           <!-- Câmera Leitora de QR Code & Ficha de Triagem -->
-          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 420px; position: relative;">
-            <h3 class="card-title" style="margin-bottom: 0.5rem; text-align: center;">📷 Check-in via QR Code</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">Aponte o QR Code do crachá ou do celular do participante para a câmera.</p>
+          <div class="card" style="padding: 1rem 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 340px; position: relative;">
+            <h3 class="card-title" style="margin-bottom: 0.25rem; text-align: center;">📷 Check-in via QR Code</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; text-align: center;">Aponte o QR Code do crachá ou celular para a câmera.</p>
             
-            <div id="checkin-camera-actions" style="margin-bottom: 1rem; display: flex; gap: 0.5rem; z-index: 10;">
-              <button class="btn btn-primary" onclick="iniciarLeitorCheckin()">Iniciar Scanner</button>
-              <button class="btn btn-outline" id="btn-stop-checkin" onclick="pararLeitorCheckin()" disabled>Parar Scanner</button>
+            <div id="checkin-camera-actions" style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem; z-index: 10;">
+              <button class="btn btn-primary" onclick="iniciarLeitorCheckin()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Iniciar Scanner</button>
+              <button class="btn btn-outline" id="btn-stop-checkin" onclick="pararLeitorCheckin()" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Parar</button>
             </div>
             
-            <!-- Leitor QR Code (Visualizador Ampliado) -->
-            <div id="reader" style="width: 100%; max-width: 480px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; border: 2px dashed #cbd5e1; height: 320px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500;">
+            <!-- Leitor QR Code (Visualizador Compacto) -->
+            <div id="reader" style="width: 100%; max-width: 480px; border-radius: var(--radius-md); overflow: hidden; background: #e2e8f0; border: 2px dashed #cbd5e1; height: 200px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 500; font-size: 0.85rem;">
               Leitor inativo
             </div>
 
             <!-- Ficha de Triagem (Aparece após escaneamento) -->
-            <div id="checkin-scanned-card" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; border-radius: var(--radius-lg); padding: 2rem; flex-direction: column; justify-content: space-between; z-index: 20; border: 2px solid var(--border-color);">
+            <div id="checkin-scanned-card" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; flex-direction: column; justify-content: space-between; z-index: 20; border: 2px solid var(--border-color);">
               <div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                  <h4 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0;">📋 Ficha de Triagem</h4>
-                  <span id="triagem-status-badge" class="badge">PENDENTE</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--primary); margin: 0;">📋 Ficha de Triagem</h4>
+                  <span id="triagem-status-badge" class="badge" style="font-size: 0.75rem;">PENDENTE</span>
                 </div>
                 
-                <div style="text-align: left; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="text-align: left; display: flex; flex-direction: column; gap: 0.5rem;">
                   <div>
-                    <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Nome do Participante</span>
-                    <strong id="triagem-nome" style="font-size: 1.35rem; color: var(--text-dark);">-</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">Nome do Participante</span>
+                    <strong id="triagem-nome" style="font-size: 1.2rem; color: var(--text-dark);">-</strong>
                   </div>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
                     <div>
-                      <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">CPF</span>
-                      <span id="triagem-cpf" style="font-weight: 600;">-</span>
+                      <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">CPF</span>
+                      <span id="triagem-cpf" style="font-weight: 600; font-size: 0.85rem;">-</span>
                     </div>
                     <div>
-                      <span style="font-size: 0.8rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">E-mail</span>
-                      <span id="triagem-email" style="font-weight: 600; font-size: 0.85rem;">-</span>
+                      <span style="font-size: 0.75rem; color: var(--text-muted); display: block; font-weight: 600; text-transform: uppercase;">E-mail</span>
+                      <span id="triagem-email" style="font-weight: 600; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;">-</span>
                     </div>
                   </div>
                   
-                  <div id="triagem-aviso-container" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                  <div id="triagem-aviso-container" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 600; align-items: center; gap: 0.35rem; margin-top: 0.25rem;">
                     <span>⚠️</span>
                     <span id="triagem-aviso-texto">Esta inscrição não está confirmada!</span>
                   </div>
                 </div>
               </div>
               
-              <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-                <button class="btn btn-primary" id="btn-triagem-confirmar" style="flex: 2; padding: 0.75rem 1rem;" onclick="confirmarCheckinTriagem()">
+              <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <button class="btn btn-primary" id="btn-triagem-confirmar" style="flex: 2; padding: 0.55rem 1rem; font-size: 0.85rem;" onclick="confirmarCheckinTriagem()">
                   ✅ Confirmar Entrada
                 </button>
-                <button class="btn btn-outline" style="flex: 1; padding: 0.75rem 1rem;" onclick="cancelarTriagem()">
+                <button class="btn btn-outline" style="flex: 1; padding: 0.55rem 1rem; font-size: 0.85rem;" onclick="cancelarTriagem()">
                   Cancelar
                 </button>
               </div>
@@ -318,22 +322,22 @@
           </div>
 
           <!-- Busca Manual e Ações Rápidas -->
-          <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column;">
-            <h3 class="card-title" style="margin-bottom: 0.5rem;">🔍 Busca Manual de Inscrições</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Digite o Nome, E-mail ou CPF para check-in manual imediato.</p>
+          <div class="card" style="padding: 1rem 1.5rem; display: flex; flex-direction: column; min-height: 340px;">
+            <h3 class="card-title" style="margin-bottom: 0.25rem;">🔍 Busca Manual de Inscrições</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Digite o Nome, E-mail ou CPF para check-in manual imediato.</p>
             
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <input type="text" id="checkin-search-input" class="form-control" placeholder="Digite nome, e-mail ou CPF..." onkeyup="buscarParticipantesCheckin()">
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <input type="text" id="checkin-search-input" class="form-control" placeholder="Digite nome, e-mail ou CPF..." onkeyup="buscarParticipantesCheckin()" style="height: 38px; font-size: 0.85rem;">
             </div>
 
             <!-- Feedback de Scanner QR Code -->
-            <div id="checkin-feedback-alert" style="display: none; padding: 1rem; border-radius: var(--radius-md); font-weight: 600; text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem;">
+            <div id="checkin-feedback-alert" style="display: none; padding: 0.75rem; border-radius: var(--radius-md); font-weight: 600; text-align: center; margin-bottom: 0.75rem; font-size: 0.85rem;">
               Feedback do Check-in
             </div>
 
             <!-- Lista de Resultados de Busca Manual -->
-            <div style="flex-grow: 1; overflow-y: auto; max-height: 310px;" id="checkin-results-list">
-              <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-top: 3rem;">Use a caixa de busca acima para listar participantes.</p>
+            <div style="flex-grow: 1; overflow-y: auto; max-height: 200px;" id="checkin-results-list">
+              <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 2.5rem;">Use a caixa de busca acima para listar participantes.</p>
             </div>
           </div>
         </div>
@@ -382,6 +386,8 @@
               </tbody>
             </table>
           </div>
+          <!-- Controle de Paginação -->
+          <div id="presenca-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;"></div>
         </div>
       </div>
 

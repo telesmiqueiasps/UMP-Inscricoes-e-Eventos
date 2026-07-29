@@ -3,6 +3,12 @@ let eventoAtual = null;
 let cachedInscricoesList = [];
 let allEventsList = [];
 
+// Controle de Paginação
+let currentPageInscricoes = 1;
+let currentPagePagamentos = 1;
+let currentPagePresenca = 1;
+const itemsPerPage = 20;
+
 window.execEditorCommand = function(command, arg = null) {
   document.execCommand(command, false, arg);
   document.getElementById('ev-descricao-editor').focus();
@@ -92,89 +98,142 @@ async function loadEventoInfo() {
   }
 }
 
-// --- Carregar Inscrições ---
-window.loadInscricoes = async function() {
-  const container = document.getElementById('inscricoes-table-body');
-  const tableHead = document.getElementById('inscricoes-table-head');
+// --- Controle de Paginação (Helper Genérico) ---
+function renderPaginationControls(containerId, currentPage, totalItems, onPageChange) {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  
+  if (totalItems <= itemsPerPage) {
+    container.innerHTML = `
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Mostrando todos os ${totalItems} registros</div>
+      <div></div>
+    `;
+    return;
+  }
+
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  container.innerHTML = `
+    <div style="font-size: 0.8rem; color: var(--text-muted);">
+      Mostrando <strong>${startItem}</strong> a <strong>${endItem}</strong> de <strong>${totalItems}</strong> registros
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; height: 32px;" ${currentPage === 1 ? 'disabled' : ''} onclick="${onPageChange}(${currentPage - 1})">
+        &laquo; Anterior
+      </button>
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Página ${currentPage} de ${totalPages}</span>
+      <button class="btn btn-outline" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; height: 32px;" ${currentPage === totalPages ? 'disabled' : ''} onclick="${onPageChange}(${currentPage + 1})">
+        Próxima &raquo;
+      </button>
+    </div>
+  `;
+}
+
+// --- Carregar Inscrições ---
+window.loadInscricoes = async function() {
   const status = document.getElementById('filter-status').value;
   const search = document.getElementById('filter-search').value;
 
-  let queryStr = `?page=1&limit=200&evento_id=${selectedEventoId}`;
+  let queryStr = `?page=1&limit=500&evento_id=${selectedEventoId}`;
   if (status) queryStr += `&status_filtro=${status}`;
   if (search) queryStr += `&search=${encodeURIComponent(search)}`;
 
   try {
     const data = await API.request(`/admin/inscricoes${queryStr}`);
     cachedInscricoesList = data;
-
-    // Descobrir campos dinâmicos exigidos
-    let customFields = [];
-    if (eventoAtual && eventoAtual.campos_formulario) {
-      customFields = eventoAtual.campos_formulario.split(',').filter(f => f.trim() !== '');
+    currentPageInscricoes = 1;
+    renderInscricoesTable();
+  } catch (err) {
+    const container = document.getElementById('inscricoes-table-body');
+    if (container) {
+      container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-danger);">Erro ao carregar inscrições.</td></tr>`;
     }
+  }
+};
 
-    // Atualizar Cabeçalho da Tabela
-    let headHTML = `
+window.renderInscricoesTable = function() {
+  const container = document.getElementById('inscricoes-table-body');
+  const tableHead = document.getElementById('inscricoes-table-head');
+  if (!container) return;
+
+  // Descobrir campos dinâmicos exigidos
+  let customFields = [];
+  if (eventoAtual && eventoAtual.campos_formulario) {
+    customFields = eventoAtual.campos_formulario.split(',').filter(f => f.trim() !== '');
+  }
+
+  // Atualizar Cabeçalho da Tabela
+  let headHTML = `
+    <tr>
+      <th>ID</th>
+      <th>Participante</th>
+      <th>Forma Pag.</th>
+      <th>Valor Total</th>
+  `;
+  customFields.forEach(f => {
+    headHTML += `<th>${formatarLabelCampo(f)}</th>`;
+  });
+  headHTML += `
+      <th>Status</th>
+      <th>Ações Manuais</th>
+    </tr>
+  `;
+  if (tableHead) tableHead.innerHTML = headHTML;
+
+  const totalItems = cachedInscricoesList.length;
+  const start = (currentPageInscricoes - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedData = cachedInscricoesList.slice(start, end);
+
+  // Preencher Linhas
+  if (totalItems === 0) {
+    container.innerHTML = `<tr><td colspan="${6 + customFields.length}" style="text-align:center;">Nenhuma inscrição encontrada para este evento.</td></tr>`;
+    renderPaginationControls('inscricoes-pagination-container', currentPageInscricoes, totalItems, 'changePageInscricoes');
+    return;
+  }
+
+  container.innerHTML = paginatedData.map(ins => {
+    const valorFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
+    const user = ins.usuario || {};
+    const userMail = user.email ? ` (${user.email})` : '';
+
+    let rowHTML = `
       <tr>
-        <th>ID</th>
-        <th>Participante</th>
-        <th>Forma Pag.</th>
-        <th>Valor Total</th>
+        <td>#${ins.id}</td>
+        <td><strong>${user.nome || 'N/A'}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${userMail}</div></td>
+        <td>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</td>
+        <td>${valorFmt}</td>
     `;
+
+    // Preencher campos dinâmicos
     customFields.forEach(f => {
-      headHTML += `<th>${formatarLabelCampo(f)}</th>`;
+      const val = (ins.dados_extras && ins.dados_extras[f]) ? ins.dados_extras[f] : '-';
+      rowHTML += `<td>${val}</td>`;
     });
-    headHTML += `
-        <th>Status</th>
-        <th>Ações Manuais</th>
+
+    rowHTML += `
+        <td><span class="badge ${statusBadge}">${ins.status}</span></td>
+        <td>
+          <div style="display:flex; gap:0.25rem;">
+            ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">Confirmar</button>` : ''}
+            ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">Cancelar</button>` : ''}
+          </div>
+        </td>
       </tr>
     `;
-    tableHead.innerHTML = headHTML;
+    return rowHTML;
+  }).join('');
 
-    // Preencher Linhas
-    if (data.length === 0) {
-      container.innerHTML = `<tr><td colspan="${6 + customFields.length}" style="text-align:center;">Nenhuma inscrição encontrada para este evento.</td></tr>`;
-      return;
-    }
+  renderPaginationControls('inscricoes-pagination-container', currentPageInscricoes, totalItems, 'changePageInscricoes');
+};
 
-    container.innerHTML = data.map(ins => {
-      const valorFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
-      const user = ins.usuario || {};
-      const userMail = user.email ? ` (${user.email})` : '';
-
-      let rowHTML = `
-        <tr>
-          <td>#${ins.id}</td>
-          <td><strong>${user.nome || 'N/A'}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${userMail}</div></td>
-          <td>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</td>
-          <td>${valorFmt}</td>
-      `;
-
-      // Preencher campos dinâmicos
-      customFields.forEach(f => {
-        const val = (ins.dados_extras && ins.dados_extras[f]) ? ins.dados_extras[f] : '-';
-        rowHTML += `<td>${val}</td>`;
-      });
-
-      rowHTML += `
-          <td><span class="badge ${statusBadge}">${ins.status}</span></td>
-          <td>
-            <div style="display:flex; gap:0.25rem;">
-              ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">Confirmar</button>` : ''}
-              ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">Cancelar</button>` : ''}
-            </div>
-          </td>
-        </tr>
-      `;
-      return rowHTML;
-    }).join('');
-
-  } catch (err) {
-    container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-danger);">Erro ao carregar inscrições.</td></tr>`;
-  }
+window.changePageInscricoes = function(page) {
+  currentPageInscricoes = page;
+  renderInscricoesTable();
 };
 
 window.alterarStatusInscricao = async function(id, novoStatus) {
@@ -238,114 +297,119 @@ async function loadPagamentos() {
     document.getElementById('evt-total-pendente').textContent = formatBRL(totalPendente);
     document.getElementById('evt-total-vencido').textContent = formatBRL(totalVencido);
 
-    renderPagamentosList(pagamentos);
+    currentPagePagamentos = 1;
+    updatePagamentosTable();
   } catch (err) {
     container.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-danger);">Erro ao carregar pagamentos.</td></tr>`;
   }
 }
 
-function renderPagamentosList(pagamentos, statusFilter = '') {
+window.updatePagamentosTable = function() {
   const container = document.getElementById('pagamentos-table-body');
   if (!container) return;
 
-  // Se o filtro de status estiver ativo, filtrar antes de verificar se está vazio
-  let hasAnyRow = false;
-  
-  let rowsHtml = '';
-  pagamentos.forEach(pag => {
-    const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
-    const statusBadgeClass = (status) => {
-      if (status === 'PAGO') return 'badge-success';
-      if (status === 'CANCELADO' || status === 'CANCELADA') return 'badge-info';
-      if (status === 'VENCIDO' || status === 'VENCIDA') return 'badge-danger';
-      return 'badge-warning';
-    };
-
-    if (pag.parcelas && pag.parcelas.length > 0) {
-      pag.parcelas.forEach(parc => {
-        if (statusFilter && parc.status !== statusFilter) return;
-        hasAnyRow = true;
-
-        let actionHTML = '';
-        if (parc.status === 'PAGO') {
-          actionHTML = '<span style="color:#059669; font-weight:600;">Quitada</span>';
-        } else if (parc.status === 'CANCELADO' || parc.status === 'CANCELADA') {
-          actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelada</span>';
-        } else {
-          actionHTML = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${parc.id}, 'PAGO')">Dar Baixa (Pago)</button>`;
-        }
-
-        rowsHtml += `
-          <tr>
-            <td>Pag #${pag.id} (Parc ${parc.numero})</td>
-            <td>${userDisplay}</td>
-            <td>Inscrição #${pag.inscricao_id}</td>
-            <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
-            <td>R$ ${parseFloat(parc.valor).toFixed(2).replace('.', ',')}</td>
-            <td>${new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-            <td><span class="badge ${statusBadgeClass(parc.status)}">${parc.status}</span></td>
-            <td>${actionHTML}</td>
-          </tr>
-        `;
-      });
-    } else {
-      if (statusFilter && pag.status !== statusFilter) return;
-      hasAnyRow = true;
-
-      rowsHtml += `
-        <tr>
-          <td>Pag #${pag.id}</td>
-          <td>${userDisplay}</td>
-          <td>Inscrição #${pag.inscricao_id}</td>
-          <td>${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</td>
-          <td>R$ ${parseFloat(pag.valor).toFixed(2).replace('.', ',')}</td>
-          <td>N/A</td>
-          <td><span class="badge ${statusBadgeClass(pag.status)}">${pag.status}</span></td>
-          <td>-</td>
-        </tr>
-      `;
-    }
-  });
-
-  if (!hasAnyRow) {
-    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento correspondente aos filtros.</td></tr>`;
-    return;
-  }
-
-  container.innerHTML = rowsHtml;
-}
-
-window.filterPagamentosLocal = function() {
   const searchVal = document.getElementById('pay-filter-search').value.toLowerCase().trim();
   const methodVal = document.getElementById('pay-filter-method').value;
   const statusVal = document.getElementById('pay-filter-status').value;
 
-  const filtered = allPagamentosCached.filter(pag => {
+  let rows = [];
+  allPagamentosCached.forEach(pag => {
+    if (methodVal && pag.forma_pagamento !== methodVal) return;
+
     if (searchVal) {
       const nameMatch = pag.usuario_nome && pag.usuario_nome.toLowerCase().includes(searchVal);
       const emailMatch = pag.usuario_email && pag.usuario_email.toLowerCase().includes(searchVal);
       const cpfMatch = pag.usuario_cpf && pag.usuario_cpf.toLowerCase().includes(searchVal);
-      if (!nameMatch && !emailMatch && !cpfMatch) {
-        return false;
-      }
+      if (!nameMatch && !emailMatch && !cpfMatch) return;
     }
-    if (methodVal) {
-      if (pag.forma_pagamento !== methodVal) {
-        return false;
-      }
+
+    const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
+
+    if (pag.parcelas && pag.parcelas.length > 0) {
+      pag.parcelas.forEach(parc => {
+        if (statusVal && parc.status !== statusVal) return;
+        rows.push({
+          id: `Pag #${pag.id} (Parc ${parc.numero})`,
+          userDisplay,
+          inscricaoId: pag.inscricao_id,
+          formaPag: formatarFormaPagamento(pag.forma_pagamento, pag.capture_method),
+          valor: parseFloat(parc.valor),
+          vencimento: new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR'),
+          status: parc.status,
+          parcelaId: parc.id,
+          isParcela: true
+        });
+      });
+    } else {
+      if (statusVal && pag.status !== statusVal) return;
+      rows.push({
+        id: `Pag #${pag.id}`,
+        userDisplay,
+        inscricaoId: pag.inscricao_id,
+        formaPag: formatarFormaPagamento(pag.forma_pagamento, pag.capture_method),
+        valor: parseFloat(pag.valor),
+        vencimento: 'N/A',
+        status: pag.status,
+        isParcela: false
+      });
     }
-    if (statusVal) {
-      if (pag.forma_pagamento === 'PARCELADO') {
-        const hasStatus = pag.parcelas.some(parc => parc.status === statusVal);
-        if (!hasStatus) return false;
-      } else {
-        if (pag.status !== statusVal) return false;
-      }
-    }
-    return true;
   });
 
-  renderPagamentosList(filtered, statusVal);
+  const totalItems = rows.length;
+  const start = (currentPagePagamentos - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedRows = rows.slice(start, end);
+
+  if (totalItems === 0) {
+    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento correspondente aos filtros.</td></tr>`;
+    renderPaginationControls('pagamentos-pagination-container', currentPagePagamentos, totalItems, 'changePagePagamentos');
+    return;
+  }
+
+  const statusBadgeClass = (status) => {
+    if (status === 'PAGO') return 'badge-success';
+    if (status === 'CANCELADO' || status === 'CANCELADA') return 'badge-info';
+    if (status === 'VENCIDO' || status === 'VENCIDA') return 'badge-danger';
+    return 'badge-warning';
+  };
+
+  container.innerHTML = paginatedRows.map(row => {
+    let actionHTML = '-';
+    if (row.isParcela) {
+      if (row.status === 'PAGO') {
+        actionHTML = '<span style="color:#059669; font-weight:600;">Quitada</span>';
+      } else if (row.status === 'CANCELADO' || row.status === 'CANCELADA') {
+        actionHTML = '<span style="color:#ef4444; font-weight:600;">Cancelada</span>';
+      } else {
+        actionHTML = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusParcela(${row.parcelaId}, 'PAGO')">Dar Baixa (Pago)</button>`;
+      }
+    }
+
+    return `
+      <tr>
+        <td>${row.id}</td>
+        <td>${row.userDisplay}</td>
+        <td>Inscrição #${row.inscricaoId}</td>
+        <td>${row.formaPag}</td>
+        <td>R$ ${row.valor.toFixed(2).replace('.', ',')}</td>
+        <td>${row.vencimento}</td>
+        <td><span class="badge ${statusBadgeClass(row.status)}">${row.status}</span></td>
+        <td>${actionHTML}</td>
+      </tr>
+    `;
+  }).join('');
+
+  renderPaginationControls('pagamentos-pagination-container', currentPagePagamentos, totalItems, 'changePagePagamentos');
+};
+
+window.changePagePagamentos = function(page) {
+  currentPagePagamentos = page;
+  updatePagamentosTable();
+};
+
+window.filterPagamentosLocal = function() {
+  currentPagePagamentos = 1;
+  updatePagamentosTable();
 };
 
 window.alterarStatusParcela = async function(id, novoStatus) {
@@ -688,7 +752,9 @@ let currentTriagemCode = null;
 window.loadListaPresenca = async function() {
   try {
     const data = await API.request(`/admin/eventos/${selectedEventoId}/checkin/participantes`);
-    cacheCheckinParticipantes = data || [];
+    // Excluir permanentemente inscrições canceladas
+    cacheCheckinParticipantes = (data || []).filter(ins => ins.status !== 'CANCELADA' && ins.status !== 'CANCELADO');
+    currentPagePresenca = 1;
     renderCheckinMetrics();
     renderTabelaPresenca();
   } catch (err) {
@@ -747,21 +813,21 @@ function renderTabelaPresenca() {
     );
   }
 
-  if (list.length === 0) {
+  const totalItems = list.length;
+  const start = (currentPagePresenca - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const paginatedList = list.slice(start, end);
+
+  if (paginatedList.length === 0) {
     tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum participante correspondente encontrado.</td></tr>`;
+    renderPaginationControls('presenca-pagination-container', currentPagePresenca, totalItems, 'changePagePresenca');
     return;
   }
 
-  tableBody.innerHTML = list.map(ins => {
+  tableBody.innerHTML = paginatedList.map(ins => {
     let badgeClass = 'badge-warning';
     if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
-
-    const getStatusBadge = (st) => {
-      if (st === 'PAGO' || st === 'CONFIRMADA') return 'badge-success';
-      if (st === 'CANCELADO' || st === 'CANCELADA') return 'badge-danger';
-      return 'badge-warning';
-    };
 
     const checkinStatusHTML = ins.checkin_realizado ? 
       `<div style="color: #10B981; font-weight: 600;">
@@ -792,10 +858,18 @@ function renderTabelaPresenca() {
       </tr>
     `;
   }).join('');
+
+  renderPaginationControls('presenca-pagination-container', currentPagePresenca, totalItems, 'changePagePresenca');
 }
+
+window.changePagePresenca = function(page) {
+  currentPagePresenca = page;
+  renderTabelaPresenca();
+};
 
 window.setPresencaFiltro = function(filtro) {
   filtroPresencaAtivo = filtro;
+  currentPagePresenca = 1;
 
   // Toggle active tab classes
   const tabs = ['todos', 'presentes', 'ausentes'];
@@ -818,6 +892,7 @@ window.setPresencaFiltro = function(filtro) {
 };
 
 window.filtrarTabelaPresenca = function() {
+  currentPagePresenca = 1;
   renderTabelaPresenca();
 };
 
