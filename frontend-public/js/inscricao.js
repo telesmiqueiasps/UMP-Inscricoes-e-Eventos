@@ -497,46 +497,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     } else if (forma === 'PARCELADO') {
-      const parcelasHtml = (pagamento.parcelas || []).map(p => {
-        const isLink = p.copia_cola_pix && p.copia_cola_pix.startsWith('http');
-        const acaoBtn = isLink
-          ? `<a href="${p.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">💳 Pagar Parcela ${p.numero}</a>`
-          : (p.pdf_url ? `<a href="${p.pdf_url}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">📄 Baixar PDF</a>` : `<span style="font-size: 0.8rem;">Pend. 1º Pagamento</span>`);
+      const primeiraParcela = (pagamento.parcelas || [])[0];
+      const valorFmt = primeiraParcela ? `R$ ${parseFloat(primeiraParcela.valor).toFixed(2).replace('.', ',')}` : '';
+      const vencFmt = primeiraParcela ? new Date(primeiraParcela.vencimento + (primeiraParcela.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : '';
 
-        return `
-          <tr>
-            <td>Parcela ${p.numero}</td>
-            <td>${new Date(p.vencimento + (p.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-            <td>R$ ${parseFloat(p.valor).toFixed(2).replace('.', ',')}</td>
-            <td><span class="badge badge-warning">${p.status}</span></td>
-            <td>${acaoBtn}</td>
-          </tr>
-        `;
-      }).join('');
+      let botaoPagarHTML = '';
+      if (primeiraParcela) {
+        if (primeiraParcela.copia_cola_pix && primeiraParcela.copia_cola_pix.startsWith('http')) {
+          botaoPagarHTML = `
+            <a href="${primeiraParcela.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; width: 100%; display: block;">
+              💳 Pagar 1ª Parcela (Confirmação da Inscrição)
+            </a>
+          `;
+        } else if (primeiraParcela.pdf_url) {
+          botaoPagarHTML = `
+            <a href="${primeiraParcela.pdf_url}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; width: 100%; display: block;">
+              📄 Baixar Boleto / PDF da 1ª Parcela
+            </a>
+          `;
+        } else if (primeiraParcela.copia_cola_pix) {
+          botaoPagarHTML = `
+            <div style="background: #FFFBEB; border: 1px solid #FCD34D; padding: 1rem; border-radius: 8px; margin: 1.5rem 0; text-align: left;">
+              <strong style="color: #92400E;">Código Pix para Pagamento da 1ª Parcela:</strong>
+              <input type="text" readonly class="form-control" value="${primeiraParcela.copia_cola_pix}" id="pix-input-parc1" style="margin-top: 0.5rem;" />
+              <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPixParc1()">Copiar Código Pix</button>
+            </div>
+          `;
+        }
+      }
 
       paymentResult.innerHTML = `
-        <div>
-          <h3>Resumo do Parcelamento Gerado!</h3>
-          <p style="color: var(--text-muted); margin-bottom: 1rem;">Para oficializar sua inscrição e garantir sua vaga, efetue o pagamento da 1ª parcela abaixo:</p>
-          
-          <div class="table-container" style="margin-bottom: 1.5rem;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Parcela</th>
-                  <th>Vencimento</th>
-                  <th>Valor</th>
-                  <th>Status</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody>${parcelasHtml}</tbody>
-            </table>
+        <div style="text-align: center; padding: 0.5rem 0;">
+          <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando 1ª Parcela</div>
+          <h3 style="font-size: 1.35rem; font-weight: 700;">1ª Parcela - Confirmação da Inscrição</h3>
+          <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem;">
+            Efetue o pagamento da 1ª parcela até <strong>${vencFmt}</strong> para confirmar sua vaga e oficializar sua inscrição no evento.
+          </p>
+
+          <div style="background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: var(--radius-md); padding: 1.25rem; margin: 1.5rem 0; text-align: center;">
+            <div style="font-size: 0.85rem; color: #6B21A8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Valor da 1ª Parcela</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #581C87; margin: 0.25rem 0;">${valorFmt}</div>
+            <div style="font-size: 0.85rem; color: #7E22CE;">Vencimento: <strong>${vencFmt}</strong></div>
           </div>
+
+          ${botaoPagarHTML}
 
           ${infoAvisoHtml}
 
-          <a href="${userAreaUrl}" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">Acessar Área do Participante</a>
+          <a href="${userAreaUrl}" class="btn btn-outline" style="margin-top: 1.5rem; width: 100%; display: inline-block;">Ir para Minha Área</a>
         </div>
       `;
     }
@@ -549,6 +557,15 @@ function copiarPix() {
     input.select();
     navigator.clipboard.writeText(input.value);
     showToast('Código Pix copiado para a área de transferência!', 'success');
+  }
+}
+
+function copiarPixParc1() {
+  const input = document.getElementById('pix-input-parc1');
+  if (input) {
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    showToast('Código Pix da 1ª parcela copiado!', 'success');
   }
 }
 
