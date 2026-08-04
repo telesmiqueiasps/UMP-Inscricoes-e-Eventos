@@ -534,17 +534,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       }
 
-      let pixCopiaColaHtml = '';
-      if (primeiraParcela && primeiraParcela.copia_cola_pix) {
-        pixCopiaColaHtml = `
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: left;">
-            <strong style="color: #334155; font-size: 0.85rem;">Link / Chave Pix da 1ª Parcela:</strong>
-            <input type="text" readonly class="form-control" value="${primeiraParcela.copia_cola_pix}" id="pix-input-parc1" style="margin-top: 0.5rem; font-size: 0.85rem;" />
-            <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem; font-size: 0.85rem;" onclick="copiarPixParc1()">Copiar Link / Código Pix</button>
-          </div>
-        `;
-      }
-
       paymentResult.innerHTML = `
         <div style="text-align: center; padding: 0.5rem 0;">
           <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando 1ª Parcela</div>
@@ -562,8 +551,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${qrHtml}
 
           ${acoesHtml}
-
-          ${pixCopiaColaHtml}
 
           ${infoAvisoHtml}
 
