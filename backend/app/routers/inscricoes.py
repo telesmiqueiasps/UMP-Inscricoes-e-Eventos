@@ -8,8 +8,13 @@ from app.core.security import get_current_user
 from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.inscricao import Inscricao
-from app.schemas.inscricao import InscricaoCreate, InscricaoResponse
+from app.models.inscricao_triagem import InscricaoTriagem
+from app.schemas.inscricao import (
+    InscricaoCreate, InscricaoResponse,
+    InscricaoTriagemCreate, InscricaoTriagemResponse
+)
 from app.services.email import enviar_email_inscricao
+from datetime import datetime
 
 router = APIRouter(prefix="/inscricoes", tags=["Inscrições"])
 
@@ -105,3 +110,89 @@ def obter_inscricao(
         raise HTTPException(status_code=403, detail="Acesso negado a esta inscrição.")
 
     return inscricao
+
+
+@router.post("/triagem", response_model=InscricaoTriagemResponse, status_code=status.HTTP_201_CREATED)
+def criar_ou_atualizar_triagem(
+    triagem_in: InscricaoTriagemCreate,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    # 1. Verificar evento
+    evento = db.query(Evento).filter(Evento.id == triagem_in.evento_id, Evento.ativo == True).first()
+    if not evento:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Evento não encontrado ou indisponível."
+        )
+
+    # 2. Verificar se já tem inscrição oficial confirmada/ativa
+    inscricao_existente = db.query(Inscricao).filter(
+        Inscricao.usuario_id == current_user.id,
+        Inscricao.evento_id == evento.id,
+        Inscricao.status != "CANCELADA"
+    ).first()
+
+    if inscricao_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Você já possui uma inscrição realizada para este evento."
+        )
+
+    # 3. Tratar data da primeira parcela
+    dt_primeira = None
+    if triagem_in.data_primeira_parcela:
+        try:
+            dt_primeira = datetime.strptime(triagem_in.data_primeira_parcela, "%Y-%m-%d").date()
+        except ValueError:
+            pass
+
+    # 4. Buscar se já possui uma triagem PENDENTE_PAGAMENTO para este usuário + evento
+    triagem_existente = db.query(InscricaoTriagem).filter(
+        InscricaoTriagem.usuario_id == current_user.id,
+        InscricaoTriagem.evento_id == evento.id,
+        InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
+    ).first()
+
+    if triagem_existente:
+        triagem_existente.forma_pagamento = triagem_in.forma_pagamento
+        triagem_existente.num_parcelas = triagem_in.num_parcelas or 1
+        triagem_existente.data_primeira_parcela = dt_primeira
+        triagem_existente.dados_extras = triagem_in.dados_extras
+        triagem_existente.valor_total = evento.valor
+        db.commit()
+        db.refresh(triagem_existente)
+        return triagem_existente
+
+    # Criar nova triagem
+    db_triagem = InscricaoTriagem(
+        usuario_id=current_user.id,
+        evento_id=evento.id,
+        status="PENDENTE_PAGAMENTO",
+        forma_pagamento=triagem_in.forma_pagamento,
+        num_parcelas=triagem_in.num_parcelas or 1,
+        data_primeira_parcela=dt_primeira,
+        valor_total=evento.valor,
+        dados_extras=triagem_in.dados_extras
+    )
+    db.add(db_triagem)
+    db.commit()
+    db.refresh(db_triagem)
+
+    return db_triagem
+
+
+@router.get("/triagem/pendente", response_model=Optional[InscricaoTriagemResponse])
+def obter_triagem_pendente(
+    evento_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    triagem = db.query(InscricaoTriagem).filter(
+        InscricaoTriagem.usuario_id == current_user.id,
+        InscricaoTriagem.evento_id == evento_id,
+        InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
+    ).order_by(InscricaoTriagem.created_at.desc()).first()
+
+    return triagem
+

@@ -8,13 +8,15 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.usuario import Usuario
 from app.models.inscricao import Inscricao
+from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
-from app.services.parcelamento import gerar_parcelas
+from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas
 from app.services.pix import gerar_copia_cola_pix, gerar_qr_code_base64
 from app.services.infinitepay import infinitepay_service
 from app.services.pdf_generator import gerar_pdf_parcela
+from datetime import datetime, date
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,6 +29,116 @@ class ProcessarPagamentoRequest(BaseModel):
     forma_pagamento: str  # PIX, INFINITEPAY, PARCELADO
     num_parcelas: Optional[int] = 1
     data_primeira_parcela: Optional[str] = None  # Formato YYYY-MM-DD
+
+
+class ProcessarTriagemRequest(BaseModel):
+    triagem_id: int
+
+
+@router.post("/processar-triagem")
+def processar_pagamento_triagem(
+    req: ProcessarTriagemRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == req.triagem_id).first()
+    if not triagem:
+        raise HTTPException(status_code=404, detail="Triagem de inscrição não encontrada.")
+
+    if triagem.usuario_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Acesso negado a esta triagem.")
+
+    forma_pag = (triagem.forma_pagamento or "PIX").upper()
+    evento = triagem.evento
+
+    receipt_url = None
+    copia_cola_pix = None
+    qr_code_pix = None
+    parcelas_info = []
+
+    if forma_pag == "PIX":
+        if evento.link_pagamento_pix:
+            copia_cola_pix = evento.link_pagamento_pix
+            qr_code_pix = gerar_qr_code_base64(copia_cola_pix)
+            receipt_url = copia_cola_pix
+        else:
+            order_nsu = f"TRIAGEM-{triagem.id}"
+            result = infinitepay_service.criar_checkout_link(
+                order_nsu=order_nsu,
+                valor=triagem.valor_total,
+                descricao=f"Inscrição Evento #{evento.id} - {evento.titulo} (Pix)",
+                customer_email=current_user.email,
+                customer_name=current_user.nome
+            )
+            receipt_url = result.get("checkout_url")
+            copia_cola_pix = receipt_url
+            qr_code_pix = ""
+
+    elif forma_pag == "INFINITEPAY":
+        order_nsu = f"TRIAGEM-{triagem.id}"
+        if evento.link_pagamento_cartao:
+            receipt_url = evento.link_pagamento_cartao
+        else:
+            result = infinitepay_service.criar_checkout_link(
+                order_nsu=order_nsu,
+                valor=triagem.valor_total,
+                descricao=f"Inscrição Evento #{evento.id} - {evento.titulo}",
+                customer_email=current_user.email,
+                customer_name=current_user.nome
+            )
+            receipt_url = result.get("checkout_url")
+
+    elif forma_pag == "PARCELADO":
+        dt_primeira = triagem.data_primeira_parcela or date.today()
+        if dt_primeira < date.today():
+            dt_primeira = date.today()
+
+        dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
+
+        max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
+        n_parcelas = min(max(triagem.num_parcelas or 1, 1), max(max_permitido, 1))
+
+        parcelas_calc = gerar_parcelas(
+            valor_total=triagem.valor_total,
+            num_parcelas=n_parcelas,
+            data_primeira_parcela=dt_primeira,
+            data_limite_evento=dt_limite
+        )
+
+        for item in parcelas_calc:
+            order_nsu_parc = f"TRIAGEM-{triagem.id}-PARC-{item['numero']}"
+            try:
+                res = infinitepay_service.criar_checkout_link(
+                    order_nsu=order_nsu_parc,
+                    valor=item["valor"],
+                    descricao=f"Inscrição Evento #{evento.id} - Parcela {item['numero']}/{n_parcelas}",
+                    customer_email=current_user.email,
+                    customer_name=current_user.nome
+                )
+                link_parc = res.get("checkout_url")
+            except Exception:
+                link_parc = gerar_copia_cola_pix(
+                    valor=item["valor"],
+                    txid=f"TR{triagem.id}P{item['numero']}"
+                )
+
+            parcelas_info.append({
+                "numero": item["numero"],
+                "vencimento": item["vencimento"].isoformat(),
+                "valor": float(item["valor"]),
+                "status": "PENDENTE",
+                "copia_cola_pix": link_parc
+            })
+
+    return {
+        "triagem_id": triagem.id,
+        "forma_pagamento": forma_pag,
+        "valor_total": float(triagem.valor_total),
+        "receipt_url": receipt_url,
+        "copia_cola_pix": copia_cola_pix,
+        "qr_code_pix": qr_code_pix,
+        "parcelas": parcelas_info
+    }
 
 
 @router.post("/processar", response_model=PagamentoResponse)

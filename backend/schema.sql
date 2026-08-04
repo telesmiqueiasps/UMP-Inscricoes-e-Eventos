@@ -51,6 +51,24 @@ CREATE TABLE IF NOT EXISTS inscricoes (
 CREATE INDEX IF NOT EXISTS ix_inscricoes_usuario_id ON inscricoes(usuario_id);
 CREATE INDEX IF NOT EXISTS ix_inscricoes_evento_id ON inscricoes(evento_id);
 
+-- 3.1. Tabela de Triagem de Inscrições (Drafts Pendentes de Pagamento)
+CREATE TABLE IF NOT EXISTS inscricoes_triagem (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'PENDENTE_PAGAMENTO' NOT NULL,
+    forma_pagamento VARCHAR(50),
+    num_parcelas INTEGER DEFAULT 1 NOT NULL,
+    data_primeira_parcela DATE,
+    valor_total NUMERIC(10, 2) NOT NULL,
+    dados_extras JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_inscricoes_triagem_usuario_id ON inscricoes_triagem(usuario_id);
+CREATE INDEX IF NOT EXISTS ix_inscricoes_triagem_evento_id ON inscricoes_triagem(evento_id);
+
 -- 4. Tabela de Pagamentos
 CREATE TABLE IF NOT EXISTS pagamentos (
     id SERIAL PRIMARY KEY,

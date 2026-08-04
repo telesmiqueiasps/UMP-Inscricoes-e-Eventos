@@ -91,6 +91,46 @@ async def webhook_infinitepay(
         f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
     )
 
+    # --- LÓGICA DE WEBHOOK PARA TRIAGEM DE INSCRIÇÃO ---
+    if order_nsu and str(order_nsu).startswith("TRIAGEM-"):
+        try:
+            parts = str(order_nsu).split("-")
+            triagem_id = int(parts[1])
+            parcela_num = int(parts[3]) if "-PARC-" in str(order_nsu) else 1
+
+            from app.models.inscricao_triagem import InscricaoTriagem
+            from app.services.triagem_service import converter_triagem_em_inscricao
+            from decimal import Decimal
+
+            triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
+            if not triagem:
+                logger.error(f"Triagem #{triagem_id} não encontrada para webhook order_nsu={order_nsu}")
+                raise HTTPException(status_code=400, detail="Triagem não encontrada.")
+
+            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
+            paid_amount_reais = Decimal(str(paid_amount_raw)) / 100 if paid_amount_raw else triagem.valor_total
+            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+
+            inscricao = converter_triagem_em_inscricao(
+                db=db,
+                triagem=triagem,
+                order_nsu=str(order_nsu),
+                transaction_nsu=str(transaction_nsu or ""),
+                receipt_url=str(receipt_url or ""),
+                invoice_slug=str(invoice_slug or ""),
+                paid_amount=paid_amount_reais,
+                capture_method=capture_method,
+                parcela_num_paga=parcela_num,
+                background_tasks=background_tasks
+            )
+
+            return {"message": "Webhook de triagem processado com sucesso. Inscrição confirmada!", "inscricao_id": inscricao.id}
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            logger.error(f"Erro ao converter triagem no webhook: {e}")
+            raise HTTPException(status_code=400, detail=f"Erro ao converter triagem: {str(e)}")
+
     # --- LÓGICA DE WEBHOOK PARA PARCELA INDIVIDUAL DO CARNÊ ---
     if order_nsu and "-PARC-" in str(order_nsu):
         try:

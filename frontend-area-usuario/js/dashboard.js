@@ -29,6 +29,31 @@ async function loadDashboard() {
     // 1. Nome de boas-vindas
     if (welcomeUser && data.usuario) welcomeUser.textContent = `Olá, ${data.usuario.nome}!`;
 
+    // Renderizar Banner de Triagens Pendentes de Pagamento
+    const triagensContainer = document.getElementById('triagem-banner-container');
+    if (triagensContainer) {
+      if (data.triagens && data.triagens.length > 0) {
+        triagensContainer.innerHTML = data.triagens.map(tr => `
+          <div style="background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="color: #92400E; font-weight: 700; font-size: 1rem;">⏳ Inscrição Pendente de Pagamento</div>
+              <div style="color: #78350F; font-size: 0.9rem; margin-top: 0.25rem;">
+                Evento: <strong>${tr.evento_titulo}</strong> | Valor: <strong>R$ ${tr.valor_total.toFixed(2).replace('.', ',')}</strong> (${tr.forma_pagamento})
+              </div>
+              <div style="font-size: 0.8rem; color: #B45309; margin-top: 0.25rem;">
+                Sua vaga será confirmada assim que o pagamento (ou a 1ª parcela) for identificado pelo nosso sistema.
+              </div>
+            </div>
+            <a href="https://inscricoessinodalpb.netlify.app/inscricao.html?evento_id=${tr.evento_id}" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; font-weight: 600;">
+              💳 Concluir Pagamento Agora &rarr;
+            </a>
+          </div>
+        `).join('');
+      } else {
+        triagensContainer.innerHTML = '';
+      }
+    }
+
     // 2. Dados Pessoais com botão Editar
     if (userInfoCard && data.usuario) {
       userInfoCard.innerHTML = `

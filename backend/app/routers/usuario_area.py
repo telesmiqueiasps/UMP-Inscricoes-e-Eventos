@@ -103,6 +103,25 @@ def obter_dashboard_usuario(
                 "parcelas": parcelas_list
             })
 
+    # 3. Triagens Pendentes do Usuário
+    from app.models.inscricao_triagem import InscricaoTriagem
+    triagens = db.query(InscricaoTriagem).filter(
+        InscricaoTriagem.usuario_id == current_user.id,
+        InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
+    ).order_by(InscricaoTriagem.created_at.desc()).all()
+
+    triagens_data = []
+    for tr in triagens:
+        triagens_data.append({
+            "id": tr.id,
+            "evento_id": tr.evento_id,
+            "evento_titulo": tr.evento.titulo if tr.evento else "",
+            "forma_pagamento": tr.forma_pagamento,
+            "num_parcelas": tr.num_parcelas,
+            "valor_total": float(tr.valor_total),
+            "created_at": tr.created_at.isoformat()
+        })
+
     # Comunicados do sistema/evento
     comunicados = [
         {
@@ -117,6 +136,7 @@ def obter_dashboard_usuario(
         "usuario": usuario_info,
         "inscricoes": inscricoes_data,
         "pagamentos": pagamentos_data,
+        "triagens": triagens_data,
         "comunicados": comunicados
     }
 

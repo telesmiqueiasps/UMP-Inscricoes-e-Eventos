@@ -2,9 +2,10 @@ from app.core.database import Base
 from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.inscricao import Inscricao
+from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.models.configuracao import Configuracao
 from app.models.presbiterio import Presbiterio
 
-__all__ = ["Base", "Usuario", "Evento", "Inscricao", "Pagamento", "Parcela", "Configuracao", "Presbiterio"]
+__all__ = ["Base", "Usuario", "Evento", "Inscricao", "InscricaoTriagem", "Pagamento", "Parcela", "Configuracao", "Presbiterio"]

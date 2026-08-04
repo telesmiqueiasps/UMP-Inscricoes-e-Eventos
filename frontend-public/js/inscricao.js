@@ -287,33 +287,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- SUBMETER INSCRIÇÃO & PAGAMENTO (ETAPA 3) ---
+  // --- SUBMETER TRIAGEM & PAGAMENTO (ETAPA 3) ---
   if (formPagamento) {
     formPagamento.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formaPagamento = document.querySelector('input[name="forma_pagamento"]:checked').value;
       const numParcelas = parseInt(numParcelasSelect.value) || 1;
+      const dataPrimeira = formaPagamento === 'PARCELADO' ? document.getElementById('data_primeira_parcela').value : null;
 
       try {
-        // 1. Criar Inscrição
-        const inscricao = await API.request('/inscricoes', {
+        // 1. Criar/Atualizar Triagem de Inscrição
+        const triagem = await API.request('/inscricoes/triagem', {
           method: 'POST',
           body: JSON.stringify({
             evento_id: parseInt(eventoId),
             forma_pagamento: formaPagamento,
             num_parcelas: numParcelas,
+            data_primeira_parcela: dataPrimeira,
             dados_extras: dadosExtrasSalvos
           })
         });
 
-        // 2. Processar Pagamento
-        const pagamento = await API.request('/pagamentos/processar', {
+        // 2. Processar Checkout da Triagem
+        const pagamentoRes = await API.request('/pagamentos/processar-triagem', {
           method: 'POST',
           body: JSON.stringify({
-            inscricao_id: inscricao.id,
-            forma_pagamento: formaPagamento,
-            num_parcelas: numParcelas,
-            data_primeira_parcela: formaPagamento === 'PARCELADO' ? document.getElementById('data_primeira_parcela').value : null
+            triagem_id: triagem.id
           })
         });
 
@@ -321,11 +320,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         step4.style.display = 'block';
         if (loggedUserBanner) loggedUserBanner.style.display = 'none';
 
-        renderPaymentResult(pagamento, formaPagamento);
-        showToast('Inscrição e pagamento gerados com sucesso!', 'success');
+        renderPaymentResult(pagamentoRes, formaPagamento);
+        showToast('Resumo de pagamento gerado! Conclua o pagamento para confirmar sua vaga.', 'success');
 
       } catch (err) {
-        showToast(err.message || 'Erro ao processar inscrição.', 'error');
+        showToast(err.message || 'Erro ao processar checkout.', 'error');
       }
     });
   }
@@ -340,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     step2.style.display = 'block';
   };
 
-  function atualizarEstadoUsuario() {
+  async function atualizarEstadoUsuario() {
     const user = API.getUser();
     const token = API.getToken();
 
@@ -354,6 +353,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       step3.style.display = 'none';
       step4.style.display = 'none';
       renderDynamicFormFields();
+
+      // Checar se possui triagem pendente
+      try {
+        const triagem = await API.request(`/inscricoes/triagem/pendente?evento_id=${eventoId}`);
+        if (triagem) {
+          exibirAvisoTriagem(triagem);
+        }
+      } catch (e) {}
     } else {
       if (loggedUserBanner) {
         loggedUserBanner.style.display = 'none';
@@ -375,31 +382,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Permite deslogar para cadastrar outra pessoa
-  window.deslogarWizard = function () {
-    API.removeToken();
-    showToast('Sessão encerrada para novo participante.', 'info');
-    atualizarEstadoUsuario();
-  };
-
-  window.voltarParaEmail = function () {
-    if (formAuthLogin) formAuthLogin.style.display = 'none';
-    if (formAuthRegister) formAuthRegister.style.display = 'none';
-    if (formEmailCheck) {
-      formEmailCheck.style.display = 'block';
-      document.getElementById('email-verify').focus();
+  function exibirAvisoTriagem(triagem) {
+    let banner = document.getElementById('triagem-banner-msg');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'triagem-banner-msg';
+      banner.style.cssText = 'background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; text-align: left;';
+      const step2Card = document.getElementById('step-2');
+      if (step2Card) {
+        step2Card.insertBefore(banner, step2Card.firstChild);
+      }
     }
-  };
+
+    banner.innerHTML = `
+      <div style="color: #92400E; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem;">
+        ⏳ Proposta de inscrição em andamento
+      </div>
+      <p style="color: #78350F; font-size: 0.88rem; margin-bottom: 0.75rem;">
+        Identificamos que você iniciou o processo de inscrição para este evento anteriormente. Deseja retomar o pagamento?
+      </p>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="retomarTriagem()">
+          Retomar Pagamento &rarr;
+        </button>
+        <button type="button" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="ignorarTriagem()">
+          Recomeçar do Zero
+        </button>
+      </div>
+    `;
+
+    window.retomarTriagem = function() {
+      if (triagem.dados_extras) {
+        dadosExtrasSalvos = triagem.dados_extras;
+        Object.keys(triagem.dados_extras).forEach(k => {
+          const inp = document.querySelector(`[name="dyn_${k}"]`);
+          if (inp) inp.value = triagem.dados_extras[k];
+        });
+      }
+      if (triagem.forma_pagamento) {
+        const radio = document.querySelector(`input[name="forma_pagamento"][value="${triagem.forma_pagamento}"]`);
+        if (radio) {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change'));
+        }
+      }
+      step2.style.display = 'none';
+      step3.style.display = 'block';
+    };
+
+    window.ignorarTriagem = function() {
+      if (banner) banner.style.display = 'none';
+    };
+  }
 
   function renderPaymentResult(pagamento, forma) {
     const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
+
+    const infoAvisoHtml = `
+      <div style="background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: var(--radius-md); padding: 1rem; margin-top: 1.5rem; text-align: left;">
+        <strong style="color: #1E40AF; display: block; margin-bottom: 0.25rem;">ℹ️ Confirmação da Vaga</strong>
+        <span style="font-size: 0.85rem; color: #1E3A8A;">Sua vaga e sua inscrição serão oficializadas no sistema assim que o pagamento (ou a 1ª parcela) for identificado pelo nosso sistema.</span>
+      </div>
+    `;
 
     if (forma === 'PIX') {
       const isUrl = pagamento.copia_cola_pix && (pagamento.copia_cola_pix.startsWith('http://') || pagamento.copia_cola_pix.startsWith('https://'));
       if (isUrl) {
         paymentResult.innerHTML = `
           <div style="text-align: center; padding: 1.5rem;">
-            <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
+            <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando Pagamento</div>
             <h3>Conclua seu pagamento Pix clicando no link abaixo:</h3>
             <a href="${pagamento.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; display: inline-block;">
               💸 Pagar via Pix (InfinitePay)
@@ -410,14 +461,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             ` : `
               <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Você será redirecionado para a página segura da InfinitePay.</p>
             `}
+            ${infoAvisoHtml}
             <br>
-            <a href="${userAreaUrl}" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-block;">Ir para Minha Área</a>
+            <a href="${userAreaUrl}" class="btn btn-outline" style="margin-top: 1rem; display: inline-block;">Ir para Minha Área</a>
           </div>
         `;
       } else {
         paymentResult.innerHTML = `
           <div style="text-align: center;">
-            <div class="badge badge-warning" style="margin-bottom: 1rem;">Pagamento Pendente</div>
+            <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando Pagamento</div>
             <h3>Escaneie o QR Code abaixo para pagar via Pix:</h3>
             <img src="${pagamento.qr_code_pix}" alt="QR Code Pix" style="max-width: 240px; margin: 1.5rem 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px;" />
             
@@ -426,42 +478,46 @@ document.addEventListener('DOMContentLoaded', async () => {
               <input type="text" readonly class="form-control" value="${pagamento.copia_cola_pix}" id="pix-input" />
               <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPix()">Copiar Código Pix</button>
             </div>
-
-            <a href="${userAreaUrl}" class="btn btn-primary" style="margin-top: 1rem;">Ir para Minha Área</a>
+            ${infoAvisoHtml}
+            <a href="${userAreaUrl}" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Ir para Minha Área</a>
           </div>
         `;
       }
     } else if (forma === 'INFINITEPAY') {
       paymentResult.innerHTML = `
         <div style="text-align: center; padding: 2rem;">
-          <div class="badge badge-success" style="margin-bottom: 1rem;">Checkout InfinitePay Gerado</div>
+          <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando Pagamento</div>
           <h3>Clique no botão abaixo para concluir o pagamento via Pix ou Cartão:</h3>
           <a href="${pagamento.receipt_url}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem;">
             💳 Pagar na InfinitePay
           </a>
+          ${infoAvisoHtml}
           <br>
           <a href="${userAreaUrl}" class="btn btn-outline">Ir para Minha Área</a>
         </div>
       `;
     } else if (forma === 'PARCELADO') {
-      const parcelasHtml = pagamento.parcelas.map(p => `
-        <tr>
-          <td>Parcela ${p.numero}</td>
-          <td>${new Date(p.vencimento + (p.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
-          <td>R$ ${parseFloat(p.valor).toFixed(2).replace('.', ',')}</td>
-          <td><span class="badge badge-warning">${p.status}</span></td>
-          <td>
-            <a href="${API_BASE_URL}/pagamentos/parcelas/${p.id}/pdf?token=${API.getToken()}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">
-              📄 Baixar PDF
-            </a>
-          </td>
-        </tr>
-      `).join('');
+      const parcelasHtml = (pagamento.parcelas || []).map(p => {
+        const isLink = p.copia_cola_pix && p.copia_cola_pix.startsWith('http');
+        const acaoBtn = isLink
+          ? `<a href="${p.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">💳 Pagar Parcela ${p.numero}</a>`
+          : (p.pdf_url ? `<a href="${p.pdf_url}" target="_blank" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">📄 Baixar PDF</a>` : `<span style="font-size: 0.8rem;">Pend. 1º Pagamento</span>`);
+
+        return `
+          <tr>
+            <td>Parcela ${p.numero}</td>
+            <td>${new Date(p.vencimento + (p.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR')}</td>
+            <td>R$ ${parseFloat(p.valor).toFixed(2).replace('.', ',')}</td>
+            <td><span class="badge badge-warning">${p.status}</span></td>
+            <td>${acaoBtn}</td>
+          </tr>
+        `;
+      }).join('');
 
       paymentResult.innerHTML = `
         <div>
-          <h3>Inscrição Parcelada com Sucesso!</h3>
-          <p style="color: var(--text-muted); margin-bottom: 1rem;">Suas parcelas foram geradas. Você pode baixar os comprovantes/carnês em PDF abaixo ou no seu painel.</p>
+          <h3>Resumo do Parcelamento Gerado!</h3>
+          <p style="color: var(--text-muted); margin-bottom: 1rem;">Para oficializar sua inscrição e garantir sua vaga, efetue o pagamento da 1ª parcela abaixo:</p>
           
           <div class="table-container" style="margin-bottom: 1.5rem;">
             <table>
@@ -471,14 +527,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <th>Vencimento</th>
                   <th>Valor</th>
                   <th>Status</th>
-                  <th>Carnê PDF</th>
+                  <th>Ação</th>
                 </tr>
               </thead>
               <tbody>${parcelasHtml}</tbody>
             </table>
           </div>
 
-          <a href="${userAreaUrl}" class="btn btn-primary" style="width: 100%;">Acessar Área do Participante</a>
+          ${infoAvisoHtml}
+
+          <a href="${userAreaUrl}" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">Acessar Área do Participante</a>
         </div>
       `;
     }
