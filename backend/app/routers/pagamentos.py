@@ -123,7 +123,7 @@ def processar_pagamento_triagem(
                 )
 
             qr_b64_parc = gerar_qr_code_base64(link_parc)
-            pdf_url_parc = f"/api/v1/pagamentos/triagem/{triagem.id}/parcela/{item['numero']}/pdf"
+            pdf_url_parc = f"/pagamentos/triagem/{triagem.id}/parcela/{item['numero']}/pdf"
 
             parcelas_info.append({
                 "numero": item["numero"],
