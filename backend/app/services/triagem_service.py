@@ -61,11 +61,14 @@ def converter_triagem_em_inscricao(
                 detail="Infelizmente as vagas para este evento foram esgotadas."
             )
 
-    # 2. Criar Inscrição Oficial (CONFIRMADA)
+    is_parcelado = (triagem.forma_pagamento == "PARCELADO" and triagem.num_parcelas > 1)
+    status_inscricao_inicial = "PENDENTE" if is_parcelado else "CONFIRMADA"
+
+    # 2. Criar Inscrição Oficial (Vai para a tabela oficial de inscrições)
     db_inscricao = Inscricao(
         usuario_id=triagem.usuario_id,
         evento_id=triagem.evento_id,
-        status="CONFIRMADA",
+        status=status_inscricao_inicial,
         forma_pagamento=triagem.forma_pagamento,
         valor_total=triagem.valor_total,
         dados_extras=triagem.dados_extras,
