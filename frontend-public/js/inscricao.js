@@ -501,29 +501,48 @@ document.addEventListener('DOMContentLoaded', async () => {
       const valorFmt = primeiraParcela ? `R$ ${parseFloat(primeiraParcela.valor).toFixed(2).replace('.', ',')}` : '';
       const vencFmt = primeiraParcela ? new Date(primeiraParcela.vencimento + (primeiraParcela.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : '';
 
-      let botaoPagarHTML = '';
-      if (primeiraParcela) {
-        if (primeiraParcela.copia_cola_pix && primeiraParcela.copia_cola_pix.startsWith('http')) {
-          botaoPagarHTML = `
-            <a href="${primeiraParcela.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; width: 100%; display: block;">
-              💳 Pagar 1ª Parcela (Confirmação da Inscrição)
-            </a>
-          `;
-        } else if (primeiraParcela.pdf_url) {
-          botaoPagarHTML = `
-            <a href="${primeiraParcela.pdf_url}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; width: 100%; display: block;">
-              📄 Baixar Boleto / PDF da 1ª Parcela
-            </a>
-          `;
-        } else if (primeiraParcela.copia_cola_pix) {
-          botaoPagarHTML = `
-            <div style="background: #FFFBEB; border: 1px solid #FCD34D; padding: 1rem; border-radius: 8px; margin: 1.5rem 0; text-align: left;">
-              <strong style="color: #92400E;">Código Pix para Pagamento da 1ª Parcela:</strong>
-              <input type="text" readonly class="form-control" value="${primeiraParcela.copia_cola_pix}" id="pix-input-parc1" style="margin-top: 0.5rem;" />
-              <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="copiarPixParc1()">Copiar Código Pix</button>
-            </div>
-          `;
-        }
+      const pdfUrl = primeiraParcela && primeiraParcela.pdf_url ? `${API_BASE_URL}${primeiraParcela.pdf_url}?token=${API.getToken()}` : null;
+      const checkoutUrl = primeiraParcela && primeiraParcela.copia_cola_pix && primeiraParcela.copia_cola_pix.startsWith('http') ? primeiraParcela.copia_cola_pix : null;
+      const qrCodeImg = primeiraParcela ? primeiraParcela.qr_code_pix : null;
+
+      let qrHtml = '';
+      if (qrCodeImg) {
+        qrHtml = `
+          <div style="margin: 1.5rem 0; text-align: center;">
+            <p style="font-weight: 600; font-size: 0.9rem; color: var(--text-color); margin-bottom: 0.5rem;">
+              📱 Escaneie o QR Code abaixo com a câmera do seu celular para ir ao checkout:
+            </p>
+            <img src="${qrCodeImg}" alt="QR Code 1ª Parcela" style="max-width: 210px; border: 1px solid #ddd; padding: 10px; border-radius: 12px; background: white;" />
+          </div>
+        `;
+      }
+
+      let acoesHtml = '';
+      if (checkoutUrl) {
+        acoesHtml += `
+          <a href="${checkoutUrl}" target="_blank" class="btn btn-primary" style="margin-bottom: 0.75rem; font-size: 1.05rem; width: 100%; display: block; padding: 0.85rem;">
+            💳 Pagar 1ª Parcela no Checkout (InfinitePay) &rarr;
+          </a>
+        `;
+      }
+
+      if (pdfUrl) {
+        acoesHtml += `
+          <a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="margin-bottom: 0.75rem; font-size: 1rem; width: 100%; display: block; border-color: var(--primary); color: var(--primary); font-weight: 600; padding: 0.75rem;">
+            📄 Baixar Carnê / PDF da 1ª Parcela
+          </a>
+        `;
+      }
+
+      let pixCopiaColaHtml = '';
+      if (primeiraParcela && primeiraParcela.copia_cola_pix) {
+        pixCopiaColaHtml = `
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: left;">
+            <strong style="color: #334155; font-size: 0.85rem;">Link / Chave Pix da 1ª Parcela:</strong>
+            <input type="text" readonly class="form-control" value="${primeiraParcela.copia_cola_pix}" id="pix-input-parc1" style="margin-top: 0.5rem; font-size: 0.85rem;" />
+            <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem; font-size: 0.85rem;" onclick="copiarPixParc1()">Copiar Link / Código Pix</button>
+          </div>
+        `;
       }
 
       paymentResult.innerHTML = `
@@ -531,16 +550,20 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando 1ª Parcela</div>
           <h3 style="font-size: 1.35rem; font-weight: 700;">1ª Parcela - Confirmação da Inscrição</h3>
           <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem;">
-            Efetue o pagamento da 1ª parcela até <strong>${vencFmt}</strong> para confirmar sua vaga e oficializar sua inscrição no evento.
+            Efetue o pagamento da 1ª parcela até <strong>${vencFmt}</strong> para garantir sua vaga e oficializar sua inscrição.
           </p>
 
           <div style="background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: var(--radius-md); padding: 1.25rem; margin: 1.5rem 0; text-align: center;">
-            <div style="font-size: 0.85rem; color: #6B21A8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Valor da 1ª Parcela</div>
+            <div style="font-size: 0.85rem; color: #6B21A8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Valor da 1ª Parcela (Confirmação)</div>
             <div style="font-size: 2.2rem; font-weight: 800; color: #581C87; margin: 0.25rem 0;">${valorFmt}</div>
             <div style="font-size: 0.85rem; color: #7E22CE;">Vencimento: <strong>${vencFmt}</strong></div>
           </div>
 
-          ${botaoPagarHTML}
+          ${qrHtml}
+
+          ${acoesHtml}
+
+          ${pixCopiaColaHtml}
 
           ${infoAvisoHtml}
 

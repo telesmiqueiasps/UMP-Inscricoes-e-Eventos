@@ -122,12 +122,17 @@ def processar_pagamento_triagem(
                     txid=f"TR{triagem.id}P{item['numero']}"
                 )
 
+            qr_b64_parc = gerar_qr_code_base64(link_parc)
+            pdf_url_parc = f"/api/v1/pagamentos/triagem/{triagem.id}/parcela/{item['numero']}/pdf"
+
             parcelas_info.append({
                 "numero": item["numero"],
                 "vencimento": item["vencimento"].isoformat(),
                 "valor": float(item["valor"]),
                 "status": "PENDENTE",
-                "copia_cola_pix": link_parc
+                "copia_cola_pix": link_parc,
+                "qr_code_pix": qr_b64_parc,
+                "pdf_url": pdf_url_parc
             })
 
     return {
@@ -406,3 +411,76 @@ def baixar_pdf_parcela(
         "Content-Disposition": f"inline; filename={filename}"
     }
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+@router.get("/triagem/{triagem_id}/parcela/{numero_parcela}/pdf")
+def baixar_pdf_parcela_triagem(
+    triagem_id: int,
+    numero_parcela: int = 1,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(obter_usuario_por_token_ou_query)
+):
+    triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
+    if not triagem:
+        raise HTTPException(status_code=404, detail="Triagem de inscrição não encontrada.")
+
+    if triagem.usuario_id != current_user.id and not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Acesso negado a esta triagem.")
+
+    evento = triagem.evento
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    dt_primeira = triagem.data_primeira_parcela or date.today()
+    if dt_primeira < date.today():
+        dt_primeira = date.today()
+
+    dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
+    max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
+    n_parcelas = min(max(triagem.num_parcelas or 1, 1), max(max_permitido, 1))
+
+    parcelas_calc = gerar_parcelas(
+        valor_total=triagem.valor_total,
+        num_parcelas=n_parcelas,
+        data_primeira_parcela=dt_primeira,
+        data_limite_evento=dt_limite
+    )
+
+    num_p = min(max(numero_parcela, 1), n_parcelas)
+    item_p = parcelas_calc[num_p - 1]
+
+    order_nsu_parc = f"TRIAGEM-{triagem.id}-PARC-{num_p}"
+    try:
+        res = infinitepay_service.criar_checkout_link(
+            order_nsu=order_nsu_parc,
+            valor=item_p["valor"],
+            descricao=f"Inscrição Evento #{evento.id} - Parcela {num_p}/{n_parcelas}",
+            customer_email=current_user.email,
+            customer_name=current_user.nome
+        )
+        link_ou_pix = res.get("checkout_url")
+    except Exception:
+        link_ou_pix = gerar_copia_cola_pix(
+            valor=item_p["valor"],
+            txid=f"TR{triagem.id}P{num_p}"
+        )
+
+    pdf_bytes = gerar_pdf_parcela(
+        parcela_id=triagem.id,
+        numero_parcela=num_p,
+        total_parcelas=n_parcelas,
+        vencimento=item_p["vencimento"],
+        valor=item_p["valor"],
+        status="PENDENTE",
+        nome_participante=current_user.nome,
+        cpf_participante=current_user.cpf,
+        nome_evento=evento.titulo,
+        copia_cola_pix=link_ou_pix
+    )
+
+    filename = f"boleto_parcela_{num_p}_triagem_{triagem.id}.pdf"
+    headers = {
+        "Content-Disposition": f"inline; filename={filename}"
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
