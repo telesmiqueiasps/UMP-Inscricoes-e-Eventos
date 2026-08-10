@@ -35,6 +35,9 @@ class InscricaoResponse(BaseModel):
     evento: Optional[EventoResponse] = None
     pagamentos: Optional[List[PagamentoResponse]] = []
 
+    class Config:
+        from_attributes = True
+
 class InscricaoTriagemCreate(BaseModel):
     evento_id: int
     forma_pagamento: Optional[str] = "PIX"

@@ -518,10 +518,11 @@ window.exportarCSV = function() {
 
   const lines = [headers.join(';')];
   cachedInscricoesList.forEach(ins => {
+    const user = ins.usuario || {};
     const row = [
       ins.id,
-      ins.usuario_nome,
-      ins.usuario_email,
+      user.nome || 'N/A',
+      user.email || 'N/A',
       ins.status,
       formatarFormaPagamento(ins.forma_pagamento, ins.capture_method),
       ins.valor_total
@@ -595,10 +596,11 @@ window.imprimirPDF = function() {
   `;
 
   const rowsHtml = cachedInscricoesList.map(ins => {
+    const user = ins.usuario || {};
     const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
     let cols = `
       <td>#${ins.id}</td>
-      <td><strong>${ins.usuario_nome}</strong><br>${ins.usuario_email}</td>
+      <td><strong>${user.nome || 'N/A'}</strong><br>${user.email || ''}</td>
       <td><span class="badge ${statusBadge}">${ins.status}</span></td>
     `;
     customFields.forEach(f => {
