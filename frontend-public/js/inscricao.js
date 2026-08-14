@@ -330,8 +330,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --- NAVEGAÇÃO DO WIZARD ---
+  window.deslogarWizard = function() {
+    API.removeToken();
+    atualizarEstadoUsuario();
+  };
+
   window.voltarParaIdentificacao = function() {
-    deslogarWizard();
+    window.deslogarWizard();
   };
 
   window.voltarParaDados = function() {

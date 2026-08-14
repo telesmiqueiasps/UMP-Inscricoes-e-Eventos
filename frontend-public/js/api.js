@@ -48,6 +48,12 @@ const API = {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.removeToken();
+          if (typeof window.deslogarWizard === 'function') {
+            window.deslogarWizard();
+          }
+        }
         throw new Error(data.detail || 'Ocorreu um erro na requisição.');
       }
 
