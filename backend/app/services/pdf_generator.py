@@ -11,7 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 import qrcode
 
-from app.services.pix import gerar_copia_cola_pix
+from app.services.infinitepay import infinitepay_service
 
 
 def gerar_pdf_parcela(
@@ -134,7 +134,14 @@ def gerar_pdf_parcela(
 
     # 2. Informações Principais Grid
     if not copia_cola_pix:
-        copia_cola_pix = gerar_copia_cola_pix(valor=valor, txid=f"PARC{parcela_id}")
+        res_link = infinitepay_service.criar_checkout_link(
+            order_nsu=f"PARCELA-{parcela_id}",
+            valor=valor,
+            descricao=f"Parcela #{numero_parcela}/{total_parcelas} - {nome_evento}",
+            customer_email="",
+            customer_name=nome_participante
+        )
+        copia_cola_pix = res_link.get("checkout_url")
 
     vencimento_str = vencimento.strftime("%d/%m/%Y") if isinstance(vencimento, (date)) else str(vencimento)
     valor_str = f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")

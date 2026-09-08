@@ -13,7 +13,7 @@ from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
 from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas
-from app.services.pix import gerar_copia_cola_pix, gerar_qr_code_base64
+from app.services.pix import gerar_qr_code_base64
 from app.services.infinitepay import infinitepay_service
 from app.services.pdf_generator import gerar_pdf_parcela
 from datetime import datetime, date
@@ -117,10 +117,8 @@ def processar_pagamento_triagem(
                 )
                 link_parc = res.get("checkout_url")
             except Exception:
-                link_parc = gerar_copia_cola_pix(
-                    valor=item["valor"],
-                    txid=f"TR{triagem.id}P{item['numero']}"
-                )
+                val_fmt = f"{float(item['valor']):.2f}".replace(".", ",")
+                link_parc = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
 
             qr_b64_parc = gerar_qr_code_base64(link_parc)
             pdf_url_parc = f"/pagamentos/triagem/{triagem.id}/parcela/{item['numero']}/pdf"
@@ -297,13 +295,10 @@ def processar_pagamento(
                 )
                 copia_cola_parc = res.get("checkout_url")
             except Exception:
-                # Fallback para Pix estático local caso a API falhe
-                copia_cola_parc = gerar_copia_cola_pix(
-                    valor=item["valor"],
-                    txid=f"INS{inscricao.id}P{item['numero']}"
-                )
+                val_fmt = f"{float(item['valor']):.2f}".replace(".", ",")
+                copia_cola_parc = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
 
-            qr_b64_parc = gerar_qr_code_base64(copia_cola_parc) if not copia_cola_parc.startswith("http") else ""
+            qr_b64_parc = gerar_qr_code_base64(copia_cola_parc)
 
             parc = Parcela(
                 pagamento_id=db_pagamento.id,
@@ -460,10 +455,8 @@ def baixar_pdf_parcela_triagem(
         )
         link_ou_pix = res.get("checkout_url")
     except Exception:
-        link_ou_pix = gerar_copia_cola_pix(
-            valor=item_p["valor"],
-            txid=f"TR{triagem.id}P{num_p}"
-        )
+        val_fmt = f"{float(item_p['valor']):.2f}".replace(".", ",")
+        link_ou_pix = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
 
     pdf_bytes = gerar_pdf_parcela(
         parcela_id=triagem.id,

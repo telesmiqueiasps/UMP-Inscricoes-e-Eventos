@@ -588,10 +588,18 @@ function formatarFormaPagamento(forma, captureMethod) {
 async function initConfiguracoes() {
   try {
     const data = await API.request('/admin/configuracoes');
-    document.getElementById('config-infinitepay-handle').value = data.infinitepay_handle || '';
-    document.getElementById('config-pix-chave').value = data.pix_chave || '';
-    document.getElementById('config-pix-nome').value = data.pix_nome_recebedor || '';
-    document.getElementById('config-pix-cidade').value = data.pix_cidade_recebedor || '';
+    if (document.getElementById('config-infinitepay-handle')) {
+      document.getElementById('config-infinitepay-handle').value = data.infinitepay_handle || '';
+    }
+    if (document.getElementById('config-pix-chave')) {
+      document.getElementById('config-pix-chave').value = data.pix_chave || '';
+    }
+    if (document.getElementById('config-pix-nome')) {
+      document.getElementById('config-pix-nome').value = data.pix_nome_recebedor || '';
+    }
+    if (document.getElementById('config-pix-cidade')) {
+      document.getElementById('config-pix-cidade').value = data.pix_cidade_recebedor || '';
+    }
   } catch (err) {
     showToast('Erro ao carregar configurações do sistema.', 'error');
   }
@@ -601,18 +609,21 @@ async function initConfiguracoes() {
 async function salvarConfiguracoes(e) {
   e.preventDefault();
   const payload = {
-    infinitepay_handle: document.getElementById('config-infinitepay-handle').value.trim(),
-    pix_chave: document.getElementById('config-pix-chave').value.trim(),
-    pix_nome_recebedor: document.getElementById('config-pix-nome').value.trim(),
-    pix_cidade_recebedor: document.getElementById('config-pix-cidade').value.trim()
+    infinitepay_handle: document.getElementById('config-infinitepay-handle').value.trim()
   };
+  const elChave = document.getElementById('config-pix-chave');
+  if (elChave) payload.pix_chave = elChave.value.trim();
+  const elNome = document.getElementById('config-pix-nome');
+  if (elNome) payload.pix_nome_recebedor = elNome.value.trim();
+  const elCidade = document.getElementById('config-pix-cidade');
+  if (elCidade) payload.pix_cidade_recebedor = elCidade.value.trim();
 
   try {
     await API.request('/admin/configuracoes', {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    showToast('Configurações updated successfully!', 'success');
+    showToast('Configurações salvas com sucesso!', 'success');
   } catch (err) {
     showToast('Erro ao salvar as configurações.', 'error');
   }

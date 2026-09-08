@@ -18,37 +18,11 @@ def gerar_copia_cola_pix(
     txid: str = "***"
 ) -> str:
     """
-    Gera a string de Pix Copia e Cola de acordo com a especificação do Bacen (EMV QRCPS).
+    Retorna o link de checkout dinâmico da InfinitePay com o handle configurado.
     """
-    from app.services.config import get_pix_chave, get_pix_nome_recebedor, get_pix_cidade_recebedor
-    chave = chave_pix or get_pix_chave()
-    nome = (nome_recebedor or get_pix_nome_recebedor())[:25].upper()
-    cidade = (cidade_recebedor or get_pix_cidade_recebedor())[:15].upper()
-    
-    val_str = f"{float(valor):.2f}"
-
-    # Format merchant account information (ID 26)
-    gui = format_emv_field("00", "br.gov.bcb.pix")
-    key = format_emv_field("01", chave)
-    merchant_account_info = format_emv_field("26", f"{gui}{key}")
-
-    payload_parts = [
-        format_emv_field("00", "01"),                      # Payload Format Indicator
-        merchant_account_info,                             # Merchant Account Information
-        format_emv_field("52", "0000"),                    # Merchant Category Code
-        format_emv_field("53", "986"),                     # Transaction Currency (BRL)
-        format_emv_field("54", val_str),                   # Transaction Amount
-        format_emv_field("58", "BR"),                      # Country Code
-        format_emv_field("59", nome),                      # Merchant Name
-        format_emv_field("60", cidade),                    # Merchant City
-        format_emv_field("62", format_emv_field("05", txid)) # Additional Data Field Template (txid)
-    ]
-
-    payload_without_crc = "".join(payload_parts) + "6304"
-    
-    # Simple CRC16 CCITT Calculation
-    crc = calculate_crc16(payload_without_crc)
-    return f"{payload_without_crc}{crc:04X}"
+    from app.services.infinitepay import infinitepay_service
+    val_str = f"{float(valor):.2f}".replace(".", ",")
+    return f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_str}?order_nsu={txid}"
 
 
 def calculate_crc16(payload: str) -> int:
