@@ -44,7 +44,17 @@ const API = {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      let response;
+      try {
+        response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      } catch (networkErr) {
+        if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
+          console.warn('API local inacessível. Tentando servidor na nuvem...');
+          response = await fetch(`https://ump-inscricoes-e-eventos.onrender.com/api/v1${endpoint}`, config);
+        } else {
+          throw networkErr;
+        }
+      }
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {

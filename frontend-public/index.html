@@ -3,56 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UMP Eventos</title>
+  <title>UMP Eventos — Plataforma de Inscrições da Sinodal UMP PB</title>
   <link rel="icon" href="img/logo.png" type="image/png">
-  <meta name="description" content="Garanta sua vaga nos melhores eventos de forma rápida, segura e parcelada.">
+  <meta name="description" content="Plataforma de Inscrições da Sinodal UMP PB. Gerencie suas inscrições, escolha sua forma de pagamento preferida (Pix, Cartão InfinitePay ou Parcelado) e receba seus comprovantes na hora.">
+  
+  <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <a href="index.html" class="brand" style="font-size: 1.5rem; gap: 0.75rem;">
-      <img src="img/logo.png" alt="Logo" style="height: 44px; object-fit: contain;" onerror="this.style.display='none';">
-      <span>UMP Eventos</span>
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html" class="nav-link">Início</a></li>
-      <li><a href="https://usuariosinodalpb.netlify.app/login.html" class="nav-link">Área do Participante</a></li>
-      <li><a href="https://adminsinodalpb.netlify.app/" class="nav-link">Painel Admin</a></li>
-      <li><a href="#eventos-section" class="btn btn-primary">Ver Eventos</a></li>
-    </ul>
-  </nav>
+  <!-- Top Sticky Navbar -->
+  <header class="navbar-wrapper">
+    <nav class="navbar-container" aria-label="Navegação Principal">
+      <a href="index.html" class="navbar-brand" aria-label="UMP Eventos - Início">
+        <img src="img/logo.png" alt="Logo UMP" class="navbar-logo" onerror="this.style.display='none';">
+        <span class="navbar-brand-name">UMP Eventos</span>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <ul class="navbar-menu" id="navbar-menu">
+        <li><a href="index.html" class="nav-item active">Início</a></li>
+        <li><a href="https://usuariosinodalpb.netlify.app/login.html" class="nav-item" target="_blank" rel="noopener noreferrer">Área do Participante</a></li>
+        <li><a href="https://adminsinodalpb.netlify.app/" class="nav-item" target="_blank" rel="noopener noreferrer">Painel Admin</a></li>
+        <li>
+          <a href="#eventos-section" class="btn-navbar-cta">
+            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Ver Eventos</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir Menu de Navegação" aria-expanded="false" aria-controls="mobile-drawer">
+        <svg class="hamburger-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Mobile Drawer Overlay & Menu -->
+  <div class="drawer-backdrop" id="drawer-backdrop" aria-hidden="true"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-label="Menu Mobile" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="navbar-brand">
+        <img src="img/logo.png" alt="Logo UMP" class="navbar-logo">
+        <span class="navbar-brand-name">UMP Eventos</span>
+      </div>
+      <button class="drawer-close-btn" id="drawer-close-btn" aria-label="Fechar Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-body">
+      <ul class="drawer-menu">
+        <li><a href="index.html" class="drawer-link active">Início</a></li>
+        <li><a href="https://usuariosinodalpb.netlify.app/login.html" class="drawer-link" target="_blank" rel="noopener noreferrer">Área do Participante</a></li>
+        <li><a href="https://adminsinodalpb.netlify.app/" class="drawer-link" target="_blank" rel="noopener noreferrer">Painel Admin</a></li>
+      </ul>
+      <div class="drawer-cta-wrap">
+        <a href="#eventos-section" class="btn-navbar-cta drawer-btn-events" id="drawer-btn-events">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>Ver Eventos</span>
+        </a>
+      </div>
+    </div>
+  </aside>
 
   <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-title">Plataforma de Inscrições da Sinodal UMP PB</div>
-    <p class="hero-subtitle">Gerencie suas inscrições, escolha sua forma de pagamento preferida (Pix, Cartão InfinitePay ou Parcelado) e receba seus comprovantes na hora.</p>
-    <a href="#eventos-section" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.1rem;">
-      Explorar Eventos Disponíveis
-    </a>
-  </section>
-
-  <!-- Main Content -->
-  <main class="container" id="eventos-section">
-    <div style="margin-bottom: 2rem; text-align: center;">
-      <h2 style="font-size: 2rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif;">Eventos em Destaque</h2>
-      <p style="color: var(--text-muted);">Selecione o evento desejado para realizar sua inscrição</p>
+  <section class="hero-section">
+    <!-- Abstract Background SVG Elements -->
+    <div class="hero-bg-shapes" aria-hidden="true">
+      <svg class="hero-shape hero-shape-1" viewBox="0 0 600 600" fill="none">
+        <circle cx="300" cy="300" r="280" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
+        <circle cx="300" cy="300" r="200" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
+        <circle cx="300" cy="300" r="120" stroke="rgba(56,189,248,0.12)" stroke-width="1.5" />
+      </svg>
+      <svg class="hero-shape hero-shape-2" viewBox="0 0 500 500" fill="none">
+        <path d="M50 250 C 150 100, 350 400, 450 250" stroke="rgba(255,255,255,0.07)" stroke-width="2" />
+        <path d="M10 200 C 120 80, 380 420, 490 200" stroke="rgba(56,189,248,0.08)" stroke-width="1.5" />
+      </svg>
+      <div class="hero-glow-dot dot-1"></div>
+      <div class="hero-glow-dot dot-2"></div>
+      <div class="hero-glow-dot dot-3"></div>
     </div>
 
-    <!-- Dynamic Events Grid -->
-    <div class="grid-3" id="events-container">
-      <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-        Carregando eventos disponíveis...
+    <div class="hero-container">
+      <!-- Left Column: Content -->
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span>BEM-VINDO AO UMP EVENTOS</span>
+          <span class="hero-eyebrow-line" aria-hidden="true"></span>
+        </div>
+        <h1 class="hero-title">
+          Plataforma de Inscrições da<br>
+          Sinodal <span class="hero-title-highlight">UMP PB</span>
+        </h1>
+        <p class="hero-description">
+          Gerencie suas inscrições, escolha sua forma de pagamento preferida (Pix, Cartão InfinitePay ou Parcelado) e receba seus comprovantes na hora.
+        </p>
+        <div class="hero-actions">
+          <a href="#eventos-section" class="btn-hero-cta" id="btn-hero-explore">
+            <svg class="hero-cta-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Explorar Eventos Disponíveis</span>
+            <svg class="hero-arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </a>
+        </div>
       </div>
+
+      <!-- Right Column: Banner Image -->
+      <div class="hero-media-wrapper">
+        <div class="hero-banner-card">
+          <img src="img/banner.png" alt="UMP Eventos - Juntos na Missão" class="hero-banner-image" fetchpriority="high">
+          <div class="hero-banner-overlay" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Events Section -->
+  <main class="events-section" id="eventos-section">
+    <div class="events-container-wrapper">
+      
+      <!-- Section Header -->
+      <div class="section-header">
+        <div class="section-tag">
+          <span class="section-tag-dash" aria-hidden="true">—</span>
+          <span class="section-tag-text">Eventos em Destaque</span>
+        </div>
+        <h2 class="section-title">Eventos em Destaque</h2>
+        <p class="section-subtitle">Selecione o evento desejado para realizar sua inscrição</p>
+      </div>
+
+      <!-- Carousel / Events Viewport -->
+      <div class="carousel-outer" id="carousel-outer">
+        <!-- Previous Button -->
+        <button class="carousel-arrow carousel-prev" id="carousel-prev" aria-label="Evento Anterior">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <!-- Cards Viewport & Track -->
+        <div class="carousel-viewport" id="carousel-viewport">
+          <div class="events-carousel-track" id="events-container">
+            <!-- Skeleton Loading state will be rendered here immediately via public.js -->
+          </div>
+        </div>
+
+        <!-- Next Button -->
+        <button class="carousel-arrow carousel-next" id="carousel-next" aria-label="Próximo Evento">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Carousel Pagination Dots -->
+      <div class="carousel-pagination" id="carousel-dots" role="tablist" aria-label="Navegação dos Eventos"></div>
+
     </div>
   </main>
 
   <!-- Footer -->
-  <footer>
-    <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <img src="img/logo.png" alt="Logo UMP" class="footer-logo">
+        <span class="footer-brand-name">UMP Eventos</span>
+      </div>
+
+      <div class="footer-center">
+        <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+      </div>
+
+      <div class="footer-slogan">
+        <span class="slogan-dash" aria-hidden="true">—</span>
+        <span>Servindo à Igreja, com propósito.</span>
+      </div>
+    </div>
   </footer>
 
+  <!-- Scripts -->
   <script src="js/api.js"></script>
   <script src="js/public.js"></script>
 </body>
