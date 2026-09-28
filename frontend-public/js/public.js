@@ -530,8 +530,171 @@ async function carregarEventos() {
   }
 }
 
+// Controlador do Slider de Banners do Hero
+class HeroBannerSliderController {
+  constructor() {
+    this.container = document.getElementById('hero-banner-slider');
+    this.slidesWrapper = document.getElementById('hero-banner-slides');
+    this.dotsContainer = document.getElementById('banner-slider-dots');
+    this.prevBtn = document.getElementById('banner-prev');
+    this.nextBtn = document.getElementById('banner-next');
+    this.controls = document.getElementById('banner-slider-controls');
+
+    if (!this.container || !this.slidesWrapper) return;
+
+    this.currentIndex = 0;
+    this.timer = null;
+    this.availableBanners = ['img/banner.png']; // Padrão garantido
+    
+    this.init();
+  }
+
+  async init() {
+    await this.discoverBanners();
+    this.renderSlides();
+    this.renderDots();
+    this.bindEvents();
+    this.startAutoplay();
+  }
+
+  async discoverBanners() {
+    // Procura por banner.png e por banner1.png até banner15.png (além de .jpg e .webp)
+    const candidates = ['img/banner.png'];
+    for (let i = 1; i <= 15; i++) {
+      candidates.push(`img/banner${i}.png`);
+      candidates.push(`img/banner${i}.jpg`);
+      candidates.push(`img/banner${i}.webp`);
+    }
+
+    const checkImage = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(url);
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    };
+
+    const results = await Promise.all(candidates.map(checkImage));
+    const valid = results.filter(Boolean);
+    this.availableBanners = Array.from(new Set(valid.length > 0 ? valid : ['img/banner.png']));
+  }
+
+  renderSlides() {
+    this.slidesWrapper.innerHTML = this.availableBanners.map((src, idx) => `
+      <div class="banner-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
+        <img src="${src}" alt="UMP Eventos - Destaque ${idx + 1}" class="hero-banner-image" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
+      </div>
+    `).join('');
+  }
+
+  renderDots() {
+    if (this.availableBanners.length <= 1) {
+      if (this.controls) this.controls.style.display = 'none';
+      return;
+    }
+
+    if (this.controls) this.controls.style.display = 'flex';
+
+    if (this.dotsContainer) {
+      this.dotsContainer.innerHTML = this.availableBanners.map((_, idx) => `
+        <button class="banner-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Ir para banner ${idx + 1}"></button>
+      `).join('');
+
+      this.dotsContainer.querySelectorAll('.banner-dot').forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+          this.goToSlide(idx);
+          this.resetAutoplay();
+        });
+      });
+    }
+  }
+
+  goToSlide(index) {
+    const total = this.availableBanners.length;
+    if (total <= 1) return;
+
+    this.currentIndex = (index + total) % total;
+
+    const slides = this.slidesWrapper.querySelectorAll('.banner-slide');
+    slides.forEach((slide, idx) => {
+      slide.classList.toggle('active', idx === this.currentIndex);
+    });
+
+    if (this.dotsContainer) {
+      const dots = this.dotsContainer.querySelectorAll('.banner-dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === this.currentIndex);
+      });
+    }
+  }
+
+  next() {
+    this.goToSlide(this.currentIndex + 1);
+  }
+
+  prev() {
+    this.goToSlide(this.currentIndex - 1);
+  }
+
+  startAutoplay() {
+    this.stopAutoplay();
+    if (this.availableBanners.length <= 1) return;
+    this.timer = setInterval(() => this.next(), 5500);
+  }
+
+  stopAutoplay() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+  }
+
+  resetAutoplay() {
+    this.stopAutoplay();
+    this.startAutoplay();
+  }
+
+  bindEvents() {
+    if (this.prevBtn) {
+      this.prevBtn.addEventListener('click', () => {
+        this.prev();
+        this.resetAutoplay();
+      });
+    }
+
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', () => {
+        this.next();
+        this.resetAutoplay();
+      });
+    }
+
+    this.container.addEventListener('mouseenter', () => this.stopAutoplay());
+    this.container.addEventListener('mouseleave', () => this.startAutoplay());
+
+    // Suporte touch
+    let touchStartX = 0;
+    this.container.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      this.stopAutoplay();
+    }, { passive: true });
+
+    this.container.addEventListener('touchend', (e) => {
+      const diffX = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diffX) > 40) {
+        if (diffX > 0) this.next();
+        else this.prev();
+      }
+      this.startAutoplay();
+    }, { passive: true });
+  }
+}
+
 // Inicialização após o DOM estar pronto
 document.addEventListener('DOMContentLoaded', () => {
   setupMobileMenu();
+  new HeroBannerSliderController();
   carregarEventos();
 });

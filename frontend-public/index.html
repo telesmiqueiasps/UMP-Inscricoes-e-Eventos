@@ -136,11 +136,29 @@
         </div>
       </div>
 
-      <!-- Right Column: Banner Image -->
+      <!-- Right Column: Banner Slider with Gradient Blend -->
       <div class="hero-media-wrapper">
-        <div class="hero-banner-card">
-          <img src="img/banner.png" alt="UMP Eventos - Juntos na Missão" class="hero-banner-image" fetchpriority="high">
+        <div class="hero-banner-card" id="hero-banner-slider" role="region" aria-label="Banners dos Eventos UMP">
+          <!-- Slides Wrapper -->
+          <div class="hero-banner-slides" id="hero-banner-slides">
+            <div class="banner-slide active" data-index="0">
+              <img src="img/banner.png" alt="UMP Eventos - Juntos na Missão" class="hero-banner-image" fetchpriority="high">
+            </div>
+          </div>
+
+          <!-- Multi-stop Gradient Blend Overlay -->
           <div class="hero-banner-overlay" aria-hidden="true"></div>
+
+          <!-- Controls & Dots -->
+          <div class="banner-slider-controls" id="banner-slider-controls" style="display: none;">
+            <button class="banner-ctrl-btn banner-ctrl-prev" id="banner-prev" aria-label="Banner anterior">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="banner-slider-dots" id="banner-slider-dots"></div>
+            <button class="banner-ctrl-btn banner-ctrl-next" id="banner-next" aria-label="Próximo banner">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
