@@ -64,8 +64,8 @@ def obter_dashboard_usuario(
         inscricoes_data.append(ins_dict)
 
         # Buscar pagamentos associados
-        from datetime import date
-        hoje = date.today()
+        from app.services.parcelamento import get_hoje_brasil
+        hoje = get_hoje_brasil()
         
         for pag in ins.pagamentos:
             pag_status = "CANCELADO" if ins.status == "CANCELADA" else pag.status

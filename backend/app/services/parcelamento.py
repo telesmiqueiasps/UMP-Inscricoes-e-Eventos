@@ -1,7 +1,14 @@
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 import calendar
 from typing import List, Dict, Any
+
+TZ_BRASIL = timezone(timedelta(hours=-3))
+
+
+def get_hoje_brasil() -> date:
+    """Retorna a data atual no fuso horário do Brasil (UTC-3)."""
+    return datetime.now(TZ_BRASIL).date()
 
 
 def add_months(sourcedate: date, months: int) -> date:
@@ -59,7 +66,7 @@ def gerar_parcelas(
         num_parcelas = 1
 
     if not data_primeira_parcela:
-        data_primeira_parcela = date.today() + timedelta(days=30)
+        data_primeira_parcela = get_hoje_brasil() + timedelta(days=30)
 
     # Citar limite máximo de parcelas permitidas
     if data_limite_evento:

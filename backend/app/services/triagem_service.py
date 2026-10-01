@@ -10,7 +10,7 @@ from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.evento import Evento
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
-from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas
+from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil
 from app.services.email import enviar_email_confirmacao
 
 logger = logging.getLogger(__name__)
@@ -100,7 +100,7 @@ def converter_triagem_em_inscricao(
 
     # 4. Criar Parcelas
     if is_parcelado:
-        dt_primeira = triagem.data_primeira_parcela or date.today()
+        dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
         dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
         
         max_parc = calcular_max_parcelas(dt_primeira, dt_limite)
@@ -129,7 +129,7 @@ def converter_triagem_em_inscricao(
         parc = Parcela(
             pagamento_id=db_pagamento.id,
             numero=1,
-            vencimento=date.today(),
+            vencimento=get_hoje_brasil(),
             valor=triagem.valor_total,
             status="PAGO"
         )

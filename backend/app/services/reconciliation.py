@@ -144,10 +144,11 @@ def processar_alertas_vencimento(db):
     - Lembrete prévio: 3 dias antes do vencimento.
     - Lembrete de atraso: 1 dia após o vencimento.
     """
-    from datetime import date, timedelta
+    from datetime import timedelta
     from app.services.email import enviar_email_alerta_vencimento
+    from app.services.parcelamento import get_hoje_brasil
 
-    hoje = date.today()
+    hoje = get_hoje_brasil()
     logger.warning("Verificando lembretes de vencimento de parcelas...")
 
     # 1. Alerta prévio: nos próximos 3 dias (e ainda não enviado)

@@ -294,8 +294,8 @@ def listar_pagamentos_admin(
     if evento_id is not None:
         query = query.join(Pagamento.inscricao).filter(Inscricao.evento_id == evento_id)
     pagamentos = query.order_by(Pagamento.created_at.desc()).all()
-    from datetime import date
-    hoje = date.today()
+    from app.services.parcelamento import get_hoje_brasil
+    hoje = get_hoje_brasil()
     
     for pag in pagamentos:
         if pag.inscricao:

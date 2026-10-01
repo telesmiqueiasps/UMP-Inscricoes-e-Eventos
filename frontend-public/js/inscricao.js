@@ -81,33 +81,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
+    // Funções auxiliares de fuso horário local
+    function getLocalDateString(d = new Date()) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseLocalDate(str) {
+      if (!str) return null;
+      const dateOnly = str.split('T')[0];
+      const parts = dateOnly.split('-');
+      if (parts.length === 3) {
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
+      return new Date(str);
+    }
+
     // Configurar inicial da data da primeira parcela
     const inputDataPrimeira = document.getElementById('data_primeira_parcela');
-    const hojeStr = new Date().toISOString().split('T')[0];
+    const hojeStr = getLocalDateString(new Date());
     inputDataPrimeira.min = hojeStr;
+
     if (eventoAtual.data_inicio) {
-      inputDataPrimeira.max = new Date(eventoAtual.data_inicio).toISOString().split('T')[0];
+      const limitObj = parseLocalDate(eventoAtual.data_inicio);
+      if (limitObj) {
+        inputDataPrimeira.max = getLocalDateString(limitObj);
+      }
     }
     
-    let dataPadrao = new Date(Date.now() + 86400000 * 5); // 5 dias no futuro
-    const dataLimite = new Date(eventoAtual.data_inicio);
-    if (dataPadrao > dataLimite) {
+    let dataPadrao = new Date();
+    dataPadrao.setDate(dataPadrao.getDate() + 5);
+
+    const dataLimite = parseLocalDate(eventoAtual.data_inicio);
+    if (dataLimite && dataPadrao > dataLimite) {
       dataPadrao = dataLimite;
     }
-    inputDataPrimeira.value = dataPadrao.toISOString().split('T')[0];
+    const hojeObj = new Date();
+    hojeObj.setHours(0, 0, 0, 0);
+    if (dataPadrao < hojeObj) {
+      dataPadrao = hojeObj;
+    }
+    inputDataPrimeira.value = getLocalDateString(dataPadrao);
 
     // Função para recalcular parcelas
     window.recalcularDropdownParcelas = function() {
       const dataSelStr = inputDataPrimeira.value;
       if (!dataSelStr) return;
 
-      const d1 = new Date(dataSelStr + 'T00:00:00');
-      const limit = new Date(eventoAtual.data_inicio);
-      d1.setHours(0,0,0,0);
-      limit.setHours(0,0,0,0);
+      const d1 = parseLocalDate(dataSelStr);
+      const limit = parseLocalDate(eventoAtual.data_inicio);
+      if (d1) d1.setHours(0,0,0,0);
+      if (limit) limit.setHours(0,0,0,0);
 
       let maxParc = 1;
-      if (d1 > limit) {
+      if (!d1 || !limit || d1 > limit) {
         maxParc = 0;
       } else if (d1.getTime() === limit.getTime()) {
         maxParc = 1;

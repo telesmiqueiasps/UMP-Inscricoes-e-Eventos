@@ -12,7 +12,7 @@ from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
-from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas
+from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil
 from app.services.pix import gerar_qr_code_base64
 from app.services.infinitepay import infinitepay_service
 from app.services.pdf_generator import gerar_pdf_parcela
@@ -89,9 +89,9 @@ def processar_pagamento_triagem(
             receipt_url = result.get("checkout_url")
 
     elif forma_pag == "PARCELADO":
-        dt_primeira = triagem.data_primeira_parcela or date.today()
-        if dt_primeira < date.today():
-            dt_primeira = date.today()
+        dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
+        if dt_primeira < get_hoje_brasil():
+            dt_primeira = get_hoje_brasil()
 
         dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
 
@@ -256,11 +256,11 @@ def processar_pagamento(
             except ValueError:
                 raise HTTPException(status_code=400, detail="Formato de data inválido. Use AAAA-MM-DD.")
         else:
-            data_primeira_parcela = date.today() + timedelta(days=30)
+            data_primeira_parcela = get_hoje_brasil() + timedelta(days=30)
 
         # A data da primeira parcela não pode ser anterior a hoje
-        if data_primeira_parcela < date.today():
-            data_primeira_parcela = date.today()
+        if data_primeira_parcela < get_hoje_brasil():
+            data_primeira_parcela = get_hoje_brasil()
 
         data_limite = inscricao.evento.data_inicio.date()
 
@@ -426,9 +426,9 @@ def baixar_pdf_parcela_triagem(
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
 
-    dt_primeira = triagem.data_primeira_parcela or date.today()
-    if dt_primeira < date.today():
-        dt_primeira = date.today()
+    dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
+    if dt_primeira < get_hoje_brasil():
+        dt_primeira = get_hoje_brasil()
 
     dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
     max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
