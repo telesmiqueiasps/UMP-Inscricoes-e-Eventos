@@ -33,12 +33,15 @@ async function loadDashboard() {
       userInfoCard.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 0;">Meus Dados Pessoais</h3>
-          <button class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;" onclick="openEditModal()">✏️ Editar</button>
+          <button class="btn btn-outline btn-sm" onclick="openEditModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+            <span>Editar</span>
+          </button>
         </div>
-        <p><strong>Nome:</strong> ${data.usuario.nome || 'Não informado'}</p>
-        <p><strong>E-mail:</strong> ${data.usuario.email || 'Não informado'}</p>
-        <p><strong>CPF:</strong> ${data.usuario.cpf || 'Não informado'}</p>
-        <p><strong>Telefone:</strong> ${data.usuario.telefone || 'Não informado'}</p>
+        <p style="margin-bottom: 0.35rem;"><strong>Nome:</strong> ${data.usuario.nome || 'Não informado'}</p>
+        <p style="margin-bottom: 0.35rem;"><strong>E-mail:</strong> ${data.usuario.email || 'Não informado'}</p>
+        <p style="margin-bottom: 0.35rem;"><strong>CPF:</strong> ${data.usuario.cpf || 'Não informado'}</p>
+        <p style="margin-bottom: 0.35rem;"><strong>Telefone:</strong> ${data.usuario.telefone || 'Não informado'}</p>
       `;
     }
 
@@ -88,9 +91,11 @@ async function loadDashboard() {
       if (selectorContainer) selectorContainer.style.display = 'none';
       if (registrationCard) {
         registrationCard.innerHTML = `
-          <h3 class="card-title">Inscrições</h3>
-          <p style="color: var(--text-muted);">Você ainda não possui inscrições realizadas.</p>
-          <a href="https://inscricoessinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1rem;">Ver Eventos Disponíveis</a>
+          <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.5rem;">Inscrições</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Você ainda não possui inscrições realizadas em eventos.</p>
+          <a href="https://inscricoessinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1.25rem;">
+            <span>Ver Eventos Disponíveis</span>
+          </a>
         `;
       }
       if (paymentsContainer) {
@@ -98,7 +103,7 @@ async function loadDashboard() {
       }
     }
 
-    // 4. Renderizar histórico completo de inscrições e triagens para a Aba de Inscrições
+    // Renderizar histórico completo de inscrições e triagens para a Aba de Inscrições
     renderAllInscricoes(inscricoes, triagens, data.pagamentos || []);
 
   } catch (err) {
@@ -142,21 +147,22 @@ function renderActiveRegistration(inscricaoId) {
     else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
     const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ? 
-      `<button class="btn btn-outline" style="margin-top: 1rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-color: var(--primary); color: var(--primary); font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
-         🔑 Ver QR Code de Check-in
+      `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
+         <span>Ver QR Code de Check-in</span>
        </button>` : '';
     
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
         <div>
           <span class="badge ${statusBadge}">${ins.status}</span>
-          <h3 class="card-title" style="margin-top: 0.5rem;">${ins.evento_titulo || 'Evento'}</h3>
+          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${ins.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">
           ${valorFmt}
         </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
         📍 Local: ${ins.evento_local || 'A definir'}<br>
         💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
       </p>
@@ -179,20 +185,20 @@ async function renderActiveTriagem(triagemId) {
 
   if (registrationCard) {
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
         <div>
           <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
-          <h3 class="card-title" style="margin-top: 0.5rem;">${tr.evento_titulo || 'Evento'}</h3>
+          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${tr.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">
           ${valorFmt}
         </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
         📍 Local: ${tr.evento_local || 'A definir'}<br>
         💳 Forma de Pagamento Escolhida: <strong>${formatarFormaPagamento(tr.forma_pagamento)}</strong>
       </p>
-      <div style="margin-top: 1rem; padding: 0.85rem; background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; text-align: left;">
+      <div style="margin-top: 1rem; padding: 0.85rem; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; text-align: left; line-height: 1.4;">
         <strong>⚠️ Inscrição Iniciada!</strong><br>
         Atenção: <strong>sua vaga NÃO está reservada até que você conclua o pagamento</strong> da 1ª parcela (ou valor total).
       </div>
@@ -200,7 +206,12 @@ async function renderActiveTriagem(triagemId) {
   }
 
   if (paymentsContainer) {
-    paymentsContainer.innerHTML = `<p style="color: var(--text-muted); padding: 1rem;">Carregando boletos e opções de pagamento...</p>`;
+    paymentsContainer.innerHTML = `
+      <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+        <span class="spinner-sm" style="border-top-color: var(--primary); margin-right: 0.5rem;"></span>
+        Carregando boletos e opções de pagamento...
+      </div>
+    `;
   }
 
   try {
@@ -222,36 +233,90 @@ function renderTriagemPayments(pagamentoRes, tr) {
   const formaPag = (pagamentoRes.forma_pagamento || tr.forma_pagamento || 'PIX').toUpperCase();
 
   if (formaPag === 'PARCELADO' && pagamentoRes.parcelas && pagamentoRes.parcelas.length > 0) {
+    // 1. Linhas de Tabela para Desktop
     const parcelasRows = pagamentoRes.parcelas.map(parc => {
       const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const pdfUrl = `${API_BASE_URL}/pagamentos/triagem/${tr.id}/parcela/${parc.numero}/pdf?token=${API.getToken()}`;
 
+      const actionBtnHTML = parc.copia_cola_pix ? 
+        (parc.copia_cola_pix.startsWith('http') ? 
+          `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagar Parcela</span>
+          </a>` : 
+          `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copiar Pix</span>
+          </button>`
+        ) : '';
+
       return `
         <tr>
-          <td>Parcela ${parc.numero}</td>
+          <td><strong>Parcela ${parc.numero}</strong></td>
           <td>${parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A'}</td>
-          <td>${valorParcFmt}</td>
+          <td><strong>${valorParcFmt}</strong></td>
           <td><span class="badge badge-warning">PENDENTE</span></td>
           <td>
-            ${parc.copia_cola_pix ? 
-              (parc.copia_cola_pix.startsWith('http') ? 
-                `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Parcela</a>` : 
-                `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
-              ) : ''
-            }
-            <a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem; text-decoration: none;">📄 Carnê PDF</a>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              ${actionBtnHTML}
+              <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Carnê PDF</span>
+              </a>
+            </div>
           </td>
         </tr>
       `;
     }).join('');
 
+    // 2. Cards para Mobile
+    const mobileCards = pagamentoRes.parcelas.map(parc => {
+      const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const pdfUrl = `${API_BASE_URL}/pagamentos/triagem/${tr.id}/parcela/${parc.numero}/pdf?token=${API.getToken()}`;
+      const dtVenc = parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A';
+
+      const actionBtnMobile = parc.copia_cola_pix ? 
+        (parc.copia_cola_pix.startsWith('http') ? 
+          `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagar Parcela</span>
+          </a>` : 
+          `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copiar Pix</span>
+          </button>`
+        ) : '';
+
+      return `
+        <div class="parcela-card-item">
+          <div class="top-row">
+            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Parcela ${parc.numero}</span>
+            <span class="badge badge-warning">PENDENTE</span>
+          </div>
+          <div class="info-row">
+            <span>📅 Vencimento: <strong>${dtVenc}</strong></span>
+            <span>Valor: <strong style="color: var(--primary); font-size: 0.95rem;">${valorParcFmt}</strong></span>
+          </div>
+          <div class="actions-row">
+            ${actionBtnMobile}
+            <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>Carnê PDF</span>
+            </a>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     paymentsContainer.innerHTML = `
       <div class="card">
-        <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Parcelamento (${tr.evento_titulo || 'Evento'})</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-          Clique em <strong>Pagar Parcela</strong> para pagar online ou em <strong>Carnê PDF</strong> para visualizar e baixar o boleto impresso.
+        <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 0.4rem;">Parcelamento (${tr.evento_titulo || 'Evento'})</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Clique em <strong>Pagar Parcela</strong> para acionar o pagamento online ou em <strong>Carnê PDF</strong> para visualizar e imprimir o boleto.
         </p>
-        <div style="overflow-x: auto;">
+
+        <!-- Tabela no Desktop -->
+        <div class="table-responsive">
           <table>
             <thead>
               <tr>
@@ -265,6 +330,11 @@ function renderTriagemPayments(pagamentoRes, tr) {
             <tbody>${parcelasRows}</tbody>
           </table>
         </div>
+
+        <!-- Cards no Mobile -->
+        <div class="parcelas-mobile-list">
+          ${mobileCards}
+        </div>
       </div>
     `;
   } else {
@@ -273,16 +343,24 @@ function renderTriagemPayments(pagamentoRes, tr) {
 
     let pixBtnHTML = '';
     if (pagamentoRes.copia_cola_pix && !pagamentoRes.copia_cola_pix.startsWith('http')) {
-      pixBtnHTML = `<button class="btn btn-outline" style="margin-top: 0.5rem; margin-left: 0.5rem;" onclick="copiarPixString('${pagamentoRes.copia_cola_pix}')">📋 Copiar Pix</button>`;
+      pixBtnHTML = `
+        <button class="btn btn-outline btn-sm" onclick="copiarPixString('${pagamentoRes.copia_cola_pix}')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span>Copiar Código Pix</span>
+        </button>
+      `;
     }
 
     paymentsContainer.innerHTML = `
       <div class="card">
         <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(formaPag)}</h3>
-        <p>Valor Total: <strong>${valorPagFmt}</strong> | Status: <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span></p>
-        <div style="margin-top: 1rem;">
+        <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: var(--primary);">${valorPagFmt}</strong> | Status: <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span></p>
+        <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
           ${receiptUrl && receiptUrl.startsWith('http') ? 
-            `<a href="${receiptUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-block;">💳 Efetuar Pagamento da Inscrição</a>` : ''
+            `<a href="${receiptUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              <span>Efetuar Pagamento da Inscrição</span>
+            </a>` : ''
           }
           ${pixBtnHTML}
         </div>
@@ -307,6 +385,7 @@ function renderRecentPayments(pagamentos) {
 
   paymentsContainer.innerHTML = pagamentos.map(pag => {
     if (pag.parcelas && pag.parcelas.length > 0) {
+      // Desktop Rows
       const parcelasRows = pag.parcelas.map(parc => {
         const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
@@ -314,29 +393,81 @@ function renderRecentPayments(pagamentos) {
 
         return `
           <tr>
-            <td>Parcela ${parc.numero}</td>
+            <td><strong>Parcela ${parc.numero}</strong></td>
             <td>${parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A'}</td>
-            <td>${valorParcFmt}</td>
+            <td><strong>${valorParcFmt}</strong></td>
             <td><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
             <td>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
+                  (parc.copia_cola_pix.startsWith('http') ? 
+                    `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                      <span>Pagar Parcela</span>
+                    </a>` : 
+                    `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                      <span>Copiar Pix</span>
+                    </button>`
+                  ) : ''
+                }
+                ${!isCancelled ? 
+                  `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>Carnê PDF</span>
+                  </a>` : ''
+                }
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Mobile Cards
+      const mobileCards = pag.parcelas.map(parc => {
+        const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
+        const isCancelled = parc.status === 'CANCELADO' || parc.status === 'CANCELADA' || pag.status === 'CANCELADO';
+        const dtVenc = parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A';
+
+        return `
+          <div class="parcela-card-item">
+            <div class="top-row">
+              <span style="font-weight: 700; font-size: 0.95rem;">Parcela ${parc.numero}</span>
+              <span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span>
+            </div>
+            <div class="info-row">
+              <span>📅 Vencimento: <strong>${dtVenc}</strong></span>
+              <span>Valor: <strong style="color: var(--primary); font-size: 0.95rem;">${valorParcFmt}</strong></span>
+            </div>
+            <div class="actions-row">
               ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
                 (parc.copia_cola_pix.startsWith('http') ? 
-                  `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; text-decoration: none;">Pagar Parcela</a>` : 
-                  `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
+                  `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    <span>Pagar Parcela</span>
+                  </a>` : 
+                  `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span>Copiar Pix</span>
+                  </button>`
                 ) : ''
               }
               ${!isCancelled ? 
-                `<a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-left: 0.25rem; text-decoration: none;">📄 Carnê PDF</a>` : ''
+                `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <span>Carnê PDF</span>
+                </a>` : ''
               }
-            </td>
-          </tr>
+            </div>
+          </div>
         `;
       }).join('');
 
       return `
         <div class="card">
           <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Parcelamento (${pag.evento_titulo || 'Evento'})</h3>
-          <div style="overflow-x: auto;">
+          <div class="table-responsive">
             <table>
               <thead>
                 <tr>
@@ -350,6 +481,9 @@ function renderRecentPayments(pagamentos) {
               <tbody>${parcelasRows}</tbody>
             </table>
           </div>
+          <div class="parcelas-mobile-list">
+            ${mobileCards}
+          </div>
         </div>
       `;
     } else {
@@ -358,11 +492,17 @@ function renderRecentPayments(pagamentos) {
       return `
         <div class="card">
           <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h3>
-          <p>Valor: ${valorPagFmt} | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></p>
+          <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor: <strong style="color: var(--primary);">${valorPagFmt}</strong> | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></p>
           ${pag.receipt_url && !isCancelled ? 
             (pag.status === 'PAGO' ? 
-              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline" style="margin-top: 0.5rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-md);">📄 Comprovante de Pagamento</a>` :
-              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block;">Pagar Inscrição</a>`
+              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="margin-top: 1rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Comprovante de Pagamento</span>
+              </a>` :
+              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 1rem; text-decoration: none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                <span>Pagar Inscrição</span>
+              </a>`
             ) : ''
           }
         </div>
@@ -409,14 +549,15 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
               </p>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">${valorTotalFmt}</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">${valorTotalFmt}</div>
               <div style="font-size: 0.8rem; color: #D97706; font-weight: 600; margin-top: 0.25rem;">Pagamento Pendente</div>
             </div>
           </div>
-          <div style="margin-top: 1rem; padding: 0.75rem; background: #FEF3C7; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #FEF3C7; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
             <span>⚠️ <strong>Atenção:</strong> sua vaga NÃO está reservada até que você conclua o pagamento.</span>
-            <button class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="selecionarEventosDashboard('tr_${tr.id}')">
-              📄 Ver Boletos / Pagar
+            <button class="btn btn-primary btn-sm" onclick="selecionarEventosDashboard('tr_${tr.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>Ver Boletos / Pagar</span>
             </button>
           </div>
         </div>
@@ -448,82 +589,8 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
       else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-info';
       else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') badgeClass = 'badge-danger';
 
-      let pagamentosHTML = '';
-      if (insPags.length > 0) {
-        pagamentosHTML = insPags.map(pag => {
-          if (pag.parcelas && pag.parcelas.length > 0) {
-            const parcelasRows = pag.parcelas.map(parc => {
-              const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-              const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
-              const isCancelled = parc.status === 'CANCELADO' || parc.status === 'CANCELADA' || pag.status === 'CANCELADO';
-
-              return `
-                <tr style="border-bottom: 1px solid var(--border-color);">
-                  <td style="padding: 0.5rem;">Parcela ${parc.numero}</td>
-                  <td style="padding: 0.5rem;">${parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A'}</td>
-                  <td style="padding: 0.5rem;">${valorParcFmt}</td>
-                  <td style="padding: 0.5rem;"><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
-                  <td style="padding: 0.5rem;">
-                    ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
-                      (parc.copia_cola_pix.startsWith('http') ? 
-                        `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; text-decoration: none;">Pagar</a>` : 
-                        `<button class="btn btn-outline" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;" onclick="copiarPixString('${parc.copia_cola_pix}')">Copiar Pix</button>`
-                      ) : ''
-                    }
-                    ${!isCancelled ? 
-                      `<a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="padding: 0.2rem 0.4rem; font-size: 0.75rem; margin-left: 0.25rem; text-decoration: none;">📄 PDF</a>` : ''
-                    }
-                  </td>
-                </tr>
-              `;
-            }).join('');
-
-            return `
-              <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
-                <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">Parcelamento (Carnê):</h4>
-                <div style="overflow-x: auto;">
-                  <table style="font-size: 0.85rem; width: 100%; border-collapse: collapse;">
-                    <thead>
-                      <tr style="background: #f1f5f9; border-bottom: 1px solid var(--border-color);">
-                        <th style="padding: 0.5rem; text-align: left;">Parcela</th>
-                        <th style="padding: 0.5rem; text-align: left;">Vencimento</th>
-                        <th style="padding: 0.5rem; text-align: left;">Valor</th>
-                        <th style="padding: 0.5rem; text-align: left;">Status</th>
-                        <th style="padding: 0.5rem; text-align: left;">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>${parcelasRows}</tbody>
-                  </table>
-                </div>
-              </div>
-            `;
-          } else {
-            const valorPagFmt = parseFloat(pag.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const isCancelled = pag.status === 'CANCELADO' || pag.status === 'CANCELADA';
-            return `
-              <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-                <div>
-                  <h4 style="font-size: 0.9rem; font-weight: 700; margin: 0; color: var(--primary);">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h4>
-                  <div style="margin-top: 0.25rem; font-size: 0.85rem; color: var(--text-muted);">
-                    Valor: ${valorPagFmt} | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span>
-                  </div>
-                </div>
-                <div>
-                  ${pag.receipt_url && !isCancelled ? 
-                    (pag.status === 'PAGO' ? 
-                      `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline" style="border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: var(--radius-md);">📄 Comprovante</a>` :
-                      `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; text-decoration: none; border-radius: var(--radius-md);">Pagar Inscrição</a>`
-                    ) : ''
-                  }
-                </div>
-              </div>
-            `;
-          }
-        }).join('');
-      }
-
       return `
-        <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid var(--border-color); background: #fdfdfd; box-shadow: none;">
+        <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid var(--border-color); background: #FFFFFF;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
             <div>
               <span class="badge ${badgeClass}">${ins.status}</span>
@@ -534,11 +601,10 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
               </p>
             </div>
             <div style="text-align: right;">
-              <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">${totalInscFmt}</div>
-              <div style="font-size: 0.8rem; color: #10B981; font-weight: 600; margin-top: 0.25rem;">Total Pago: ${totalPagoFmt}</div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">${totalInscFmt}</div>
+              <div style="font-size: 0.8rem; color: #047857; font-weight: 600; margin-top: 0.25rem;">Total Pago: ${totalPagoFmt}</div>
             </div>
           </div>
-          ${pagamentosHTML}
         </div>
       `;
     }).join('');
@@ -554,11 +620,14 @@ window.switchTab = function(tabId) {
 
   document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
   if (tabId === 'tab-painel') {
-    document.getElementById('menu-painel').classList.add('active');
+    const el = document.getElementById('menu-painel');
+    if (el) el.classList.add('active');
   } else if (tabId === 'tab-eventos') {
-    document.getElementById('menu-eventos').classList.add('active');
+    const el = document.getElementById('menu-eventos');
+    if (el) el.classList.add('active');
   } else if (tabId === 'tab-senha') {
-    document.getElementById('menu-senha').classList.add('active');
+    const el = document.getElementById('menu-senha');
+    if (el) el.classList.add('active');
   }
 };
 
@@ -569,11 +638,13 @@ window.openEditModal = function() {
   document.getElementById('edit-email').value = user.email || '';
   document.getElementById('edit-telefone').value = user.telefone || '';
   document.getElementById('edit-senha').value = '';
-  document.getElementById('edit-profile-modal').style.display = 'block';
+  const modal = document.getElementById('edit-profile-modal');
+  if (modal) modal.style.display = 'flex';
 };
 
 window.closeEditModal = function() {
-  document.getElementById('edit-profile-modal').style.display = 'none';
+  const modal = document.getElementById('edit-profile-modal');
+  if (modal) modal.style.display = 'none';
 };
 
 window.salvarPerfil = async function(e) {
@@ -654,7 +725,7 @@ window.atualizarSenhaParticipante = async function(e) {
   }
   
   saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="spinner"></span> Atualizando...';
+  saveBtn.innerHTML = '<span class="spinner-sm"></span> Atualizando...';
   
   try {
     await API.request('/usuario/alterar-senha', {
@@ -690,7 +761,7 @@ window.openQrModal = function(codigo, eventoTitulo) {
     img.src = qrUrl;
     codeText.textContent = codigo;
     downloadBtn.href = qrUrl;
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
   }
 };
 

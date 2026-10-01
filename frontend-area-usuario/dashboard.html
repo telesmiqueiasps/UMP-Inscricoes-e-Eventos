@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Participante - UMP Eventos</title>
+  <title>Área do Participante - UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,18 +11,40 @@
 
   <div class="dashboard-layout">
     
-    <!-- Sidebar -->
+    <!-- Sidebar / Top Bar Mobile -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.png" alt="Logo" style="height: 32px; object-fit: contain;" onerror="this.style.display='none';">
-        <span>UMP Eventos</span>
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
       </div>
       
       <ul class="sidebar-menu">
-        <li><a href="javascript:void(0)" onclick="switchTab('tab-painel')" id="menu-painel" class="sidebar-link active"><img src="img/dashboard.png" alt="🏠" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🏠'"> Meu Painel</a></li>
-        <li><a href="javascript:void(0)" onclick="switchTab('tab-eventos')" id="menu-eventos" class="sidebar-link"><img src="img/calendario.png" alt="📅" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='📅'"> Minhas Inscrições</a></li>
-        <li><a href="javascript:void(0)" onclick="switchTab('tab-senha')" id="menu-senha" class="sidebar-link"><img src="img/senha.png" alt="🔒" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🔒'"> Alterar Senha</a></li>
-        <li><a href="javascript:void(0)" onclick="logout()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;"><img src="img/sair.png" alt="🚪" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🚪'"> Sair</a></li>
+        <li>
+          <a href="javascript:void(0)" onclick="switchTab('tab-painel')" id="menu-painel" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Meu Painel</span>
+          </a>
+        </li>
+        <li>
+          <a href="javascript:void(0)" onclick="switchTab('tab-eventos')" id="menu-eventos" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <span>Minhas Inscrições</span>
+          </a>
+        </li>
+        <li>
+          <a href="javascript:void(0)" onclick="switchTab('tab-senha')" id="menu-senha" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Alterar Senha</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logout()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
       </ul>
     </aside>
 
@@ -32,18 +54,22 @@
       <div class="top-header">
         <div>
           <h1 class="welcome-title" id="welcome-user">Olá, Participante!</h1>
-          <p style="color: var(--text-muted);">Acompanhe o status de suas inscrições e parcelas de pagamento.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Acompanhe o status de suas inscrições e parcelas de pagamento.</p>
         </div>
       </div>
 
-      <!-- Aba 1: Meu Painel (Evento Mais Recente) -->
+      <!-- Aba 1: Meu Painel -->
       <div id="tab-painel" class="tab-content">
-        <div id="dashboard-selector-container" style="display: none; background: white; padding: 1rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-size: 1.25rem;">📅</span>
-            <div>
-              <strong style="display: block; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Selecione o Evento</strong>
-              <select id="dashboard-event-select" class="form-control" onchange="changeDashboardEvent(this.value)" style="margin-top: 0.25rem; font-weight: 700; color: var(--primary); min-width: 250px; border-color: var(--primary);"></select>
+        
+        <!-- Seletor de Eventos -->
+        <div id="dashboard-selector-container" class="selector-card" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+            <div style="background: var(--primary-light); color: var(--primary); padding: 0.6rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <label for="dashboard-event-select" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Selecione o Evento</label>
+              <select id="dashboard-event-select" class="form-control" onchange="changeDashboardEvent(this.value)" style="margin-top: 0.2rem; font-weight: 700; color: var(--primary); border-color: var(--border-color);"></select>
             </div>
           </div>
         </div>
@@ -59,18 +85,18 @@
         </div>
 
         <div style="margin-top: 2rem;">
-          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Pagamentos & Parcelas do Evento Selecionado</h2>
+          <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; font-family: 'Plus Jakarta Sans', sans-serif;">Pagamentos & Parcelas do Evento Selecionado</h2>
           <div id="payments-container">
             Carregando pagamentos...
           </div>
         </div>
       </div>
 
-      <!-- Aba 2: Minhas Inscrições (Histórico Completo) -->
+      <!-- Aba 2: Minhas Inscrições -->
       <div id="tab-eventos" class="tab-content" style="display: none;">
         <div class="card">
-          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem;">Meus Eventos & Inscrições</h2>
-          <p class="card-desc">Lista completa de todos os eventos em que você realizou inscrição.</p>
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Meus Eventos & Inscrições</h2>
+          <p class="card-desc">Lista completa de todos os eventos em que você solicitou inscrição.</p>
           <div id="all-registrations-container" style="margin-top: 1.5rem;">
             Carregando histórico de inscrições...
           </div>
@@ -80,7 +106,7 @@
       <!-- Aba 3: Alterar Senha -->
       <div id="tab-senha" class="tab-content" style="display: none;">
         <div class="card" style="max-width: 480px;">
-          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem;">Alterar Senha</h2>
+          <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Alterar Senha</h2>
           <p class="card-desc" style="margin-bottom: 1.5rem;">Mantenha sua conta segura alterando sua senha regularmente.</p>
           
           <form id="form-alterar-senha" onsubmit="atualizarSenhaParticipante(event)">
@@ -99,8 +125,8 @@
               <input type="password" id="pass-nova-confirm" class="form-control" required placeholder="Repita a nova senha">
             </div>
 
-            <div id="alterar-senha-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
-            <div id="alterar-senha-success" style="display: none; background: #d1fae5; color: #065f46; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #a7f3d0; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+            <div id="alterar-senha-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+            <div id="alterar-senha-success" style="display: none; background: #d1fae5; color: #065f46; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid #a7f3d0; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
 
             <button type="submit" id="btn-salvar-senha" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
               Atualizar Senha
@@ -108,6 +134,7 @@
           </form>
         </div>
       </div>
+
       <!-- Footer -->
       <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
         <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
@@ -118,9 +145,9 @@
   </div>
 
   <!-- Modal de Edição de Perfil -->
-  <div id="edit-profile-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-    <div class="card" style="max-width: 450px; margin: 10% auto; padding: 2rem; position: relative; background: #FFF; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
-      <span onclick="closeEditModal()" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 1.75rem; cursor: pointer; color: var(--text-muted); font-weight: bold;">&times;</span>
+  <div id="edit-profile-modal" class="modal-overlay">
+    <div class="modal-content">
+      <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
       <h3 class="card-title" style="margin-bottom: 1.5rem; font-size: 1.25rem;">Editar Meus Dados</h3>
       
       <form id="form-edit-profile" onsubmit="salvarPerfil(event)">
@@ -137,7 +164,7 @@
           <input type="text" id="edit-telefone" class="form-control">
         </div>
         <div class="form-group">
-          <label class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+          <label class="form-label">Nova Senha (deixe em branco para manter)</label>
           <input type="password" id="edit-senha" class="form-control" placeholder="******">
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
@@ -148,19 +175,20 @@
   </div>
 
   <!-- Modal de Visualização de QR Code para Check-in -->
-  <div id="qr-code-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-    <div class="card" style="max-width: 400px; margin: 10% auto; padding: 2rem; position: relative; background: #FFF; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); text-align: center;">
-      <span onclick="closeQrModal()" style="position: absolute; top: 1rem; right: 1.5rem; font-size: 1.75rem; cursor: pointer; color: var(--text-muted); font-weight: bold;">&times;</span>
+  <div id="qr-code-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center;">
+      <button type="button" class="modal-close" onclick="closeQrModal()">&times;</button>
       <h3 class="card-title" id="qr-modal-title" style="margin-bottom: 0.5rem; font-size: 1.25rem;">Seu QR Code de Check-in</h3>
       <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Apresente este código no dia do evento para realizar o seu check-in.</p>
       
-      <div style="background: #f8fafc; padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: inline-block; margin-bottom: 1.5rem;">
-        <img id="qr-code-img" src="" alt="QR Code de Check-in" style="width: 200px; height: 200px; display: block; margin: 0 auto; background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #cbd5e1;">
-        <div id="qr-code-text" style="margin-top: 0.75rem; font-family: monospace; font-size: 0.95rem; font-weight: bold; color: var(--primary); letter-spacing: 0.05em;">CK-XXXXXXXX</div>
+      <div style="background: #F8FAFC; padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: inline-block; margin-bottom: 1.5rem; width: 100%;">
+        <img id="qr-code-img" src="" alt="QR Code de Check-in" style="width: 200px; height: 200px; display: block; margin: 0 auto; background: white; padding: 0.5rem; border-radius: 8px; border: 1px solid #CBD5E1;">
+        <div id="qr-code-text" style="margin-top: 0.75rem; font-family: monospace; font-size: 1rem; font-weight: 700; color: var(--primary); letter-spacing: 0.05em;">CK-XXXXXXXX</div>
       </div>
       
-      <a id="btn-download-qr" href="" download="checkin-qrcode.png" target="_blank" class="btn btn-primary" style="width: 100%; display: block; text-decoration: none; padding: 0.75rem; text-align: center;">
-        💾 Salvar QR Code / Imagem
+      <a id="btn-download-qr" href="" download="checkin-qrcode.png" target="_blank" class="btn btn-primary" style="width: 100%; text-decoration: none; padding: 0.75rem; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        <span>Salvar QR Code / Imagem</span>
       </a>
     </div>
   </div>
