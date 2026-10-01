@@ -116,8 +116,13 @@ def obter_dashboard_usuario(
             "id": tr.id,
             "evento_id": tr.evento_id,
             "evento_titulo": tr.evento.titulo if tr.evento else "",
+            "evento_local": tr.evento.local if tr.evento else "",
+            "evento_data_inicio": tr.evento.data_inicio.isoformat() if tr.evento and tr.evento.data_inicio else "",
+            "evento_data_fim": tr.evento.data_fim.isoformat() if tr.evento and tr.evento.data_fim else "",
+            "status": tr.status,
             "forma_pagamento": tr.forma_pagamento,
             "num_parcelas": tr.num_parcelas,
+            "data_primeira_parcela": tr.data_primeira_parcela.isoformat() if tr.data_primeira_parcela else None,
             "valor_total": float(tr.valor_total),
             "created_at": tr.created_at.isoformat()
         })
