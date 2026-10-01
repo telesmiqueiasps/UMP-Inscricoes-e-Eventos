@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Configurações - UMP Eventos</title>
+  <title>Configurações - Admin UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,16 +11,34 @@
 
   <div class="admin-layout" id="admin-configuracoes">
     
-    <!-- Sidebar -->
+    <!-- Sidebar / Topbar Mobile -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.png" alt="Logo" style="height: 32px; object-fit: contain;" onerror="this.style.display='none';">
-        <span>UMP Eventos</span>
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
       </div>
+      
       <ul class="sidebar-menu">
-        <li><a href="index.html" class="sidebar-link"><img src="img/home.png" alt="📊" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='📊'"> Dashboard & Eventos</a></li>
-        <li><a href="configuracoes.html" class="sidebar-link active"><img src="img/config.png" alt="⚙️" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='⚙️'"> Configurações</a></li>
-        <li><a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;"><img src="img/sair.png" alt="🚪" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🚪'"> Sair</a></li>
+        <li>
+          <a href="index.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard & Eventos</span>
+          </a>
+        </li>
+        <li>
+          <a href="configuracoes.html" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
       </ul>
     </aside>
 
@@ -28,74 +46,65 @@
     <main class="main-content">
       
       <div style="margin-bottom: 2rem;">
-        <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem;">Configurações Globais</h1>
-        <p style="color: var(--text-muted);">Gerencie as credenciais de pagamento por Pix e InfinitePay em tempo real</p>
+        <h1 class="welcome-title">Configurações Globais</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Gerencie as credenciais de pagamento e cadastros auxiliares</p>
       </div>
 
-      <div class="card" style="max-width: 600px; padding: 2rem;">
-        <form id="form-configuracoes" onsubmit="salvarConfiguracoes(event)">
-          
-          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary);">💳 Integração InfinitePay (Link de Pagamento)</h3>
-          
-          <div class="form-group">
-            <label class="form-label">InfinitePay Tag (Handle)</label>
-            <input type="text" id="config-infinitepay-handle" class="form-control" placeholder="ex: miqueiasteles" required>
-            <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Esta é a tag que identifica seu estabelecimento no checkout/links da InfinitePay.</small>
-          </div>
-
-          <!-- Pix Estático Ocultado conforme solicitação: usando apenas InfinitePay -->
-          <div style="display: none;">
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
-
-            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary);">🔑 Pix Estático (Carnês / Parcelas)</h3>
-
-            <div class="form-group">
-              <label class="form-label">Chave Pix</label>
-              <input type="text" id="config-pix-chave" class="form-control" placeholder="E-mail, CPF, CNPJ, Telefone ou Chave Aleatória">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Nome do Recebedor</label>
-              <input type="text" id="config-pix-nome" class="form-control" placeholder="ex: MIQUEIAS TELES" maxlength="25">
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Cidade do Recebedor</label>
-              <input type="text" id="config-pix-cidade" class="form-control" placeholder="ex: SOUSA" maxlength="15">
-            </div>
-          </div>
-
-          <div style="margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary" style="width: 100%; height: 46px; font-weight: 600;">💾 Salvar Configurações</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Presbitérios Card -->
-      <div class="card" style="max-width: 600px; padding: 2rem; margin-top: 2rem;">
-        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary);">⛪ Gerenciamento de Presbitérios</h3>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Cadastre e gerencie os Presbitérios que ficarão disponíveis para escolha no formulário de inscrição.</p>
+      <div class="grid-2" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
         
-        <form id="form-presbiterio" onsubmit="salvarPresbiterio(event)" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-          <input type="hidden" id="presbiterio-id">
-          <input type="text" id="presbiterio-nome" class="form-control" placeholder="Nome do Presbitério (ex: PRSO)..." required style="margin-bottom: 0;">
-          <button type="submit" id="btn-salvar-presbiterio" class="btn btn-primary" style="height: 38px; white-space: nowrap;">Adicionar</button>
-          <button type="button" id="btn-cancelar-presbiterio" class="btn btn-outline" style="height: 38px; display: none;" onclick="resetFormPresbiterio()">Cancelar</button>
-        </form>
+        <!-- Configurações InfinitePay -->
+        <div class="card" style="margin-bottom: 0;">
+          <form id="form-configuracoes" onsubmit="salvarConfiguracoes(event)">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              <span>Integração InfinitePay</span>
+            </h3>
+            
+            <div class="form-group">
+              <label class="form-label">InfinitePay Tag (Handle)</label>
+              <input type="text" id="config-infinitepay-handle" class="form-control" placeholder="ex: miqueiasteles" required>
+              <small style="color: var(--text-muted); display: block; margin-top: 0.4rem; font-size: 0.8rem;">Esta é a tag que identifica seu estabelecimento nos checkouts e links de pagamento.</small>
+            </div>
 
-        <div style="overflow-x: auto;">
-          <table style="font-size: 0.9rem;">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th style="width: 120px; text-align: right;">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="presbiterios-table-body">
-              <tr><td colspan="2" style="text-align: center; color: var(--text-muted);">Carregando presbitérios...</td></tr>
-            </tbody>
-          </table>
+            <div style="margin-top: 2rem;">
+              <button type="submit" class="btn btn-primary" style="width: 100%; height: 44px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span>Salvar Configurações</span>
+              </button>
+            </div>
+          </form>
         </div>
+
+        <!-- Presbitérios Card -->
+        <div class="card" style="margin-bottom: 0;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-3"/><path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/></svg>
+            <span>Gerenciamento de Presbitérios</span>
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Cadastre os Presbitérios disponíveis para os participantes no formulário de inscrição.</p>
+          
+          <form id="form-presbiterio" onsubmit="salvarPresbiterio(event)" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <input type="hidden" id="presbiterio-id">
+            <input type="text" id="presbiterio-nome" class="form-control" placeholder="Nome do Presbitério (ex: PRSO)..." required style="margin-bottom: 0; flex: 1; min-width: 180px;">
+            <button type="submit" id="btn-salvar-presbiterio" class="btn btn-primary btn-sm" style="height: 42px;">Adicionar</button>
+            <button type="button" id="btn-cancelar-presbiterio" class="btn btn-outline btn-sm" style="height: 42px; display: none;" onclick="resetFormPresbiterio()">Cancelar</button>
+          </form>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th style="width: 120px; text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="presbiterios-table-body">
+                <tr><td colspan="2" style="text-align: center; color: var(--text-muted);">Carregando presbitérios...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- Footer -->

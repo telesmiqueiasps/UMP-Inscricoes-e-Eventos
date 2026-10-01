@@ -64,16 +64,34 @@
 
   <div class="admin-layout" id="admin-gerenciar-evento">
     
-    <!-- Sidebar -->
+    <!-- Sidebar / Topbar Mobile -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.png" alt="Logo" style="height: 32px; object-fit: contain;" onerror="this.style.display='none';">
-        <span>UMP Eventos</span>
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
       </div>
+      
       <ul class="sidebar-menu">
-        <li><a href="index.html" class="sidebar-link active"><img src="img/home.png" alt="📊" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='📊'"> Dashboard & Eventos</a></li>
-        <li><a href="configuracoes.html" class="sidebar-link"><img src="img/config.png" alt="⚙️" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='⚙️'"> Configurações</a></li>
-        <li><a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;"><img src="img/sair.png" alt="🚪" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🚪'"> Sair</a></li>
+        <li>
+          <a href="index.html" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard & Eventos</span>
+          </a>
+        </li>
+        <li>
+          <a href="configuracoes.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
       </ul>
     </aside>
 
@@ -95,19 +113,24 @@
       <!-- Tabs Bar -->
       <div class="tabs-bar">
         <button class="tab-btn active" onclick="switchSubTab('pane-inscricoes', this)">
-          <img src="img/inscricoes.png" alt="📝" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='📝'"> Inscrições
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y1="13"/><line x1="16" y1="17" x2="8" y1="17"/></svg>
+          <span>Inscrições</span>
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-pagamentos', this)">
-          <img src="img/pagamentos.png" alt="💳" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='💳'"> Pagamentos
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          <span>Pagamentos</span>
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-checkin', this)">
-          <img src="img/checkin.png" alt="✔️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='✔️'"> Check-in
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
+          <span>Check-in</span>
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-editar', this)">
-          <img src="img/editar.png" alt="✏️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='✏️'"> Editar Evento
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          <span>Editar Evento</span>
         </button>
         <button class="tab-btn" onclick="switchSubTab('pane-excluir', this)" style="color: #EF4444;">
-          <img src="img/excluir.png" alt="🗑️" style="width: 18px; height: 18px; object-fit: contain;" onerror="this.outerHTML='🗑️'"> Excluir Evento
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+          <span>Excluir Evento</span>
         </button>
       </div>
 
@@ -115,7 +138,7 @@
       <div class="tab-pane active" id="pane-inscricoes">
         <!-- Filtros -->
         <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-          <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 1rem; align-items: end;">
+          <div class="filters-wrapper" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 1rem; align-items: end;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label">Buscar Participante</label>
               <input type="text" id="filter-search" class="form-control" placeholder="Nome, e-mail, CPF..." onkeyup="loadInscricoes()">
@@ -140,7 +163,7 @@
 
         <!-- Tabela -->
         <div class="card">
-          <div style="overflow-x: auto;">
+          <div class="table-responsive">
             <table id="inscricoes-table">
               <thead id="inscricoes-table-head">
                 <tr>
@@ -186,7 +209,7 @@
 
         <!-- Filtros de Pagamentos -->
         <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: end;">
+          <div class="filters-wrapper" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: end;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label">Buscar por Participante (Nome ou CPF)</label>
               <input type="text" id="pay-filter-search" class="form-control" placeholder="Nome ou CPF..." onkeyup="filterPagamentosLocal()">
@@ -216,7 +239,7 @@
         </div>
 
         <div class="card">
-          <div style="overflow-x: auto;">
+          <div class="table-responsive">
             <table>
               <thead>
                 <tr>

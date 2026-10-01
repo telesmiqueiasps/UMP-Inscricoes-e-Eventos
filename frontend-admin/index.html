@@ -3,60 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - UMP Eventos</title>
+  <title>Admin Dashboard - UMP Eventos</title>
   <link class="icon-link" rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
 </head>
 <body>
 
   <div class="admin-layout" id="admin-dashboard">
     
-    <!-- Sidebar -->
+    <!-- Sidebar / Topbar Mobile -->
     <aside class="sidebar">
-      <div class="sidebar-brand">
-        <img src="img/logo.png" alt="Logo" style="height: 32px; object-fit: contain;" onerror="this.style.display='none';">
-        <span>UMP Eventos</span>
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
       </div>
+      
       <ul class="sidebar-menu">
-        <li><a href="index.html" class="sidebar-link active"><img src="img/home.png" alt="📊" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='📊'"> Dashboard & Eventos</a></li>
-        <li><a href="configuracoes.html" class="sidebar-link"><img src="img/config.png" alt="⚙️" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='⚙️'"> Configurações</a></li>
-        <li><a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link" style="color: #F87171; margin-top: 2rem;"><img src="img/sair.png" alt="🚪" style="width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-right: 0.5rem;" onerror="this.outerHTML='🚪'"> Sair</a></li>
+        <li>
+          <a href="index.html" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard & Eventos</span>
+          </a>
+        </li>
+        <li>
+          <a href="configuracoes.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
       </ul>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
       
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div class="top-header">
         <div>
-          <h1 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.75rem;">Visão Geral do Sistema</h1>
-          <p style="color: var(--text-muted);">Métricas e Gerenciamento de Eventos</p>
+          <h1 class="welcome-title">Visão Geral do Sistema</h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Métricas e Gerenciamento de Eventos</p>
         </div>
-        <button class="btn btn-primary" onclick="abrirModalEvento()">+ Novo Evento</button>
+        <button class="btn btn-primary" onclick="abrirModalEvento()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Novo Evento</span>
+        </button>
       </div>
 
       <!-- Métricas Cards -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Total de Eventos</div>
+          <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total de Eventos</div>
           <div class="metric-val" id="m-eventos">0</div>
         </div>
         <div class="metric-card">
-          <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Eventos Ativos</div>
+          <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Eventos Ativos</div>
           <div class="metric-val" id="m-eventos-ativos" style="color: #10B981;">0</div>
         </div>
         <div class="metric-card">
-          <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Eventos Inativos / Finalizados</div>
+          <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Inativos / Finalizados</div>
           <div class="metric-val" id="m-eventos-inativos" style="color: #EF4444;">0</div>
         </div>
         <div class="metric-card">
-          <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Média de Inscritos / Evento</div>
-          <div class="metric-val" id="m-media-participantes" style="color: var(--secondary);">0</div>
+          <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Média de Inscritos</div>
+          <div class="metric-val" id="m-media-participantes" style="color: var(--primary);">0</div>
         </div>
       </div>
 
@@ -76,15 +92,17 @@
 
   <!-- Modal Criar Evento -->
   <div class="modal" id="evento-modal">
-    <div class="modal-content" style="max-width: 440px;">
-      <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;" id="modal-evento-title">Novo Evento</h3>
+    <div class="modal-content" style="max-width: 460px;">
+      <button type="button" class="modal-close" onclick="fecharModalEvento()">&times;</button>
+      <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; font-family: 'Plus Jakarta Sans', sans-serif;" id="modal-evento-title">Novo Evento</h3>
+      
       <form id="form-evento" onsubmit="salvarEvento(event)">
         <div class="form-group">
           <label class="form-label">Título do Evento</label>
           <input type="text" id="ev-titulo" class="form-control" required placeholder="Digite o nome do evento...">
         </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
           <button type="button" class="btn btn-outline" onclick="fecharModalEvento()">Cancelar</button>
           <button type="submit" class="btn btn-primary">Salvar e Continuar</button>
         </div>
@@ -94,27 +112,32 @@
 
   <!-- Modal Admin Login -->
   <div class="modal" id="login-modal">
-    <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-content" style="max-width: 420px;">
       <div style="text-align: center; margin-bottom: 1.5rem;">
-        <img src="img/logo.png" alt="Logo" style="height: 50px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
-        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--primary);">Login Administrativo</h3>
+        <img src="img/logo.png" alt="Logo UMP" style="height: 48px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
+        <h3 style="font-size: 1.35rem; font-weight: 800; margin: 0; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">Login Administrativo</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Painel de gestão de eventos e inscrições</p>
       </div>
+      
       <form id="admin-login-form">
         <div class="form-group">
           <label class="form-label">E-mail Admin</label>
-          <input type="email" id="admin-email" class="form-control" required>
+          <input type="email" id="admin-email" class="form-control" required placeholder="admin@ump.com">
         </div>
         <div class="form-group">
           <label class="form-label">Senha</label>
-          <input type="password" id="admin-senha" class="form-control" required>
+          <input type="password" id="admin-senha" class="form-control" required placeholder="******">
         </div>
-        <div id="admin-login-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+        <div id="admin-login-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
 
-        <button type="submit" id="admin-login-submit-btn" class="btn btn-primary" style="width: 100%;">Entrar no Painel</button>
+        <button type="submit" id="admin-login-submit-btn" class="btn btn-primary" style="width: 100%; height: 44px;">
+          Entrar no Painel
+        </button>
         
         <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-          <button type="button" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; font-weight: 500;" onclick="voltarParaSitePublico()">
-            <span>🌐</span> Voltar para o Site Público
+          <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; height: 42px;" onclick="voltarParaSitePublico()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>Voltar para o Site Público</span>
           </button>
         </div>
       </form>
