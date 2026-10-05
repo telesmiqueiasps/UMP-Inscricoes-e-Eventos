@@ -62,7 +62,7 @@ async function loadEventoInfo() {
     
     const dataInicio = new Date(eventoAtual.data_inicio).toLocaleDateString('pt-BR');
     const valorFmt = parseFloat(eventoAtual.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('event-detail-subtitle').textContent = `📅 Início: ${dataInicio} | 💳 Valor: ${valorFmt} | 📍 Local: ${eventoAtual.local || 'A definir'}`;
+    document.getElementById('event-detail-subtitle').textContent = `Início: ${dataInicio} • Valor: ${valorFmt} • Local: ${eventoAtual.local || 'A definir'}`;
 
     // Preencher Formulário de Edição (Tab 3)
     document.getElementById('evento-id').value = eventoAtual.id;
@@ -152,6 +152,27 @@ window.loadInscricoes = async function() {
       container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-danger);">Erro ao carregar inscrições.</td></tr>`;
     }
   }
+};
+
+// --- Ícones SVG do Sistema (Sem Emojis) ---
+const ICONS = {
+  eye: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  check: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  checkCircle: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>`,
+  x: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  clock: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  whatsapp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+  copy: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>`,
+  printer: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>`,
+  user: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  church: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 7 4 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9l4-2"/><path d="M14 22v-4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4"/><path d="M18 22V5l-6-3-6 3v17"/><path d="M12 7v5"/><path d="M10 9h4"/></svg>`,
+  health: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`,
+  package: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>`,
+  creditCard: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+  fileText: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  alertTriangle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  droplet: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  undo: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>`
 };
 
 // --- Helpers de Formatação e Utilitários ---
@@ -255,6 +276,7 @@ window.fecharModalInscricaoDetalhes = function() {
   }
 };
 
+// --- Renderizar Tabela de Inscrições ---
 window.renderInscricoesTable = function() {
   const container = document.getElementById('inscricoes-table-body');
   const tableHead = document.getElementById('inscricoes-table-head');
@@ -264,13 +286,13 @@ window.renderInscricoesTable = function() {
   if (tableHead) {
     tableHead.innerHTML = `
       <tr>
-        <th style="width: 70px;">ID</th>
+        <th style="width: 55px;">ID</th>
         <th>Participante</th>
         <th>Origem / Igreja</th>
         <th>Pagamento & Valor</th>
         <th>Status</th>
         <th>Check-in</th>
-        <th style="text-align: right; width: 170px;">Ações</th>
+        <th class="col-acoes">Ações</th>
       </tr>
     `;
   }
@@ -306,36 +328,36 @@ window.renderInscricoesTable = function() {
     }
 
     // Origem (Igreja / Presbitério / Cidade)
-    const igrejaStr = extras.igreja || extras.presbiterio || 'Não informada';
+    const origemTexto = extras.igreja || extras.presbiterio || 'Origem não informada';
     const cidadeStr = extras.cidade ? `<div style="font-size:0.75rem; color:var(--text-muted);">${extras.cidade}</div>` : '';
 
-    // Check-in Badge
+    // Check-in Badge com Ícone SVG
     const checkinBadgeMini = ins.checkin_realizado ? 
-      `<span class="badge badge-success" style="font-size:0.725rem;">✅ Checked-in</span>` : 
-      `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.725rem;">⏳ Ausente</span>`;
+      `<span class="badge badge-success" style="font-size:0.72rem; gap:0.25rem;">${ICONS.checkCircle} Checked-in</span>` : 
+      `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.72rem; gap:0.25rem;">${ICONS.clock} Ausente</span>`;
 
     return `
-      <tr class="inscricao-row-interactive" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Clique para ver a ficha completa com todos os dados">
+      <tr class="inscricao-row-interactive" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Clique para ver a ficha completa com as informações solicitadas">
         <td>
-          <span style="font-weight: 700; color: var(--primary); font-size: 0.85rem;">#${ins.id}</span>
+          <span style="font-weight: 700; color: var(--primary); font-size: 0.825rem;">#${ins.id}</span>
         </td>
         <td>
-          <div style="display: flex; align-items: center; gap: 0.65rem;">
-            <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #1D4ED8, #3B82F6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; box-shadow: 0 2px 5px rgba(29, 78, 216, 0.2);">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <div class="ficha-avatar" style="width: 32px; height: 32px; font-size: 0.775rem;">
               ${iniciais}
             </div>
             <div>
-              <div style="font-weight: 700; color: var(--text-main); font-size: 0.925rem;">${user.nome || 'N/A'}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted);">${contatoResumo || 'Sem contato'}</div>
+              <div style="font-weight: 700; color: var(--text-main); font-size: 0.88rem;">${user.nome || 'N/A'}</div>
+              <div style="font-size: 0.73rem; color: var(--text-muted);">${contatoResumo || 'Sem contato adicional'}</div>
             </div>
           </div>
         </td>
         <td>
-          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">${igrejaStr}</div>
+          <div style="font-size: 0.825rem; font-weight: 600; color: var(--text-main);">${origemTexto}</div>
           ${cidadeStr}
         </td>
         <td>
-          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</div>
+          <div style="font-size: 0.825rem; font-weight: 600; color: var(--text-main);">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</div>
           <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700;">${valorFmt}</div>
         </td>
         <td>
@@ -344,13 +366,14 @@ window.renderInscricoesTable = function() {
         <td>
           ${checkinBadgeMini}
         </td>
-        <td style="text-align: right;" onclick="event.stopPropagation()">
-          <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
-            <button class="btn-detalhes-inline" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Abrir ficha completa">
-              👁️ Ficha
+        <td class="col-acoes" onclick="event.stopPropagation()">
+          <div style="display: inline-flex; gap: 0.3rem; align-items: center;">
+            <button class="btn-detalhes-inline" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Visualizar ficha">
+              ${ICONS.eye}
+              <span>Ficha</span>
             </button>
-            ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.3rem 0.55rem; font-size: 0.75rem;" title="Confirmar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">✓</button>` : ''}
-            ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.3rem 0.55rem; font-size: 0.75rem;" title="Cancelar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">✕</button>` : ''}
+            ${ins.status !== 'CONFIRMADA' ? `<button class="btn-action-icon btn-action-confirm" title="Confirmar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">${ICONS.check}</button>` : ''}
+            ${ins.status !== 'CANCELADA' ? `<button class="btn-action-icon btn-action-cancel" title="Cancelar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">${ICONS.x}</button>` : ''}
           </div>
         </td>
       </tr>
@@ -378,7 +401,7 @@ window.alterarStatusInscricao = async function(id, novoStatus) {
   } catch (err) {}
 };
 
-// --- Modal de Ficha Completa do Inscrito (Visualização em Card) ---
+// --- Modal de Ficha do Inscrito (Apenas Campos Solicitados no Formulário) ---
 window.abrirModalInscricaoDetalhes = function(id) {
   const ins = cachedInscricoesList.find(i => i.id === id);
   if (!ins) {
@@ -394,6 +417,29 @@ window.abrirModalInscricaoDetalhes = function(id) {
   const extras = ins.dados_extras || {};
   const iniciais = obterIniciaisNome(user.nome || 'Participante');
 
+  // Campos que foram configurados/solicitados no formulário do evento
+  const camposConfigurados = (eventoAtual && eventoAtual.campos_formulario)
+    ? eventoAtual.campos_formulario.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  // Helper para verificar se um campo deve ser exibido:
+  // Retorna true somente se foi solicitado no evento OU se possui valor preenchido na inscrição
+  const deveExibirCampo = (nomeCampo) => {
+    const nomeLower = nomeCampo.toLowerCase();
+    const solicitadoNoEvento = camposConfigurados.includes(nomeLower);
+    const temValorExtras = extras && extras[nomeCampo] !== undefined && extras[nomeCampo] !== null && String(extras[nomeCampo]).trim() !== '' && String(extras[nomeCampo]).trim() !== '-';
+    
+    if (nomeLower === 'cpf') {
+      const temCpf = (user.cpf && user.cpf.trim() !== '') || temValorExtras;
+      return solicitadoNoEvento || temCpf;
+    }
+    if (nomeLower === 'telefone') {
+      const temTel = (user.telefone && user.telefone.trim() !== '') || temValorExtras;
+      return solicitadoNoEvento || temTel;
+    }
+    return solicitadoNoEvento || temValorExtras;
+  };
+
   const cpfFormatado = formatarCPF(user.cpf || extras.cpf || '');
   const telFormatado = formatarTelefone(user.telefone || extras.telefone || '');
   const telLimpo = (user.telefone || extras.telefone || '').replace(/\D/g, '');
@@ -408,8 +454,8 @@ window.abrirModalInscricaoDetalhes = function(id) {
 
   const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
   const checkinBadge = ins.checkin_realizado ? 
-    `<span class="badge badge-success" style="font-size:0.8rem; padding: 0.4rem 0.85rem;">✅ Checked-in (${dataCheckinFmt || 'Confirmado'})</span>` : 
-    `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.8rem; padding: 0.4rem 0.85rem;">⏳ Ausente</span>`;
+    `<span class="badge badge-success" style="font-size:0.75rem; padding: 0.35rem 0.75rem; gap: 0.35rem;">${ICONS.checkCircle} Checked-in (${dataCheckinFmt || 'Confirmado'})</span>` : 
+    `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.75rem; padding: 0.35rem 0.75rem; gap: 0.35rem;">${ICONS.clock} Ausente</span>`;
 
   // Buscar parcelas ou histórico de pagamento vinculado
   let pagamentosVinculados = ins.pagamentos || [];
@@ -417,279 +463,389 @@ window.abrirModalInscricaoDetalhes = function(id) {
     pagamentosVinculados = allPagamentosCached.filter(p => p.inscricao_id === id);
   }
 
-  // Identificar campos extras adicionais que não sejam os padrões
-  const camposPadroes = [
+  // --- Construção Dinâmica das Seções Solicitadas ---
+
+  // 1. Dados Pessoais & Contato
+  let camposPessoaisHTML = `
+    <div class="ficha-item">
+      <span class="ficha-item-label">Nome Completo</span>
+      <span class="ficha-item-valor">${user.nome || '-'}</span>
+    </div>
+    <div class="ficha-item">
+      <span class="ficha-item-label">E-mail</span>
+      <span class="ficha-item-valor">
+        ${user.email ? `
+          <a href="mailto:${user.email}" style="color:var(--primary); text-decoration:none;">${user.email}</a>
+          <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${user.email}', 'E-mail')" title="Copiar e-mail">${ICONS.copy}</button>
+        ` : '-'}
+      </span>
+    </div>
+  `;
+
+  if (deveExibirCampo('cpf')) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">CPF</span>
+        <span class="ficha-item-valor">
+          ${cpfFormatado || '-'}
+          ${cpfFormatado ? `<button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${cpfFormatado}', 'CPF')" title="Copiar CPF">${ICONS.copy}</button>` : ''}
+        </span>
+      </div>
+    `;
+  }
+
+  if (deveExibirCampo('telefone')) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Telefone / WhatsApp</span>
+        <span class="ficha-item-valor">
+          ${telFormatado || '-'}
+          ${whatsappLink ? `<a href="${whatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none; color:#10B981; vertical-align:middle;" title="Abrir WhatsApp">${ICONS.whatsapp}</a>` : ''}
+        </span>
+      </div>
+    `;
+  }
+
+  if (deveExibirCampo('data_nascimento')) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Data de Nascimento / Idade</span>
+        <span class="ficha-item-valor">${calcularIdadeTexto(extras.data_nascimento || '')}</span>
+      </div>
+    `;
+  }
+
+  if (deveExibirCampo('genero')) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Gênero</span>
+        <span class="ficha-item-valor">${extras.genero || '-'}</span>
+      </div>
+    `;
+  }
+
+  if (deveExibirCampo('estado_civil')) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Estado Civil</span>
+        <span class="ficha-item-valor">${extras.estado_civil || '-'}</span>
+      </div>
+    `;
+  }
+
+  // 2. Informações Eclesiásticas
+  const camposEclesiasticos = ['igreja', 'presbiterio', 'cidade', 'nome_pastor', 'contato_pastor', 'cargo_federacao'];
+  const exibirEclesiastico = camposEclesiasticos.some(deveExibirCampo);
+  let secaoEclesiasticaHTML = '';
+
+  if (exibirEclesiastico) {
+    let itensEclHTML = '';
+    if (deveExibirCampo('igreja')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Igreja / Congregação</span>
+          <span class="ficha-item-valor destaque">${extras.igreja || '-'}</span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('presbiterio')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Presbitério</span>
+          <span class="ficha-item-valor">${extras.presbiterio || '-'}</span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('cidade')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Cidade / UF</span>
+          <span class="ficha-item-valor">${extras.cidade || '-'}</span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('nome_pastor')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Pastor Responsável</span>
+          <span class="ficha-item-valor">${extras.nome_pastor || '-'}</span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('contato_pastor')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Contato do Pastor</span>
+          <span class="ficha-item-valor">
+            ${extras.contato_pastor ? formatarTelefone(extras.contato_pastor) : '-'}
+            ${pastorWhatsappLink ? `<a href="${pastorWhatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none; color:#10B981; vertical-align:middle;" title="Conversar no WhatsApp">${ICONS.whatsapp}</a>` : ''}
+          </span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('cargo_federacao')) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Cargo na Federação / Igreja</span>
+          <span class="ficha-item-valor">${extras.cargo_federacao || '-'}</span>
+        </div>
+      `;
+    }
+
+    secaoEclesiasticaHTML = `
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.church} Informações Eclesiásticas</h4>
+        </div>
+        <div class="ficha-grid-3">
+          ${itensEclHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. Saúde, Emergência & Alimentação
+  const camposSaude = ['tipo_sanguineo', 'contato_emergencia', 'alergias', 'medicamento_continuo', 'restricao_alimentar'];
+  const exibirSaude = camposSaude.some(deveExibirCampo);
+  let secaoSaudeHTML = '';
+
+  if (exibirSaude) {
+    let itensSaudeHTML = '';
+    if (deveExibirCampo('tipo_sanguineo')) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Tipo Sanguíneo</span>
+          <span class="ficha-item-valor">
+            ${extras.tipo_sanguineo ? `<span class="badge" style="background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5; font-weight:800; font-size:0.78rem; gap:0.25rem;">${ICONS.droplet} ${extras.tipo_sanguineo}</span>` : '-'}
+          </span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('contato_emergencia')) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Contato(s) de Emergência</span>
+          <span class="ficha-item-valor" style="font-weight: 700; color: #DC2626;">
+            ${extras.contato_emergencia || '-'}
+          </span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('alergias')) {
+      itensSaudeHTML += `
+        <div class="ficha-item" style="grid-column: 1 / -1;">
+          <span class="ficha-item-label">Alergias</span>
+          <div style="margin-top: 0.15rem;">
+            ${extras.alergias ? `
+              <div style="background:#FEF2F2; border:1px solid #FECACA; color:#B91C1C; padding:0.4rem 0.65rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; display:inline-flex; align-items:center; gap:0.35rem;">
+                ${ICONS.alertTriangle}
+                <span>${extras.alergias}</span>
+              </div>
+            ` : '<span style="color:var(--text-muted); font-size:0.825rem;">Nenhuma informada</span>'}
+          </div>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('medicamento_continuo')) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Medicamento Contínuo</span>
+          <span class="ficha-item-valor">${extras.medicamento_continuo || '-'}</span>
+        </div>
+      `;
+    }
+    if (deveExibirCampo('restricao_alimentar')) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Restrição Alimentar</span>
+          <span class="ficha-item-valor">${extras.restricao_alimentar || '-'}</span>
+        </div>
+      `;
+    }
+
+    secaoSaudeHTML = `
+      <div class="ficha-secao" style="border-left: 3px solid #EF4444;">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.health} Saúde, Emergência & Alimentação</h4>
+        </div>
+        <div class="ficha-grid-2">
+          ${itensSaudeHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Logística do Evento & Check-in
+  let itensLogisticaHTML = '';
+  if (deveExibirCampo('tamanho_camiseta')) {
+    itensLogisticaHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Tamanho da Camiseta</span>
+        <span class="ficha-item-valor">
+          ${extras.tamanho_camiseta ? `
+            <span class="badge" style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.78rem; font-weight:800;">${extras.tamanho_camiseta}</span>
+          ` : '-'}
+        </span>
+      </div>
+    `;
+  }
+  if (deveExibirCampo('dias_estadia')) {
+    itensLogisticaHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Dia da Chegada / Estadia</span>
+        <span class="ficha-item-valor">${extras.dias_estadia || '-'}</span>
+      </div>
+    `;
+  }
+
+  // Código de Check-in e Situação (sempre fazem parte do controle do evento)
+  itensLogisticaHTML += `
+    <div class="ficha-item">
+      <span class="ficha-item-label">Código de Check-in</span>
+      <span class="ficha-item-valor">
+        ${ins.codigo_checkin ? `
+          <code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary); font-size:0.825rem;">${ins.codigo_checkin}</code>
+          <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${ins.codigo_checkin}', 'Código Check-in')" title="Copiar código">${ICONS.copy}</button>
+        ` : '-'}
+      </span>
+    </div>
+
+    <div class="ficha-item" style="grid-column: 1 / -1;">
+      <span class="ficha-item-label">Situação do Check-in</span>
+      <div style="margin-top: 0.25rem; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+        ${checkinBadge}
+        <span style="font-size:0.775rem; color:var(--text-muted);">
+          ${ins.checkin_realizado ? 'Confirmado na portaria.' : 'Aguardando entrada.'}
+        </span>
+      </div>
+    </div>
+  `;
+
+  // 5. Outros Campos Extras Solicitados (dinâmicos adicionais)
+  const todosPadroes = [
     'cpf', 'telefone', 'data_nascimento', 'genero', 'tamanho_camiseta', 
     'tipo_sanguineo', 'alergias', 'medicamento_continuo', 'contato_emergencia', 
     'restricao_alimentar', 'igreja', 'presbiterio', 'cidade', 'estado_civil', 
     'nome_pastor', 'contato_pastor', 'cargo_federacao', 'dias_estadia'
   ];
-  const outrosCamposExtras = Object.keys(extras).filter(k => !camposPadroes.includes(k) && extras[k]);
+  const outrosCampos = Object.keys(extras).filter(k => !todosPadroes.includes(k) && deveExibirCampo(k));
 
-  // Montar HTML da Ficha Completa
+  let secaoOutrosCamposHTML = '';
+  if (outrosCampos.length > 0) {
+    secaoOutrosCamposHTML = `
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.fileText} Informações Adicionais</h4>
+        </div>
+        <div class="ficha-grid-2">
+          ${outrosCampos.map(k => `
+            <div class="ficha-item">
+              <span class="ficha-item-label">${formatarLabelCampo(k)}</span>
+              <span class="ficha-item-valor">${extras[k]}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Montar HTML Completo da Ficha
   conteudo.innerHTML = `
     <!-- Header -->
     <div class="modal-detalhes-header">
-      <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.85rem;">
         <div class="ficha-avatar">
           ${iniciais}
         </div>
         <div>
           <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0;">
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">
               ${user.nome || 'Participante'}
             </h3>
             <span class="badge ${statusBadge}">${ins.status}</span>
           </div>
-          <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.2rem;">
-            Inscrição <strong>#${ins.id}</strong> • Cadastrada em ${dataCriacaoFmt}
+          <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.15rem;">
+            Inscrição <strong>#${ins.id}</strong> • ${dataCriacaoFmt}
           </div>
         </div>
       </div>
-      <button type="button" class="modal-close" onclick="fecharModalInscricaoDetalhes()" style="position: static;" title="Fechar (Esc)">&times;</button>
+      <button type="button" class="btn-action-icon" onclick="fecharModalInscricaoDetalhes()" style="background:#F1F5F9; color:var(--text-muted);" title="Fechar (Esc)">
+        ${ICONS.x}
+      </button>
     </div>
 
     <!-- Barra de Ações Rápidas -->
-    <div style="background: #FFFFFF; border-bottom: 1px solid var(--border-color); padding: 0.75rem 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;">
-      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+    <div class="modal-detalhes-bar">
+      <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
         ${whatsappLink ? `
-          <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="btn btn-success" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;">
-            💬 Conversar no WhatsApp
+          <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="btn btn-success" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
+            ${ICONS.whatsapp}
+            <span>WhatsApp</span>
           </a>
         ` : ''}
-        <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="copiarFichaInscrito(${ins.id})">
-          📋 Copiar Ficha
+        <button class="btn btn-outline" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="copiarFichaInscrito(${ins.id})">
+          ${ICONS.copy}
+          <span>Copiar Ficha</span>
         </button>
-        <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="imprimirFichaInscrito(${ins.id})">
-          🖨️ Imprimir Ficha
+        <button class="btn btn-outline" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="imprimirFichaInscrito(${ins.id})">
+          ${ICONS.printer}
+          <span>Imprimir</span>
         </button>
       </div>
 
       <div>
         ${ins.checkin_realizado ? `
-          <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; color: #DC2626; border-color: #FCA5A5;" onclick="toggleCheckinPeloCard(${ins.id})">
-            🔄 Desfazer Check-in
+          <button class="btn btn-outline" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; color: #DC2626; border-color: #FCA5A5; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="toggleCheckinPeloCard(${ins.id})">
+            ${ICONS.undo}
+            <span>Desfazer Check-in</span>
           </button>
         ` : `
-          <button class="btn btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="toggleCheckinPeloCard(${ins.id})">
-            ✅ Realizar Check-in Agora
+          <button class="btn btn-primary" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="toggleCheckinPeloCard(${ins.id})">
+            ${ICONS.check}
+            <span>Confirmar Check-in</span>
           </button>
         `}
       </div>
     </div>
 
-    <!-- Corpo com Seções Organizadas em Cards -->
+    <!-- Corpo com Rolagem Funcional e Garantida -->
     <div class="modal-detalhes-body">
       
       <!-- Seção 1: Dados Pessoais & Contato -->
       <div class="ficha-secao">
         <div class="ficha-secao-titulo">
-          <h4>👤 Dados Pessoais & Contato</h4>
+          <h4>${ICONS.user} Dados Pessoais & Contato</h4>
         </div>
         <div class="ficha-grid-3">
-          <div class="ficha-item">
-            <span class="ficha-item-label">Nome Completo</span>
-            <span class="ficha-item-valor">${user.nome || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">E-mail</span>
-            <span class="ficha-item-valor">
-              ${user.email ? `
-                <a href="mailto:${user.email}" style="color:var(--primary); text-decoration:none;">${user.email}</a>
-                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${user.email}', 'E-mail')" title="Copiar e-mail">📋</button>
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">CPF</span>
-            <span class="ficha-item-valor">
-              ${cpfFormatado ? `
-                ${cpfFormatado}
-                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${cpfFormatado}', 'CPF')" title="Copiar CPF">📋</button>
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Telefone / WhatsApp</span>
-            <span class="ficha-item-valor">
-              ${telFormatado ? `
-                ${telFormatado}
-                ${whatsappLink ? `<a href="${whatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none;" title="Abrir WhatsApp">💬</a>` : ''}
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Data de Nascimento / Idade</span>
-            <span class="ficha-item-valor">${calcularIdadeTexto(extras.data_nascimento || '')}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Gênero</span>
-            <span class="ficha-item-valor">${extras.genero || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Estado Civil</span>
-            <span class="ficha-item-valor">${extras.estado_civil || '-'}</span>
-          </div>
+          ${camposPessoaisHTML}
         </div>
       </div>
 
-      <!-- Seção 2: Informações Eclesiásticas -->
-      <div class="ficha-secao">
-        <div class="ficha-secao-titulo">
-          <h4>⛪ Informações Eclesiásticas</h4>
-        </div>
-        <div class="ficha-grid-3">
-          <div class="ficha-item">
-            <span class="ficha-item-label">Igreja / Congregação</span>
-            <span class="ficha-item-valor destaque">${extras.igreja || '-'}</span>
-          </div>
+      <!-- Seção 2: Informações Eclesiásticas (Apenas se solicitadas) -->
+      ${secaoEclesiasticaHTML}
 
-          <div class="ficha-item">
-            <span class="ficha-item-label">Presbitério</span>
-            <span class="ficha-item-valor">${extras.presbiterio || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Cidade / UF</span>
-            <span class="ficha-item-valor">${extras.cidade || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Pastor Responsável</span>
-            <span class="ficha-item-valor">${extras.nome_pastor || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Contato do Pastor</span>
-            <span class="ficha-item-valor">
-              ${extras.contato_pastor ? `
-                ${formatarTelefone(extras.contato_pastor)}
-                ${pastorWhatsappLink ? `<a href="${pastorWhatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none;" title="Conversar no WhatsApp">💬</a>` : ''}
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Cargo na Federação / Igreja</span>
-            <span class="ficha-item-valor">${extras.cargo_federacao || '-'}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Seção 3: Saúde, Emergência & Alimentação -->
-      <div class="ficha-secao" style="border-left: 4px solid #EF4444;">
-        <div class="ficha-secao-titulo">
-          <h4>🩺 Saúde, Emergência & Alimentação</h4>
-        </div>
-        <div class="ficha-grid-2">
-          <div class="ficha-item">
-            <span class="ficha-item-label">Tipo Sanguíneo</span>
-            <span class="ficha-item-valor">
-              ${extras.tipo_sanguineo ? `<span class="badge" style="background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5; font-weight:800; font-size:0.85rem;">🩸 ${extras.tipo_sanguineo}</span>` : '<span style="color:var(--text-muted); font-size:0.85rem;">Não informado</span>'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Contato(s) de Emergência</span>
-            <span class="ficha-item-valor" style="font-weight: 700; color: #DC2626;">
-              ${extras.contato_emergencia || '<span style="color:var(--text-muted); font-weight:normal;">Não informado</span>'}
-            </span>
-          </div>
-
-          <div class="ficha-item" style="grid-column: 1 / -1;">
-            <span class="ficha-item-label">Alergias</span>
-            <div style="margin-top: 0.2rem;">
-              ${extras.alergias ? `
-                <div style="background:#FEF2F2; border:1px solid #FECACA; color:#B91C1C; padding:0.6rem 0.85rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
-                  ⚠️ ${extras.alergias}
-                </div>
-              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhuma alergia informada.</span>'}
-            </div>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Medicamento Contínuo</span>
-            <div style="margin-top: 0.2rem;">
-              ${extras.medicamento_continuo ? `
-                <div style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
-                  💊 ${extras.medicamento_continuo}
-                </div>
-              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhum medicamento informado.</span>'}
-            </div>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Restrição Alimentar</span>
-            <div style="margin-top: 0.2rem;">
-              ${extras.restricao_alimentar ? `
-                <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
-                  🍽️ ${extras.restricao_alimentar}
-                </div>
-              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhuma restrição informada.</span>'}
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Seção 3: Saúde, Emergência & Alimentação (Apenas se solicitadas) -->
+      ${secaoSaudeHTML}
 
       <!-- Seção 4: Logística do Evento & Check-in -->
       <div class="ficha-secao">
         <div class="ficha-secao-titulo">
-          <h4>📦 Logística do Evento & Check-in</h4>
+          <h4>${ICONS.package} Logística do Evento & Check-in</h4>
         </div>
         <div class="ficha-grid-3">
-          <div class="ficha-item">
-            <span class="ficha-item-label">Tamanho da Camiseta</span>
-            <span class="ficha-item-valor">
-              ${extras.tamanho_camiseta ? `
-                <span class="badge" style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.85rem; font-weight:800;">👕 ${extras.tamanho_camiseta}</span>
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Dia da Chegada / Estadia</span>
-            <span class="ficha-item-valor">${extras.dias_estadia || '-'}</span>
-          </div>
-
-          <div class="ficha-item">
-            <span class="ficha-item-label">Código de Check-in</span>
-            <span class="ficha-item-valor">
-              ${ins.codigo_checkin ? `
-                <code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary);">${ins.codigo_checkin}</code>
-                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${ins.codigo_checkin}', 'Código Check-in')" title="Copiar código">📋</button>
-              ` : '-'}
-            </span>
-          </div>
-
-          <div class="ficha-item" style="grid-column: 1 / -1;">
-            <span class="ficha-item-label">Situação do Check-in</span>
-            <div style="margin-top: 0.35rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-              ${checkinBadge}
-              ${ins.checkin_realizado ? `
-                <span style="font-size:0.825rem; color:var(--text-muted);">Realizado com sucesso na portaria.</span>
-              ` : `
-                <span style="font-size:0.825rem; color:var(--text-muted);">Participante ainda não confirmou entrada no evento.</span>
-              `}
-            </div>
-          </div>
+          ${itensLogisticaHTML}
         </div>
       </div>
 
       <!-- Seção 5: Dados Financeiros & Pagamento -->
       <div class="ficha-secao">
         <div class="ficha-secao-titulo">
-          <h4>💳 Informações Financeiras & Pagamento</h4>
+          <h4>${ICONS.creditCard} Informações Financeiras & Pagamento</h4>
         </div>
-        <div class="ficha-grid-3" style="margin-bottom: 1.25rem;">
+        <div class="ficha-grid-3" style="margin-bottom: 0.85rem;">
           <div class="ficha-item">
-            <span class="ficha-item-label">Valor Total da Inscrição</span>
-            <span class="ficha-item-valor destaque" style="font-size: 1.2rem; color: #10B981;">
+            <span class="ficha-item-label">Valor Total</span>
+            <span class="ficha-item-valor destaque" style="font-size: 1.05rem; color: #10B981;">
               ${valorTotalFmt}
             </span>
           </div>
@@ -726,16 +882,16 @@ window.abrirModalInscricaoDetalhes = function(id) {
           }
 
           if (parcelasLista.length === 0) {
-            return `<div style="font-size: 0.85rem; color: var(--text-muted); background: #F8FAFC; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">Nenhum lançamento financeiro individual registrado.</div>`;
+            return `<div style="font-size: 0.775rem; color: var(--text-muted); background: #F8FAFC; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">Lançamento direto sem parcelas registradas.</div>`;
           }
 
           return `
-            <div style="border-top: 1px solid #F1F5F9; padding-top: 1rem;">
-              <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+            <div style="border-top: 1px solid #F1F5F9; padding-top: 0.75rem;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.4rem;">
                 Detalhamento das Parcelas / Lançamentos (${parcelasLista.length})
               </div>
               <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
-                <table style="font-size: 0.825rem;">
+                <table style="font-size: 0.775rem;">
                   <thead>
                     <tr style="background: #F8FAFC;">
                       <th>Parcela</th>
@@ -755,7 +911,7 @@ window.abrirModalInscricaoDetalhes = function(id) {
                       if (parc.status === 'PAGO') {
                         actionHtml = '<span style="color:#059669; font-weight:700;">Quitada</span>';
                       } else if (!parc.isPagamentoUnico && parc.status !== 'PAGO') {
-                        actionHtml = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.725rem;" onclick="darBaixaParcelaPeloCard(${parc.id}, ${ins.id})">Dar Baixa</button>`;
+                        actionHtml = `<button class="btn btn-success" style="padding: 0.15rem 0.45rem; font-size: 0.7rem; height:24px;" onclick="darBaixaParcelaPeloCard(${parc.id}, ${ins.id})">Dar Baixa</button>`;
                       }
 
                       return `
@@ -777,45 +933,34 @@ window.abrirModalInscricaoDetalhes = function(id) {
       </div>
 
       <!-- Seção 6: Outros Campos Extras (Se houver) -->
-      ${outrosCamposExtras.length > 0 ? `
-        <div class="ficha-secao">
-          <div class="ficha-secao-titulo">
-            <h4>📝 Outros Dados Cadastrais</h4>
-          </div>
-          <div class="ficha-grid-2">
-            ${outrosCamposExtras.map(k => `
-              <div class="ficha-item">
-                <span class="ficha-item-label">${formatarLabelCampo(k)}</span>
-                <span class="ficha-item-valor">${extras[k]}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
+      ${secaoOutrosCamposHTML}
 
     </div>
 
     <!-- Footer com Ações -->
     <div class="modal-detalhes-footer">
-      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Alterar Status:</span>
+      <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Status:</span>
         ${ins.status !== 'CONFIRMADA' ? `
-          <button class="btn btn-success" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CONFIRMADA')">
-            ✅ Confirmar Inscrição
+          <button class="btn btn-success" style="padding: 0 0.75rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CONFIRMADA')">
+            ${ICONS.check}
+            <span>Confirmar Inscrição</span>
           </button>
         ` : `
-          <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'PENDENTE')">
-            ⏳ Marcar como Pendente
+          <button class="btn btn-outline" style="padding: 0 0.75rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'PENDENTE')">
+            ${ICONS.clock}
+            <span>Marcar como Pendente</span>
           </button>
         `}
         ${ins.status !== 'CANCELADA' ? `
-          <button class="btn btn-danger" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; background: #EF4444; border-color: #EF4444;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CANCELADA')">
-            ❌ Cancelar Inscrição
+          <button class="btn btn-danger" style="padding: 0 0.75rem; height: 30px; font-size: 0.75rem; background: #EF4444; border-color: #EF4444; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CANCELADA')">
+            ${ICONS.x}
+            <span>Cancelar</span>
           </button>
         ` : ''}
       </div>
 
-      <button type="button" class="btn btn-outline" onclick="fecharModalInscricaoDetalhes()">
+      <button type="button" class="btn btn-outline" style="padding: 0 0.85rem; height: 30px; font-size: 0.75rem;" onclick="fecharModalInscricaoDetalhes()">
         Fechar
       </button>
     </div>
@@ -824,6 +969,7 @@ window.abrirModalInscricaoDetalhes = function(id) {
   modal.style.display = 'flex';
 };
 
+// --- Copiar Ficha Individual com Campos Solicitados ---
 window.copiarFichaInscrito = function(id) {
   const ins = cachedInscricoesList.find(i => i.id === id);
   if (!ins) return;
@@ -832,40 +978,60 @@ window.copiarFichaInscrito = function(id) {
   const extras = ins.dados_extras || {};
   const valorTotalFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const texto = [
+  const camposConfigurados = (eventoAtual && eventoAtual.campos_formulario)
+    ? eventoAtual.campos_formulario.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const deveExibir = (k) => {
+    return camposConfigurados.includes(k.toLowerCase()) || (extras && extras[k]);
+  };
+
+  const linhas = [
     `=== FICHA DE INSCRIÇÃO #${ins.id} - ${eventoAtual?.titulo || 'EVENTO UMP'} ===`,
     `Nome: ${user.nome || 'N/A'}`,
-    `E-mail: ${user.email || 'N/A'}`,
-    `CPF: ${formatarCPF(user.cpf || extras.cpf || '') || 'Não informado'}`,
-    `Telefone: ${formatarTelefone(user.telefone || extras.telefone || '') || 'Não informado'}`,
-    `Data Nasc.: ${extras.data_nascimento || 'Não informada'}`,
-    `Gênero: ${extras.genero || 'Não informado'}`,
-    `Estado Civil: ${extras.estado_civil || 'Não informado'}`,
-    `----------------------------------------`,
-    `Igreja: ${extras.igreja || 'Não informada'}`,
-    `Presbitério: ${extras.presbiterio || 'Não informado'}`,
-    `Cidade: ${extras.cidade || 'Não informada'}`,
-    `Pastor: ${extras.nome_pastor || 'Não informado'} (Contato: ${extras.contato_pastor || 'N/A'})`,
-    `Cargo na Federação: ${extras.cargo_federacao || 'Não informado'}`,
-    `----------------------------------------`,
-    `Tipo Sanguíneo: ${extras.tipo_sanguineo || 'Não informado'}`,
-    `Emergência: ${extras.contato_emergencia || 'Não informado'}`,
-    `Alergias: ${extras.alergias || 'Nenhuma'}`,
-    `Medicamentos: ${extras.medicamento_continuo || 'Nenhum'}`,
-    `Restrições Alimentares: ${extras.restricao_alimentar || 'Nenhuma'}`,
-    `----------------------------------------`,
-    `Camiseta: ${extras.tamanho_camiseta || 'N/A'}`,
-    `Dia Chegada: ${extras.dias_estadia || 'N/A'}`,
-    `Código Check-in: ${ins.codigo_checkin || 'N/A'}`,
-    `Status Check-in: ${ins.checkin_realizado ? 'Checked-in' : 'Ausente'}`,
-    `----------------------------------------`,
-    `Valor: ${valorTotalFmt} | Forma Pagamento: ${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}`,
-    `Status da Inscrição: ${ins.status}`
-  ].join('\n');
+    `E-mail: ${user.email || 'N/A'}`
+  ];
 
-  window.copiarTextoParaClipboard(texto, 'Ficha completa do inscrito');
+  if (deveExibir('cpf') || user.cpf) linhas.push(`CPF: ${formatarCPF(user.cpf || extras.cpf || '') || 'Não informado'}`);
+  if (deveExibir('telefone') || user.telefone) linhas.push(`Telefone: ${formatarTelefone(user.telefone || extras.telefone || '') || 'Não informado'}`);
+  if (deveExibir('data_nascimento')) linhas.push(`Data Nasc.: ${extras.data_nascimento || 'Não informada'}`);
+  if (deveExibir('genero')) linhas.push(`Gênero: ${extras.genero || 'Não informado'}`);
+  if (deveExibir('estado_civil')) linhas.push(`Estado Civil: ${extras.estado_civil || 'Não informado'}`);
+
+  const temEcl = ['igreja', 'presbiterio', 'cidade', 'nome_pastor', 'contato_pastor', 'cargo_federacao'].some(deveExibir);
+  if (temEcl) {
+    linhas.push(`----------------------------------------`);
+    if (deveExibir('igreja')) linhas.push(`Igreja: ${extras.igreja || '-'}`);
+    if (deveExibir('presbiterio')) linhas.push(`Presbitério: ${extras.presbiterio || '-'}`);
+    if (deveExibir('cidade')) linhas.push(`Cidade: ${extras.cidade || '-'}`);
+    if (deveExibir('nome_pastor')) linhas.push(`Pastor: ${extras.nome_pastor || '-'}`);
+    if (deveExibir('contato_pastor')) linhas.push(`Contato Pastor: ${extras.contato_pastor || '-'}`);
+    if (deveExibir('cargo_federacao')) linhas.push(`Cargo na Federação: ${extras.cargo_federacao || '-'}`);
+  }
+
+  const temSaude = ['tipo_sanguineo', 'contato_emergencia', 'alergias', 'medicamento_continuo', 'restricao_alimentar'].some(deveExibir);
+  if (temSaude) {
+    linhas.push(`----------------------------------------`);
+    if (deveExibir('tipo_sanguineo')) linhas.push(`Tipo Sanguíneo: ${extras.tipo_sanguineo || '-'}`);
+    if (deveExibir('contato_emergencia')) linhas.push(`Emergência: ${extras.contato_emergencia || '-'}`);
+    if (deveExibir('alergias')) linhas.push(`Alergias: ${extras.alergias || '-'}`);
+    if (deveExibir('medicamento_continuo')) linhas.push(`Medicamento Contínuo: ${extras.medicamento_continuo || '-'}`);
+    if (deveExibir('restricao_alimentar')) linhas.push(`Restrição Alimentar: ${extras.restricao_alimentar || '-'}`);
+  }
+
+  if (deveExibir('tamanho_camiseta')) linhas.push(`Camiseta: ${extras.tamanho_camiseta || '-'}`);
+  if (deveExibir('dias_estadia')) linhas.push(`Dia Chegada: ${extras.dias_estadia || '-'}`);
+
+  linhas.push(`----------------------------------------`);
+  linhas.push(`Código Check-in: ${ins.codigo_checkin || 'N/A'}`);
+  linhas.push(`Status Check-in: ${ins.checkin_realizado ? 'Checked-in' : 'Ausente'}`);
+  linhas.push(`Valor: ${valorTotalFmt} | Forma Pagamento: ${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}`);
+  linhas.push(`Status da Inscrição: ${ins.status}`);
+
+  window.copiarTextoParaClipboard(linhas.join('\n'), 'Ficha do inscrito');
 };
 
+// --- Imprimir Ficha Individual com Campos Solicitados ---
 window.imprimirFichaInscrito = function(id) {
   const ins = cachedInscricoesList.find(i => i.id === id);
   if (!ins) return;
@@ -876,30 +1042,90 @@ window.imprimirFichaInscrito = function(id) {
   const dataCriacaoFmt = formatarDataHora(ins.created_at);
   const dataHoje = new Date().toLocaleString('pt-BR');
 
+  const camposConfigurados = (eventoAtual && eventoAtual.campos_formulario)
+    ? eventoAtual.campos_formulario.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const deveExibir = (k) => camposConfigurados.includes(k.toLowerCase()) || (extras && extras[k]);
+
+  let camposPessoaisHTML = `
+    <div class="field"><span class="field-label">Nome Completo</span><span class="field-val">${user.nome || '-'}</span></div>
+    <div class="field"><span class="field-label">E-mail</span><span class="field-val">${user.email || '-'}</span></div>
+  `;
+  if (deveExibir('cpf') || user.cpf) camposPessoaisHTML += `<div class="field"><span class="field-label">CPF</span><span class="field-val">${formatarCPF(user.cpf || extras.cpf || '') || '-'}</span></div>`;
+  if (deveExibir('telefone') || user.telefone) camposPessoaisHTML += `<div class="field"><span class="field-label">Telefone</span><span class="field-val">${formatarTelefone(user.telefone || extras.telefone || '') || '-'}</span></div>`;
+  if (deveExibir('data_nascimento')) camposPessoaisHTML += `<div class="field"><span class="field-label">Nascimento / Idade</span><span class="field-val">${calcularIdadeTexto(extras.data_nascimento || '')}</span></div>`;
+  if (deveExibir('genero')) camposPessoaisHTML += `<div class="field"><span class="field-label">Gênero</span><span class="field-val">${extras.genero || '-'}</span></div>`;
+  if (deveExibir('estado_civil')) camposPessoaisHTML += `<div class="field"><span class="field-label">Estado Civil</span><span class="field-val">${extras.estado_civil || '-'}</span></div>`;
+
+  const temEcl = ['igreja', 'presbiterio', 'cidade', 'nome_pastor', 'contato_pastor', 'cargo_federacao'].some(deveExibir);
+  let secaoEcl = '';
+  if (temEcl) {
+    let sub = '';
+    if (deveExibir('igreja')) sub += `<div class="field"><span class="field-label">Igreja</span><span class="field-val">${extras.igreja || '-'}</span></div>`;
+    if (deveExibir('presbiterio')) sub += `<div class="field"><span class="field-label">Presbitério</span><span class="field-val">${extras.presbiterio || '-'}</span></div>`;
+    if (deveExibir('cidade')) sub += `<div class="field"><span class="field-label">Cidade</span><span class="field-val">${extras.cidade || '-'}</span></div>`;
+    if (deveExibir('nome_pastor')) sub += `<div class="field"><span class="field-label">Pastor</span><span class="field-val">${extras.nome_pastor || '-'}</span></div>`;
+    if (deveExibir('contato_pastor')) sub += `<div class="field"><span class="field-label">Contato Pastor</span><span class="field-val">${formatarTelefone(extras.contato_pastor || '') || '-'}</span></div>`;
+    if (deveExibir('cargo_federacao')) sub += `<div class="field"><span class="field-label">Cargo Federação</span><span class="field-val">${extras.cargo_federacao || '-'}</span></div>`;
+    secaoEcl = `
+      <div class="section">
+        <div class="section-header">Informações Eclesiásticas</div>
+        <div class="section-body">${sub}</div>
+      </div>
+    `;
+  }
+
+  const temSaude = ['tipo_sanguineo', 'contato_emergencia', 'alergias', 'medicamento_continuo', 'restricao_alimentar'].some(deveExibir);
+  let secaoSaude = '';
+  if (temSaude) {
+    let sub = '';
+    if (deveExibir('tipo_sanguineo')) sub += `<div class="field"><span class="field-label">Tipo Sanguíneo</span><span class="field-val highlight">${extras.tipo_sanguineo || '-'}</span></div>`;
+    if (deveExibir('contato_emergencia')) sub += `<div class="field" style="grid-column: span 2;"><span class="field-label">Emergência</span><span class="field-val highlight">${extras.contato_emergencia || '-'}</span></div>`;
+    if (deveExibir('alergias')) sub += `<div class="field" style="grid-column: span 3;"><span class="field-label">Alergias</span><span class="field-val">${extras.alergias || '-'}</span></div>`;
+    if (deveExibir('medicamento_continuo')) sub += `<div class="field"><span class="field-label">Medicamento</span><span class="field-val">${extras.medicamento_continuo || '-'}</span></div>`;
+    if (deveExibir('restricao_alimentar')) sub += `<div class="field"><span class="field-label">Restrição Alimentar</span><span class="field-val">${extras.restricao_alimentar || '-'}</span></div>`;
+    secaoSaude = `
+      <div class="section">
+        <div class="section-header">Saúde & Emergência</div>
+        <div class="section-body">${sub}</div>
+      </div>
+    `;
+  }
+
+  let subLogistica = '';
+  if (deveExibir('tamanho_camiseta')) subLogistica += `<div class="field"><span class="field-label">Camiseta</span><span class="field-val">${extras.tamanho_camiseta || '-'}</span></div>`;
+  if (deveExibir('dias_estadia')) subLogistica += `<div class="field"><span class="field-label">Dia Chegada</span><span class="field-val">${extras.dias_estadia || '-'}</span></div>`;
+  subLogistica += `
+    <div class="field"><span class="field-label">Cód. Check-in</span><span class="field-val">${ins.codigo_checkin || '-'}</span></div>
+    <div class="field"><span class="field-label">Valor Total</span><span class="field-val">${valorTotalFmt}</span></div>
+    <div class="field"><span class="field-label">Forma Pagamento</span><span class="field-val">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</span></div>
+    <div class="field"><span class="field-label">Data da Inscrição</span><span class="field-val">${dataCriacaoFmt}</span></div>
+  `;
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <title>Ficha do Participante #${ins.id} - ${user.nome || 'UMP'}</title>
+      <title>Ficha #${ins.id} - ${user.nome || 'UMP'}</title>
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #1e293b; line-height: 1.5; }
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 20px; }
-        .title { font-size: 1.4rem; font-weight: bold; color: #1d4ed8; margin: 0; }
-        .subtitle { font-size: 0.9rem; color: #64748b; margin: 2px 0 0 0; }
-        .badge { display: inline-block; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #1e293b; line-height: 1.5; font-size: 13px; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 10px; margin-bottom: 16px; }
+        .title { font-size: 1.3rem; font-weight: bold; color: #1d4ed8; margin: 0; }
+        .subtitle { font-size: 0.85rem; color: #64748b; margin: 2px 0 0 0; }
+        .badge { display: inline-block; padding: 3px 8px; font-size: 0.72rem; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
         .badge-success { background: #d1fae5; color: #047857; }
         .badge-warning { background: #fef3c7; color: #b45309; }
-        .badge-danger { background: #fee2e2; color: #b91c1c; }
-        .section { margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-        .section-header { background: #f8fafc; padding: 8px 14px; font-weight: bold; font-size: 0.85rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.04em; }
-        .section-body { padding: 12px 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 0.85rem; }
+        .section { margin-bottom: 14px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+        .section-header { background: #f8fafc; padding: 6px 12px; font-weight: bold; font-size: 0.8rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.04em; }
+        .section-body { padding: 10px 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.82rem; }
         .field { display: flex; flex-direction: column; }
-        .field-label { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
-        .field-val { font-weight: 600; color: #0f172a; margin-top: 2px; }
+        .field-label { font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .field-val { font-weight: 600; color: #0f172a; margin-top: 1px; }
         .highlight { color: #dc2626; font-weight: bold; }
-        .footer { margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 0.75rem; color: #64748b; text-align: center; }
+        .footer { margin-top: 25px; border-top: 1px dashed #cbd5e1; padding-top: 8px; font-size: 0.72rem; color: #64748b; text-align: center; }
       </style>
     </head>
     <body>
@@ -915,50 +1141,16 @@ window.imprimirFichaInscrito = function(id) {
       </div>
 
       <div class="section">
-        <div class="section-header">1. Dados Pessoais & Contato</div>
-        <div class="section-body">
-          <div class="field"><span class="field-label">Nome Completo</span><span class="field-val">${user.nome || '-'}</span></div>
-          <div class="field"><span class="field-label">E-mail</span><span class="field-val">${user.email || '-'}</span></div>
-          <div class="field"><span class="field-label">CPF</span><span class="field-val">${formatarCPF(user.cpf || extras.cpf || '') || '-'}</span></div>
-          <div class="field"><span class="field-label">Telefone / Celular</span><span class="field-val">${formatarTelefone(user.telefone || extras.telefone || '') || '-'}</span></div>
-          <div class="field"><span class="field-label">Nascimento / Idade</span><span class="field-val">${calcularIdadeTexto(extras.data_nascimento || '')}</span></div>
-          <div class="field"><span class="field-label">Gênero / Estado Civil</span><span class="field-val">${extras.genero || '-'} • ${extras.estado_civil || '-'}</span></div>
-        </div>
+        <div class="section-header">Dados Pessoais & Contato</div>
+        <div class="section-body">${camposPessoaisHTML}</div>
       </div>
 
-      <div class="section">
-        <div class="section-header">2. Informações Eclesiásticas</div>
-        <div class="section-body">
-          <div class="field"><span class="field-label">Igreja / Congregação</span><span class="field-val">${extras.igreja || '-'}</span></div>
-          <div class="field"><span class="field-label">Presbitério</span><span class="field-val">${extras.presbiterio || '-'}</span></div>
-          <div class="field"><span class="field-label">Cidade</span><span class="field-val">${extras.cidade || '-'}</span></div>
-          <div class="field"><span class="field-label">Pastor</span><span class="field-val">${extras.nome_pastor || '-'}</span></div>
-          <div class="field"><span class="field-label">Contato do Pastor</span><span class="field-val">${formatarTelefone(extras.contato_pastor || '') || '-'}</span></div>
-          <div class="field"><span class="field-label">Cargo na Federação</span><span class="field-val">${extras.cargo_federacao || '-'}</span></div>
-        </div>
-      </div>
+      ${secaoEcl}
+      ${secaoSaude}
 
       <div class="section">
-        <div class="section-header">3. Saúde, Emergência & Cuidados</div>
-        <div class="section-body">
-          <div class="field"><span class="field-label">Tipo Sanguíneo</span><span class="field-val highlight">${extras.tipo_sanguineo || 'Não informado'}</span></div>
-          <div class="field" style="grid-column: span 2;"><span class="field-label">Contato(s) de Emergência</span><span class="field-val highlight">${extras.contato_emergencia || 'Não informado'}</span></div>
-          <div class="field" style="grid-column: span 3;"><span class="field-label">Alergias</span><span class="field-val">${extras.alergias || 'Nenhuma informada'}</span></div>
-          <div class="field" style="grid-column: span 2;"><span class="field-label">Medicamento Contínuo</span><span class="field-val">${extras.medicamento_continuo || 'Nenhum'}</span></div>
-          <div class="field"><span class="field-label">Restrição Alimentar</span><span class="field-val">${extras.restricao_alimentar || 'Nenhuma'}</span></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-header">4. Logística & Pagamento</div>
-        <div class="section-body">
-          <div class="field"><span class="field-label">Camiseta</span><span class="field-val">${extras.tamanho_camiseta || '-'}</span></div>
-          <div class="field"><span class="field-label">Dia Chegada</span><span class="field-val">${extras.dias_estadia || '-'}</span></div>
-          <div class="field"><span class="field-label">Cód. Check-in</span><span class="field-val">${ins.codigo_checkin || '-'}</span></div>
-          <div class="field"><span class="field-label">Valor Total</span><span class="field-val">${valorTotalFmt}</span></div>
-          <div class="field"><span class="field-label">Forma Pagamento</span><span class="field-val">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</span></div>
-          <div class="field"><span class="field-label">Data da Inscrição</span><span class="field-val">${dataCriacaoFmt}</span></div>
-        </div>
+        <div class="section-header">Logística & Pagamento</div>
+        <div class="section-body">${subLogistica}</div>
       </div>
 
       <div class="footer">
@@ -1605,13 +1797,14 @@ function renderTabelaPresenca() {
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
 
     const checkinStatusHTML = ins.checkin_realizado ? 
-      `<div style="color: #10B981; font-weight: 600;">
-         ✅ Presente<br>
-         <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">
-           ${ins.checkin_data ? new Date(ins.checkin_data).toLocaleString('pt-BR') : ''}
-         </span>
+      `<div style="color: #10B981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
+         ${ICONS.checkCircle}
+         <span>Presente</span>
+       </div>
+       <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal; margin-top: 2px;">
+         ${ins.checkin_data ? new Date(ins.checkin_data).toLocaleString('pt-BR') : ''}
        </div>` : 
-      `<span style="color: #F59E0B; font-weight: 600;">❌ Ausente</span>`;
+      `<span style="color: #F59E0B; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">${ICONS.clock} <span>Ausente</span></span>`;
 
     const btnText = ins.checkin_realizado ? "Desfazer Check-in" : "Confirmar Check-in";
     const btnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
@@ -1713,10 +1906,14 @@ async function processarQrCodeEscaneado(codigo) {
         avisoTexto.textContent = `Aviso: Inscrição está no status '${res.status}'. Certifique o pagamento!`;
       }
       if (confirmBtn) {
-        confirmBtn.textContent = '⚠️ Confirmar Mesmo Assim';
+        confirmBtn.innerHTML = `${ICONS.alertTriangle} <span>Confirmar Mesmo Assim</span>`;
         confirmBtn.className = 'btn btn-danger';
         confirmBtn.style.background = '#EF4444';
         confirmBtn.style.borderColor = '#EF4444';
+        confirmBtn.style.display = 'inline-flex';
+        confirmBtn.style.alignItems = 'center';
+        confirmBtn.style.justifyContent = 'center';
+        confirmBtn.style.gap = '0.4rem';
       }
     } else if (res.checkin_realizado) {
       if (avisoContainer && avisoTexto) {
@@ -1728,18 +1925,26 @@ async function processarQrCodeEscaneado(codigo) {
         avisoTexto.textContent = `Aviso: Check-in já realizado anteriormente em ${horaStr}!`;
       }
       if (confirmBtn) {
-        confirmBtn.textContent = '🔄 Confirmar Novamente';
+        confirmBtn.innerHTML = `${ICONS.undo} <span>Confirmar Novamente</span>`;
         confirmBtn.className = 'btn btn-primary';
         confirmBtn.style.background = 'var(--primary)';
         confirmBtn.style.borderColor = 'var(--primary)';
+        confirmBtn.style.display = 'inline-flex';
+        confirmBtn.style.alignItems = 'center';
+        confirmBtn.style.justifyContent = 'center';
+        confirmBtn.style.gap = '0.4rem';
       }
     } else {
       if (avisoContainer) avisoContainer.style.display = 'none';
       if (confirmBtn) {
-        confirmBtn.textContent = '✅ Confirmar Entrada';
+        confirmBtn.innerHTML = `${ICONS.check} <span>Confirmar Entrada</span>`;
         confirmBtn.className = 'btn btn-success';
         confirmBtn.style.background = '#10B981';
         confirmBtn.style.borderColor = '#10B981';
+        confirmBtn.style.display = 'inline-flex';
+        confirmBtn.style.alignItems = 'center';
+        confirmBtn.style.justifyContent = 'center';
+        confirmBtn.style.gap = '0.4rem';
       }
     }
 
