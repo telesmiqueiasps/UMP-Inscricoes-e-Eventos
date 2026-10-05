@@ -161,22 +161,37 @@
           </div>
         </div>
 
+        <!-- Dica de Usabilidade -->
+        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #DBEAFE; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
+              💡
+            </div>
+            <div>
+              <div style="font-weight: 700; color: #1E40AF; font-size: 0.9rem;">Ficha Completa do Participante</div>
+              <div style="font-size: 0.8rem; color: #3B82F6;">Clique em qualquer linha ou nome na tabela para abrir o card completo com dados pessoais, eclesiásticos, de saúde e histórico financeiro sem precisar rolar para o lado.</div>
+            </div>
+          </div>
+          <span class="badge" style="background: #DBEAFE; color: #1D4ED8; border: 1px solid #93C5FD; font-size: 0.75rem; text-transform: none; font-weight: 600;">✨ Linhas Clicáveis</span>
+        </div>
+
         <!-- Tabela -->
         <div class="card">
           <div class="table-responsive">
             <table id="inscricoes-table">
               <thead id="inscricoes-table-head">
                 <tr>
-                  <th>ID</th>
+                  <th style="width: 70px;">ID</th>
                   <th>Participante</th>
-                  <th>Forma Pag.</th>
-                  <th>Valor Total</th>
+                  <th>Origem / Igreja</th>
+                  <th>Pagamento & Valor</th>
                   <th>Status</th>
-                  <th>Ações Manuais</th>
+                  <th>Check-in</th>
+                  <th style="text-align: right; width: 160px;">Ações</th>
                 </tr>
               </thead>
               <tbody id="inscricoes-table-body">
-                <tr><td colspan="6">Carregando inscrições...</td></tr>
+                <tr><td colspan="7">Carregando inscrições...</td></tr>
               </tbody>
             </table>
           </div>
@@ -692,6 +707,15 @@
           <button class="btn btn-danger" style="padding: 0.75rem 1.5rem; font-size: 0.95rem; font-weight: 700; background: #DC2626;" onclick="excluirEventoAtual()">
             ❌ Excluir Evento Definitivamente
           </button>
+        </div>
+      </div>
+
+      <!-- Modal Ficha Completa do Inscrito -->
+      <div class="modal" id="modal-detalhes-inscricao" onclick="fecharModalInscricaoBackdrop(event)">
+        <div class="modal-content modal-detalhes-dialog" onclick="event.stopPropagation()">
+          <div id="modal-detalhes-conteudo">
+            <!-- Conteúdo montado via JS -->
+          </div>
         </div>
       </div>
 

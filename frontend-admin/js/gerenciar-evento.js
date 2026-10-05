@@ -154,34 +154,126 @@ window.loadInscricoes = async function() {
   }
 };
 
+// --- Helpers de Formatação e Utilitários ---
+function obterIniciaisNome(nome) {
+  if (!nome) return 'U';
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
+  return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
+}
+
+function formatarCPF(cpf) {
+  if (!cpf) return '';
+  const num = cpf.replace(/\D/g, '');
+  if (num.length === 11) {
+    return num.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
+  return cpf;
+}
+
+function formatarTelefone(tel) {
+  if (!tel) return '';
+  const num = tel.replace(/\D/g, '');
+  if (num.length === 11) {
+    return num.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  if (num.length === 10) {
+    return num.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  return tel;
+}
+
+function calcularIdadeTexto(dataStr) {
+  if (!dataStr) return '-';
+  let ano, mes, dia;
+  if (dataStr.includes('-')) {
+    const parts = dataStr.split('T')[0].split('-');
+    ano = parseInt(parts[0], 10);
+    mes = parseInt(parts[1], 10) - 1;
+    dia = parseInt(parts[2], 10);
+  } else if (dataStr.includes('/')) {
+    const parts = dataStr.split('/');
+    dia = parseInt(parts[0], 10);
+    mes = parseInt(parts[1], 10) - 1;
+    ano = parseInt(parts[2], 10);
+  } else {
+    return dataStr;
+  }
+
+  if (isNaN(ano) || isNaN(mes) || isNaN(dia)) return dataStr;
+
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - ano;
+  const m = hoje.getMonth() - mes;
+  if (m < 0 || (m === 0 && hoje.getDate() < dia)) {
+    idade--;
+  }
+  const dataFmt = `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${ano}`;
+  if (!isNaN(idade) && idade >= 0 && idade < 120) {
+    return `${dataFmt} (${idade} anos)`;
+  }
+  return dataFmt;
+}
+
+function formatarDataHora(dt) {
+  if (!dt) return '-';
+  try {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt;
+    return d.toLocaleString('pt-BR');
+  } catch (e) {
+    return dt;
+  }
+}
+
+window.copiarTextoParaClipboard = function(texto, label = 'Dado') {
+  if (!texto) return;
+  navigator.clipboard.writeText(texto).then(() => {
+    showToast(`${label} copiado!`, 'success');
+  }).catch(() => {
+    showToast('Não foi possível copiar.', 'warning');
+  });
+};
+
+// Fechar modal com tecla ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    window.fecharModalInscricaoDetalhes();
+  }
+});
+
+window.fecharModalInscricaoBackdrop = function(e) {
+  if (e.target && e.target.id === 'modal-detalhes-inscricao') {
+    window.fecharModalInscricaoDetalhes();
+  }
+};
+
+window.fecharModalInscricaoDetalhes = function() {
+  const modal = document.getElementById('modal-detalhes-inscricao');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+};
+
 window.renderInscricoesTable = function() {
   const container = document.getElementById('inscricoes-table-body');
   const tableHead = document.getElementById('inscricoes-table-head');
   if (!container) return;
 
-  // Descobrir campos dinâmicos exigidos
-  let customFields = [];
-  if (eventoAtual && eventoAtual.campos_formulario) {
-    customFields = eventoAtual.campos_formulario.split(',').filter(f => f.trim() !== '');
+  // Cabeçalho Limpo e Otimizado
+  if (tableHead) {
+    tableHead.innerHTML = `
+      <tr>
+        <th style="width: 70px;">ID</th>
+        <th>Participante</th>
+        <th>Origem / Igreja</th>
+        <th>Pagamento & Valor</th>
+        <th>Status</th>
+        <th>Check-in</th>
+        <th style="text-align: right; width: 170px;">Ações</th>
+      </tr>
+    `;
   }
-
-  // Atualizar Cabeçalho da Tabela
-  let headHTML = `
-    <tr>
-      <th>ID</th>
-      <th>Participante</th>
-      <th>Forma Pag.</th>
-      <th>Valor Total</th>
-  `;
-  customFields.forEach(f => {
-    headHTML += `<th>${formatarLabelCampo(f)}</th>`;
-  });
-  headHTML += `
-      <th>Status</th>
-      <th>Ações Manuais</th>
-    </tr>
-  `;
-  if (tableHead) tableHead.innerHTML = headHTML;
 
   const totalItems = cachedInscricoesList.length;
   const start = (currentPageInscricoes - 1) * itemsPerPage;
@@ -190,7 +282,7 @@ window.renderInscricoesTable = function() {
 
   // Preencher Linhas
   if (totalItems === 0) {
-    container.innerHTML = `<tr><td colspan="${6 + customFields.length}" style="text-align:center;">Nenhuma inscrição encontrada para este evento.</td></tr>`;
+    container.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2.5rem; color: var(--text-muted);">Nenhuma inscrição encontrada para este evento.</td></tr>`;
     renderPaginationControls('inscricoes-pagination-container', currentPageInscricoes, totalItems, 'changePageInscricoes');
     return;
   }
@@ -199,33 +291,70 @@ window.renderInscricoesTable = function() {
     const valorFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
     const user = ins.usuario || {};
-    const userMail = user.email ? ` (${user.email})` : '';
+    const extras = ins.dados_extras || {};
+    const iniciais = obterIniciaisNome(user.nome || 'Participante');
 
-    let rowHTML = `
-      <tr>
-        <td>#${ins.id}</td>
-        <td><strong>${user.nome || 'N/A'}</strong><div style="font-size:0.75rem; color:var(--text-muted);">${userMail}</div></td>
-        <td>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</td>
-        <td>${valorFmt}</td>
-    `;
+    const cpfFormatado = formatarCPF(user.cpf || extras.cpf || '');
+    const telFormatado = formatarTelefone(user.telefone || extras.telefone || '');
+    
+    // Contato secundário resumido
+    let contatoResumo = user.email || '';
+    if (telFormatado) {
+      contatoResumo += (contatoResumo ? ' • ' : '') + telFormatado;
+    } else if (cpfFormatado) {
+      contatoResumo += (contatoResumo ? ' • CPF: ' : 'CPF: ') + cpfFormatado;
+    }
 
-    // Preencher campos dinâmicos
-    customFields.forEach(f => {
-      const val = (ins.dados_extras && ins.dados_extras[f]) ? ins.dados_extras[f] : '-';
-      rowHTML += `<td>${val}</td>`;
-    });
+    // Origem (Igreja / Presbitério / Cidade)
+    const igrejaStr = extras.igreja || extras.presbiterio || 'Não informada';
+    const cidadeStr = extras.cidade ? `<div style="font-size:0.75rem; color:var(--text-muted);">${extras.cidade}</div>` : '';
 
-    rowHTML += `
-        <td><span class="badge ${statusBadge}">${ins.status}</span></td>
+    // Check-in Badge
+    const checkinBadgeMini = ins.checkin_realizado ? 
+      `<span class="badge badge-success" style="font-size:0.725rem;">✅ Checked-in</span>` : 
+      `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.725rem;">⏳ Ausente</span>`;
+
+    return `
+      <tr class="inscricao-row-interactive" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Clique para ver a ficha completa com todos os dados">
         <td>
-          <div style="display:flex; gap:0.25rem;">
-            ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">Confirmar</button>` : ''}
-            ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">Cancelar</button>` : ''}
+          <span style="font-weight: 700; color: var(--primary); font-size: 0.85rem;">#${ins.id}</span>
+        </td>
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #1D4ED8, #3B82F6); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; box-shadow: 0 2px 5px rgba(29, 78, 216, 0.2);">
+              ${iniciais}
+            </div>
+            <div>
+              <div style="font-weight: 700; color: var(--text-main); font-size: 0.925rem;">${user.nome || 'N/A'}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${contatoResumo || 'Sem contato'}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">${igrejaStr}</div>
+          ${cidadeStr}
+        </td>
+        <td>
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</div>
+          <div style="font-size: 0.75rem; color: var(--primary); font-weight: 700;">${valorFmt}</div>
+        </td>
+        <td>
+          <span class="badge ${statusBadge}">${ins.status}</span>
+        </td>
+        <td>
+          ${checkinBadgeMini}
+        </td>
+        <td style="text-align: right;" onclick="event.stopPropagation()">
+          <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+            <button class="btn-detalhes-inline" onclick="abrirModalInscricaoDetalhes(${ins.id})" title="Abrir ficha completa">
+              👁️ Ficha
+            </button>
+            ${ins.status !== 'CONFIRMADA' ? `<button class="btn btn-success" style="padding: 0.3rem 0.55rem; font-size: 0.75rem;" title="Confirmar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CONFIRMADA')">✓</button>` : ''}
+            ${ins.status !== 'CANCELADA' ? `<button class="btn btn-danger" style="padding: 0.3rem 0.55rem; font-size: 0.75rem;" title="Cancelar Inscrição" onclick="alterarStatusInscricao(${ins.id}, 'CANCELADA')">✕</button>` : ''}
           </div>
         </td>
       </tr>
     `;
-    return rowHTML;
   }).join('');
 
   renderPaginationControls('inscricoes-pagination-container', currentPageInscricoes, totalItems, 'changePageInscricoes');
@@ -240,8 +369,646 @@ window.alterarStatusInscricao = async function(id, novoStatus) {
   try {
     await API.request(`/admin/inscricoes/${id}/status?novo_status=${novoStatus}`, { method: 'PUT' });
     showToast(`Inscrição #${id} atualizada para ${novoStatus}!`, 'success');
-    loadInscricoes();
+    await loadInscricoes();
+    // Se o modal estiver aberto com essa mesma inscrição, atualiza ele também
+    const modal = document.getElementById('modal-detalhes-inscricao');
+    if (modal && modal.style.display === 'flex') {
+      window.abrirModalInscricaoDetalhes(id);
+    }
   } catch (err) {}
+};
+
+// --- Modal de Ficha Completa do Inscrito (Visualização em Card) ---
+window.abrirModalInscricaoDetalhes = function(id) {
+  const ins = cachedInscricoesList.find(i => i.id === id);
+  if (!ins) {
+    showToast('Inscrição não encontrada no cache.', 'error');
+    return;
+  }
+
+  const modal = document.getElementById('modal-detalhes-inscricao');
+  const conteudo = document.getElementById('modal-detalhes-conteudo');
+  if (!modal || !conteudo) return;
+
+  const user = ins.usuario || {};
+  const extras = ins.dados_extras || {};
+  const iniciais = obterIniciaisNome(user.nome || 'Participante');
+
+  const cpfFormatado = formatarCPF(user.cpf || extras.cpf || '');
+  const telFormatado = formatarTelefone(user.telefone || extras.telefone || '');
+  const telLimpo = (user.telefone || extras.telefone || '').replace(/\D/g, '');
+  const whatsappLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20tudo%20bem?%20Falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento%20${encodeURIComponent(eventoAtual?.titulo || 'UMP')}!` : null;
+
+  const pastorTelLimpo = (extras.contato_pastor || '').replace(/\D/g, '');
+  const pastorWhatsappLink = pastorTelLimpo ? `https://wa.me/55${pastorTelLimpo}` : null;
+
+  const valorTotalFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const dataCriacaoFmt = formatarDataHora(ins.created_at);
+  const dataCheckinFmt = ins.checkin_data ? formatarDataHora(ins.checkin_data) : null;
+
+  const statusBadge = ins.status === 'CONFIRMADA' ? 'badge-success' : ins.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
+  const checkinBadge = ins.checkin_realizado ? 
+    `<span class="badge badge-success" style="font-size:0.8rem; padding: 0.4rem 0.85rem;">✅ Checked-in (${dataCheckinFmt || 'Confirmado'})</span>` : 
+    `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.8rem; padding: 0.4rem 0.85rem;">⏳ Ausente</span>`;
+
+  // Buscar parcelas ou histórico de pagamento vinculado
+  let pagamentosVinculados = ins.pagamentos || [];
+  if ((!pagamentosVinculados || pagamentosVinculados.length === 0) && allPagamentosCached && allPagamentosCached.length > 0) {
+    pagamentosVinculados = allPagamentosCached.filter(p => p.inscricao_id === id);
+  }
+
+  // Identificar campos extras adicionais que não sejam os padrões
+  const camposPadroes = [
+    'cpf', 'telefone', 'data_nascimento', 'genero', 'tamanho_camiseta', 
+    'tipo_sanguineo', 'alergias', 'medicamento_continuo', 'contato_emergencia', 
+    'restricao_alimentar', 'igreja', 'presbiterio', 'cidade', 'estado_civil', 
+    'nome_pastor', 'contato_pastor', 'cargo_federacao', 'dias_estadia'
+  ];
+  const outrosCamposExtras = Object.keys(extras).filter(k => !camposPadroes.includes(k) && extras[k]);
+
+  // Montar HTML da Ficha Completa
+  conteudo.innerHTML = `
+    <!-- Header -->
+    <div class="modal-detalhes-header">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="ficha-avatar">
+          ${iniciais}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0;">
+              ${user.nome || 'Participante'}
+            </h3>
+            <span class="badge ${statusBadge}">${ins.status}</span>
+          </div>
+          <div style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Inscrição <strong>#${ins.id}</strong> • Cadastrada em ${dataCriacaoFmt}
+          </div>
+        </div>
+      </div>
+      <button type="button" class="modal-close" onclick="fecharModalInscricaoDetalhes()" style="position: static;" title="Fechar (Esc)">&times;</button>
+    </div>
+
+    <!-- Barra de Ações Rápidas -->
+    <div style="background: #FFFFFF; border-bottom: 1px solid var(--border-color); padding: 0.75rem 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        ${whatsappLink ? `
+          <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="btn btn-success" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;">
+            💬 Conversar no WhatsApp
+          </a>
+        ` : ''}
+        <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="copiarFichaInscrito(${ins.id})">
+          📋 Copiar Ficha
+        </button>
+        <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem;" onclick="imprimirFichaInscrito(${ins.id})">
+          🖨️ Imprimir Ficha
+        </button>
+      </div>
+
+      <div>
+        ${ins.checkin_realizado ? `
+          <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; color: #DC2626; border-color: #FCA5A5;" onclick="toggleCheckinPeloCard(${ins.id})">
+            🔄 Desfazer Check-in
+          </button>
+        ` : `
+          <button class="btn btn-primary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="toggleCheckinPeloCard(${ins.id})">
+            ✅ Realizar Check-in Agora
+          </button>
+        `}
+      </div>
+    </div>
+
+    <!-- Corpo com Seções Organizadas em Cards -->
+    <div class="modal-detalhes-body">
+      
+      <!-- Seção 1: Dados Pessoais & Contato -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>👤 Dados Pessoais & Contato</h4>
+        </div>
+        <div class="ficha-grid-3">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Nome Completo</span>
+            <span class="ficha-item-valor">${user.nome || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">E-mail</span>
+            <span class="ficha-item-valor">
+              ${user.email ? `
+                <a href="mailto:${user.email}" style="color:var(--primary); text-decoration:none;">${user.email}</a>
+                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${user.email}', 'E-mail')" title="Copiar e-mail">📋</button>
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">CPF</span>
+            <span class="ficha-item-valor">
+              ${cpfFormatado ? `
+                ${cpfFormatado}
+                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${cpfFormatado}', 'CPF')" title="Copiar CPF">📋</button>
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Telefone / WhatsApp</span>
+            <span class="ficha-item-valor">
+              ${telFormatado ? `
+                ${telFormatado}
+                ${whatsappLink ? `<a href="${whatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none;" title="Abrir WhatsApp">💬</a>` : ''}
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Data de Nascimento / Idade</span>
+            <span class="ficha-item-valor">${calcularIdadeTexto(extras.data_nascimento || '')}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Gênero</span>
+            <span class="ficha-item-valor">${extras.genero || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Estado Civil</span>
+            <span class="ficha-item-valor">${extras.estado_civil || '-'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 2: Informações Eclesiásticas -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>⛪ Informações Eclesiásticas</h4>
+        </div>
+        <div class="ficha-grid-3">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Igreja / Congregação</span>
+            <span class="ficha-item-valor destaque">${extras.igreja || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Presbitério</span>
+            <span class="ficha-item-valor">${extras.presbiterio || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Cidade / UF</span>
+            <span class="ficha-item-valor">${extras.cidade || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Pastor Responsável</span>
+            <span class="ficha-item-valor">${extras.nome_pastor || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Contato do Pastor</span>
+            <span class="ficha-item-valor">
+              ${extras.contato_pastor ? `
+                ${formatarTelefone(extras.contato_pastor)}
+                ${pastorWhatsappLink ? `<a href="${pastorWhatsappLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none;" title="Conversar no WhatsApp">💬</a>` : ''}
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Cargo na Federação / Igreja</span>
+            <span class="ficha-item-valor">${extras.cargo_federacao || '-'}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 3: Saúde, Emergência & Alimentação -->
+      <div class="ficha-secao" style="border-left: 4px solid #EF4444;">
+        <div class="ficha-secao-titulo">
+          <h4>🩺 Saúde, Emergência & Alimentação</h4>
+        </div>
+        <div class="ficha-grid-2">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Tipo Sanguíneo</span>
+            <span class="ficha-item-valor">
+              ${extras.tipo_sanguineo ? `<span class="badge" style="background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5; font-weight:800; font-size:0.85rem;">🩸 ${extras.tipo_sanguineo}</span>` : '<span style="color:var(--text-muted); font-size:0.85rem;">Não informado</span>'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Contato(s) de Emergência</span>
+            <span class="ficha-item-valor" style="font-weight: 700; color: #DC2626;">
+              ${extras.contato_emergencia || '<span style="color:var(--text-muted); font-weight:normal;">Não informado</span>'}
+            </span>
+          </div>
+
+          <div class="ficha-item" style="grid-column: 1 / -1;">
+            <span class="ficha-item-label">Alergias</span>
+            <div style="margin-top: 0.2rem;">
+              ${extras.alergias ? `
+                <div style="background:#FEF2F2; border:1px solid #FECACA; color:#B91C1C; padding:0.6rem 0.85rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
+                  ⚠️ ${extras.alergias}
+                </div>
+              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhuma alergia informada.</span>'}
+            </div>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Medicamento Contínuo</span>
+            <div style="margin-top: 0.2rem;">
+              ${extras.medicamento_continuo ? `
+                <div style="background:#FFFBEB; border:1px solid #FDE68A; color:#B45309; padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
+                  💊 ${extras.medicamento_continuo}
+                </div>
+              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhum medicamento informado.</span>'}
+            </div>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Restrição Alimentar</span>
+            <div style="margin-top: 0.2rem;">
+              ${extras.restricao_alimentar ? `
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.85rem; font-weight:600;">
+                  🍽️ ${extras.restricao_alimentar}
+                </div>
+              ` : '<span style="color:var(--text-muted); font-size:0.85rem;">Nenhuma restrição informada.</span>'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 4: Logística do Evento & Check-in -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>📦 Logística do Evento & Check-in</h4>
+        </div>
+        <div class="ficha-grid-3">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Tamanho da Camiseta</span>
+            <span class="ficha-item-valor">
+              ${extras.tamanho_camiseta ? `
+                <span class="badge" style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.85rem; font-weight:800;">👕 ${extras.tamanho_camiseta}</span>
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Dia da Chegada / Estadia</span>
+            <span class="ficha-item-valor">${extras.dias_estadia || '-'}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Código de Check-in</span>
+            <span class="ficha-item-valor">
+              ${ins.codigo_checkin ? `
+                <code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary);">${ins.codigo_checkin}</code>
+                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${ins.codigo_checkin}', 'Código Check-in')" title="Copiar código">📋</button>
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item" style="grid-column: 1 / -1;">
+            <span class="ficha-item-label">Situação do Check-in</span>
+            <div style="margin-top: 0.35rem; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+              ${checkinBadge}
+              ${ins.checkin_realizado ? `
+                <span style="font-size:0.825rem; color:var(--text-muted);">Realizado com sucesso na portaria.</span>
+              ` : `
+                <span style="font-size:0.825rem; color:var(--text-muted);">Participante ainda não confirmou entrada no evento.</span>
+              `}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 5: Dados Financeiros & Pagamento -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>💳 Informações Financeiras & Pagamento</h4>
+        </div>
+        <div class="ficha-grid-3" style="margin-bottom: 1.25rem;">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Valor Total da Inscrição</span>
+            <span class="ficha-item-valor destaque" style="font-size: 1.2rem; color: #10B981;">
+              ${valorTotalFmt}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Forma de Pagamento</span>
+            <span class="ficha-item-valor">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Status da Inscrição</span>
+            <span class="ficha-item-valor"><span class="badge ${statusBadge}">${ins.status}</span></span>
+          </div>
+        </div>
+
+        <!-- Detalhamento de Parcelas se houver -->
+        ${(() => {
+          let parcelasLista = [];
+          if (pagamentosVinculados && pagamentosVinculados.length > 0) {
+            pagamentosVinculados.forEach(pag => {
+              if (pag.parcelas && pag.parcelas.length > 0) {
+                pag.parcelas.forEach(p => parcelasLista.push({ ...p, pagId: pag.id, forma: pag.forma_pagamento }));
+              } else {
+                parcelasLista.push({
+                  id: pag.id,
+                  numero: 1,
+                  valor: pag.valor,
+                  vencimento: pag.created_at ? pag.created_at.substring(0, 10) : '-',
+                  status: pag.status,
+                  isPagamentoUnico: true
+                });
+              }
+            });
+          }
+
+          if (parcelasLista.length === 0) {
+            return `<div style="font-size: 0.85rem; color: var(--text-muted); background: #F8FAFC; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">Nenhum lançamento financeiro individual registrado.</div>`;
+          }
+
+          return `
+            <div style="border-top: 1px solid #F1F5F9; padding-top: 1rem;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+                Detalhamento das Parcelas / Lançamentos (${parcelasLista.length})
+              </div>
+              <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                <table style="font-size: 0.825rem;">
+                  <thead>
+                    <tr style="background: #F8FAFC;">
+                      <th>Parcela</th>
+                      <th>Valor</th>
+                      <th>Vencimento</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${parcelasLista.map(parc => {
+                      const parcVal = parseFloat(parc.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                      const vencFmt = parc.vencimento && parc.vencimento !== '-' ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : '-';
+                      const badgeClass = parc.status === 'PAGO' ? 'badge-success' : (parc.status === 'CANCELADO' ? 'badge-danger' : 'badge-warning');
+                      
+                      let actionHtml = '-';
+                      if (parc.status === 'PAGO') {
+                        actionHtml = '<span style="color:#059669; font-weight:700;">Quitada</span>';
+                      } else if (!parc.isPagamentoUnico && parc.status !== 'PAGO') {
+                        actionHtml = `<button class="btn btn-success" style="padding: 0.2rem 0.5rem; font-size: 0.725rem;" onclick="darBaixaParcelaPeloCard(${parc.id}, ${ins.id})">Dar Baixa</button>`;
+                      }
+
+                      return `
+                        <tr>
+                          <td><strong>${parc.numero ? `Parcela ${parc.numero}` : 'Pagamento'}</strong></td>
+                          <td>${parcVal}</td>
+                          <td>${vencFmt}</td>
+                          <td><span class="badge ${badgeClass}">${parc.status}</span></td>
+                          <td style="text-align: right;">${actionHtml}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        })()}
+      </div>
+
+      <!-- Seção 6: Outros Campos Extras (Se houver) -->
+      ${outrosCamposExtras.length > 0 ? `
+        <div class="ficha-secao">
+          <div class="ficha-secao-titulo">
+            <h4>📝 Outros Dados Cadastrais</h4>
+          </div>
+          <div class="ficha-grid-2">
+            ${outrosCamposExtras.map(k => `
+              <div class="ficha-item">
+                <span class="ficha-item-label">${formatarLabelCampo(k)}</span>
+                <span class="ficha-item-valor">${extras[k]}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+    </div>
+
+    <!-- Footer com Ações -->
+    <div class="modal-detalhes-footer">
+      <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Alterar Status:</span>
+        ${ins.status !== 'CONFIRMADA' ? `
+          <button class="btn btn-success" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CONFIRMADA')">
+            ✅ Confirmar Inscrição
+          </button>
+        ` : `
+          <button class="btn btn-outline" style="padding: 0.4rem 0.85rem; font-size: 0.8rem;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'PENDENTE')">
+            ⏳ Marcar como Pendente
+          </button>
+        `}
+        ${ins.status !== 'CANCELADA' ? `
+          <button class="btn btn-danger" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; background: #EF4444; border-color: #EF4444;" onclick="alterarStatusInscricaoPeloCard(${ins.id}, 'CANCELADA')">
+            ❌ Cancelar Inscrição
+          </button>
+        ` : ''}
+      </div>
+
+      <button type="button" class="btn btn-outline" onclick="fecharModalInscricaoDetalhes()">
+        Fechar
+      </button>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+};
+
+window.copiarFichaInscrito = function(id) {
+  const ins = cachedInscricoesList.find(i => i.id === id);
+  if (!ins) return;
+
+  const user = ins.usuario || {};
+  const extras = ins.dados_extras || {};
+  const valorTotalFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const texto = [
+    `=== FICHA DE INSCRIÇÃO #${ins.id} - ${eventoAtual?.titulo || 'EVENTO UMP'} ===`,
+    `Nome: ${user.nome || 'N/A'}`,
+    `E-mail: ${user.email || 'N/A'}`,
+    `CPF: ${formatarCPF(user.cpf || extras.cpf || '') || 'Não informado'}`,
+    `Telefone: ${formatarTelefone(user.telefone || extras.telefone || '') || 'Não informado'}`,
+    `Data Nasc.: ${extras.data_nascimento || 'Não informada'}`,
+    `Gênero: ${extras.genero || 'Não informado'}`,
+    `Estado Civil: ${extras.estado_civil || 'Não informado'}`,
+    `----------------------------------------`,
+    `Igreja: ${extras.igreja || 'Não informada'}`,
+    `Presbitério: ${extras.presbiterio || 'Não informado'}`,
+    `Cidade: ${extras.cidade || 'Não informada'}`,
+    `Pastor: ${extras.nome_pastor || 'Não informado'} (Contato: ${extras.contato_pastor || 'N/A'})`,
+    `Cargo na Federação: ${extras.cargo_federacao || 'Não informado'}`,
+    `----------------------------------------`,
+    `Tipo Sanguíneo: ${extras.tipo_sanguineo || 'Não informado'}`,
+    `Emergência: ${extras.contato_emergencia || 'Não informado'}`,
+    `Alergias: ${extras.alergias || 'Nenhuma'}`,
+    `Medicamentos: ${extras.medicamento_continuo || 'Nenhum'}`,
+    `Restrições Alimentares: ${extras.restricao_alimentar || 'Nenhuma'}`,
+    `----------------------------------------`,
+    `Camiseta: ${extras.tamanho_camiseta || 'N/A'}`,
+    `Dia Chegada: ${extras.dias_estadia || 'N/A'}`,
+    `Código Check-in: ${ins.codigo_checkin || 'N/A'}`,
+    `Status Check-in: ${ins.checkin_realizado ? 'Checked-in' : 'Ausente'}`,
+    `----------------------------------------`,
+    `Valor: ${valorTotalFmt} | Forma Pagamento: ${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}`,
+    `Status da Inscrição: ${ins.status}`
+  ].join('\n');
+
+  window.copiarTextoParaClipboard(texto, 'Ficha completa do inscrito');
+};
+
+window.imprimirFichaInscrito = function(id) {
+  const ins = cachedInscricoesList.find(i => i.id === id);
+  if (!ins) return;
+
+  const user = ins.usuario || {};
+  const extras = ins.dados_extras || {};
+  const valorTotalFmt = parseFloat(ins.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const dataCriacaoFmt = formatarDataHora(ins.created_at);
+  const dataHoje = new Date().toLocaleString('pt-BR');
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Ficha do Participante #${ins.id} - ${user.nome || 'UMP'}</title>
+      <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #1e293b; line-height: 1.5; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 20px; }
+        .title { font-size: 1.4rem; font-weight: bold; color: #1d4ed8; margin: 0; }
+        .subtitle { font-size: 0.9rem; color: #64748b; margin: 2px 0 0 0; }
+        .badge { display: inline-block; padding: 4px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        .badge-success { background: #d1fae5; color: #047857; }
+        .badge-warning { background: #fef3c7; color: #b45309; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+        .section { margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .section-header { background: #f8fafc; padding: 8px 14px; font-weight: bold; font-size: 0.85rem; color: #1e40af; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.04em; }
+        .section-body { padding: 12px 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 0.85rem; }
+        .field { display: flex; flex-direction: column; }
+        .field-label { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .field-val { font-weight: 600; color: #0f172a; margin-top: 2px; }
+        .highlight { color: #dc2626; font-weight: bold; }
+        .footer { margin-top: 30px; border-top: 1px dashed #cbd5e1; padding-top: 10px; font-size: 0.75rem; color: #64748b; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <h1 class="title">${eventoAtual?.titulo || 'UMP Eventos'}</h1>
+          <p class="subtitle">Ficha Individual do Participante • Inscrição #${ins.id}</p>
+        </div>
+        <div style="text-align: right;">
+          <span class="badge ${ins.status === 'CONFIRMADA' ? 'badge-success' : 'badge-warning'}">${ins.status}</span>
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Check-in: ${ins.checkin_realizado ? 'Checked-in' : 'Ausente'}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">1. Dados Pessoais & Contato</div>
+        <div class="section-body">
+          <div class="field"><span class="field-label">Nome Completo</span><span class="field-val">${user.nome || '-'}</span></div>
+          <div class="field"><span class="field-label">E-mail</span><span class="field-val">${user.email || '-'}</span></div>
+          <div class="field"><span class="field-label">CPF</span><span class="field-val">${formatarCPF(user.cpf || extras.cpf || '') || '-'}</span></div>
+          <div class="field"><span class="field-label">Telefone / Celular</span><span class="field-val">${formatarTelefone(user.telefone || extras.telefone || '') || '-'}</span></div>
+          <div class="field"><span class="field-label">Nascimento / Idade</span><span class="field-val">${calcularIdadeTexto(extras.data_nascimento || '')}</span></div>
+          <div class="field"><span class="field-label">Gênero / Estado Civil</span><span class="field-val">${extras.genero || '-'} • ${extras.estado_civil || '-'}</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">2. Informações Eclesiásticas</div>
+        <div class="section-body">
+          <div class="field"><span class="field-label">Igreja / Congregação</span><span class="field-val">${extras.igreja || '-'}</span></div>
+          <div class="field"><span class="field-label">Presbitério</span><span class="field-val">${extras.presbiterio || '-'}</span></div>
+          <div class="field"><span class="field-label">Cidade</span><span class="field-val">${extras.cidade || '-'}</span></div>
+          <div class="field"><span class="field-label">Pastor</span><span class="field-val">${extras.nome_pastor || '-'}</span></div>
+          <div class="field"><span class="field-label">Contato do Pastor</span><span class="field-val">${formatarTelefone(extras.contato_pastor || '') || '-'}</span></div>
+          <div class="field"><span class="field-label">Cargo na Federação</span><span class="field-val">${extras.cargo_federacao || '-'}</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">3. Saúde, Emergência & Cuidados</div>
+        <div class="section-body">
+          <div class="field"><span class="field-label">Tipo Sanguíneo</span><span class="field-val highlight">${extras.tipo_sanguineo || 'Não informado'}</span></div>
+          <div class="field" style="grid-column: span 2;"><span class="field-label">Contato(s) de Emergência</span><span class="field-val highlight">${extras.contato_emergencia || 'Não informado'}</span></div>
+          <div class="field" style="grid-column: span 3;"><span class="field-label">Alergias</span><span class="field-val">${extras.alergias || 'Nenhuma informada'}</span></div>
+          <div class="field" style="grid-column: span 2;"><span class="field-label">Medicamento Contínuo</span><span class="field-val">${extras.medicamento_continuo || 'Nenhum'}</span></div>
+          <div class="field"><span class="field-label">Restrição Alimentar</span><span class="field-val">${extras.restricao_alimentar || 'Nenhuma'}</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">4. Logística & Pagamento</div>
+        <div class="section-body">
+          <div class="field"><span class="field-label">Camiseta</span><span class="field-val">${extras.tamanho_camiseta || '-'}</span></div>
+          <div class="field"><span class="field-label">Dia Chegada</span><span class="field-val">${extras.dias_estadia || '-'}</span></div>
+          <div class="field"><span class="field-label">Cód. Check-in</span><span class="field-val">${ins.codigo_checkin || '-'}</span></div>
+          <div class="field"><span class="field-label">Valor Total</span><span class="field-val">${valorTotalFmt}</span></div>
+          <div class="field"><span class="field-label">Forma Pagamento</span><span class="field-val">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</span></div>
+          <div class="field"><span class="field-label">Data da Inscrição</span><span class="field-val">${dataCriacaoFmt}</span></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Ficha emitida pelo Portal Administrativo UMP Eventos em ${dataHoje}
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+  }, 350);
+};
+
+window.toggleCheckinPeloCard = async function(inscricaoId) {
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/inscricoes/${inscricaoId}/toggle-checkin`, {
+      method: 'POST'
+    });
+    showToast(res.mensagem, "success");
+    await loadInscricoes();
+    await loadListaPresenca();
+    window.abrirModalInscricaoDetalhes(inscricaoId);
+  } catch (err) {
+    showToast(err.message || "Erro ao alternar check-in.", "error");
+  }
+};
+
+window.alterarStatusInscricaoPeloCard = async function(inscricaoId, novoStatus) {
+  try {
+    await API.request(`/admin/inscricoes/${inscricaoId}/status?novo_status=${novoStatus}`, { method: 'PUT' });
+    showToast(`Status alterado para ${novoStatus}!`, 'success');
+    await loadInscricoes();
+    window.abrirModalInscricaoDetalhes(inscricaoId);
+  } catch (err) {
+    showToast(err.message || "Erro ao atualizar status.", "error");
+  }
+};
+
+window.darBaixaParcelaPeloCard = async function(parcelaId, inscricaoId) {
+  try {
+    await API.request(`/admin/parcelas/${parcelaId}/status?novo_status=PAGO`, { method: 'PUT' });
+    showToast('Parcela quitada com sucesso!', 'success');
+    await loadPagamentos();
+    await loadInscricoes();
+    window.abrirModalInscricaoDetalhes(inscricaoId);
+  } catch (err) {
+    showToast(err.message || "Erro ao quitar parcela.", "error");
+  }
 };
 
 // --- Carregar Pagamentos ---
@@ -497,7 +1264,13 @@ function formatarFormaPagamento(fp, capture) {
   if (fp === 'INFINITEPAY') {
     return capture === 'pix' ? 'Pix (InfinitePay)' : 'Cartão (InfinitePay)';
   }
-  return 'Parcelado (Carnê)';
+  if (fp === 'PIX') {
+    return 'Pix Direto';
+  }
+  if (fp === 'PARCELADO') {
+    return 'Parcelado (Carnê)';
+  }
+  return fp || 'Parcelado (Carnê)';
 }
 
 window.exportarCSV = function() {
