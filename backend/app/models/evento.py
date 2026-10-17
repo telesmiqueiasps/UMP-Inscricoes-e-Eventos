@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Numeric, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Text, Numeric, Boolean, DateTime, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -23,7 +23,15 @@ class Evento(Base):
     campos_formulario = Column(Text, nullable=True)
     fotos = Column(Text, nullable=True)
     whatsapp_grupo_link = Column(String(500), nullable=True)
+
+    # Configurações de Diárias
+    diarias_habilitadas = Column(Boolean, default=False, nullable=False)
+    config_diarias = Column(JSON, nullable=True)
+    campos_formulario_diaria = Column(Text, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     inscricoes = relationship("Inscricao", back_populates="evento", cascade="all, delete-orphan")
+    diarias = relationship("InscricaoDiaria", back_populates="evento", cascade="all, delete-orphan")
+    diarias_triagem = relationship("DiariaTriagem", back_populates="evento", cascade="all, delete-orphan")

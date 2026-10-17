@@ -50,8 +50,16 @@ async function loadDashboard() {
     const triagens = data.triagens || [];
 
     const items = [
-      ...inscricoes.map(ins => ({ key: `ins_${ins.id}`, type: 'inscricao', data: ins })),
-      ...triagens.map(tr => ({ key: `tr_${tr.id}`, type: 'triagem', data: tr }))
+      ...inscricoes.map(ins => ({
+        key: ins.tipo_registro === 'DIARIA' ? `dia_${ins.id}` : `ins_${ins.id}`,
+        type: ins.tipo_registro === 'DIARIA' ? 'diaria' : 'inscricao',
+        data: ins
+      })),
+      ...triagens.map(tr => ({
+        key: tr.tipo_registro === 'DIARIA' ? `trdia_${tr.id}` : `tr_${tr.id}`,
+        type: tr.tipo_registro === 'DIARIA' ? 'triagem_diaria' : 'triagem',
+        data: tr
+      }))
     ];
 
     const selectorContainer = document.getElementById('dashboard-selector-container');
@@ -62,12 +70,18 @@ async function loadDashboard() {
         if (selectorContainer) selectorContainer.style.display = 'flex';
         if (eventSelect) {
           eventSelect.innerHTML = items.map(item => {
-            if (item.type === 'inscricao') {
+            if (item.type === 'diaria') {
+              const dia = item.data;
+              return `<option value="${item.key}">🎟️ ${dia.evento_titulo || 'Evento'} (Diária - ${dia.status})</option>`;
+            } else if (item.type === 'triagem_diaria') {
+              const tr = item.data;
+              return `<option value="${item.key}">⏳ ${tr.evento_titulo || 'Evento'} (Diária - Aguardando Pagamento)</option>`;
+            } else if (item.type === 'inscricao') {
               const ins = item.data;
-              return `<option value="ins_${ins.id}">${ins.evento_titulo || 'Evento'} (Inscrito - ${ins.status})</option>`;
+              return `<option value="${item.key}">${ins.evento_titulo || 'Evento'} (Inscrito - ${ins.status})</option>`;
             } else {
               const tr = item.data;
-              return `<option value="tr_${tr.id}">${tr.evento_titulo || 'Evento'} (Aguardando Pagamento)</option>`;
+              return `<option value="${item.key}">${tr.evento_titulo || 'Evento'} (Aguardando Pagamento)</option>`;
             }
           }).join('');
         }
@@ -125,12 +139,128 @@ window.selecionarEventosDashboard = function(eventKey) {
 function renderActiveItem(eventKey) {
   if (!currentDashboardData || !eventKey) return;
 
-  if (eventKey.startsWith('ins_')) {
+  if (eventKey.startsWith('dia_')) {
+    const diaId = parseInt(eventKey.replace('dia_', ''));
+    renderActiveDiaria(diaId);
+  } else if (eventKey.startsWith('trdia_')) {
+    const trdiaId = parseInt(eventKey.replace('trdia_', ''));
+    renderActiveTriagemDiaria(trdiaId);
+  } else if (eventKey.startsWith('ins_')) {
     const insId = parseInt(eventKey.replace('ins_', ''));
     renderActiveRegistration(insId);
   } else if (eventKey.startsWith('tr_')) {
     const trId = parseInt(eventKey.replace('tr_', ''));
     renderActiveTriagem(trId);
+  }
+}
+
+// Renderizar dados de uma Diária Confirmada
+function renderActiveDiaria(diariaId) {
+  const data = currentDashboardData;
+  const dia = data.inscricoes ? data.inscricoes.find(item => item.id === diariaId && item.tipo_registro === 'DIARIA') : null;
+  if (!dia) return;
+
+  if (registrationCard) {
+    let statusBadge = 'badge-warning';
+    if (dia.status === 'CONFIRMADA') statusBadge = 'badge-success';
+    else if (dia.status === 'CANCELADA' || dia.status === 'CANCELADO') statusBadge = 'badge-info';
+    else if (dia.status === 'VENCIDA' || dia.status === 'VENCIDO') statusBadge = 'badge-danger';
+    
+    const valorFmt = parseFloat(dia.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const qrButtonHTML = dia.status === 'CONFIRMADA' && dia.codigo_checkin ? 
+      `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: #7E22CE; color: #7E22CE; font-weight: 600;" onclick="openQrModal('${dia.codigo_checkin}', '${(dia.evento_titulo || '').replace(/'/g, "\\'")}')">
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
+         <span>Ver QR Code de Check-in (Diária)</span>
+       </button>` : '';
+
+    registrationCard.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+        <div>
+          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+          <span class="badge ${statusBadge}">${dia.status}</span>
+          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${dia.evento_titulo || 'Evento'}</h3>
+        </div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">
+          ${valorFmt}
+        </div>
+      </div>
+      <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: #FAF5FF; border: 1px solid #DDD6FE; border-radius: var(--radius-sm); font-size: 0.88rem; color: #581C87;">
+        <strong>🗓️ Dias Contratados:</strong> ${dia.dias_formatados}
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
+        📍 Local: ${dia.evento_local || 'A definir'}<br>
+        💳 Pagamento: <strong>${dia.forma_pagamento || 'InfinitePay (Pix ou Cartão)'}</strong>
+      </p>
+      ${qrButtonHTML}
+    `;
+  }
+
+  if (paymentsContainer) {
+    const valorFmt = parseFloat(dia.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    paymentsContainer.innerHTML = `
+      <div class="card">
+        <h3 class="card-title" style="font-size: 1.1rem;">Pagamento da Diária — Confirmado</h3>
+        <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: #7E22CE;">${valorFmt}</strong> | Status: <span class="badge badge-success">PAGO</span></p>
+        ${dia.receipt_url ? `
+          <a href="${dia.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="margin-top: 1rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Comprovante de Pagamento</span>
+          </a>
+        ` : ''}
+      </div>
+    `;
+  }
+}
+
+// Renderizar dados de uma Triagem de Diária Pendente
+function renderActiveTriagemDiaria(trdiaId) {
+  const data = currentDashboardData;
+  const tr = data.triagens ? data.triagens.find(item => item.id === trdiaId && item.tipo_registro === 'DIARIA') : null;
+  if (!tr) return;
+
+  const valorFmt = parseFloat(tr.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  if (registrationCard) {
+    registrationCard.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+        <div>
+          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+          <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
+          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${tr.evento_titulo || 'Evento'}</h3>
+        </div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">
+          ${valorFmt}
+        </div>
+      </div>
+      <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: #FAF5FF; border: 1px solid #DDD6FE; border-radius: var(--radius-sm); font-size: 0.88rem; color: #581C87;">
+        <strong>🗓️ Dias Contratados:</strong> ${tr.dias_formatados}
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
+        📍 Local: ${tr.evento_local || 'A definir'}<br>
+        💳 Pagamento: <strong>InfinitePay (Pix ou Cartão)</strong>
+      </p>
+      <div style="margin-top: 1rem; padding: 0.85rem; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; text-align: left; line-height: 1.4;">
+        <strong>⚠️ Compra de Diária Iniciada!</strong><br>
+        Atenção: <strong>sua vaga NÃO está garantida até que você conclua o pagamento</strong> pelo checkout da InfinitePay.
+      </div>
+    `;
+  }
+
+  if (paymentsContainer) {
+    paymentsContainer.innerHTML = `
+      <div class="card">
+        <h3 class="card-title" style="font-size: 1.1rem;">Pagamento da Diária — InfinitePay</h3>
+        <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: #7E22CE;">${valorFmt}</strong> | Status: <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span></p>
+        <div style="margin-top: 1.25rem;">
+          ${tr.checkout_url ? `
+            <a href="${tr.checkout_url}" target="_blank" class="btn btn-primary" style="background: #7E22CE; border-color: #7E22CE; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              <span>Efetuar Pagamento da Diária (Pix ou Cartão)</span>
+            </a>
+          ` : '<p style="color: var(--text-muted);">Link de checkout indisponível.</p>'}
+        </div>
+      </div>
+    `;
   }
 }
 
@@ -536,6 +666,37 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
       const valorTotalFmt = parseFloat(tr.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const dataReg = new Date(tr.created_at).toLocaleDateString('pt-BR');
 
+      if (tr.tipo_registro === 'DIARIA') {
+        return `
+          <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid #C084FC; background: #FAF5FF; box-shadow: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span class="badge" style="background: #7E22CE; color: white; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+                <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
+                <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${tr.evento_titulo || 'Evento'}</h3>
+                <p style="font-size: 0.85rem; color: #581C87; margin-top: 0.25rem; line-height: 1.5;">
+                  🗓️ <strong>Dias Contratados:</strong> ${tr.dias_formatados || 'N/A'}<br>
+                  📅 Início da solicitação: ${dataReg}<br>
+                  📍 Local: ${tr.evento_local || 'A definir'}<br>
+                  💳 Pagamento: <strong>InfinitePay (Pix ou Cartão)</strong>
+                </p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 1.15rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">${valorTotalFmt}</div>
+                <div style="font-size: 0.8rem; color: #9333EA; font-weight: 600; margin-top: 0.25rem;">Pagamento Pendente</div>
+              </div>
+            </div>
+            <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #F3E8FF; border-radius: var(--radius-md); font-size: 0.85rem; color: #6B21A8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+              <span>⚠️ <strong>Atenção:</strong> sua vaga NÃO está reservada até que conclua o pagamento.</span>
+              <button class="btn btn-primary btn-sm" style="background: #7E22CE; border-color: #7E22CE;" onclick="selecionarEventosDashboard('trdia_${tr.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                <span>Pagar Diária</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
       return `
         <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid #F59E0B; background: #FFFDF5; box-shadow: none;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
@@ -568,6 +729,45 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
   let htmlInscricoes = '';
   if (hasInscricoes) {
     htmlInscricoes = inscricoes.map(ins => {
+      const dataReg = new Date(ins.created_at).toLocaleDateString('pt-BR');
+      let badgeClass = 'badge-warning';
+      if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
+      else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-info';
+      else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') badgeClass = 'badge-danger';
+
+      if (ins.tipo_registro === 'DIARIA') {
+        const totalInscFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ? 
+          `<button class="btn btn-outline btn-sm" style="border-color: #7E22CE; color: #7E22CE; font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
+             <span>Ver QR Code</span>
+           </button>` : '';
+
+        return `
+          <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid #DDD6FE; background: #FFFFFF;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+                <span class="badge ${badgeClass}">${ins.status}</span>
+                <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${ins.evento_titulo}</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.5;">
+                  🗓️ <strong>Dias Contratados:</strong> <span style="color: #6B21A8; font-weight: 600;">${ins.dias_formatados || 'N/A'}</span><br>
+                  📅 Data da Compra: ${dataReg}<br>
+                  📍 Local do Evento: ${ins.evento_local || 'A definir'}
+                </p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 1.15rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">${totalInscFmt}</div>
+                <div style="font-size: 0.8rem; color: #047857; font-weight: 600; margin-top: 0.25rem;">Total Pago: ${totalInscFmt}</div>
+                <div style="margin-top: 0.75rem;">
+                  ${qrButtonHTML}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       const insPags = (pagamentos || []).filter(pag => pag.inscricao_id === ins.id);
       
       let totalPago = 0;
@@ -583,11 +783,6 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
 
       const totalPagoFmt = totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const totalInscFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      const dataReg = new Date(ins.created_at).toLocaleDateString('pt-BR');
-      let badgeClass = 'badge-warning';
-      if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
-      else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-info';
-      else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') badgeClass = 'badge-danger';
 
       return `
         <div class="card" style="margin-bottom: 1.5rem; border: 1.5px solid var(--border-color); background: #FFFFFF;">

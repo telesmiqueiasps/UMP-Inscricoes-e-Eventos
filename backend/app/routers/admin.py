@@ -16,10 +16,13 @@ from app.models.inscricao import Inscricao
 from app.models.usuario import Usuario
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
+from app.models.diaria import InscricaoDiaria, DiariaTriagem
 from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
 from app.schemas.inscricao import InscricaoResponse
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
+from app.schemas.diaria import InscricaoDiariaResponse, DiariaConfigUpdate, DiariaUpdateStatus
 from app.services.email import enviar_email_confirmacao
+from app.services.parcelamento import get_hoje_brasil
 
 router = APIRouter(tags=["Administração e Eventos"])
 
@@ -496,114 +499,21 @@ class CheckinRequest(BaseModel):
     codigo_checkin: str
 
 
-# --- Endpoints de Check-in (Aba Controle do Evento) ---
-@router.get("/admin/eventos/{evento_id}/checkin/detalhes")
-def obter_detalhes_checkin(
+# --- Gerenciamento de Diárias do Evento ---
+
+@router.get("/admin/eventos/{evento_id}/diarias", response_model=List[InscricaoDiariaResponse])
+def listar_diarias_evento_admin(
     evento_id: int,
-    codigo_checkin: str,
-    admin: Usuario = Depends(get_current_admin),
-    db: Session = Depends(get_db)
-):
-    # Buscar inscrição
-    inscricao = db.query(Inscricao).filter(
-        Inscricao.evento_id == evento_id,
-        Inscricao.codigo_checkin == codigo_checkin
-    ).first()
-
-    if not inscricao:
-        raise HTTPException(
-            status_code=404,
-            detail="Inscrição não encontrada para este código de check-in."
-        )
-
-    usuario = inscricao.usuario
-    return {
-        "inscricao_id": inscricao.id,
-        "nome": usuario.nome,
-        "cpf": usuario.cpf,
-        "email": usuario.email,
-        "status": inscricao.status,
-        "checkin_realizado": inscricao.checkin_realizado,
-        "checkin_data": inscricao.checkin_data.isoformat() if inscricao.checkin_data else None,
-        "codigo_checkin": inscricao.codigo_checkin
-    }
-
-
-@router.post("/admin/eventos/{evento_id}/checkin")
-def realizar_checkin(
-    evento_id: int,
-    req: CheckinRequest,
-    admin: Usuario = Depends(get_current_admin),
-    db: Session = Depends(get_db)
-):
-    # Buscar inscrição
-    inscricao = db.query(Inscricao).filter(
-        Inscricao.evento_id == evento_id,
-        Inscricao.codigo_checkin == req.codigo_checkin
-    ).first()
-
-    if not inscricao:
-        raise HTTPException(
-            status_code=404,
-            detail="Inscrição não encontrada para este código de check-in."
-        )
-
-    # Obter dados do participante
-    usuario = inscricao.usuario
-    
-    # Validar status da inscrição
-    if inscricao.status != "CONFIRMADA":
-        return {
-            "sucesso": False,
-            "status_inscricao": inscricao.status,
-            "participante": {
-                "nome": usuario.nome,
-                "cpf": usuario.cpf,
-                "email": usuario.email
-            },
-            "mensagem": f"Aviso: Inscrição está no status '{inscricao.status}'. Pagamento não confirmado ou inscrição cancelada."
-        }
-
-    # Se já realizou check-in
-    if inscricao.checkin_realizado:
-        checkin_dt_str = inscricao.checkin_data.strftime("%d/%m/%Y %H:%M:%S") if inscricao.checkin_data else "Desconhecido"
-        return {
-            "sucesso": False,
-            "status_inscricao": inscricao.status,
-            "participante": {
-                "nome": usuario.nome,
-                "cpf": usuario.cpf,
-                "email": usuario.email
-            },
-            "mensagem": f"Check-in já realizado anteriormente em {checkin_dt_str}."
-        }
-
-    # Confirmar check-in
-    from datetime import datetime
-    inscricao.checkin_realizado = True
-    inscricao.checkin_data = datetime.utcnow()
-    db.commit()
-
-    return {
-        "sucesso": True,
-        "status_inscricao": inscricao.status,
-        "participante": {
-            "nome": usuario.nome,
-            "cpf": usuario.cpf,
-            "email": usuario.email
-        },
-        "mensagem": "Check-in realizado com sucesso!"
-    }
-
-
-@router.get("/admin/eventos/{evento_id}/checkin/participantes")
-def listar_participantes_checkin(
-    evento_id: int,
+    status_filtro: Optional[str] = Query(None, alias="status"),
+    dia_filtro: Optional[str] = Query(None, alias="dia"),
     search: Optional[str] = Query(None),
-    admin: Usuario = Depends(get_current_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
 ):
-    query = db.query(Inscricao).join(Usuario).filter(Inscricao.evento_id == evento_id)
+    query = db.query(InscricaoDiaria).join(Usuario).filter(InscricaoDiaria.evento_id == evento_id)
+
+    if status_filtro:
+        query = query.filter(InscricaoDiaria.status == status_filtro)
 
     if search:
         search_pattern = f"%{search}%"
@@ -615,21 +525,325 @@ def listar_participantes_checkin(
             )
         )
 
-    inscricoes = query.order_by(Usuario.nome.asc()).all()
+    diarias = query.order_by(InscricaoDiaria.created_at.desc()).all()
+
+    if dia_filtro:
+        dia_filtro_limpo = dia_filtro.strip().lower()
+        diarias = [
+            d for d in diarias
+            if any(dia_filtro_limpo in str(x).lower() for x in (d.dias_selecionados or []))
+        ]
+
+    return diarias
+
+
+@router.put("/admin/eventos/{evento_id}/diarias/{diaria_id}/status", response_model=InscricaoDiariaResponse)
+def atualizar_status_diaria_admin(
+    evento_id: int,
+    diaria_id: int,
+    req: DiariaUpdateStatus,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    diaria = db.query(InscricaoDiaria).filter(
+        InscricaoDiaria.id == diaria_id,
+        InscricaoDiaria.evento_id == evento_id
+    ).first()
+    if not diaria:
+        raise HTTPException(status_code=404, detail="Diária não encontrada.")
+
+    diaria.status = req.status
+    db.commit()
+    db.refresh(diaria)
+    return diaria
+
+
+@router.delete("/admin/eventos/{evento_id}/diarias/{diaria_id}")
+def excluir_diaria_admin(
+    evento_id: int,
+    diaria_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    diaria = db.query(InscricaoDiaria).filter(
+        InscricaoDiaria.id == diaria_id,
+        InscricaoDiaria.evento_id == evento_id
+    ).first()
+    if not diaria:
+        raise HTTPException(status_code=404, detail="Diária não encontrada.")
+
+    db.delete(diaria)
+    db.commit()
+    return {"message": "Diária excluída com sucesso."}
+
+
+@router.put("/admin/eventos/{evento_id}/diarias-config")
+def atualizar_config_diarias_admin(
+    evento_id: int,
+    req: DiariaConfigUpdate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    evento = db.query(Evento).filter(Evento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    evento.diarias_habilitadas = req.diarias_habilitadas
+    evento.config_diarias = req.config_diarias
+    evento.campos_formulario_diaria = req.campos_formulario_diaria
+
+    db.commit()
+    db.refresh(evento)
+
+    return {
+        "sucesso": True,
+        "mensagem": "Configurações de diárias atualizadas com sucesso!",
+        "diarias_habilitadas": evento.diarias_habilitadas,
+        "config_diarias": evento.config_diarias,
+        "campos_formulario_diaria": evento.campos_formulario_diaria
+    }
+
+
+# --- Endpoints de Check-in Unificado (Aba Controle do Evento) ---
+@router.get("/admin/eventos/{evento_id}/checkin/detalhes")
+def obter_detalhes_checkin(
+    evento_id: int,
+    codigo_checkin: str,
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    codigo_clean = codigo_checkin.strip()
+
+    # 1. Tentar buscar em Inscricao Regular
+    inscricao = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento_id,
+        Inscricao.codigo_checkin == codigo_clean
+    ).first()
+
+    if inscricao:
+        usuario = inscricao.usuario
+        return {
+            "id": inscricao.id,
+            "tipo": "REGULAR",
+            "tipo_label": "Inscrição Integral",
+            "nome": usuario.nome if usuario else "",
+            "cpf": usuario.cpf if usuario else "",
+            "email": usuario.email if usuario else "",
+            "status": inscricao.status,
+            "checkin_realizado": inscricao.checkin_realizado,
+            "checkin_data": inscricao.checkin_data.isoformat() if inscricao.checkin_data else None,
+            "codigo_checkin": inscricao.codigo_checkin,
+            "valido_hoje": True,
+            "dias_selecionados": []
+        }
+
+    # 2. Tentar buscar em Inscricao Diaria
+    diaria = db.query(InscricaoDiaria).filter(
+        InscricaoDiaria.evento_id == evento_id,
+        InscricaoDiaria.codigo_checkin == codigo_clean
+    ).first()
+
+    if diaria:
+        usuario = diaria.usuario
+        hoje = get_hoje_brasil()
+        hoje_iso = hoje.strftime("%Y-%m-%d")
+        dias = diaria.dias_selecionados or []
+
+        valido_hoje = False
+        for d in dias:
+            d_str = str(d).strip()
+            if d_str == hoje_iso or hoje_iso in d_str or hoje.strftime("%d/%m") in d_str:
+                valido_hoje = True
+                break
+
+        return {
+            "id": diaria.id,
+            "tipo": "DIARIA",
+            "tipo_label": "Diária",
+            "nome": usuario.nome if usuario else "",
+            "cpf": usuario.cpf if usuario else "",
+            "email": usuario.email if usuario else "",
+            "status": diaria.status,
+            "checkin_realizado": diaria.checkin_realizado,
+            "checkin_data": diaria.checkin_data.isoformat() if diaria.checkin_data else None,
+            "codigo_checkin": diaria.codigo_checkin,
+            "valido_hoje": valido_hoje,
+            "dias_selecionados": dias,
+            "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias)
+        }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Código de check-in não encontrado para este evento (nem como integral nem como diária)."
+    )
+
+
+@router.post("/admin/eventos/{evento_id}/checkin")
+def realizar_checkin(
+    evento_id: int,
+    req: CheckinRequest,
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    codigo_clean = req.codigo_checkin.strip()
+    from datetime import datetime
+
+    # 1. Tentar Inscrição Regular
+    inscricao = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento_id,
+        Inscricao.codigo_checkin == codigo_clean
+    ).first()
+
+    if inscricao:
+        usuario = inscricao.usuario
+        if inscricao.status != "CONFIRMADA":
+            return {
+                "sucesso": False,
+                "tipo": "REGULAR",
+                "status_inscricao": inscricao.status,
+                "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+                "mensagem": f"Aviso: Inscrição está no status '{inscricao.status}'. Pagamento não confirmado."
+            }
+
+        if inscricao.checkin_realizado:
+            checkin_dt_str = inscricao.checkin_data.strftime("%d/%m/%Y %H:%M:%S") if inscricao.checkin_data else "Desconhecido"
+            return {
+                "sucesso": False,
+                "tipo": "REGULAR",
+                "status_inscricao": inscricao.status,
+                "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+                "mensagem": f"Check-in integral já realizado anteriormente em {checkin_dt_str}."
+            }
+
+        inscricao.checkin_realizado = True
+        inscricao.checkin_data = datetime.utcnow()
+        db.commit()
+
+        return {
+            "sucesso": True,
+            "tipo": "REGULAR",
+            "status_inscricao": inscricao.status,
+            "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+            "mensagem": "Check-in realizado com sucesso! (Inscrição Integral)"
+        }
+
+    # 2. Tentar Inscrição Diária
+    diaria = db.query(InscricaoDiaria).filter(
+        InscricaoDiaria.evento_id == evento_id,
+        InscricaoDiaria.codigo_checkin == codigo_clean
+    ).first()
+
+    if diaria:
+        usuario = diaria.usuario
+        if diaria.status != "CONFIRMADA":
+            return {
+                "sucesso": False,
+                "tipo": "DIARIA",
+                "status_inscricao": diaria.status,
+                "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+                "mensagem": f"Aviso: Diária está no status '{diaria.status}'. Pagamento não confirmado."
+            }
+
+        if diaria.checkin_realizado:
+            checkin_dt_str = diaria.checkin_data.strftime("%d/%m/%Y %H:%M:%S") if diaria.checkin_data else "Desconhecido"
+            return {
+                "sucesso": False,
+                "tipo": "DIARIA",
+                "status_inscricao": diaria.status,
+                "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+                "mensagem": f"Check-in de diária já realizado anteriormente em {checkin_dt_str}."
+            }
+
+        diaria.checkin_realizado = True
+        diaria.checkin_data = datetime.utcnow()
+        db.commit()
+
+        dias_str = ", ".join(diaria.dias_selecionados) if isinstance(diaria.dias_selecionados, list) else str(diaria.dias_selecionados)
+        return {
+            "sucesso": True,
+            "tipo": "DIARIA",
+            "dias_selecionados": diaria.dias_selecionados,
+            "status_inscricao": diaria.status,
+            "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+            "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
+        }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Código de check-in não encontrado."
+    )
+
+
+@router.get("/admin/eventos/{evento_id}/checkin/participantes")
+def listar_participantes_checkin(
+    evento_id: int,
+    search: Optional[str] = Query(None),
+    tipo_filtro: Optional[str] = Query(None, alias="tipo"),
+    admin: Usuario = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    search_pattern = f"%{search}%" if search else None
+
+    # Inscrições Regulares
+    query_ins = db.query(Inscricao).join(Usuario).filter(Inscricao.evento_id == evento_id)
+    if search_pattern:
+        query_ins = query_ins.filter(
+            or_(
+                Usuario.nome.ilike(search_pattern),
+                Usuario.cpf.ilike(search_pattern),
+                Usuario.email.ilike(search_pattern)
+            )
+        )
+    inscricoes = query_ins.all()
+
+    # Inscrições Diárias
+    query_dia = db.query(InscricaoDiaria).join(Usuario).filter(InscricaoDiaria.evento_id == evento_id)
+    if search_pattern:
+        query_dia = query_dia.filter(
+            or_(
+                Usuario.nome.ilike(search_pattern),
+                Usuario.cpf.ilike(search_pattern),
+                Usuario.email.ilike(search_pattern)
+            )
+        )
+    diarias = query_dia.all()
 
     resultado = []
-    for ins in inscricoes:
-        resultado.append({
-            "inscricao_id": ins.id,
-            "nome": ins.usuario.nome,
-            "cpf": ins.usuario.cpf,
-            "email": ins.usuario.email,
-            "status": ins.status,
-            "codigo_checkin": ins.codigo_checkin,
-            "checkin_realizado": ins.checkin_realizado,
-            "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None
-        })
+    if not tipo_filtro or tipo_filtro.upper() in ["TODOS", "REGULAR"]:
+        for ins in inscricoes:
+            resultado.append({
+                "inscricao_id": ins.id,
+                "tipo": "REGULAR",
+                "tipo_label": "Integral",
+                "nome": ins.usuario.nome if ins.usuario else "",
+                "cpf": ins.usuario.cpf if ins.usuario else "",
+                "email": ins.usuario.email if ins.usuario else "",
+                "status": ins.status,
+                "codigo_checkin": ins.codigo_checkin,
+                "checkin_realizado": ins.checkin_realizado,
+                "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None,
+                "dias_selecionados": []
+            })
 
+    if not tipo_filtro or tipo_filtro.upper() in ["TODOS", "DIARIA"]:
+        for d in diarias:
+            dias = d.dias_selecionados or []
+            resultado.append({
+                "inscricao_id": d.id,
+                "tipo": "DIARIA",
+                "tipo_label": "Diária",
+                "nome": d.usuario.nome if d.usuario else "",
+                "cpf": d.usuario.cpf if d.usuario else "",
+                "email": d.usuario.email if d.usuario else "",
+                "status": d.status,
+                "codigo_checkin": d.codigo_checkin,
+                "checkin_realizado": d.checkin_realizado,
+                "checkin_data": d.checkin_data.isoformat() if d.checkin_data else None,
+                "dias_selecionados": dias,
+                "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias)
+            })
+
+    resultado.sort(key=lambda x: (x.get("nome") or "").lower())
     return resultado
 
 
@@ -637,9 +851,37 @@ def listar_participantes_checkin(
 def toggle_checkin_manual(
     evento_id: int,
     inscricao_id: int,
+    tipo: str = Query("REGULAR"),
     admin: Usuario = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
+    from datetime import datetime
+    if tipo.upper() == "DIARIA":
+        diaria = db.query(InscricaoDiaria).filter(
+            InscricaoDiaria.id == inscricao_id,
+            InscricaoDiaria.evento_id == evento_id
+        ).first()
+
+        if not diaria:
+            raise HTTPException(status_code=404, detail="Diária não encontrada.")
+
+        if diaria.checkin_realizado:
+            diaria.checkin_realizado = False
+            diaria.checkin_data = None
+            mensagem = "Check-in de diária desfeito com sucesso."
+        else:
+            diaria.checkin_realizado = True
+            diaria.checkin_data = datetime.utcnow()
+            mensagem = "Check-in de diária realizado com sucesso."
+
+        db.commit()
+        return {
+            "sucesso": True,
+            "checkin_realizado": diaria.checkin_realizado,
+            "mensagem": mensagem
+        }
+
+    # Inscrição Regular
     inscricao = db.query(Inscricao).filter(
         Inscricao.id == inscricao_id,
         Inscricao.evento_id == evento_id
@@ -648,7 +890,6 @@ def toggle_checkin_manual(
     if not inscricao:
         raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
 
-    from datetime import datetime
     if inscricao.checkin_realizado:
         inscricao.checkin_realizado = False
         inscricao.checkin_data = None

@@ -116,6 +116,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y1="13"/><line x1="16" y1="17" x2="8" y1="17"/></svg>
           <span>Inscrições</span>
         </button>
+        <button class="tab-btn" onclick="switchSubTab('pane-diarias', this)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+          <span>Diárias</span>
+        </button>
         <button class="tab-btn" onclick="switchSubTab('pane-pagamentos', this)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
           <span>Pagamentos</span>
@@ -207,6 +211,202 @@
           <!-- Controle de Paginação -->
           <div id="inscricoes-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem; background: #FFFFFF;"></div>
         </div>
+      </div>
+
+      <!-- TAB DIÁRIAS: GESTÃO E DIARISTAS -->
+      <div class="tab-pane" id="pane-diarias">
+        
+        <!-- Bloco 1: Configuração e Ativação de Diárias -->
+        <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #8B5CF6;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <h3 style="font-size: 1.2rem; font-weight: 800; color: #6D28D9; margin: 0; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span>Configurações de Diárias do Evento</span>
+              </h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Defina se este evento aceita inscrições por diária, os valores de cada dia e os campos solicitados.</p>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.75rem; background: #F5F3FF; padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid #DDD6FE;">
+              <input type="checkbox" id="diarias-toggle-habilitado" style="width: 18px; height: 18px; cursor: pointer;" onchange="onToggleDiariasChange()">
+              <label for="diarias-toggle-habilitado" style="font-weight: 700; color: #6D28D9; font-size: 0.9rem; cursor: pointer; margin: 0;">Habilitar Inscrições por Diária</label>
+            </div>
+          </div>
+
+          <div id="diarias-config-body">
+            <!-- Configuração de Preço Padrão e Status -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
+              <div>
+                <label class="form-label" style="font-weight: 700;">Valor Padrão da Diária (R$)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="number" id="diaria-valor-padrao" class="form-control" placeholder="Ex: 50.00" step="0.01" min="0">
+                  <button type="button" class="btn btn-outline" onclick="aplicarValorPadraoDiarias()" style="white-space: nowrap; font-size: 0.85rem;">Aplicar a Todos</button>
+                </div>
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Preenche automaticamente o mesmo valor para todos os dias abaixo.</small>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-weight: 700;">Status do Recurso</label>
+                <div id="diarias-status-badge-container" style="padding-top: 0.5rem;">
+                  <span class="badge" style="background: #E2E8F0; color: #64748B;">Diárias Desabilitadas</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabela dos Dias do Evento para Diária -->
+            <div style="margin-bottom: 1.5rem;">
+              <label class="form-label" style="font-weight: 700; color: var(--primary);">Dias Disponíveis para Compra de Diária</label>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Você pode desmarcar dias que não aceitam diária ou definir um valor diferente para datas específicas:</p>
+              
+              <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                  <thead style="background: #F8FAFC;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                      <th style="padding: 0.65rem 1rem; width: 80px; text-align: center;">Liberar</th>
+                      <th style="padding: 0.65rem 1rem; text-align: left;">Dia / Data</th>
+                      <th style="padding: 0.65rem 1rem; text-align: left; width: 220px;">Valor da Diária (R$)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="diarias-dias-table-body">
+                    <tr><td colspan="3" style="text-align: center; padding: 1rem; color: var(--text-muted);">Defina as datas do evento primeiro na aba Editar Evento.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Checkboxes de Seleção dos Campos do Formulário de Diária -->
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+              <label class="form-label" style="font-weight: 700; color: #6D28D9; font-size: 0.95rem;">Campos do Formulário de Diária</label>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Selecione quais informações extras devem ser solicitadas <strong>exclusivamente</strong> para quem comprar diária:</p>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.9rem;">
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="cpf"> CPF
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="telefone"> Telefone
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="data_nascimento"> Data de Nascimento
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="genero"> Gênero
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="tamanho_camiseta"> Tamanho da Camiseta
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="tipo_sanguineo"> Tipo Sanguíneo
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="alergias"> Alergias
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="medicamento_continuo"> Medicamento Contínuo
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="contato_emergencia"> Contatos de Emergência
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="restricao_alimentar"> Restrição Alimentar
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="igreja"> Igreja / Congregação
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="presbiterio"> Presbitério
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="cidade"> Cidade
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="estado_civil"> Estado Civil
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="nome_pastor"> Nome do seu Pastor
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="contato_pastor"> Contato do seu Pastor
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" class="diaria-form-field" value="cargo_federacao"> Cargo na Federação
+                </label>
+              </div>
+            </div>
+
+            <!-- Botão Salvar Configurações -->
+            <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+              <button class="btn btn-primary" onclick="salvarConfiguracoesDiarias()" style="background: #8B5CF6; border-color: #8B5CF6; padding: 0.6rem 1.5rem; font-weight: 700;">
+                Salvar Configurações de Diárias
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco 2: Lista Separada de Diaristas -->
+        <div class="card" style="padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Diaristas Cadastrados</span>
+                <span class="badge" id="diarias-total-badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.8rem;">0</span>
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Participantes que optaram por comparecer apenas em dias específicos.</p>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-outline" onclick="exportarDiaristasExcel()" style="padding: 0.4rem 0.85rem; font-size: 0.825rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar Diaristas</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros de Diaristas -->
+          <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 0.75rem; margin-bottom: 1rem; align-items: end;">
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Buscar Diarista</label>
+              <input type="text" id="diarias-filter-search" class="form-control" placeholder="Nome, CPF ou e-mail..." onkeyup="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Filtrar por Dia</label>
+              <select id="diarias-filter-dia" class="form-control" onchange="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+                <option value="">Todos os Dias</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Status</label>
+              <select id="diarias-filter-status" class="form-control" onchange="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+                <option value="">Todos os Status</option>
+                <option value="CONFIRMADA">Confirmada</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tabela de Diaristas -->
+          <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+              <thead style="background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
+                <tr>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Participante</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Dias Contratados</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Valor Pago</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Status</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Check-in</th>
+                  <th style="padding: 0.75rem; text-align: center; font-weight: 700;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="diarias-table-body">
+                <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando diaristas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="diarias-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);"></div>
+        </div>
+
       </div>
 
       <!-- TAB 2: PAGAMENTOS -->
@@ -337,7 +537,10 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                     <span>Ficha de Triagem</span>
                   </h4>
-                  <span id="triagem-status-badge" class="badge" style="font-size: 0.75rem;">PENDENTE</span>
+                  <div style="display: flex; gap: 0.35rem;">
+                    <span id="triagem-tipo-badge" class="badge" style="font-size: 0.75rem; background: #EFF6FF; color: #1D4ED8;">Integral</span>
+                    <span id="triagem-status-badge" class="badge" style="font-size: 0.75rem;">PENDENTE</span>
+                  </div>
                 </div>
                 
                 <div style="text-align: left; display: flex; flex-direction: column; gap: 0.5rem;">
@@ -356,6 +559,8 @@
                     </div>
                   </div>
                   
+                  <div id="triagem-diaria-dias-container" style="display: none; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: var(--radius-md); padding: 0.4rem 0.6rem; font-size: 0.8rem; color: #6D28D9; font-weight: 600;"></div>
+
                   <div id="triagem-aviso-container" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 600; align-items: center; gap: 0.35rem; margin-top: 0.25rem;">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     <span id="triagem-aviso-texto">Esta inscrição não está confirmada!</span>
@@ -740,6 +945,15 @@
       <div class="modal" id="modal-detalhes-inscricao" onclick="fecharModalInscricaoBackdrop(event)">
         <div class="modal-content modal-detalhes-dialog" onclick="event.stopPropagation()">
           <div id="modal-detalhes-conteudo">
+            <!-- Conteúdo montado via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Ficha Completa do Diarista -->
+      <div class="modal" id="modal-detalhes-diaria" onclick="fecharModalDiariaBackdrop(event)">
+        <div class="modal-content modal-detalhes-dialog" onclick="event.stopPropagation()">
+          <div id="modal-detalhes-diaria-conteudo">
             <!-- Conteúdo montado via JS -->
           </div>
         </div>

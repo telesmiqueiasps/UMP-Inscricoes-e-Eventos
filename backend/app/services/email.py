@@ -195,3 +195,43 @@ def enviar_email_recuperacao_senha(destinatario_email: str, destinatario_nome: s
     """
     return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
 
+
+def enviar_email_confirmacao_diaria(
+    destinatario_email: str,
+    destinatario_nome: str,
+    nome_evento: str,
+    dias_formatados: str,
+    valor: float,
+    codigo_checkin: str
+) -> bool:
+    """
+    Envia e-mail confirmando o pagamento e aprovação da diária.
+    """
+    assunto = f"Diária Confirmada! 🎫 - {nome_evento}"
+    valor_fmt = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    conteudo_html = f"""
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+        <h2 style="color: #8B5CF6; margin-bottom: 20px; text-align: center;">Sua Diária está Confirmada! 🎫</h2>
+        <p>Olá, <strong>{destinatario_nome}</strong>,</p>
+        <p>Confirmamos o pagamento da sua diária para o evento <strong>{nome_evento}</strong>!</p>
+        
+        <div style="background-color: #f5f3ff; border: 1px solid #ddd6fe; padding: 15px; border-radius: 6px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Evento:</strong> {nome_evento}</p>
+            <p style="margin: 5px 0;"><strong>Dias Contratados:</strong> {dias_formatados}</p>
+            <p style="margin: 5px 0;"><strong>Valor Total Pago:</strong> {valor_fmt}</p>
+            <p style="margin: 5px 0;"><strong>Código de Check-in:</strong> <span style="font-family: monospace; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{codigo_checkin}</span></p>
+        </div>
+
+        <p>Apresente o seu QR Code ou o código de check-in na portaria do evento no(s) dia(s) correspondente(s) para liberar o seu acesso.</p>
+        
+        <p style="text-align: center; margin-top: 25px;">
+            <a href="https://usuariosinodalpb.netlify.app/dashboard.html" style="background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ver Minha Diária no Painel</a>
+        </p>
+        
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />
+        <p style="font-size: 0.85rem; color: #666; text-align: center;">Sinodal UMP PB - Organização de Eventos</p>
+    </div>
+    """
+    return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
+

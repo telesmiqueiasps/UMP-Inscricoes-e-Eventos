@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Inicializar o carregamento
   await loadEventoInfo();
   await loadInscricoes();
+  await carregarDiaristas();
   await loadPagamentos();
   await loadListaPresenca();
 });
@@ -91,6 +92,11 @@ async function loadEventoInfo() {
         input.value = val;
         updateMediaPreview(i, val);
       }
+    }
+
+    // Inicializar UI de configurações de diárias
+    if (typeof renderConfigDiariasUI === 'function') {
+      renderConfigDiariasUI();
     }
 
   } catch (err) {
@@ -1796,6 +1802,10 @@ function renderTabelaPresenca() {
     if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
 
+    const tipoBadge = ins.tipo === 'DIARIA'
+      ? `<span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.72rem; padding: 2px 6px;">Diária (${ins.dias_formatados || 'Dias'})</span>`
+      : `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.72rem; padding: 2px 6px;">Integral</span>`;
+
     const checkinStatusHTML = ins.checkin_realizado ? 
       `<div style="color: #10B981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
          ${ICONS.checkCircle}
@@ -1812,14 +1822,17 @@ function renderTabelaPresenca() {
     return `
       <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
         <td style="padding: 0.75rem;">
-          <strong style="color: var(--text-dark); display: block;">${ins.nome}</strong>
+          <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+            <strong style="color: var(--text-dark);">${ins.nome}</strong>
+            ${tipoBadge}
+          </div>
           <span style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</span>
         </td>
         <td style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
         <td style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
         <td style="padding: 0.75rem;">${checkinStatusHTML}</td>
         <td style="padding: 0.75rem; text-align: center;">
-          <button class="${btnClass}" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id})">
+          <button class="${btnClass}" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')">
             ${btnText}
           </button>
         </td>
@@ -1883,6 +1896,36 @@ async function processarQrCodeEscaneado(codigo) {
     document.getElementById('triagem-nome').textContent = res.nome;
     document.getElementById('triagem-cpf').textContent = res.cpf || 'Não informado';
     document.getElementById('triagem-email').textContent = res.email;
+
+    // Atualizar badge de tipo (Integral vs Diária)
+    const tipoBadge = document.getElementById('triagem-tipo-badge');
+    const diariaDiasContainer = document.getElementById('triagem-diaria-dias-container');
+    if (tipoBadge) {
+      if (res.tipo === 'DIARIA') {
+        tipoBadge.textContent = 'Diária';
+        tipoBadge.style.background = '#EDE9FE';
+        tipoBadge.style.color = '#6D28D9';
+      } else {
+        tipoBadge.textContent = 'Integral';
+        tipoBadge.style.background = '#EFF6FF';
+        tipoBadge.style.color = '#1D4ED8';
+      }
+    }
+
+    if (diariaDiasContainer) {
+      if (res.tipo === 'DIARIA') {
+        diariaDiasContainer.style.display = 'block';
+        const diasStr = res.dias_formatados || (Array.isArray(res.dias_selecionados) ? res.dias_selecionados.join(', ') : res.dias_selecionados);
+        diariaDiasContainer.innerHTML = `
+          <div>📅 <strong>Dias Contratados:</strong> ${diasStr}</div>
+          <div style="margin-top: 4px; font-size: 0.75rem;">
+            ${res.valido_hoje ? '<span style="color: #059669; font-weight: bold;">✅ Autorizado para a data de hoje!</span>' : '<span style="color: #DC2626; font-weight: bold;">⚠️ ATENÇÃO: Diária para outra data!</span>'}
+          </div>
+        `;
+      } else {
+        diariaDiasContainer.style.display = 'none';
+      }
+    }
     
     const badge = document.getElementById('triagem-status-badge');
     if (badge) {
@@ -1952,7 +1995,6 @@ async function processarQrCodeEscaneado(codigo) {
     document.getElementById('checkin-scanned-card').style.display = 'flex';
   } catch (err) {
     showToast(err.message || 'Código de QR Code inválido ou não cadastrado.', 'error');
-    // Retomar scanner se deu erro na leitura
     if (html5QrcodeScanner) {
       html5QrcodeScanner.resume();
     }
@@ -1977,9 +2019,9 @@ window.confirmarCheckinTriagem = async function() {
 
     showToast(res.mensagem, res.sucesso ? "success" : "warning");
     
-    // Fechar Ficha de Triagem e recarregar dados da lista
     cancelarTriagem();
     await loadListaPresenca();
+    await carregarDiaristas();
   } catch (err) {
     showToast(err.message || "Erro ao realizar check-in.", "error");
   } finally {
@@ -1993,7 +2035,6 @@ window.confirmarCheckinTriagem = async function() {
 window.cancelarTriagem = function() {
   currentTriagemCode = null;
   document.getElementById('checkin-scanned-card').style.display = 'none';
-  // Retomar scanner
   if (html5QrcodeScanner) {
     html5QrcodeScanner.resume();
   }
@@ -2022,6 +2063,10 @@ window.buscarParticipantesCheckin = async function() {
       if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
       else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
 
+      const tipoBadge = ins.tipo === 'DIARIA'
+        ? `<span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.7rem;">Diária (${ins.dias_formatados || 'Dias'})</span>`
+        : `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.7rem;">Integral</span>`;
+
       const checkinBadge = ins.checkin_realizado ? 
         `<span class="badge badge-success">Checked-in</span>` : 
         `<span class="badge badge-warning">Ausente</span>`;
@@ -2032,7 +2077,10 @@ window.buscarParticipantesCheckin = async function() {
       return `
         <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; gap: 0.5rem;">
           <div>
-            <div style="font-weight: 700; font-size: 0.9rem;">${ins.nome}</div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="font-weight: 700; font-size: 0.9rem;">${ins.nome}</span>
+              ${tipoBadge}
+            </div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">CPF: ${ins.cpf || 'N/A'} | Email: ${ins.email}</div>
             <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem;">
               <span class="badge ${badgeClass}">${ins.status}</span>
@@ -2040,7 +2088,7 @@ window.buscarParticipantesCheckin = async function() {
             </div>
           </div>
           <div>
-            <button class="${checkinBtnClass}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id})">
+            <button class="${checkinBtnClass}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')">
               ${checkinBtnText}
             </button>
           </div>
@@ -2052,15 +2100,471 @@ window.buscarParticipantesCheckin = async function() {
   }
 };
 
-window.realizarCheckinManual = async function(inscricaoId) {
+window.realizarCheckinManual = async function(inscricaoId, tipo = 'REGULAR') {
   try {
-    const res = await API.request(`/admin/eventos/${selectedEventoId}/inscricoes/${inscricaoId}/toggle-checkin`, {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/inscricoes/${inscricaoId}/toggle-checkin?tipo=${tipo}`, {
       method: 'POST'
     });
     showToast(res.mensagem, "success");
     await loadListaPresenca();
     buscarParticipantesCheckin();
+    if (tipo === 'DIARIA') {
+      await carregarDiaristas();
+    }
   } catch (err) {
     showToast(err.message || "Erro ao atualizar check-in manual.", "error");
   }
+};
+
+// ==========================================
+// --- MÓDULO DE GESTÃO DE DIÁRIAS DO EVENTO ---
+// ==========================================
+
+let cachedDiaristasList = [];
+
+function gerarDiasDoEvento(dataInicioStr, dataFimStr) {
+  const dias = [];
+  if (!dataInicioStr || !dataFimStr) return dias;
+  const dtInicio = new Date(dataInicioStr);
+  const dtFim = new Date(dataFimStr);
+
+  const cur = new Date(dtInicio.getFullYear(), dtInicio.getMonth(), dtInicio.getDate());
+  const fim = new Date(dtFim.getFullYear(), dtFim.getMonth(), dtFim.getDate());
+
+  const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+
+  while (cur <= fim) {
+    const yyyy = cur.getFullYear();
+    const mm = String(cur.getMonth() + 1).padStart(2, '0');
+    const dd = String(cur.getDate()).padStart(2, '0');
+    const isoDate = `${yyyy}-${mm}-${dd}`;
+    const diaNome = diasSemana[cur.getDay()];
+    const label = `${diaNome} (${dd}/${mm})`;
+
+    dias.push({ data: isoDate, label: label });
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dias;
+}
+
+window.renderConfigDiariasUI = function() {
+  if (!eventoAtual) return;
+
+  const toggle = document.getElementById('diarias-toggle-habilitado');
+  const valorPadraoInput = document.getElementById('diaria-valor-padrao');
+  const badgeContainer = document.getElementById('diarias-status-badge-container');
+  const tableBody = document.getElementById('diarias-dias-table-body');
+  const diaFilterSelect = document.getElementById('diarias-filter-dia');
+
+  const habilitado = Boolean(eventoAtual.diarias_habilitadas);
+  if (toggle) toggle.checked = habilitado;
+
+  if (badgeContainer) {
+    badgeContainer.innerHTML = habilitado
+      ? `<span class="badge" style="background: #DEF7EC; color: #03543F; font-size: 0.85rem; padding: 0.4rem 0.8rem;">Diárias Habilitadas</span>`
+      : `<span class="badge" style="background: #F1F5F9; color: #64748B; font-size: 0.85rem; padding: 0.4rem 0.8rem;">Diárias Desabilitadas</span>`;
+  }
+
+  const config = eventoAtual.config_diarias || {};
+  const valorPadrao = config.valor_padrao !== undefined ? config.valor_padrao : '';
+  if (valorPadraoInput) valorPadraoInput.value = valorPadrao;
+
+  // Gerar dias do evento
+  const diasGerados = gerarDiasDoEvento(eventoAtual.data_inicio, eventoAtual.data_fim);
+  const diasSalvos = config.dias || [];
+
+  if (tableBody) {
+    if (diasGerados.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Defina as datas de início e término na aba 'Editar Evento' para listar os dias.</td></tr>`;
+    } else {
+      tableBody.innerHTML = diasGerados.map((d) => {
+        const salvo = diasSalvos.find(s => s.data === d.data);
+        const ativo = salvo ? (salvo.ativo !== false) : true;
+        const valor = salvo && salvo.valor !== undefined ? salvo.valor : (valorPadrao || '');
+
+        return `
+          <tr class="diaria-dia-row" data-data="${d.data}" data-label="${d.label}" style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+            <td style="padding: 0.65rem 1rem; text-align: center;">
+              <input type="checkbox" class="diaria-dia-check" ${ativo ? 'checked' : ''} style="width: 17px; height: 17px; cursor: pointer;">
+            </td>
+            <td style="padding: 0.65rem 1rem; font-weight: 600; color: var(--text-dark);">
+              ${d.label}
+              <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">Data ISO: ${d.data}</div>
+            </td>
+            <td style="padding: 0.65rem 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.35rem;">
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">R$</span>
+                <input type="number" class="form-control diaria-dia-valor" step="0.01" min="0" placeholder="0.00" value="${valor}" style="height: 34px; font-size: 0.85rem; width: 130px;">
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  // Preencher filtro por dia na tabela de diaristas
+  if (diaFilterSelect) {
+    const curVal = diaFilterSelect.value;
+    diaFilterSelect.innerHTML = `<option value="">Todos os Dias</option>` + diasGerados.map(d => `
+      <option value="${d.data}" ${curVal === d.data ? 'selected' : ''}>${d.label}</option>
+    `).join('');
+  }
+
+  // Marcar checkboxes dos campos extras do formulário de diária
+  const camposDiariaStr = eventoAtual.campos_formulario_diaria || '';
+  const camposDiariaArr = camposDiariaStr.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  document.querySelectorAll('.diaria-form-field').forEach(cb => {
+    cb.checked = camposDiariaArr.includes(cb.value.toLowerCase());
+  });
+};
+
+window.onToggleDiariasChange = function() {
+  const toggle = document.getElementById('diarias-toggle-habilitado');
+  const badgeContainer = document.getElementById('diarias-status-badge-container');
+  if (!toggle || !badgeContainer) return;
+
+  if (toggle.checked) {
+    badgeContainer.innerHTML = `<span class="badge" style="background: #DEF7EC; color: #03543F; font-size: 0.85rem; padding: 0.4rem 0.8rem;">Diárias Habilitadas (Não Salvo)</span>`;
+  } else {
+    badgeContainer.innerHTML = `<span class="badge" style="background: #FEE2E2; color: #991B1B; font-size: 0.85rem; padding: 0.4rem 0.8rem;">Diárias Desabilitadas (Não Salvo)</span>`;
+  }
+};
+
+window.aplicarValorPadraoDiarias = function() {
+  const padrao = document.getElementById('diaria-valor-padrao')?.value;
+  if (!padrao || isNaN(parseFloat(padrao))) {
+    showToast('Informe um valor padrão válido para aplicar.', 'warning');
+    return;
+  }
+  const valFmt = parseFloat(padrao).toFixed(2);
+  document.querySelectorAll('.diaria-dia-valor').forEach(input => {
+    input.value = valFmt;
+  });
+  showToast(`Valor de R$ ${valFmt.replace('.', ',')} aplicado a todos os dias!`, 'success');
+};
+
+window.salvarConfiguracoesDiarias = async function() {
+  if (!selectedEventoId) return;
+
+  const habilitado = document.getElementById('diarias-toggle-habilitado').checked;
+  const valorPadrao = parseFloat(document.getElementById('diaria-valor-padrao').value) || 0;
+
+  const diasRows = document.querySelectorAll('.diaria-dia-row');
+  const diasConfig = [];
+  diasRows.forEach(row => {
+    const dataIso = row.dataset.data;
+    const label = row.dataset.label;
+    const ativo = row.querySelector('.diaria-dia-check').checked;
+    const valor = parseFloat(row.querySelector('.diaria-dia-valor').value) || valorPadrao;
+    diasConfig.push({ data: dataIso, label, ativo, valor });
+  });
+
+  const camposSelecionados = Array.from(document.querySelectorAll('.diaria-form-field:checked')).map(cb => cb.value).join(',');
+
+  const payload = {
+    diarias_habilitadas: habilitado,
+    config_diarias: {
+      valor_padrao: valorPadrao,
+      dias: diasConfig
+    },
+    campos_formulario_diaria: camposSelecionados || null
+  };
+
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/diarias-config`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+
+    showToast('Configurações de diárias salvas com sucesso!', 'success');
+    await loadEventoInfo();
+  } catch (err) {
+    showToast(err.message || 'Erro ao salvar configurações de diárias.', 'error');
+  }
+};
+
+window.carregarDiaristas = async function() {
+  const tableBody = document.getElementById('diarias-table-body');
+  if (!tableBody || !selectedEventoId) return;
+
+  const search = document.getElementById('diarias-filter-search')?.value || '';
+  const dia = document.getElementById('diarias-filter-dia')?.value || '';
+  const status = document.getElementById('diarias-filter-status')?.value || '';
+
+  let query = `?evento_id=${selectedEventoId}`;
+  if (search) query += `&search=${encodeURIComponent(search)}`;
+  if (dia) query += `&dia=${encodeURIComponent(dia)}`;
+  if (status) query += `&status=${encodeURIComponent(status)}`;
+
+  try {
+    const list = await API.request(`/admin/eventos/${selectedEventoId}/diarias${query}`);
+    cachedDiaristasList = list || [];
+
+    const totalBadge = document.getElementById('diarias-total-badge');
+    if (totalBadge) totalBadge.textContent = cachedDiaristasList.length;
+
+    renderTabelaDiaristas();
+  } catch (err) {
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #EF4444; padding: 2rem;">Erro ao carregar lista de diaristas.</td></tr>`;
+  }
+};
+
+function renderTabelaDiaristas() {
+  const tableBody = document.getElementById('diarias-table-body');
+  if (!tableBody) return;
+
+  if (cachedDiaristasList.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">Nenhum diarista encontrado com os filtros selecionados.</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = cachedDiaristasList.map(dia => {
+    const user = dia.usuario || {};
+    const extras = dia.dados_extras || {};
+    const tel = user.telefone || extras.telefone || '';
+    const telLimpo = tel.replace(/\D/g, '');
+    const waLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20tudo%20bem?%20Falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento%20${encodeURIComponent(eventoAtual?.titulo || 'UMP')}!` : null;
+
+    const diasArr = Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados : [dia.dias_selecionados];
+    const diasBadges = diasArr.map(d => `<span class="badge" style="background: #F3E8FF; color: #6B21A8; font-size: 0.75rem; margin-right: 3px;">${d}</span>`).join(' ');
+
+    const valorFmt = parseFloat(dia.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const statusBadge = dia.status === 'CONFIRMADA'
+      ? `<span class="badge badge-success">Confirmada</span>`
+      : `<span class="badge badge-danger">${dia.status}</span>`;
+
+    const checkinBadge = dia.checkin_realizado
+      ? `<span class="badge badge-success" style="font-size: 0.75rem;">Checked-in</span>`
+      : `<span class="badge" style="background: #F1F5F9; color: var(--text-muted); border: 1px solid #E2E8F0; font-size: 0.75rem;">Ausente</span>`;
+
+    const checkinBtnText = dia.checkin_realizado ? "Desfazer Check-in" : "Check-in Manual";
+    const checkinBtnClass = dia.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+        <td style="padding: 0.75rem 1rem;">
+          <strong style="color: var(--text-dark); display: block; font-size: 0.9rem;">${user.nome || 'Participante'}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">CPF: ${formatarCPF(user.cpf || extras.cpf || '')}</span>
+          ${waLink ? `<a href="${waLink}" target="_blank" style="font-size: 0.75rem; color: #10B981; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; margin-top: 2px;">${ICONS.whatsapp} ${tel}</a>` : `<span style="font-size: 0.75rem; color: var(--text-muted);">${tel || 'Sem telefone'}</span>`}
+        </td>
+        <td style="padding: 0.75rem 1rem;">
+          ${diasBadges}
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${dia.quantidade_dias} dia(s)</div>
+        </td>
+        <td style="padding: 0.75rem 1rem; font-weight: 700; color: #6D28D9;">
+          ${valorFmt}
+        </td>
+        <td style="padding: 0.75rem 1rem;">
+          ${statusBadge}
+        </td>
+        <td style="padding: 0.75rem 1rem;">
+          ${checkinBadge}
+        </td>
+        <td style="padding: 0.75rem 1rem; text-align: center;">
+          <div style="display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-outline" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="abrirModalFichaDiaria(${dia.id})" title="Ver Ficha Completa">
+              Ver Ficha
+            </button>
+            <button class="${checkinBtnClass}" style="padding: 0.35rem 0.6rem; font-size: 0.75rem;" onclick="toggleCheckinDiaria(${dia.id})">
+              ${checkinBtnText}
+            </button>
+            ${dia.status === 'CONFIRMADA' ? `
+              <button class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.75rem; color: #EF4444;" onclick="alterarStatusDiaria(${dia.id}, 'CANCELADA')" title="Cancelar Diária">
+                Cancelar
+              </button>
+            ` : `
+              <button class="btn btn-outline" style="padding: 0.35rem 0.5rem; font-size: 0.75rem; color: #10B981;" onclick="alterarStatusDiaria(${dia.id}, 'CONFIRMADA')" title="Reativar Diária">
+                Reativar
+              </button>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.abrirModalFichaDiaria = function(diariaId) {
+  const dia = cachedDiaristasList.find(d => d.id === diariaId);
+  if (!dia) return;
+
+  const user = dia.usuario || {};
+  const extras = dia.dados_extras || {};
+  const modal = document.getElementById('modal-detalhes-diaria');
+  const conteudo = document.getElementById('modal-detalhes-diaria-conteudo');
+  if (!modal || !conteudo) return;
+
+  const tel = user.telefone || extras.telefone || '';
+  const telLimpo = tel.replace(/\D/g, '');
+  const waLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento!` : null;
+
+  const diasArr = Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados : [dia.dias_selecionados];
+  const diasHTML = diasArr.map(d => `<span style="background: #EDE9FE; color: #6D28D9; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-right: 5px;">📅 ${d}</span>`).join('');
+
+  const rotulosAmigaveis = {
+    cpf: "CPF",
+    telefone: "Telefone / WhatsApp",
+    data_nascimento: "Data de Nascimento",
+    genero: "Gênero",
+    tamanho_camiseta: "Tamanho da Camiseta",
+    tipo_sanguineo: "Tipo Sanguíneo",
+    alergias: "Alergias",
+    medicamento_continuo: "Medicamento Contínuo",
+    contato_emergencia: "Contato de Emergência",
+    restricao_alimentar: "Restrição Alimentar",
+    igreja: "Igreja / Congregação",
+    presbiterio: "Presbitério",
+    cidade: "Cidade",
+    estado_civil: "Estado Civil",
+    nome_pastor: "Nome do Pastor",
+    contato_pastor: "Contato do Pastor",
+    cargo_federacao: "Cargo na Federação"
+  };
+
+  const extrasRows = Object.keys(rotulosAmigaveis).map(campo => {
+    const val = extras[campo];
+    if (val === undefined || val === null || String(val).trim() === '') return '';
+    return `
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">${rotulosAmigaveis[campo]}</span>
+        <strong style="font-size: 0.9rem; color: var(--text-dark);">${val}</strong>
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  conteudo.innerHTML = `
+    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 700; margin-bottom: 0.25rem;">🎫 Inscrição por Diária</span>
+        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin: 0;">${user.nome || 'Participante'}</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">${user.email}</span>
+      </div>
+      <button onclick="document.getElementById('modal-detalhes-diaria').classList.remove('active')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+    </div>
+
+    <!-- Dias Contratados -->
+    <div style="background: #FAF5FF; border: 1.5px dashed #C084FC; border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+      <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #7E22CE; display: block; margin-bottom: 0.35rem;">Dias Contratados (${dia.quantidade_dias} dia(s)):</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+        ${diasHTML}
+      </div>
+    </div>
+
+    <!-- Detalhes do Pagamento & Check-in -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Valor Total Pago</span>
+        <strong style="font-size: 1.1rem; color: #6D28D9;">${parseFloat(dia.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Código de Check-in</span>
+        <strong style="font-size: 0.95rem; font-family: monospace; color: var(--primary);">${dia.codigo_checkin || 'N/A'}</strong>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Status do Check-in</span>
+        <strong style="font-size: 0.9rem; color: ${dia.checkin_realizado ? '#10B981' : '#F59E0B'};">${dia.checkin_realizado ? 'Presente' : 'Ausente'}</strong>
+      </div>
+    </div>
+
+    <!-- Dados Extras Preenchidos -->
+    ${extrasRows ? `
+      <div style="margin-bottom: 1.25rem;">
+        <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.5rem;">Informações da Inscrição de Diária:</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
+          ${extrasRows}
+        </div>
+      </div>
+    ` : ''}
+
+    <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      ${waLink ? `
+        <a href="${waLink}" target="_blank" class="btn btn-outline" style="color: #10B981; border-color: #10B981; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem;">
+          ${ICONS.whatsapp} Conversar no WhatsApp
+        </a>
+      ` : '<div></div>'}
+      
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-primary" onclick="toggleCheckinDiaria(${dia.id}); document.getElementById('modal-detalhes-diaria').classList.remove('active');" style="font-size: 0.85rem;">
+          ${dia.checkin_realizado ? 'Desfazer Check-in' : 'Confirmar Check-in'}
+        </button>
+        <button class="btn btn-outline" onclick="document.getElementById('modal-detalhes-diaria').classList.remove('active')" style="font-size: 0.85rem;">
+          Fechar
+        </button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+};
+
+window.fecharModalDiariaBackdrop = function(e) {
+  if (e.target.id === 'modal-detalhes-diaria') {
+    e.target.classList.remove('active');
+  }
+};
+
+window.toggleCheckinDiaria = async function(diariaId) {
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/inscricoes/${diariaId}/toggle-checkin?tipo=DIARIA`, {
+      method: 'POST'
+    });
+    showToast(res.mensagem, "success");
+    await carregarDiaristas();
+    await loadListaPresenca();
+  } catch (err) {
+    showToast(err.message || "Erro ao alternar check-in.", "error");
+  }
+};
+
+window.alterarStatusDiaria = async function(diariaId, novoStatus) {
+  if (!confirm(`Deseja alterar o status da diária para ${novoStatus}?`)) return;
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/diarias/${diariaId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: novoStatus })
+    });
+    showToast(`Status da diária atualizado para ${novoStatus}!`, "success");
+    await carregarDiaristas();
+    await loadListaPresenca();
+  } catch (err) {
+    showToast(err.message || "Erro ao atualizar status da diária.", "error");
+  }
+};
+
+window.exportarDiaristasExcel = function() {
+  if (cachedDiaristasList.length === 0) {
+    showToast('Nenhum diarista para exportar.', 'warning');
+    return;
+  }
+
+  let csvContent = "\uFEFF";
+  csvContent += "Nome,CPF,E-mail,Telefone,Dias Contratados,Qtd Dias,Valor Total,Status,Check-in,Data Check-in,Data Compra\n";
+
+  cachedDiaristasList.forEach(dia => {
+    const user = dia.usuario || {};
+    const extras = dia.dados_extras || {};
+    const nome = `"${(user.nome || '').replace(/"/g, '""')}"`;
+    const cpf = `"${(user.cpf || extras.cpf || '').replace(/"/g, '""')}"`;
+    const email = `"${(user.email || '').replace(/"/g, '""')}"`;
+    const tel = `"${(user.telefone || extras.telefone || '').replace(/"/g, '""')}"`;
+    const dias = `"${(Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados.join('; ') : String(dia.dias_selecionados || '')).replace(/"/g, '""')}"`;
+    const qtd = dia.quantidade_dias || 1;
+    const valor = parseFloat(dia.valor_total || 0).toFixed(2);
+    const status = dia.status || '';
+    const checkin = dia.checkin_realizado ? 'Presente' : 'Ausente';
+    const checkinData = dia.checkin_data ? new Date(dia.checkin_data).toLocaleString('pt-BR') : '';
+    const dataCompra = dia.created_at ? new Date(dia.created_at).toLocaleString('pt-BR') : '';
+
+    csvContent += `${nome},${cpf},${email},${tel},${dias},${qtd},${valor},${status},${checkin},${checkinData},${dataCompra}\n`;
+  });
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `diaristas_evento_${selectedEventoId}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };

@@ -46,6 +46,7 @@ def obter_dashboard_usuario(
         first_pag = ins.pagamentos[0] if ins.pagamentos else None
         ins_dict = {
             "id": ins.id,
+            "tipo_registro": "REGULAR",
             "evento_id": ins.evento_id,
             "evento_titulo": ins.evento.titulo if ins.evento else "",
             "evento_local": ins.evento.local if ins.evento else "",
@@ -103,6 +104,36 @@ def obter_dashboard_usuario(
                 "parcelas": parcelas_list
             })
 
+    # 2.1 Diárias Confirmadas do Usuário
+    from app.models.diaria import InscricaoDiaria, DiariaTriagem
+    diarias = db.query(InscricaoDiaria).filter(InscricaoDiaria.usuario_id == current_user.id).order_by(InscricaoDiaria.created_at.desc()).all()
+
+    for dia in diarias:
+        dias_str = ", ".join(dia.dias_selecionados) if isinstance(dia.dias_selecionados, list) else str(dia.dias_selecionados)
+        dia_dict = {
+            "id": dia.id,
+            "tipo_registro": "DIARIA",
+            "dias_selecionados": dia.dias_selecionados,
+            "dias_formatados": dias_str,
+            "quantidade_dias": dia.quantidade_dias,
+            "evento_id": dia.evento_id,
+            "evento_titulo": dia.evento.titulo if dia.evento else "",
+            "evento_local": dia.evento.local if dia.evento else "",
+            "evento_data_inicio": dia.evento.data_inicio.isoformat() if dia.evento else "",
+            "evento_data_fim": dia.evento.data_fim.isoformat() if dia.evento else "",
+            "status": dia.status,
+            "forma_pagamento": dia.forma_pagamento or "Cartão / Pix (InfinitePay)",
+            "capture_method": dia.capture_method,
+            "valor_total": float(dia.valor_total),
+            "dados_extras": dia.dados_extras,
+            "codigo_checkin": dia.codigo_checkin,
+            "checkin_realizado": dia.checkin_realizado,
+            "checkin_data": dia.checkin_data.isoformat() if dia.checkin_data else None,
+            "receipt_url": dia.receipt_url,
+            "created_at": dia.created_at.isoformat()
+        }
+        inscricoes_data.append(dia_dict)
+
     # 3. Triagens Pendentes do Usuário
     from app.models.inscricao_triagem import InscricaoTriagem
     triagens = db.query(InscricaoTriagem).filter(
@@ -114,6 +145,7 @@ def obter_dashboard_usuario(
     for tr in triagens:
         triagens_data.append({
             "id": tr.id,
+            "tipo_registro": "REGULAR",
             "evento_id": tr.evento_id,
             "evento_titulo": tr.evento.titulo if tr.evento else "",
             "evento_local": tr.evento.local if tr.evento else "",
@@ -125,6 +157,41 @@ def obter_dashboard_usuario(
             "data_primeira_parcela": tr.data_primeira_parcela.isoformat() if tr.data_primeira_parcela else None,
             "valor_total": float(tr.valor_total),
             "created_at": tr.created_at.isoformat()
+        })
+
+    # 3.1 Triagens de Diária Pendentes do Usuário
+    triagens_diarias = db.query(DiariaTriagem).filter(
+        DiariaTriagem.usuario_id == current_user.id,
+        DiariaTriagem.status == "PENDENTE_PAGAMENTO"
+    ).order_by(DiariaTriagem.created_at.desc()).all()
+
+    from app.services.infinitepay import infinitepay_service
+    for td in triagens_diarias:
+        order_nsu = f"DIARIA_TRIAGEM-{td.id}"
+        chk = infinitepay_service.criar_checkout_link(
+            order_nsu=order_nsu,
+            valor=td.valor_total,
+            descricao=f"Diária ({td.quantidade_dias}d) - {td.evento.titulo if td.evento else 'Evento'}",
+            customer_email=current_user.email,
+            customer_name=current_user.nome
+        )
+        dias_str = ", ".join(td.dias_selecionados) if isinstance(td.dias_selecionados, list) else str(td.dias_selecionados)
+        triagens_data.append({
+            "id": td.id,
+            "tipo_registro": "DIARIA",
+            "evento_id": td.evento_id,
+            "evento_titulo": td.evento.titulo if td.evento else "",
+            "evento_local": td.evento.local if td.evento else "",
+            "evento_data_inicio": td.evento.data_inicio.isoformat() if td.evento and td.evento.data_inicio else "",
+            "evento_data_fim": td.evento.data_fim.isoformat() if td.evento and td.evento.data_fim else "",
+            "dias_formatados": dias_str,
+            "dias_selecionados": td.dias_selecionados,
+            "status": td.status,
+            "forma_pagamento": td.forma_pagamento,
+            "num_parcelas": 1,
+            "valor_total": float(td.valor_total),
+            "checkout_url": chk.get("checkout_url"),
+            "created_at": td.created_at.isoformat()
         })
 
     # Comunicados do sistema/evento

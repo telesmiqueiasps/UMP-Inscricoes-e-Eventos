@@ -91,6 +91,44 @@ async def webhook_infinitepay(
         f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
     )
 
+    # --- LÓGICA DE WEBHOOK PARA TRIAGEM DE DIÁRIA ---
+    if order_nsu and str(order_nsu).startswith("DIARIA_TRIAGEM-"):
+        try:
+            parts = str(order_nsu).split("-")
+            triagem_id = int(parts[1])
+
+            from app.models.diaria import DiariaTriagem
+            from app.services.diaria_service import converter_triagem_em_diaria
+            from decimal import Decimal
+
+            triagem = db.query(DiariaTriagem).filter(DiariaTriagem.id == triagem_id).first()
+            if not triagem:
+                logger.error(f"Triagem de Diária #{triagem_id} não encontrada para webhook order_nsu={order_nsu}")
+                raise HTTPException(status_code=400, detail="Triagem de Diária não encontrada.")
+
+            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
+            paid_amount_reais = Decimal(str(paid_amount_raw)) / 100 if paid_amount_raw else triagem.valor_total
+            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+
+            diaria = converter_triagem_em_diaria(
+                db=db,
+                triagem=triagem,
+                order_nsu=str(order_nsu),
+                transaction_nsu=str(transaction_nsu or ""),
+                receipt_url=str(receipt_url or ""),
+                invoice_slug=str(invoice_slug or ""),
+                paid_amount=paid_amount_reais,
+                capture_method=capture_method,
+                background_tasks=background_tasks
+            )
+
+            return {"message": "Webhook de triagem de diária processado com sucesso. Diária confirmada!", "diaria_id": diaria.id}
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise e
+            logger.error(f"Erro ao converter triagem de diária no webhook: {e}")
+            raise HTTPException(status_code=400, detail=f"Erro ao converter triagem de diária: {str(e)}")
+
     # --- LÓGICA DE WEBHOOK PARA TRIAGEM DE INSCRIÇÃO ---
     if order_nsu and str(order_nsu).startswith("TRIAGEM-"):
         try:

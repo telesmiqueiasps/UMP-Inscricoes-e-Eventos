@@ -105,6 +105,52 @@ CREATE TABLE IF NOT EXISTS parcelas (
 
 CREATE INDEX IF NOT EXISTS ix_parcelas_pagamento_id ON parcelas(pagamento_id);
 
+-- 6. Tabela de Triagem de Diárias (Drafts de Diárias Pendentes de Pagamento)
+CREATE TABLE IF NOT EXISTS diarias_triagem (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    dias_selecionados JSONB NOT NULL,
+    quantidade_dias INTEGER DEFAULT 1 NOT NULL,
+    valor_total NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'PENDENTE_PAGAMENTO' NOT NULL,
+    forma_pagamento VARCHAR(50) DEFAULT 'INFINITEPAY' NOT NULL,
+    dados_extras JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_diarias_triagem_usuario_id ON diarias_triagem(usuario_id);
+CREATE INDEX IF NOT EXISTS ix_diarias_triagem_evento_id ON diarias_triagem(evento_id);
+
+-- 7. Tabela Oficial de Inscrições por Diária (Confirmadas)
+CREATE TABLE IF NOT EXISTS inscricoes_diarias (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    dias_selecionados JSONB NOT NULL,
+    quantidade_dias INTEGER DEFAULT 1 NOT NULL,
+    valor_total NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'CONFIRMADA' NOT NULL,
+    forma_pagamento VARCHAR(50) DEFAULT 'INFINITEPAY' NOT NULL,
+    dados_extras JSONB,
+    codigo_checkin VARCHAR(100) UNIQUE,
+    checkin_realizado BOOLEAN DEFAULT FALSE NOT NULL,
+    checkin_data TIMESTAMP WITH TIME ZONE,
+    transaction_nsu VARCHAR(100),
+    receipt_url VARCHAR(500),
+    order_nsu VARCHAR(100),
+    invoice_slug VARCHAR(250),
+    paid_amount NUMERIC(10, 2),
+    capture_method VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_usuario_id ON inscricoes_diarias(usuario_id);
+CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_evento_id ON inscricoes_diarias(evento_id);
+CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_checkin ON inscricoes_diarias(codigo_checkin);
+
 -- ====================================================================
 -- TRIGGERS DE ATUALIZAÇÃO AUTOMÁTICA DA COLUNA updated_at
 -- ====================================================================
@@ -122,3 +168,5 @@ CREATE OR REPLACE TRIGGER update_eventos_updated_at BEFORE UPDATE ON eventos FOR
 CREATE OR REPLACE TRIGGER update_inscricoes_updated_at BEFORE UPDATE ON inscricoes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_pagamentos_updated_at BEFORE UPDATE ON pagamentos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_parcelas_updated_at BEFORE UPDATE ON parcelas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_diarias_triagem_updated_at BEFORE UPDATE ON diarias_triagem FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_inscricoes_diarias_updated_at BEFORE UPDATE ON inscricoes_diarias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

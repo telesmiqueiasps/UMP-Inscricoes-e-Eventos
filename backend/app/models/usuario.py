@@ -19,3 +19,5 @@ class Usuario(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     inscricoes = relationship("Inscricao", back_populates="usuario", cascade="all, delete-orphan")
+    diarias = relationship("InscricaoDiaria", back_populates="usuario", cascade="all, delete-orphan")
+    diarias_triagem = relationship("DiariaTriagem", back_populates="usuario", cascade="all, delete-orphan")

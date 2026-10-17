@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 from decimal import Decimal
 
@@ -19,6 +19,9 @@ class EventoBase(BaseModel):
     campos_formulario: Optional[str] = None
     fotos: Optional[str] = None
     whatsapp_grupo_link: Optional[str] = None
+    diarias_habilitadas: bool = False
+    config_diarias: Optional[Any] = None
+    campos_formulario_diaria: Optional[str] = None
 
 
 class EventoCreate(BaseModel):
@@ -36,6 +39,9 @@ class EventoCreate(BaseModel):
     campos_formulario: Optional[str] = None
     fotos: Optional[str] = None
     whatsapp_grupo_link: Optional[str] = None
+    diarias_habilitadas: bool = False
+    config_diarias: Optional[Any] = None
+    campos_formulario_diaria: Optional[str] = None
 
 
 class EventoUpdate(BaseModel):
@@ -53,6 +59,9 @@ class EventoUpdate(BaseModel):
     campos_formulario: Optional[str] = None
     fotos: Optional[str] = None
     whatsapp_grupo_link: Optional[str] = None
+    diarias_habilitadas: Optional[bool] = None
+    config_diarias: Optional[Any] = None
+    campos_formulario_diaria: Optional[str] = None
 
 
 class EventoResponse(EventoBase):

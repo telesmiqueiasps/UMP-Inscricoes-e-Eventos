@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 4. Badges e CTA
     const badgeContainer = document.getElementById('event-badge-container');
     const ctaContainer = document.getElementById('event-cta-container');
+    const diariaCtaContainer = document.getElementById('event-diaria-cta-container');
 
     if (isSoldOut) {
       if (badgeContainer) {
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (ctaContainer) {
         ctaContainer.innerHTML = `
           <button class="btn btn-outline" style="width: 100%; border-color: #EF4444; color: #EF4444; cursor: not-allowed; font-size: 1.1rem; padding: 0.9rem;" disabled>
-            Vagas Esgotadas
+            Vagas Integrais Esgotadas
           </button>
         `;
       }
@@ -86,6 +87,42 @@ document.addEventListener('DOMContentLoaded', async () => {
           </a>
         `;
       }
+    }
+
+    // Diárias CTA
+    if (ev.diarias_habilitadas && diariaCtaContainer) {
+      let valorDiariaMin = null;
+      try {
+        const cfg = typeof ev.config_diarias === 'string' ? JSON.parse(ev.config_diarias) : ev.config_diarias;
+        if (cfg) {
+          if (cfg.valor_padrao) valorDiariaMin = parseFloat(cfg.valor_padrao);
+          if (cfg.dias && Array.isArray(cfg.dias)) {
+            cfg.dias.forEach(d => {
+              if (d.disponivel !== false && d.valor) {
+                const v = parseFloat(d.valor);
+                if (valorDiariaMin === null || v < valorDiariaMin) valorDiariaMin = v;
+              }
+            });
+          }
+        }
+      } catch (e) {}
+
+      diariaCtaContainer.style.display = 'block';
+      diariaCtaContainer.innerHTML = `
+        <div style="background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; color: #7E22CE; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <span>Participação por Diária</span>
+          </div>
+          <p style="font-size: 0.88rem; color: #6B21A8; margin-bottom: 0.75rem; line-height: 1.4;">
+            Não vai participar de todos os dias? Adquira diárias avulsas para os dias que preferir.
+            ${valorDiariaMin ? `<br><strong style="font-size: 0.95rem;">A partir de ${valorDiariaMin.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/dia</strong>` : ''}
+          </p>
+          <a href="diaria.html?evento_id=${ev.id}" class="btn" style="width: 100%; display: block; text-align: center; background: #7E22CE; color: #FFFFFF; font-weight: 700; padding: 0.85rem 1rem; border-radius: var(--radius-md); text-decoration: none; box-shadow: 0 2px 4px rgba(126, 34, 206, 0.25);">
+            Comprar Diária &rarr;
+          </a>
+        </div>
+      `;
     }
 
     // 5. Galeria de Imagens
