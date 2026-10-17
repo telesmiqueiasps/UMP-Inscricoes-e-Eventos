@@ -955,6 +955,10 @@ nav.navbar {
 
 /* Badge de Status (Seção 11 da Especificação) */
 .event-card-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 }
 
@@ -982,6 +986,19 @@ nav.navbar {
 .badge-status-ended {
   background-color: #F1F5F9;
   color: #64748B;
+}
+
+.badge-diaria-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+  background-color: #FAF5FF;
+  color: #7E22CE;
+  border: 1px solid #E9D5FF;
 }
 
 /* Título e Descrição */

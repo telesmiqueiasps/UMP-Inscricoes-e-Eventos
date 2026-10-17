@@ -115,6 +115,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
+    // Renderizar observações/orientações se configurado pelo admin
+    const observacaoContainer = document.getElementById('diaria-observacao-container');
+    const observacaoTexto = document.getElementById('diaria-observacao-texto');
+    const observacao = config.observacao !== undefined ? config.observacao : (config.descricao || '');
+    if (observacaoContainer && observacaoTexto) {
+      if (observacao && observacao.trim()) {
+        observacaoTexto.textContent = observacao.trim();
+        observacaoContainer.style.display = 'block';
+      } else {
+        observacaoContainer.style.display = 'none';
+      }
+    }
+
     // Renderizar Checklist de Dias
     renderChecklistDias();
 

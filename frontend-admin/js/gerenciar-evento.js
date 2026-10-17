@@ -2169,6 +2169,10 @@ window.renderConfigDiariasUI = function() {
   const valorPadrao = config.valor_padrao !== undefined ? config.valor_padrao : '';
   if (valorPadraoInput) valorPadraoInput.value = valorPadrao;
 
+  const observacaoInput = document.getElementById('diaria-observacao');
+  const observacao = config.observacao !== undefined ? config.observacao : (config.descricao || '');
+  if (observacaoInput) observacaoInput.value = observacao;
+
   // Gerar dias do evento
   const diasGerados = gerarDiasDoEvento(eventoAtual.data_inicio, eventoAtual.data_fim);
   const diasSalvos = config.dias || [];
@@ -2249,6 +2253,7 @@ window.salvarConfiguracoesDiarias = async function() {
 
   const habilitado = document.getElementById('diarias-toggle-habilitado').checked;
   const valorPadrao = parseFloat(document.getElementById('diaria-valor-padrao').value) || 0;
+  const observacao = document.getElementById('diaria-observacao')?.value.trim() || '';
 
   const diasRows = document.querySelectorAll('.diaria-dia-row');
   const diasConfig = [];
@@ -2266,6 +2271,7 @@ window.salvarConfiguracoesDiarias = async function() {
     diarias_habilitadas: habilitado,
     config_diarias: {
       valor_padrao: valorPadrao,
+      observacao: observacao,
       dias: diasConfig
     },
     campos_formulario_diaria: camposSelecionados || null
