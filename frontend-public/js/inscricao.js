@@ -380,10 +380,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = API.getUser();
     const token = API.getToken();
 
+    // Atualizar menu caso o participante já esteja logado
+    const navUser = document.getElementById('nav-user-area');
+    if (navUser) {
+      if (user && token) {
+        const firstName = user.nome ? user.nome.split(' ')[0] : 'Minha Área';
+        const userIconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        navUser.innerHTML = `${userIconSvg}<span>Olá, ${firstName}</span>`;
+        navUser.href = '/usuario/dashboard.html';
+      } else {
+        navUser.innerHTML = 'Área do Participante';
+        navUser.href = '/usuario/login.html';
+      }
+    }
+
     if (user && token) {
       if (loggedUserBanner) {
         loggedUserBanner.style.display = 'flex';
-        loggedUserMsg.innerHTML = `Participante ativo: <strong>${user.nome}</strong> (${user.email})`;
+        const userIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        loggedUserMsg.innerHTML = `${userIconSvg}Participante ativo: <strong>${user.nome}</strong> (${user.email})`;
       }
       step1.style.display = 'none';
       step2.style.display = 'block';
@@ -787,7 +802,7 @@ function renderDynamicFormFields() {
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Presbitério *</label>
             <select name="dyn_presbiterio" id="dyn-select-presbiterio" class="form-control dyn-input" required>
-              <option value="">Carregando presbitérios...</option>
+              <option value="">Selecione seu presbitério...</option>
             </select>
           </div>
         `;
@@ -856,12 +871,7 @@ function renderDynamicFormFields() {
   // Carregar Presbitérios se houver o campo presbiterio
   const selectPresb = document.getElementById('dyn-select-presbiterio');
   if (selectPresb) {
-    API.request('/presbiterios').then(data => {
-      selectPresb.innerHTML = '<option value="">Selecione...</option>' + 
-        data.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
-    }).catch(err => {
-      selectPresb.innerHTML = '<option value="">Erro ao carregar presbitérios</option>';
-    });
+    carregarPresbiteriosSelect(selectPresb, (dadosExtrasSalvos && dadosExtrasSalvos.presbiterio) ? dadosExtrasSalvos.presbiterio : '');
   }
 
   // Pré-preenchimento
@@ -872,4 +882,60 @@ function renderDynamicFormFields() {
     const foneInput = document.querySelector('input[name="dyn_telefone"]');
     if (foneInput) foneInput.value = user.telefone || '';
   }
+}
+
+function carregarPresbiteriosSelect(selectEl, valorPreSelecionado = '') {
+  if (!selectEl) return;
+
+  const PRESBITERIOS_OFICIAIS = [
+    "Presbitério Borborema",
+    "Presbitério Central",
+    "Presbitério do Brejo",
+    "Presbitério João Pessoa",
+    "Presbitério Leste",
+    "Presbitério Metropolitano",
+    "Presbitério Oeste",
+    "Presbitério Paraíba",
+    "Presbitério Sul Paraíba",
+    "Outros"
+  ];
+
+  const getLista = () => {
+    try {
+      const cached = localStorage.getItem('cached_presbiterios');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return PRESBITERIOS_OFICIAIS.map(nome => ({ nome }));
+  };
+
+  const renderOpcoes = (lista) => {
+    const valAtual = valorPreSelecionado || selectEl.value;
+    selectEl.innerHTML = '<option value="">Selecione seu presbitério...</option>' + 
+      lista.map(p => {
+        const nome = typeof p === 'string' ? p : (p.nome || '');
+        const sel = (nome && nome === valAtual) ? 'selected' : '';
+        return `<option value="${nome}" ${sel}>${nome}</option>`;
+      }).join('');
+    if (valAtual) selectEl.value = valAtual;
+  };
+
+  // 1. Renderiza imediatamente com dados locais/padrão (zero delay para o usuário)
+  renderOpcoes(getLista());
+
+  // 2. Sincroniza silenciosamente com o backend em segundo plano
+  const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'https://ump-inscricoes-e-eventos.onrender.com/api/v1';
+  fetch(`${baseUrl}/presbiterios`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem('cached_presbiterios', JSON.stringify(data));
+        renderOpcoes(data);
+      }
+    })
+    .catch(() => {
+      // Mantém silenciosamente a lista padrão/cache pronta
+    });
 }

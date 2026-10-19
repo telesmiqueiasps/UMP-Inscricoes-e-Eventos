@@ -566,27 +566,18 @@ class HeroBannerSliderController {
     this.startAutoplay();
   }
 
-  async discoverBanners() {
-    // Procura por banner.png e por banner1.png até banner15.png (além de .jpg e .webp)
-    const candidates = ['img/banner.png'];
-    for (let i = 1; i <= 15; i++) {
-      candidates.push(`img/banner${i}.png`);
-      candidates.push(`img/banner${i}.jpg`);
-      candidates.push(`img/banner${i}.webp`);
-    }
-
-    const checkImage = (url) => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(url);
-        img.onerror = () => resolve(null);
-        img.src = url;
-      });
-    };
-
-    const results = await Promise.all(candidates.map(checkImage));
-    const valid = results.filter(Boolean);
-    this.availableBanners = Array.from(new Set(valid.length > 0 ? valid : ['img/banner.png']));
+  discoverBanners() {
+    // Lista explícita dos banners existentes no projeto (evita erros 404 no console)
+    this.availableBanners = [
+      'img/banner.png',
+      'img/banner1.png',
+      'img/banner2.png',
+      'img/banner3.png',
+      'img/banner4.png',
+      'img/banner5.png',
+      'img/banner6.png',
+      'img/banner7.png'
+    ];
   }
 
   renderSlides() {
@@ -712,14 +703,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = API.getUser();
     if (user && API.getToken()) {
       const firstName = user.nome ? user.nome.split(' ')[0] : 'Minha Área';
+      const userIconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
       const navUser = document.getElementById('nav-user-area');
       const drawerUser = document.getElementById('drawer-user-area');
       if (navUser) {
-        navUser.innerHTML = `👤 Olá, ${firstName}`;
+        navUser.innerHTML = `${userIconSvg}<span>Olá, ${firstName}</span>`;
         navUser.href = '/usuario/dashboard.html';
       }
       if (drawerUser) {
-        drawerUser.innerHTML = `👤 Olá, ${firstName}`;
+        drawerUser.innerHTML = `${userIconSvg}<span>Olá, ${firstName}</span>`;
         drawerUser.href = '/usuario/dashboard.html';
       }
     }
