@@ -491,7 +491,7 @@ function renderResultadoPagamento(checkoutUrl, valorTotal, dias) {
   const container = document.getElementById('payment-result');
   if (!container) return;
 
-  const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
+  const userAreaUrl = '/usuario/dashboard.html';
   const diasFmt = Array.isArray(dias) ? dias.map(formatarDataIso).join('<br>🗓️ ') : dias;
   const valorFmt = parseFloat(valorTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

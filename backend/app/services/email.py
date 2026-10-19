@@ -76,7 +76,7 @@ def enviar_email_inscricao(destinatario_email: str, destinatario_nome: str, nome
         
         <p>Acesse o painel do participante para copiar o código Pix, baixar os PDF das parcelas ou concluir a transação no cartão:</p>
         <p style="text-align: center; margin-top: 25px;">
-            <a href="https://usuariosinodalpb.netlify.app/dashboard.html" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Acessar Área do Participante</a>
+            <a href="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Acessar Área do Participante</a>
         </p>
         
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />
@@ -105,7 +105,7 @@ def enviar_email_confirmacao(destinatario_email: str, destinatario_nome: str, no
         
         <p>Você pode consultar o comprovante da inscrição a qualquer momento no seu painel:</p>
         <p style="text-align: center; margin-top: 25px;">
-            <a href="https://usuariosinodalpb.netlify.app/dashboard.html" style="background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Acessar Área do Participante</a>
+            <a href="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html" style="background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Acessar Área do Participante</a>
         </p>
         
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />
@@ -144,7 +144,7 @@ def enviar_email_alerta_vencimento(
         mensagem = f"Gostaríamos de lembrar que a sua parcela <strong>#{numero_parcela}</strong> no valor de <strong>{valor_fmt}</strong> vencerá no dia <strong>{vencimento_fmt}</strong>."
         cta_text = "Realizar Pagamento"
 
-    link = link_pagamento or "https://usuariosinodalpb.netlify.app/dashboard.html"
+    link = link_pagamento or "https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
     
     conteudo_html = f"""
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
@@ -226,7 +226,7 @@ def enviar_email_confirmacao_diaria(
         <p>Apresente o seu QR Code ou o código de check-in na portaria do evento no(s) dia(s) correspondente(s) para liberar o seu acesso.</p>
         
         <p style="text-align: center; margin-top: 25px;">
-            <a href="https://usuariosinodalpb.netlify.app/dashboard.html" style="background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ver Minha Diária no Painel</a>
+            <a href="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html" style="background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ver Minha Diária no Painel</a>
         </p>
         
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />

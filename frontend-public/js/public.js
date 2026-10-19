@@ -706,4 +706,22 @@ document.addEventListener('DOMContentLoaded', () => {
   setupMobileMenu();
   new HeroBannerSliderController();
   carregarEventos();
+
+  // Atualizar menu caso o participante já esteja logado
+  try {
+    const user = API.getUser();
+    if (user && API.getToken()) {
+      const firstName = user.nome ? user.nome.split(' ')[0] : 'Minha Área';
+      const navUser = document.getElementById('nav-user-area');
+      const drawerUser = document.getElementById('drawer-user-area');
+      if (navUser) {
+        navUser.innerHTML = `👤 Olá, ${firstName}`;
+        navUser.href = '/usuario/dashboard.html';
+      }
+      if (drawerUser) {
+        drawerUser.innerHTML = `👤 Olá, ${firstName}`;
+        drawerUser.href = '/usuario/dashboard.html';
+      }
+    }
+  } catch (e) {}
 });

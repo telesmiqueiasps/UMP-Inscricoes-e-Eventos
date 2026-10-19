@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderPaymentResult(pagamento, forma) {
-    const userAreaUrl = 'https://usuariosinodalpb.netlify.app/dashboard.html';
+    const userAreaUrl = '/usuario/dashboard.html';
 
     const infoAvisoHtml = `
       <div style="background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: var(--radius-md); padding: 1rem; margin-top: 1.5rem; text-align: left;">

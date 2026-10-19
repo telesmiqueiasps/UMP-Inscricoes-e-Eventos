@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Se o usuário já estiver autenticado, redirecionar direto para o painel
+  if (API.getToken() && API.getUser()) {
+    window.location.replace('dashboard.html');
+    return;
+  }
+
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
 

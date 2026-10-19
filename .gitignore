@@ -27,3 +27,7 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+
+# Frontend Build Output
+dist/
+node_modules/

@@ -107,7 +107,7 @@ async function loadDashboard() {
         registrationCard.innerHTML = `
           <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.5rem;">Inscrições</h3>
           <p style="color: var(--text-muted); font-size: 0.9rem;">Você ainda não possui inscrições realizadas em eventos.</p>
-          <a href="https://inscricoessinodalpb.netlify.app/" class="btn btn-primary" style="margin-top: 1.25rem;">
+          <a href="/" class="btn btn-primary" style="margin-top: 1.25rem;">
             <span>Ver Eventos Disponíveis</span>
           </a>
         `;
