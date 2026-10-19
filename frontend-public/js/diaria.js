@@ -772,7 +772,8 @@ function renderDynamicFormFields() {
 
   const selectPresb = document.getElementById('dyn-select-presbiterio');
   if (selectPresb) {
-    carregarPresbiteriosSelect(selectPresb, (dadosExtrasSalvos && dadosExtrasSalvos.presbiterio) ? dadosExtrasSalvos.presbiterio : '');
+    const valorPresb = (typeof dadosExtrasSalvos !== 'undefined' && dadosExtrasSalvos && dadosExtrasSalvos.presbiterio) ? dadosExtrasSalvos.presbiterio : '';
+    carregarPresbiteriosSelect(selectPresb, valorPresb);
   }
 
   // Pré-preenchimento com dados do usuário logado
@@ -840,10 +841,11 @@ function carregarPresbiteriosSelect(selectEl, valorPreSelecionado = '') {
   };
 
   const renderOpcoes = (lista) => {
-    const valAtual = valorPreSelecionado || selectEl.value;
+    const valAtual = selectEl.value || valorPreSelecionado;
     selectEl.innerHTML = '<option value="">Selecione seu presbitério...</option>' + 
       lista.map(p => {
-        const nome = typeof p === 'string' ? p : (p.nome || '');
+        const nome = typeof p === 'string' ? p : (p && p.nome ? p.nome : '');
+        if (!nome) return '';
         const sel = (nome && nome === valAtual) ? 'selected' : '';
         return `<option value="${nome}" ${sel}>${nome}</option>`;
       }).join('');
