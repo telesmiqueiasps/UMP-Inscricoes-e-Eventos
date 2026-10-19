@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let emailDigitado = '';
   let dadosExtrasSalvos = {};
 
+  // Validação imediata do estado de autenticação para evitar flash de tela
+  atualizarEstadoUsuario();
+
   // 1. Carregar detalhes do Evento
   try {
     eventoAtual = await API.request(`/eventos/publico/${eventoId}`);

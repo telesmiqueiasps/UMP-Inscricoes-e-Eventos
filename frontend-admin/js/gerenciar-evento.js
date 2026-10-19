@@ -16,7 +16,8 @@ window.execEditorCommand = function(command, arg = null) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
-  if (!token) {
+  const user = API.getUser();
+  if (!token || !user || !user.is_admin) {
     window.location.href = 'index.html';
     return;
   }

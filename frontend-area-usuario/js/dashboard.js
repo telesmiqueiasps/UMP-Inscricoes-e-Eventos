@@ -25,6 +25,11 @@ async function loadDashboard() {
     const data = await API.request('/usuario/dashboard');
     currentDashboardData = data;
 
+    // Atualizar dados do usuário no localStorage (incluindo is_admin, cpf, etc)
+    if (data.usuario) {
+      API.setUser(data.usuario);
+    }
+
     // 1. Nome de boas-vindas
     if (welcomeUser && data.usuario) welcomeUser.textContent = `Olá, ${data.usuario.nome}!`;
 

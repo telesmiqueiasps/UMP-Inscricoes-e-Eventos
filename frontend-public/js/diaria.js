@@ -54,6 +54,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let emailDigitado = '';
 
+  // Validação imediata do estado de autenticação para evitar flash de tela
+  atualizarEstadoUsuario();
+
   // 1. Carregar Configuração de Diárias do Evento
   try {
     const res = await API.request(`/diarias/evento/${eventoId}/config`);

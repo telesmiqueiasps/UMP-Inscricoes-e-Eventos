@@ -4,21 +4,35 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
 
 const API = {
   getToken() {
-    return localStorage.getItem('admin_token');
+    const t = localStorage.getItem('token') || localStorage.getItem('admin_token');
+    if (!t || t === 'null' || t === 'undefined') return null;
+    return t;
   },
   setToken(token) {
+    if (!token) return;
+    localStorage.setItem('token', token);
     localStorage.setItem('admin_token', token);
   },
   removeToken() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
   },
   getUser() {
-    const u = localStorage.getItem('admin_user');
-    return u ? JSON.parse(u) : null;
+    const raw = localStorage.getItem('user') || localStorage.getItem('admin_user');
+    if (!raw || raw === 'null' || raw === 'undefined') return null;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
   },
   setUser(user) {
-    localStorage.setItem('admin_user', JSON.stringify(user));
+    if (!user) return;
+    const str = typeof user === 'string' ? user : JSON.stringify(user);
+    localStorage.setItem('user', str);
+    localStorage.setItem('admin_user', str);
   },
   async request(endpoint, options = {}) {
     const headers = {

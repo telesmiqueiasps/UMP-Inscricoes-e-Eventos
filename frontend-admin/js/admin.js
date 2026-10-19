@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
-  if (!token) {
+  const user = API.getUser();
+
+  // Se não estiver logado ou não for administrador, solicitar login admin
+  if (!token || !user || !user.is_admin) {
     const path = window.location.pathname;
     const isIndex = path.endsWith('index.html') || path === '/' || path.endsWith('/');
     if (!isIndex) {
