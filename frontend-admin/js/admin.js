@@ -260,14 +260,16 @@ async function loadInscricoes() {
   const tableHead = document.getElementById('inscricoes-table-head');
   if (!container) return;
 
-  const status = document.getElementById('filter-status').value;
-  const search = document.getElementById('filter-search').value;
-  const eventoId = document.getElementById('filter-evento').value;
+  const status = document.getElementById('filter-status')?.value || '';
+  const search = document.getElementById('filter-search')?.value || '';
+  const eventoId = document.getElementById('filter-evento')?.value || '';
+  const igreja = document.getElementById('filter-igreja')?.value || '';
 
   let queryStr = `?page=1&limit=200`;
   if (status) queryStr += `&status_filtro=${status}`;
   if (search) queryStr += `&search=${encodeURIComponent(search)}`;
   if (eventoId) queryStr += `&evento_id=${eventoId}`;
+  if (igreja) queryStr += `&igreja=${encodeURIComponent(igreja)}`;
 
   try {
     const data = await API.request(`/admin/inscricoes${queryStr}`);

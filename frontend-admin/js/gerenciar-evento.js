@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializar o carregamento
   await loadEventoInfo();
+  await carregarIgrejasFiltro();
   await loadInscricoes();
   await carregarDiaristas();
   await loadPagamentos();
@@ -139,27 +140,98 @@ function renderPaginationControls(containerId, currentPage, totalItems, onPageCh
   `;
 }
 
+// --- Carregar Lista de Igrejas para o Filtro ---
+window.carregarIgrejasFiltro = async function() {
+  const select = document.getElementById('filter-igreja');
+  if (!select || !selectedEventoId) return;
+
+  const valorAtual = select.value;
+
+  try {
+    const igrejas = await API.request(`/admin/eventos/${selectedEventoId}/igrejas`);
+    let optionsHtml = '<option value="">Todas as Igrejas</option>';
+    if (Array.isArray(igrejas)) {
+      igrejas.forEach(igreja => {
+        optionsHtml += `<option value="${igreja}">${igreja}</option>`;
+      });
+    }
+    select.innerHTML = optionsHtml;
+    if (valorAtual) {
+      select.value = valorAtual;
+    }
+  } catch (err) {
+    console.error("Erro ao carregar lista de igrejas:", err);
+  }
+};
+
 // --- Carregar Inscrições ---
 window.loadInscricoes = async function() {
-  const status = document.getElementById('filter-status').value;
-  const search = document.getElementById('filter-search').value;
+  const status = document.getElementById('filter-status')?.value || '';
+  const search = document.getElementById('filter-search')?.value || '';
+  const igreja = document.getElementById('filter-igreja')?.value || '';
 
   let queryStr = `?page=1&limit=500&evento_id=${selectedEventoId}`;
   if (status) queryStr += `&status_filtro=${status}`;
   if (search) queryStr += `&search=${encodeURIComponent(search)}`;
+  if (igreja) queryStr += `&igreja=${encodeURIComponent(igreja)}`;
+
+  atualizarBotaoLimparFiltros();
 
   try {
     const data = await API.request(`/admin/inscricoes${queryStr}`);
     cachedInscricoesList = data;
     currentPageInscricoes = 1;
     renderInscricoesTable();
+
+    // Fallback/sync: se o select tiver apenas 1 opção ('Todas as Igrejas'), preencher com dados locais das inscrições
+    const selectIgreja = document.getElementById('filter-igreja');
+    if (selectIgreja && selectIgreja.options.length <= 1 && Array.isArray(data) && data.length > 0) {
+      const setIgrejas = new Set();
+      data.forEach(ins => {
+        const ig = ins.dados_extras?.igreja || ins.dados_extras?.dyn_igreja;
+        if (ig && typeof ig === 'string' && ig.trim()) {
+          setIgrejas.add(ig.trim());
+        }
+      });
+      if (setIgrejas.size > 0) {
+        const sorted = Array.from(setIgrejas).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+        sorted.forEach(ig => {
+          const opt = document.createElement('option');
+          opt.value = ig;
+          opt.textContent = ig;
+          selectIgreja.appendChild(opt);
+        });
+        if (igreja) selectIgreja.value = igreja;
+      }
+    }
   } catch (err) {
     const container = document.getElementById('inscricoes-table-body');
     if (container) {
-      container.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-danger);">Erro ao carregar inscrições.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-danger);">Erro ao carregar inscrições.</td></tr>`;
     }
   }
 };
+
+// --- Limpar Filtros das Inscrições ---
+window.limparFiltrosInscricoes = function() {
+  const fSearch = document.getElementById('filter-search');
+  const fStatus = document.getElementById('filter-status');
+  const fIgreja = document.getElementById('filter-igreja');
+  if (fSearch) fSearch.value = '';
+  if (fStatus) fStatus.value = '';
+  if (fIgreja) fIgreja.value = '';
+  loadInscricoes();
+};
+
+function atualizarBotaoLimparFiltros() {
+  const fSearch = document.getElementById('filter-search')?.value || '';
+  const fStatus = document.getElementById('filter-status')?.value || '';
+  const fIgreja = document.getElementById('filter-igreja')?.value || '';
+  const btnLimpar = document.getElementById('btn-limpar-filtros-inscricoes');
+  if (btnLimpar) {
+    btnLimpar.style.display = (fSearch || fStatus || fIgreja) ? 'inline-flex' : 'none';
+  }
+}
 
 // --- Ícones SVG do Sistema (Sem Emojis) ---
 const ICONS = {
@@ -1506,11 +1578,13 @@ window.exportarCSV = function() {
   });
 
   const csvContent = "\uFEFF" + lines.join('\n');
+  const filtroIgreja = document.getElementById('filter-igreja')?.value || '';
+  const igrejaSuffix = filtroIgreja ? `_${filtroIgreja.toLowerCase().replace(/\s+/g, '_')}` : '';
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `inscricoes_${eventoAtual.titulo.toLowerCase().replace(/\s+/g, '_')}.csv`);
+  link.setAttribute("download", `inscricoes_${eventoAtual.titulo.toLowerCase().replace(/\s+/g, '_')}${igrejaSuffix}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1528,6 +1602,12 @@ window.imprimirPDF = function() {
   if (eventoAtual && eventoAtual.campos_formulario) {
     customFields = eventoAtual.campos_formulario.split(',').filter(f => f.trim() !== '');
   }
+
+  const filtroIgreja = document.getElementById('filter-igreja')?.value || '';
+  const filtroStatus = document.getElementById('filter-status')?.value || '';
+  let subInfo = `Evento: <strong>${eventoAtual.titulo}</strong>`;
+  if (filtroIgreja) subInfo += ` &bull; Igreja: <strong>${filtroIgreja}</strong>`;
+  if (filtroStatus) subInfo += ` &bull; Status: <strong>${filtroStatus}</strong>`;
 
   let html = `
     <html>
@@ -1548,7 +1628,7 @@ window.imprimirPDF = function() {
       </head>
       <body>
         <h2>Lista de Inscrições</h2>
-        <h4>Evento: <strong>${eventoAtual.titulo}</strong></h4>
+        <h4>${subInfo}</h4>
         <table>
           <thead>
             <tr>

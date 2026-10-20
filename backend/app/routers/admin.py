@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, File, UploadFile
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, cast, String
 from typing import List, Optional
 from decimal import Decimal
 from pydantic import BaseModel
@@ -223,6 +223,7 @@ def listar_inscricoes_admin(
     evento_id: Optional[int] = Query(None),
     status_filtro: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    igreja: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=1000),
     db: Session = Depends(get_db),
@@ -234,19 +235,53 @@ def listar_inscricoes_admin(
         query = query.filter(Inscricao.evento_id == evento_id)
     if status_filtro:
         query = query.filter(Inscricao.status == status_filtro)
-    if search:
-        search_pattern = f"%{search}%"
+    if igreja and igreja.strip():
+        igreja_clean = igreja.strip()
+        query = query.filter(
+            or_(
+                cast(Inscricao.dados_extras["igreja"], String).ilike(f"%{igreja_clean}%"),
+                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(f"%{igreja_clean}%")
+            )
+        )
+    if search and search.strip():
+        search_pattern = f"%{search.strip()}%"
         query = query.filter(
             or_(
                 Usuario.nome.ilike(search_pattern),
                 Usuario.email.ilike(search_pattern),
-                Usuario.cpf.ilike(search_pattern)
+                Usuario.cpf.ilike(search_pattern),
+                cast(Inscricao.dados_extras["igreja"], String).ilike(search_pattern),
+                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(search_pattern)
             )
         )
 
     offset = (page - 1) * limit
     inscricoes = query.order_by(Inscricao.created_at.desc()).offset(offset).limit(limit).all()
     return inscricoes
+
+
+@router.get("/admin/eventos/{evento_id}/igrejas", response_model=List[str])
+def listar_igrejas_evento(
+    evento_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    inscricoes = db.query(Inscricao.dados_extras).filter(
+        Inscricao.evento_id == evento_id,
+        Inscricao.dados_extras.isnot(None)
+    ).all()
+
+    igrejas_dict = {}
+    for (extras,) in inscricoes:
+        if isinstance(extras, dict):
+            igreja = extras.get("igreja") or extras.get("dyn_igreja")
+            if igreja and str(igreja).strip():
+                nome = str(igreja).strip()
+                key = nome.lower()
+                if key not in igrejas_dict:
+                    igrejas_dict[key] = nome
+
+    return sorted(list(igrejas_dict.values()), key=lambda s: s.lower())
 
 
 @router.put("/admin/inscricoes/{id}/status", response_model=InscricaoResponse)
