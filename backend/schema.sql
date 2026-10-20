@@ -151,6 +151,26 @@ CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_usuario_id ON inscricoes_diaria
 CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_evento_id ON inscricoes_diarias(evento_id);
 CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_checkin ON inscricoes_diarias(codigo_checkin);
 
+-- 8. Tabela de Presbitérios
+CREATE TABLE IF NOT EXISTS presbiterios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL UNIQUE
+);
+
+CREATE INDEX IF NOT EXISTS ix_presbiterios_nome ON presbiterios(nome);
+
+-- 9. Tabela de Igrejas
+CREATE TABLE IF NOT EXISTS igrejas (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(200) NOT NULL,
+    presbiterio_id INTEGER NOT NULL REFERENCES presbiterios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_igrejas_presbiterio_id ON igrejas(presbiterio_id);
+CREATE INDEX IF NOT EXISTS ix_igrejas_nome ON igrejas(nome);
+
 -- ====================================================================
 -- TRIGGERS DE ATUALIZAÇÃO AUTOMÁTICA DA COLUNA updated_at
 -- ====================================================================
@@ -170,3 +190,4 @@ CREATE OR REPLACE TRIGGER update_pagamentos_updated_at BEFORE UPDATE ON pagament
 CREATE OR REPLACE TRIGGER update_parcelas_updated_at BEFORE UPDATE ON parcelas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_diarias_triagem_updated_at BEFORE UPDATE ON diarias_triagem FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_inscricoes_diarias_updated_at BEFORE UPDATE ON inscricoes_diarias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_igrejas_updated_at BEFORE UPDATE ON igrejas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

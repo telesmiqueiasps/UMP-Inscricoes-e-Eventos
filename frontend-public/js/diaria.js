@@ -236,6 +236,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      const hiddenIgreja = document.getElementById('dyn-hidden-igreja');
+      const searchIgreja = document.getElementById('dyn-igreja-search');
+      if (hiddenIgreja && (!hiddenIgreja.value || (searchIgreja && searchIgreja.value.trim().toLowerCase() !== hiddenIgreja.value.trim().toLowerCase()))) {
+        showToast('Por favor, selecione uma igreja cadastrada na lista ou a opção "Outra".', 'error');
+        if (searchIgreja) {
+          searchIgreja.focus();
+          searchIgreja.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
       // Coletar campos dinâmicos
       dadosExtrasSalvos = {};
       document.querySelectorAll('.dyn-input').forEach(input => {
@@ -698,7 +709,12 @@ function renderDynamicFormFields() {
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Igreja / Congregação *</label>
-            <input type="text" name="dyn_igreja" class="form-control dyn-input" placeholder="Ex: IPB Sousa" required>
+            <div class="church-select-container">
+              <input type="text" id="dyn-igreja-search" class="form-control church-search-input" placeholder="Digite para buscar ou selecione..." autocomplete="off">
+              <input type="hidden" name="dyn_igreja" id="dyn-hidden-igreja" class="dyn-input" required>
+              <div id="dyn-igreja-dropdown" class="church-dropdown-menu"></div>
+            </div>
+            <div id="dyn-igreja-hint" class="church-status-hint" style="display: none;"></div>
           </div>
         `;
         break;
@@ -770,10 +786,30 @@ function renderDynamicFormFields() {
     return fieldHTML;
   }).join('');
 
+  // Carregar Presbitérios e Igrejas com sincronização bidirecional
   const selectPresb = document.getElementById('dyn-select-presbiterio');
+  const inputIgrejaSearch = document.getElementById('dyn-igreja-search');
+  const inputIgrejaHidden = document.getElementById('dyn-hidden-igreja');
+  const dropdownIgreja = document.getElementById('dyn-igreja-dropdown');
+  const hintIgreja = document.getElementById('dyn-igreja-hint');
+
+  const valorPresbSalvo = (typeof dadosExtrasSalvos !== 'undefined' && dadosExtrasSalvos && dadosExtrasSalvos.presbiterio) ? dadosExtrasSalvos.presbiterio : '';
+  const valorIgrejaSalvo = (typeof dadosExtrasSalvos !== 'undefined' && dadosExtrasSalvos && dadosExtrasSalvos.igreja) ? dadosExtrasSalvos.igreja : '';
+
   if (selectPresb) {
-    const valorPresb = (typeof dadosExtrasSalvos !== 'undefined' && dadosExtrasSalvos && dadosExtrasSalvos.presbiterio) ? dadosExtrasSalvos.presbiterio : '';
-    carregarPresbiteriosSelect(selectPresb, valorPresb);
+    carregarPresbiteriosSelect(selectPresb, valorPresbSalvo);
+  }
+
+  if (inputIgrejaSearch && inputIgrejaHidden && dropdownIgreja) {
+    configurarSelecaoIgrejasEPresbiterios(
+      inputIgrejaSearch,
+      inputIgrejaHidden,
+      dropdownIgreja,
+      hintIgreja,
+      selectPresb,
+      valorIgrejaSalvo,
+      valorPresbSalvo
+    );
   }
 
   // Pré-preenchimento com dados do usuário logado
@@ -868,4 +904,210 @@ function carregarPresbiteriosSelect(selectEl, valorPreSelecionado = '') {
     .catch(() => {
       // Mantém silenciosamente a lista padrão/cache pronta
     });
+}
+
+function configurarSelecaoIgrejasEPresbiterios(
+  inputSearchEl,
+  hiddenInputEl,
+  dropdownEl,
+  hintEl,
+  selectPresbEl,
+  valorInicialIgreja = '',
+  valorInicialPresb = ''
+) {
+  if (!inputSearchEl || !hiddenInputEl || !dropdownEl) return;
+
+  let todasIgrejas = [];
+
+  const getIgrejasCache = () => {
+    try {
+      const cached = localStorage.getItem('cached_igrejas');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  };
+
+  const getPresbiterioNome = (igreja) => {
+    if (igreja && igreja.presbiterio && igreja.presbiterio.nome) return igreja.presbiterio.nome;
+    return '';
+  };
+
+  const renderDropdown = (termo = '') => {
+    const presbFiltro = selectPresbEl ? selectPresbEl.value.trim() : '';
+    const termoClean = termo.toLowerCase().trim();
+
+    let filtradas = todasIgrejas.filter(i => {
+      const nomeMatch = !termoClean || i.nome.toLowerCase().includes(termoClean);
+      if (!nomeMatch) return false;
+
+      // Se houver presbitério selecionado no selectPresbEl
+      if (presbFiltro) {
+        const pNome = getPresbiterioNome(i);
+        // A opção "Outra" sempre pode aparecer para o usuário
+        if (i.nome.toLowerCase() === 'outra') return true;
+        return pNome.toLowerCase() === presbFiltro.toLowerCase();
+      }
+      return true;
+    });
+
+    // Ordenar alfabeticamente mantendo "Outra" destacada ao final
+    filtradas.sort((a, b) => {
+      if (a.nome.toLowerCase() === 'outra') return 1;
+      if (b.nome.toLowerCase() === 'outra') return -1;
+      return a.nome.localeCompare(b.nome);
+    });
+
+    if (filtradas.length === 0) {
+      dropdownEl.innerHTML = `
+        <div class="church-dropdown-empty">
+          Nenhuma igreja encontrada${presbFiltro ? ` no <strong>${presbFiltro}</strong>` : ''}.<br>
+          <a href="javascript:void(0)" id="btn-selecionar-outra" style="color: var(--primary, #4f46e5); font-weight: 700; text-decoration: underline; margin-top: 0.4rem; display: inline-block;">
+            👉 Clique aqui para selecionar "Outra"
+          </a>
+        </div>
+      `;
+      const btnOutra = dropdownEl.querySelector('#btn-selecionar-outra');
+      if (btnOutra) {
+        btnOutra.addEventListener('click', (e) => {
+          e.preventDefault();
+          selecionarIgreja({ nome: 'Outra', presbiterio: { nome: 'Outros' } });
+        });
+      }
+      dropdownEl.classList.add('show');
+      return;
+    }
+
+    dropdownEl.innerHTML = filtradas.map(i => {
+      const presbNome = getPresbiterioNome(i);
+      const isOutra = i.nome.toLowerCase() === 'outra';
+      const isSelected = hiddenInputEl.value && hiddenInputEl.value.toLowerCase() === i.nome.toLowerCase();
+      return `
+        <div class="church-dropdown-item ${isSelected ? 'active' : ''}" data-nome="${i.nome}" data-presb="${presbNome}">
+          <div>
+            <strong>${i.nome}</strong>
+            ${isOutra ? '<span style="font-size: 0.75rem; color: #6b7280; margin-left: 0.4rem;">(Igreja não listada)</span>' : ''}
+          </div>
+          ${presbNome ? `<span class="presb-tag">${presbNome}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    dropdownEl.querySelectorAll('.church-dropdown-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const nome = item.getAttribute('data-nome');
+        const presb = item.getAttribute('data-presb');
+        selecionarIgreja({ nome, presbiterio: { nome: presb } });
+      });
+    });
+
+    dropdownEl.classList.add('show');
+  };
+
+  const selecionarIgreja = (igreja) => {
+    hiddenInputEl.value = igreja.nome;
+    inputSearchEl.value = igreja.nome;
+    dropdownEl.classList.remove('show');
+
+    const presbNome = getPresbiterioNome(igreja);
+    if (hintEl) {
+      if (presbNome) {
+        hintEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">✓</span> Vinculada ao <strong>${presbNome}</strong>`;
+        hintEl.style.display = 'flex';
+      } else {
+        hintEl.style.display = 'none';
+      }
+    }
+
+    // Sugerir/selecionar automaticamente o Presbitério correspondente
+    if (selectPresbEl && presbNome) {
+      for (let opt of selectPresbEl.options) {
+        if (opt.value && opt.value.toLowerCase() === presbNome.toLowerCase()) {
+          selectPresbEl.value = opt.value;
+          break;
+        }
+      }
+    }
+  };
+
+  // Eventos de interação
+  inputSearchEl.addEventListener('focus', () => {
+    renderDropdown(inputSearchEl.value);
+  });
+
+  inputSearchEl.addEventListener('input', () => {
+    if (hiddenInputEl.value && hiddenInputEl.value.toLowerCase() !== inputSearchEl.value.trim().toLowerCase()) {
+      hiddenInputEl.value = '';
+      if (hintEl) hintEl.style.display = 'none';
+    }
+    renderDropdown(inputSearchEl.value);
+  });
+
+  // Fechar dropdown ao clicar fora e garantir que valor não seja arbitrário
+  document.addEventListener('click', (e) => {
+    if (!inputSearchEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+      dropdownEl.classList.remove('show');
+      if (!hiddenInputEl.value && inputSearchEl.value.trim()) {
+        const achouExata = todasIgrejas.find(i => i.nome.toLowerCase() === inputSearchEl.value.trim().toLowerCase());
+        if (achouExata) {
+          selecionarIgreja(achouExata);
+        } else {
+          // Limpa digitação arbitrária não correspondente
+          inputSearchEl.value = '';
+          if (hintEl) hintEl.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  // Reagir a mudanças no select de Presbitério (fluxo bidirecional: filtrar igrejas daquele presbitério)
+  if (selectPresbEl) {
+    selectPresbEl.addEventListener('change', () => {
+      const presbSel = selectPresbEl.value.trim();
+      if (hiddenInputEl.value) {
+        const igrejaAtual = todasIgrejas.find(i => i.nome.toLowerCase() === hiddenInputEl.value.toLowerCase());
+        if (igrejaAtual) {
+          const presbIgreja = getPresbiterioNome(igrejaAtual);
+          if (presbSel && presbIgreja && presbSel.toLowerCase() !== presbIgreja.toLowerCase() && igrejaAtual.nome.toLowerCase() !== 'outra') {
+            // Se a igreja atual não pertence ao novo presbitério escolhido, reseta a igreja
+            hiddenInputEl.value = '';
+            inputSearchEl.value = '';
+            if (hintEl) hintEl.style.display = 'none';
+          }
+        }
+      }
+      if (dropdownEl.classList.contains('show')) {
+        renderDropdown(inputSearchEl.value);
+      }
+    });
+  }
+
+  // Inicializar com cache local imediatamente
+  todasIgrejas = getIgrejasCache();
+  if (valorInicialIgreja && todasIgrejas.length > 0) {
+    const achou = todasIgrejas.find(i => i.nome.toLowerCase() === valorInicialIgreja.toLowerCase());
+    if (achou) selecionarIgreja(achou);
+    else {
+      hiddenInputEl.value = valorInicialIgreja;
+      inputSearchEl.value = valorInicialIgreja;
+    }
+  }
+
+  // Carregar e sincronizar com o backend
+  const baseUrl = (typeof API_BASE_URL !== 'undefined') ? API_BASE_URL : 'https://ump-inscricoes-e-eventos.onrender.com/api/v1';
+  fetch(`${baseUrl}/igrejas`)
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        todasIgrejas = data;
+        localStorage.setItem('cached_igrejas', JSON.stringify(data));
+        if (valorInicialIgreja && (!hiddenInputEl.value || hiddenInputEl.value !== valorInicialIgreja)) {
+          const achou = todasIgrejas.find(i => i.nome.toLowerCase() === valorInicialIgreja.toLowerCase());
+          if (achou) selecionarIgreja(achou);
+        }
+      }
+    })
+    .catch(() => {});
 }

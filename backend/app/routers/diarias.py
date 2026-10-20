@@ -16,6 +16,7 @@ from app.services.diaria_service import (
     criar_ou_atualizar_triagem_diaria
 )
 from app.services.infinitepay import infinitepay_service
+from app.services.igreja_service import validar_igreja_dados_extras
 
 router = APIRouter(prefix="/diarias", tags=["Diárias"])
 
@@ -56,6 +57,7 @@ def criar_triagem_diaria_endpoint(
     """
     Registra ou atualiza uma intenção de compra de diária (triagem) e retorna o link de pagamento InfinitePay.
     """
+    validar_igreja_dados_extras(db, req.dados_extras)
     triagem, checkout_url = criar_ou_atualizar_triagem_diaria(
         db=db,
         current_user=current_user,

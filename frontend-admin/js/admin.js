@@ -609,6 +609,7 @@ async function initConfiguracoes() {
     showToast('Erro ao carregar configurações do sistema.', 'error');
   }
   loadPresbiterios();
+  loadIgrejas();
 }
 
 async function salvarConfiguracoes(e) {
@@ -674,6 +675,7 @@ async function loadPresbiterios() {
   try {
     const data = await API.request('/presbiterios');
     cachedPresbiterios = data;
+    atualizarSelectsPresbiterioParaIgrejas();
     if (data.length === 0) {
       container.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">Nenhum presbitério cadastrado.</td></tr>`;
       return;
@@ -741,8 +743,151 @@ window.deletarPresbiterio = async function(id) {
       });
       showToast('Presbitério excluído!', 'success');
       loadPresbiterios();
+      loadIgrejas();
     } catch (err) {
       showToast('Erro ao excluir presbitério.', 'error');
+    }
+  }
+};
+
+// --- Gerenciamento de Igrejas ---
+let cachedIgrejas = [];
+
+function atualizarSelectsPresbiterioParaIgrejas() {
+  const selectForm = document.getElementById('igreja-presbiterio-id');
+  const selectFiltro = document.getElementById('filtro-igreja-presbiterio');
+
+  if (selectForm && cachedPresbiterios) {
+    const valAtual = selectForm.value;
+    selectForm.innerHTML = '<option value="">Selecione o presbitério...</option>' + 
+      cachedPresbiterios.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    if (valAtual) selectForm.value = valAtual;
+  }
+
+  if (selectFiltro && cachedPresbiterios) {
+    const valAtual = selectFiltro.value;
+    selectFiltro.innerHTML = '<option value="">Todos os Presbitérios</option>' + 
+      cachedPresbiterios.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    if (valAtual) selectFiltro.value = valAtual;
+  }
+}
+
+async function loadIgrejas() {
+  const container = document.getElementById('igrejas-table-body');
+  if (!container) return;
+
+  try {
+    const data = await API.request('/igrejas');
+    cachedIgrejas = data;
+    atualizarSelectsPresbiterioParaIgrejas();
+    filtrarIgrejasAdmin();
+  } catch (err) {
+    container.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-danger); padding: 1.5rem;">Erro ao carregar igrejas.</td></tr>`;
+  }
+}
+
+window.filtrarIgrejasAdmin = function() {
+  const container = document.getElementById('igrejas-table-body');
+  const badgeTotal = document.getElementById('badge-total-igrejas');
+  if (!container) return;
+
+  const termo = (document.getElementById('filtro-igreja-busca')?.value || '').toLowerCase().trim();
+  const presbId = document.getElementById('filtro-igreja-presbiterio')?.value || '';
+
+  const filtradas = cachedIgrejas.filter(i => {
+    const matchNome = !termo || i.nome.toLowerCase().includes(termo);
+    const matchPresb = !presbId || String(i.presbiterio_id) === String(presbId);
+    return matchNome && matchPresb;
+  });
+
+  if (badgeTotal) {
+    badgeTotal.textContent = `${filtradas.length} de ${cachedIgrejas.length} igrejas`;
+  }
+
+  if (filtradas.length === 0) {
+    container.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Nenhuma igreja encontrada com os filtros aplicados.</td></tr>`;
+    return;
+  }
+
+  container.innerHTML = filtradas.map(i => {
+    const presbNome = i.presbiterio ? i.presbiterio.nome : 'Presbitério não identificado';
+    const escapedNome = (i.nome || '').replace(/'/g, "\\'");
+    return `
+      <tr>
+        <td><strong>${i.nome}</strong></td>
+        <td><span class="badge" style="background: var(--primary-light, #EEF2FF); color: var(--primary, #4F46E5); font-weight: 500;">${presbNome}</span></td>
+        <td style="text-align: right;">
+          <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="editarIgreja(${i.id}, '${escapedNome}', ${i.presbiterio_id})">✏️ Editar</button>
+          <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="deletarIgreja(${i.id})">❌ Excluir</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+window.editarIgreja = function(id, nome, presbiterioId) {
+  document.getElementById('igreja-id').value = id;
+  document.getElementById('igreja-nome').value = nome;
+  document.getElementById('igreja-presbiterio-id').value = presbiterioId;
+  document.getElementById('btn-salvar-igreja').textContent = 'Salvar';
+  document.getElementById('btn-cancelar-igreja').style.display = 'inline-block';
+  document.getElementById('form-igreja').scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
+window.resetFormIgreja = function() {
+  document.getElementById('igreja-id').value = '';
+  document.getElementById('igreja-nome').value = '';
+  document.getElementById('igreja-presbiterio-id').value = '';
+  document.getElementById('btn-salvar-igreja').textContent = 'Adicionar';
+  document.getElementById('btn-cancelar-igreja').style.display = 'none';
+};
+
+window.salvarIgreja = async function(e) {
+  e.preventDefault();
+  const id = document.getElementById('igreja-id').value;
+  const nome = document.getElementById('igreja-nome').value.trim();
+  const presbiterio_id = parseInt(document.getElementById('igreja-presbiterio-id').value);
+
+  if (!nome) {
+    showToast('Informe o nome da igreja.', 'error');
+    return;
+  }
+  if (!presbiterio_id) {
+    showToast('Selecione um presbitério.', 'error');
+    return;
+  }
+
+  try {
+    if (id) {
+      await API.request(`/admin/igrejas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ nome, presbiterio_id })
+      });
+      showToast('Igreja atualizada com sucesso!', 'success');
+    } else {
+      await API.request('/admin/igrejas', {
+        method: 'POST',
+        body: JSON.stringify({ nome, presbiterio_id })
+      });
+      showToast('Igreja adicionada com sucesso!', 'success');
+    }
+    resetFormIgreja();
+    loadIgrejas();
+  } catch (err) {
+    showToast(err.message || 'Erro ao salvar igreja.', 'error');
+  }
+};
+
+window.deletarIgreja = async function(id) {
+  if (confirm('Deseja realmente excluir esta igreja?')) {
+    try {
+      await API.request(`/admin/igrejas/${id}`, {
+        method: 'DELETE'
+      });
+      showToast('Igreja excluída com sucesso!', 'success');
+      loadIgrejas();
+    } catch (err) {
+      showToast(err.message || 'Erro ao excluir igreja.', 'error');
     }
   }
 };

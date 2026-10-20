@@ -107,6 +107,71 @@
 
       </div>
 
+      <!-- Gerenciamento de Igrejas Card -->
+      <div class="card" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/><path d="M14 12v.01"/><path d="M10 12v.01"/><path d="M10 16v.01"/><path d="M14 16v.01"/><path d="M12 2v2"/></svg>
+              <span>Gerenciamento de Igrejas & Congregações</span>
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0;">Cadastre as Igrejas e vincule cada uma ao seu respectivo Presbitério para seleção no formulário de inscrição.</p>
+          </div>
+          <div style="font-size: 0.85rem; background: var(--bg-surface, #f8f9fa); border: 1px solid var(--border-color); padding: 0.4rem 0.85rem; border-radius: 20px; font-weight: 600; color: var(--text-color);" id="badge-total-igrejas">
+            Carregando igrejas...
+          </div>
+        </div>
+
+        <!-- Formulário Adicionar / Editar Igreja -->
+        <form id="form-igreja" onsubmit="salvarIgreja(event)" style="background: var(--bg-surface, #fbfbfb); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;">
+          <input type="hidden" id="igreja-id">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) auto; gap: 0.75rem; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.3rem;">Nome da Igreja / Congregação *</label>
+              <input type="text" id="igreja-nome" class="form-control" placeholder="Ex: IPB Aliança..." required style="margin-bottom: 0; height: 42px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.3rem;">Presbitério Vinculado *</label>
+              <select id="igreja-presbiterio-id" class="form-control" required style="margin-bottom: 0; height: 42px;">
+                <option value="">Selecione o presbitério...</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button type="submit" id="btn-salvar-igreja" class="btn btn-primary" style="height: 42px; min-width: 110px;">Adicionar</button>
+              <button type="button" id="btn-cancelar-igreja" class="btn btn-outline" style="height: 42px; display: none;" onclick="resetFormIgreja()">Cancelar</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Barra de Busca e Filtro por Presbitério -->
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center;">
+          <div style="flex: 1; min-width: 220px;">
+            <input type="text" id="filtro-igreja-busca" class="form-control" placeholder="🔍 Buscar igreja pelo nome..." oninput="filtrarIgrejasAdmin()" style="margin-bottom: 0; height: 38px;">
+          </div>
+          <div style="min-width: 200px;">
+            <select id="filtro-igreja-presbiterio" class="form-control" onchange="filtrarIgrejasAdmin()" style="margin-bottom: 0; height: 38px;">
+              <option value="">Todos os Presbitérios</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tabela com Scroll Suave -->
+        <div class="table-responsive" style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+          <table style="margin-bottom: 0;">
+            <thead style="position: sticky; top: 0; background: var(--bg-card, #fff); z-index: 1;">
+              <tr>
+                <th>Igreja / Congregação</th>
+                <th>Presbitério Vinculado</th>
+                <th style="width: 140px; text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="igrejas-table-body">
+              <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Carregando igrejas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Footer -->
       <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
         <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>

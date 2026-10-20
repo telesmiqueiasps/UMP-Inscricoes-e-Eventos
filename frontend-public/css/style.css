@@ -1715,3 +1715,98 @@ tr:last-child td {
 .event-desc-content li, #event-description li {
   margin-bottom: 0.25rem;
 }
+
+/* ==========================================================================
+   Componente de Seleção e Busca de Igreja / Presbitério
+   ========================================================================== */
+.church-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.church-search-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1.1rem;
+  padding-right: 2.5rem !important;
+}
+
+.church-search-input:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='18 15 12 9 6 15'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+.church-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: none;
+}
+
+.church-dropdown-menu.show {
+  display: block;
+}
+
+.church-dropdown-item {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s ease;
+  color: #1f2937;
+}
+
+.church-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.church-dropdown-item:hover,
+.church-dropdown-item.active {
+  background-color: #f0f4ff;
+  color: #2563eb;
+}
+
+.church-dropdown-item .presb-tag {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.church-dropdown-item:hover .presb-tag,
+.church-dropdown-item.active .presb-tag {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.church-dropdown-empty {
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+  background: #fafafa;
+}
+
+.church-status-hint {
+  font-size: 0.78rem;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}

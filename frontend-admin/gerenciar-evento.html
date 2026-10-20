@@ -160,9 +160,11 @@
 
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.3rem;">Filtrar por Igreja</label>
-              <select id="filter-igreja" class="form-control" style="height: 38px; font-size: 0.825rem;" onchange="loadInscricoes()">
-                <option value="">Todas as Igrejas</option>
-              </select>
+              <div style="position: relative;">
+                <input type="text" id="filter-igreja" list="datalist-igrejas" class="form-control" style="height: 38px; font-size: 0.825rem; padding-right: 2rem;" placeholder="Digite o nome ou parte da igreja..." oninput="onInputIgrejaFiltro()" autocomplete="off">
+                <datalist id="datalist-igrejas"></datalist>
+                <button type="button" id="btn-clear-igreja-filtro" onclick="limparFiltroIgrejaInput()" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #9CA3AF; cursor: pointer; font-size: 14px; padding: 0; line-height: 1;" title="Limpar igreja">✕</button>
+              </div>
             </div>
 
             <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">

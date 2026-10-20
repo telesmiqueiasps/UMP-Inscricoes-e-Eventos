@@ -140,35 +140,63 @@ function renderPaginationControls(containerId, currentPage, totalItems, onPageCh
   `;
 }
 
-// --- Carregar Lista de Igrejas para o Filtro ---
+// --- Carregar Lista de Igrejas para o Datalist do Filtro ---
 window.carregarIgrejasFiltro = async function() {
-  const select = document.getElementById('filter-igreja');
-  if (!select || !selectedEventoId) return;
-
-  const valorAtual = select.value;
+  const datalist = document.getElementById('datalist-igrejas');
+  if (!datalist || !selectedEventoId) return;
 
   try {
-    const igrejas = await API.request(`/admin/eventos/${selectedEventoId}/igrejas`);
-    let optionsHtml = '<option value="">Todas as Igrejas</option>';
-    if (Array.isArray(igrejas)) {
-      igrejas.forEach(igreja => {
-        optionsHtml += `<option value="${igreja}">${igreja}</option>`;
-      });
-    }
-    select.innerHTML = optionsHtml;
-    if (valorAtual) {
-      select.value = valorAtual;
-    }
+    let listaIgrejas = [];
+    try {
+      const resEvento = await API.request(`/admin/eventos/${selectedEventoId}/igrejas`);
+      if (Array.isArray(resEvento)) listaIgrejas = resEvento;
+    } catch (e) {}
+
+    // Enriquecer com as igrejas cadastradas no sistema
+    try {
+      const todas = await API.request('/igrejas');
+      if (Array.isArray(todas)) {
+        todas.forEach(i => {
+          if (i && i.nome && !listaIgrejas.includes(i.nome)) {
+            listaIgrejas.push(i.nome);
+          }
+        });
+      }
+    } catch (e) {}
+
+    const sorted = Array.from(new Set(listaIgrejas)).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+    datalist.innerHTML = sorted.map(ig => `<option value="${ig}"></option>`).join('');
   } catch (err) {
-    console.error("Erro ao carregar lista de igrejas:", err);
+    console.error("Erro ao carregar lista de igrejas para sugestões:", err);
   }
+};
+
+let debounceTimerIgreja = null;
+window.onInputIgrejaFiltro = function() {
+  const input = document.getElementById('filter-igreja');
+  const btnClear = document.getElementById('btn-clear-igreja-filtro');
+  if (btnClear) {
+    btnClear.style.display = input && input.value ? 'block' : 'none';
+  }
+  clearTimeout(debounceTimerIgreja);
+  debounceTimerIgreja = setTimeout(() => {
+    loadInscricoes();
+  }, 250);
+};
+
+window.limparFiltroIgrejaInput = function() {
+  const input = document.getElementById('filter-igreja');
+  const btnClear = document.getElementById('btn-clear-igreja-filtro');
+  if (input) input.value = '';
+  if (btnClear) btnClear.style.display = 'none';
+  loadInscricoes();
 };
 
 // --- Carregar Inscrições ---
 window.loadInscricoes = async function() {
   const status = document.getElementById('filter-status')?.value || '';
   const search = document.getElementById('filter-search')?.value || '';
-  const igreja = document.getElementById('filter-igreja')?.value || '';
+  const igreja = document.getElementById('filter-igreja')?.value?.trim() || '';
 
   let queryStr = `?page=1&limit=500&evento_id=${selectedEventoId}`;
   if (status) queryStr += `&status_filtro=${status}`;
@@ -182,28 +210,6 @@ window.loadInscricoes = async function() {
     cachedInscricoesList = data;
     currentPageInscricoes = 1;
     renderInscricoesTable();
-
-    // Fallback/sync: se o select tiver apenas 1 opção ('Todas as Igrejas'), preencher com dados locais das inscrições
-    const selectIgreja = document.getElementById('filter-igreja');
-    if (selectIgreja && selectIgreja.options.length <= 1 && Array.isArray(data) && data.length > 0) {
-      const setIgrejas = new Set();
-      data.forEach(ins => {
-        const ig = ins.dados_extras?.igreja || ins.dados_extras?.dyn_igreja;
-        if (ig && typeof ig === 'string' && ig.trim()) {
-          setIgrejas.add(ig.trim());
-        }
-      });
-      if (setIgrejas.size > 0) {
-        const sorted = Array.from(setIgrejas).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-        sorted.forEach(ig => {
-          const opt = document.createElement('option');
-          opt.value = ig;
-          opt.textContent = ig;
-          selectIgreja.appendChild(opt);
-        });
-        if (igreja) selectIgreja.value = igreja;
-      }
-    }
   } catch (err) {
     const container = document.getElementById('inscricoes-table-body');
     if (container) {
@@ -217,16 +223,18 @@ window.limparFiltrosInscricoes = function() {
   const fSearch = document.getElementById('filter-search');
   const fStatus = document.getElementById('filter-status');
   const fIgreja = document.getElementById('filter-igreja');
+  const btnClearIgreja = document.getElementById('btn-clear-igreja-filtro');
   if (fSearch) fSearch.value = '';
   if (fStatus) fStatus.value = '';
   if (fIgreja) fIgreja.value = '';
+  if (btnClearIgreja) btnClearIgreja.style.display = 'none';
   loadInscricoes();
 };
 
 function atualizarBotaoLimparFiltros() {
   const fSearch = document.getElementById('filter-search')?.value || '';
   const fStatus = document.getElementById('filter-status')?.value || '';
-  const fIgreja = document.getElementById('filter-igreja')?.value || '';
+  const fIgreja = document.getElementById('filter-igreja')?.value?.trim() || '';
   const btnLimpar = document.getElementById('btn-limpar-filtros-inscricoes');
   if (btnLimpar) {
     btnLimpar.style.display = (fSearch || fStatus || fIgreja) ? 'inline-flex' : 'none';

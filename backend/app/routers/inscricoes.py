@@ -14,6 +14,7 @@ from app.schemas.inscricao import (
     InscricaoTriagemCreate, InscricaoTriagemResponse
 )
 from app.services.email import enviar_email_inscricao
+from app.services.igreja_service import validar_igreja_dados_extras
 from datetime import datetime
 
 router = APIRouter(prefix="/inscricoes", tags=["Inscrições"])
@@ -26,6 +27,7 @@ def criar_inscricao(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
+    validar_igreja_dados_extras(db, inscricao_in.dados_extras)
     # 1. Verificar se evento existe e está ativo
     evento = db.query(Evento).filter(Evento.id == inscricao_in.evento_id, Evento.ativo == True).first()
     if not evento:
@@ -118,6 +120,7 @@ def criar_ou_atualizar_triagem(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user)
 ):
+    validar_igreja_dados_extras(db, triagem_in.dados_extras)
     # 1. Verificar evento
     evento = db.query(Evento).filter(Evento.id == triagem_in.evento_id, Evento.ativo == True).first()
     if not evento:
