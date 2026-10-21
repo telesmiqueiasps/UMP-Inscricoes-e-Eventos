@@ -41,6 +41,10 @@ async def webhook_infinitepay(
         or inner_data.get("order_nsu")
         or flat_metadata.get("order_nsu")
         or inner_metadata.get("order_nsu")
+        or data.get("order_id")
+        or inner_data.get("order_id")
+        or data.get("external_id")
+        or inner_data.get("external_id")
     )
     
     invoice_slug = (
@@ -86,38 +90,77 @@ async def webhook_infinitepay(
         or inner_data.get("email")
     )
 
+    from decimal import Decimal
+    paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or data.get("amount") or inner_data.get("amount") or 0
+    paid_amount_reais = Decimal(str(paid_amount_raw)) / 100 if paid_amount_raw else Decimal("0.00")
+    capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+
     logger.warning(
         f"Webhook InfinitePay Parsed: order_nsu={order_nsu}, invoice_slug={invoice_slug}, "
-        f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, customer_email={customer_email}"
+        f"transaction_nsu={transaction_nsu}, payment_status={payment_status}, paid_amount={paid_amount_reais}, customer_email={customer_email}"
     )
 
-    # --- LÓGICA DE WEBHOOK PARA TRIAGEM DE DIÁRIA ---
-    if order_nsu and str(order_nsu).startswith("DIARIA_TRIAGEM-"):
+    order_nsu_str = str(order_nsu or "").strip()
+
+    # Helper para dar baixa em parcela de forma idempotente
+    def processar_baixa_parcela_webhook(parc_alvo: Parcela):
+        from app.models.pagamento import Pagamento
+        if parc_alvo.status == "PAGO":
+            logger.warning(f"Parcela ID={parc_alvo.id} (Nº {parc_alvo.numero}) já consta como PAGA. Idempotência.")
+            return {"message": "Webhook processado anteriormente para esta parcela.", "status": "PAGO"}
+
+        parc_alvo.status = "PAGO"
+        pagamento = parc_alvo.pagamento
+        if pagamento:
+            pagamento.paid_amount = (pagamento.paid_amount or Decimal("0.00")) + (paid_amount_reais if paid_amount_reais > 0 else parc_alvo.valor)
+            if capture_method:
+                pagamento.capture_method = capture_method
+            db.commit()
+            logger.warning(f"Parcela ID={parc_alvo.id} (Nº {parc_alvo.numero}) atualizada para PAGO.")
+
+            # Se todas as parcelas do carnê estiverem pagas, dar baixa completa
+            todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
+            if todas_pagas:
+                status_anterior = pagamento.status
+                pagamento.status = "PAGO"
+                if pagamento.inscricao:
+                    pagamento.inscricao.status = "CONFIRMADA"
+                db.commit()
+                logger.warning(f"Todas as parcelas pagas! Pagamento ID={pagamento.id} e Inscrição ID={pagamento.inscricao_id} CONFIRMADA.")
+
+                if status_anterior != "PAGO" and background_tasks and pagamento.inscricao and pagamento.inscricao.usuario:
+                    background_tasks.add_task(
+                        enviar_email_confirmacao,
+                        destinatario_email=pagamento.inscricao.usuario.email,
+                        destinatario_nome=pagamento.inscricao.usuario.nome,
+                        nome_evento=pagamento.inscricao.evento.titulo
+                    )
+        else:
+            db.commit()
+        return {"message": f"Parcela #{parc_alvo.numero} paga com sucesso.", "parcela_id": parc_alvo.id}
+
+    # --- 1. LÓGICA DE WEBHOOK PARA TRIAGEM DE DIÁRIA ---
+    if order_nsu_str.startswith("DIARIA_TRIAGEM-"):
         try:
-            parts = str(order_nsu).split("-")
+            parts = order_nsu_str.split("-")
             triagem_id = int(parts[1])
 
             from app.models.diaria import DiariaTriagem
             from app.services.diaria_service import converter_triagem_em_diaria
-            from decimal import Decimal
 
             triagem = db.query(DiariaTriagem).filter(DiariaTriagem.id == triagem_id).first()
             if not triagem:
-                logger.error(f"Triagem de Diária #{triagem_id} não encontrada para webhook order_nsu={order_nsu}")
+                logger.error(f"Triagem de Diária #{triagem_id} não encontrada para webhook order_nsu={order_nsu_str}")
                 raise HTTPException(status_code=400, detail="Triagem de Diária não encontrada.")
-
-            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
-            paid_amount_reais = Decimal(str(paid_amount_raw)) / 100 if paid_amount_raw else triagem.valor_total
-            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
 
             diaria = converter_triagem_em_diaria(
                 db=db,
                 triagem=triagem,
-                order_nsu=str(order_nsu),
+                order_nsu=order_nsu_str,
                 transaction_nsu=str(transaction_nsu or ""),
                 receipt_url=str(receipt_url or ""),
                 invoice_slug=str(invoice_slug or ""),
-                paid_amount=paid_amount_reais,
+                paid_amount=paid_amount_reais or triagem.valor_total,
                 capture_method=capture_method,
                 background_tasks=background_tasks
             )
@@ -129,110 +172,119 @@ async def webhook_infinitepay(
             logger.error(f"Erro ao converter triagem de diária no webhook: {e}")
             raise HTTPException(status_code=400, detail=f"Erro ao converter triagem de diária: {str(e)}")
 
-    # --- LÓGICA DE WEBHOOK PARA TRIAGEM DE INSCRIÇÃO ---
-    if order_nsu and str(order_nsu).startswith("TRIAGEM-"):
+    # --- 2. LÓGICA DE WEBHOOK PARA PARCELA DO CARNÊ (TODOS OS FORMATOS) ---
+    from app.models.parcela import Parcela
+
+    # 2.1 Identificador direto de Parcela: PARCELA-{id} ou PARC-{id}
+    if order_nsu_str.startswith("PARCELA-") or order_nsu_str.startswith("PARC-"):
         try:
-            parts = str(order_nsu).split("-")
+            clean_str = order_nsu_str.replace("PARCELA-", "").replace("PARC-", "").split("-")[0]
+            parc_id = int(clean_str)
+            parc = db.query(Parcela).filter(Parcela.id == parc_id).first()
+            if parc:
+                return processar_baixa_parcela_webhook(parc)
+        except Exception as err:
+            logger.error(f"Erro ao localizar parcela por ID direto ({order_nsu_str}): {err}")
+
+    # 2.2 Identificador de Parcela por Inscrição: ORD-{inscricao_id}-PARC-{numero}
+    if order_nsu_str.startswith("ORD-") and "-PARC-" in order_nsu_str:
+        try:
+            parts = order_nsu_str.split("-")
+            inscricao_id = int(parts[1])
+            parcela_num = int(parts[3])
+            parc = db.query(Parcela).join(Pagamento).filter(
+                Pagamento.inscricao_id == inscricao_id,
+                Parcela.numero == parcela_num
+            ).first()
+            if parc:
+                return processar_baixa_parcela_webhook(parc)
+        except Exception as err:
+            logger.error(f"Erro ao localizar parcela ORD-PARC ({order_nsu_str}): {err}")
+
+    # 2.3 Identificador de Parcela por Triagem: TRIAGEM-{triagem_id}-PARC-{numero}
+    if order_nsu_str.startswith("TRIAGEM-") and "-PARC-" in order_nsu_str:
+        try:
+            parts = order_nsu_str.split("-")
             triagem_id = int(parts[1])
-            parcela_num = int(parts[3]) if "-PARC-" in str(order_nsu) else 1
+            parcela_num = int(parts[3])
 
             from app.models.inscricao_triagem import InscricaoTriagem
             from app.services.triagem_service import converter_triagem_em_inscricao
-            from decimal import Decimal
 
             triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
             if not triagem:
-                logger.error(f"Triagem #{triagem_id} não encontrada para webhook order_nsu={order_nsu}")
                 raise HTTPException(status_code=400, detail="Triagem não encontrada.")
 
-            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
-            paid_amount_reais = Decimal(str(paid_amount_raw)) / 100 if paid_amount_raw else triagem.valor_total
-            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
+            # Se a triagem já foi convertida (ex: parcela 1 já foi paga), baixar a parcela na inscrição oficial
+            if triagem.status == "CONVERTIDA":
+                inscricao = db.query(Inscricao).filter(
+                    Inscricao.usuario_id == triagem.usuario_id,
+                    Inscricao.evento_id == triagem.evento_id,
+                    Inscricao.status != "CANCELADA"
+                ).order_by(Inscricao.created_at.desc()).first()
+                if inscricao:
+                    parc = db.query(Parcela).join(Pagamento).filter(
+                        Pagamento.inscricao_id == inscricao.id,
+                        Parcela.numero == parcela_num
+                    ).first()
+                    if parc:
+                        return processar_baixa_parcela_webhook(parc)
 
+            # Triagem ainda não convertida (1ª parcela paga): converter e registrar parcela
             inscricao = converter_triagem_em_inscricao(
                 db=db,
                 triagem=triagem,
-                order_nsu=str(order_nsu),
+                order_nsu=order_nsu_str,
                 transaction_nsu=str(transaction_nsu or ""),
                 receipt_url=str(receipt_url or ""),
                 invoice_slug=str(invoice_slug or ""),
-                paid_amount=paid_amount_reais,
+                paid_amount=paid_amount_reais or triagem.valor_total,
                 capture_method=capture_method,
                 parcela_num_paga=parcela_num,
                 background_tasks=background_tasks
             )
-
             return {"message": "Webhook de triagem processado com sucesso. Inscrição confirmada!", "inscricao_id": inscricao.id}
-        except Exception as e:
-            if isinstance(e, HTTPException):
-                raise e
-            logger.error(f"Erro ao converter triagem no webhook: {e}")
-            raise HTTPException(status_code=400, detail=f"Erro ao converter triagem: {str(e)}")
+        except Exception as err:
+            logger.error(f"Erro ao processar parcela via triagem ({order_nsu_str}): {err}")
+            raise HTTPException(status_code=400, detail=str(err))
 
-    # --- LÓGICA DE WEBHOOK PARA PARCELA INDIVIDUAL DO CARNÊ ---
-    if order_nsu and "-PARC-" in str(order_nsu):
+    # 2.4 Busca por correspondência no campo copia_cola_pix da Parcela
+    if order_nsu_str:
+        parc = db.query(Parcela).filter(Parcela.copia_cola_pix.like(f"%order_nsu={order_nsu_str}%")).first()
+        if parc:
+            return processar_baixa_parcela_webhook(parc)
+
+    # --- 3. LÓGICA DE WEBHOOK PARA TRIAGEM À VISTA (PIX/CARTÃO) ---
+    if order_nsu_str.startswith("TRIAGEM-"):
         try:
-            parts = str(order_nsu).split("-")
-            inscricao_id = int(parts[1])
-            parcela_num = int(parts[3])
-            
-            from app.models.parcela import Parcela
-            from decimal import Decimal
+            parts = order_nsu_str.split("-")
+            triagem_id = int(parts[1])
 
-            # Localizar a parcela correspondente
-            parcela = db.query(Parcela).join(Pagamento).filter(
-                Pagamento.inscricao_id == inscricao_id,
-                Parcela.numero == parcela_num
-            ).first()
+            from app.models.inscricao_triagem import InscricaoTriagem
+            from app.services.triagem_service import converter_triagem_em_inscricao
 
-            if not parcela:
-                logger.error(f"Parcela #{parcela_num} da Inscrição #{inscricao_id} não encontrada!")
-                raise HTTPException(status_code=400, detail="Parcela correspondente não encontrada.")
+            triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
+            if not triagem:
+                raise HTTPException(status_code=400, detail="Triagem não encontrada.")
 
-            # Verificar se já foi processada anteriormente
-            if parcela.status == "PAGO":
-                logger.warning(f"Parcela ID={parcela.id} (Nº {parcela_num}) já consta como PAGA. Retornando 200 (idempotência).")
-                return {"message": "Webhook processado anteriormente para esta parcela."}
-
-            # Marcar parcela como PAGA
-            parcela.status = "PAGO"
-            db.commit()
-            logger.warning(f"Parcela ID={parcela.id} (Nº {parcela_num}) atualizada para PAGO.")
-
-            # Incrementar paid_amount e salvar capture_method no Pagamento pai
-            pagamento = parcela.pagamento
-            paid_amount_raw = data.get("paid_amount") or inner_data.get("paid_amount") or 0
-            capture_method = str(data.get("capture_method") or inner_data.get("capture_method") or "")
-
-            if paid_amount_raw:
-                pagamento.paid_amount = (pagamento.paid_amount or Decimal("0.00")) + Decimal(str(paid_amount_raw)) / 100
-            if capture_method:
-                pagamento.capture_method = capture_method
-            db.commit()
-
-            # Se todas as parcelas do carnê estiverem pagas, damos baixa no pagamento completo
-            todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
-            if todas_pagas:
-                status_anterior = pagamento.status
-                pagamento.status = "PAGO"
-                pagamento.inscricao.status = "CONFIRMADA"
-                db.commit()
-                logger.warning(f"Todas as parcelas pagas! Pagamento ID={pagamento.id} e Inscrição ID={pagamento.inscricao_id} CONFIRMADA.")
-
-                # Agendar e-mail de confirmação global se o pagamento não estava confirmado
-                if status_anterior != "PAGO":
-                    background_tasks.add_task(
-                        enviar_email_confirmacao,
-                        destinatario_email=pagamento.inscricao.usuario.email,
-                        destinatario_nome=pagamento.inscricao.usuario.nome,
-                        nome_evento=pagamento.inscricao.evento.titulo
-                    )
-            return {"message": f"Parcela #{parcela_num} paga com sucesso."}
+            inscricao = converter_triagem_em_inscricao(
+                db=db,
+                triagem=triagem,
+                order_nsu=order_nsu_str,
+                transaction_nsu=str(transaction_nsu or ""),
+                receipt_url=str(receipt_url or ""),
+                invoice_slug=str(invoice_slug or ""),
+                paid_amount=paid_amount_reais or triagem.valor_total,
+                capture_method=capture_method,
+                parcela_num_paga=1,
+                background_tasks=background_tasks
+            )
+            return {"message": "Webhook de triagem à vista processado com sucesso!", "inscricao_id": inscricao.id}
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise e
-            logger.error(f"Erro ao processar webhook de parcela: {e}")
-            raise HTTPException(status_code=400, detail="Erro interno ao processar parcela.")
+            logger.error(f"Erro ao converter triagem à vista no webhook: {e}")
+            raise HTTPException(status_code=400, detail=f"Erro ao converter triagem: {str(e)}")
 
     pagamento = None
     if order_nsu or invoice_slug:

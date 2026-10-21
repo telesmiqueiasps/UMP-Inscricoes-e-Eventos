@@ -36,14 +36,194 @@ def obter_dashboard_usuario(
         "created_at": current_user.created_at.isoformat()
     }
 
-    # 2. Inscrições do Usuário
+    # 2. Auto-reconciliação de Triagens Pagas (Regular e Diária)
+    from decimal import Decimal
+    from app.services.infinitepay import infinitepay_service
+    from app.services.pix import gerar_qr_code_base64
+    from app.models.inscricao_triagem import InscricaoTriagem
+    from app.models.diaria import DiariaTriagem, InscricaoDiaria
+    from app.services.triagem_service import converter_triagem_em_inscricao
+    from app.services.diaria_service import converter_triagem_em_diaria
+
+    # 2.0.1 Verificar se triagem regular pendente já foi paga no InfinitePay
+    triagens_pendentes_check = db.query(InscricaoTriagem).filter(
+        InscricaoTriagem.usuario_id == current_user.id,
+        InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
+    ).all()
+
+    for tr_chk in triagens_pendentes_check:
+        cands = [f"TRIAGEM-{tr_chk.id}"]
+        if tr_chk.forma_pagamento == "PARCELADO":
+            cands.append(f"TRIAGEM-{tr_chk.id}-PARC-1")
+        for c in cands:
+            try:
+                res_c = infinitepay_service.consultar_status_pagamento(order_nsu=c)
+                if res_c.get("paid") is True:
+                    p_amt = Decimal(str(res_c.get("paid_amount"))) / 100 if res_c.get("paid_amount") else tr_chk.valor_total
+                    c_mth = str(res_c.get("capture_method") or "")
+                    converter_triagem_em_inscricao(
+                        db=db,
+                        triagem=tr_chk,
+                        order_nsu=c,
+                        paid_amount=p_amt,
+                        capture_method=c_mth,
+                        parcela_num_paga=1
+                    )
+                    break
+            except Exception:
+                pass
+
+    # 2.0.2 Verificar se triagem de diária pendente já foi paga no InfinitePay
+    diarias_pendentes_check = db.query(DiariaTriagem).filter(
+        DiariaTriagem.usuario_id == current_user.id,
+        DiariaTriagem.status == "PENDENTE_PAGAMENTO"
+    ).all()
+
+    for td_chk in diarias_pendentes_check:
+        order_nsu_td = f"DIARIA_TRIAGEM-{td_chk.id}"
+        try:
+            res_td = infinitepay_service.consultar_status_pagamento(order_nsu=order_nsu_td)
+            if res_td.get("paid") is True:
+                p_amt = Decimal(str(res_td.get("paid_amount"))) / 100 if res_td.get("paid_amount") else td_chk.valor_total
+                c_mth = str(res_td.get("capture_method") or "")
+                converter_triagem_em_diaria(
+                    db=db,
+                    triagem=td_chk,
+                    order_nsu=order_nsu_td,
+                    paid_amount=p_amt,
+                    capture_method=c_mth
+                )
+        except Exception:
+            pass
+
+    # 2.1 Inscrições Regulares do Usuário
     inscricoes = db.query(Inscricao).filter(Inscricao.usuario_id == current_user.id).order_by(Inscricao.created_at.desc()).all()
 
     inscricoes_data = []
     pagamentos_data = []
 
+    from app.services.parcelamento import get_hoje_brasil
+    hoje = get_hoje_brasil()
+
     for ins in inscricoes:
         first_pag = ins.pagamentos[0] if ins.pagamentos else None
+        
+        # Buscar pagamentos associados e auto-reconciliar parcelas
+        for pag in ins.pagamentos:
+            # Reconciliação à vista caso esteja PENDENTE
+            if pag.status == "PENDENTE" and ins.status != "CANCELADA" and pag.order_nsu:
+                try:
+                    res_pag = infinitepay_service.consultar_status_pagamento(
+                        order_nsu=pag.order_nsu,
+                        transaction_nsu=pag.transaction_nsu,
+                        slug=pag.invoice_slug
+                    )
+                    if res_pag.get("paid") is True:
+                        pag.status = "PAGO"
+                        if res_pag.get("paid_amount"):
+                            pag.paid_amount = Decimal(str(res_pag.get("paid_amount"))) / 100
+                        if res_pag.get("capture_method"):
+                            pag.capture_method = str(res_pag.get("capture_method"))
+                        for p in pag.parcelas:
+                            p.status = "PAGO"
+                        ins.status = "CONFIRMADA"
+                        db.commit()
+                except Exception:
+                    pass
+
+            pag_status = "CANCELADO" if ins.status == "CANCELADA" else pag.status
+            parcelas_list = []
+
+            for parc in pag.parcelas:
+                # Se parcela não estiver paga nem cancelada, consultar InfinitePay (auto-cura em tempo real)
+                if parc.status != "PAGO" and parc.status != "CANCELADO" and ins.status != "CANCELADA":
+                    nsu_candidates = [
+                        f"ORD-{ins.id}-PARC-{parc.numero}",
+                        f"PARCELA-{parc.id}",
+                        f"PARC-{parc.id}"
+                    ]
+                    if parc.copia_cola_pix and "order_nsu=" in parc.copia_cola_pix:
+                        try:
+                            nsu_from_link = parc.copia_cola_pix.split("order_nsu=")[1].split("&")[0]
+                            if nsu_from_link and nsu_from_link not in nsu_candidates:
+                                nsu_candidates.append(nsu_from_link)
+                        except Exception:
+                            pass
+
+                    for cand in nsu_candidates:
+                        try:
+                            res_parc = infinitepay_service.consultar_status_pagamento(order_nsu=cand)
+                            if res_parc.get("paid") is True:
+                                parc.status = "PAGO"
+                                if res_parc.get("paid_amount"):
+                                    pag.paid_amount = (pag.paid_amount or Decimal("0.00")) + (Decimal(str(res_parc.get("paid_amount"))) / 100)
+                                if res_parc.get("capture_method"):
+                                    pag.capture_method = str(res_parc.get("capture_method"))
+                                db.commit()
+                                break
+                        except Exception:
+                            pass
+
+                # Se a parcela ainda estiver pendente mas não possuir link gerado, gerar e persistir agora
+                if parc.status != "PAGO" and parc.status != "CANCELADO" and ins.status != "CANCELADA":
+                    if not parc.copia_cola_pix:
+                        order_nsu_parc = f"ORD-{ins.id}-PARC-{parc.numero}"
+                        try:
+                            res_link = infinitepay_service.criar_checkout_link(
+                                order_nsu=order_nsu_parc,
+                                valor=parc.valor,
+                                descricao=f"Inscrição {ins.evento.titulo if ins.evento else 'Evento'} - Parcela {parc.numero}/{len(pag.parcelas)}",
+                                customer_email=current_user.email,
+                                customer_name=current_user.nome,
+                                redirect_url="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
+                            )
+                            parc.copia_cola_pix = res_link.get("checkout_url")
+                        except Exception:
+                            val_fmt = f"{float(parc.valor):.2f}".replace(".", ",")
+                            parc.copia_cola_pix = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
+                        parc.qr_code_pix = gerar_qr_code_base64(parc.copia_cola_pix)
+                        db.commit()
+
+                parc_status = "CANCELADO" if ins.status == "CANCELADA" else parc.status
+                if parc_status == "PENDENTE" and parc.vencimento < hoje:
+                    parc_status = "VENCIDO"
+
+                parcelas_list.append({
+                    "id": parc.id,
+                    "numero": parc.numero,
+                    "vencimento": parc.vencimento.isoformat() if parc.vencimento else "",
+                    "valor": float(parc.valor),
+                    "status": parc_status,
+                    "copia_cola_pix": parc.copia_cola_pix,
+                    "qr_code_pix": parc.qr_code_pix,
+                    "pdf_url": f"/api/v1/pagamentos/parcelas/{parc.id}/pdf"
+                })
+
+            # Se todas as parcelas foram pagas, marcar pagamento e inscrição como PAGO / CONFIRMADA
+            if pag.parcelas and all(p.status == "PAGO" for p in pag.parcelas):
+                pag.status = "PAGO"
+                pag_status = "PAGO"
+                ins.status = "CONFIRMADA"
+                db.commit()
+
+            if pag_status == "PENDENTE":
+                if any(p["status"] == "VENCIDO" for p in parcelas_list) or (pag.forma_pagamento in ["PIX", "INFINITEPAY"] and len(pag.parcelas) > 0 and pag.parcelas[0].vencimento < hoje):
+                    pag_status = "VENCIDO"
+
+            pagamentos_data.append({
+                "id": pag.id,
+                "inscricao_id": ins.id,
+                "evento_titulo": ins.evento.titulo if ins.evento else "",
+                "forma_pagamento": pag.forma_pagamento,
+                "capture_method": pag.capture_method,
+                "valor": float(pag.valor),
+                "status": pag_status,
+                "copia_cola_pix": pag.copia_cola_pix,
+                "qr_code_pix": pag.qr_code_pix,
+                "receipt_url": pag.receipt_url,
+                "parcelas": parcelas_list
+            })
+
         ins_dict = {
             "id": ins.id,
             "tipo_registro": "REGULAR",
@@ -63,46 +243,6 @@ def obter_dashboard_usuario(
             "created_at": ins.created_at.isoformat()
         }
         inscricoes_data.append(ins_dict)
-
-        # Buscar pagamentos associados
-        from app.services.parcelamento import get_hoje_brasil
-        hoje = get_hoje_brasil()
-        
-        for pag in ins.pagamentos:
-            pag_status = "CANCELADO" if ins.status == "CANCELADA" else pag.status
-            parcelas_list = []
-            for parc in pag.parcelas:
-                parc_status = "CANCELADO" if ins.status == "CANCELADA" else parc.status
-                if parc_status == "PENDENTE" and parc.vencimento < hoje:
-                    parc_status = "VENCIDO"
-                parcelas_list.append({
-                    "id": parc.id,
-                    "numero": parc.numero,
-                    "vencimento": parc.vencimento.isoformat() if parc.vencimento else "",
-                    "valor": float(parc.valor),
-                    "status": parc_status,
-                    "copia_cola_pix": parc.copia_cola_pix,
-                    "qr_code_pix": parc.qr_code_pix,
-                    "pdf_url": f"/api/v1/pagamentos/parcelas/{parc.id}/pdf"
-                })
-
-            if pag_status == "PENDENTE":
-                if any(p["status"] == "VENCIDO" for p in parcelas_list) or (pag.forma_pagamento in ["PIX", "INFINITEPAY"] and len(pag.parcelas) > 0 and pag.parcelas[0].vencimento < hoje):
-                    pag_status = "VENCIDO"
-
-            pagamentos_data.append({
-                "id": pag.id,
-                "inscricao_id": ins.id,
-                "evento_titulo": ins.evento.titulo if ins.evento else "",
-                "forma_pagamento": pag.forma_pagamento,
-                "capture_method": pag.capture_method,
-                "valor": float(pag.valor),
-                "status": pag_status,
-                "copia_cola_pix": pag.copia_cola_pix,
-                "qr_code_pix": pag.qr_code_pix,
-                "receipt_url": pag.receipt_url,
-                "parcelas": parcelas_list
-            })
 
     # 2.1 Diárias Confirmadas do Usuário
     from app.models.diaria import InscricaoDiaria, DiariaTriagem

@@ -33,10 +33,12 @@ class InfinitePayService:
         # Link amigável de checkout InfinitePay (usando valor em Reais na URL de pagamento)
         checkout_url = f"https://pay.infinitepay.io/{self.handle}/{valor_reais:.2f}?order_nsu={order_nsu}"
 
+        final_redirect_url = redirect_url or "https://inscricoessinodalpb.netlify.app/confirmacao.html"
+        
         payload = {
             "handle": self.handle,
             "order_nsu": order_nsu,
-            "redirect_url": "https://inscricoessinodalpb.netlify.app/confirmacao.html",
+            "redirect_url": final_redirect_url,
             "webhook_url": "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/infinitepay",
             "items": [
                 {

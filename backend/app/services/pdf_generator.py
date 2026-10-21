@@ -24,7 +24,8 @@ def gerar_pdf_parcela(
     nome_participante: str,
     cpf_participante: str | None,
     nome_evento: str,
-    copia_cola_pix: str | None = None
+    copia_cola_pix: str | None = None,
+    customer_email: str | None = None
 ) -> bytes:
     """
     Gera um PDF em memória (bytes) semelhante a um carnê/comprovante de parcela contendo:
@@ -138,8 +139,9 @@ def gerar_pdf_parcela(
             order_nsu=f"PARCELA-{parcela_id}",
             valor=valor,
             descricao=f"Parcela #{numero_parcela}/{total_parcelas} - {nome_evento}",
-            customer_email="",
-            customer_name=nome_participante
+            customer_email=customer_email or "",
+            customer_name=nome_participante,
+            redirect_url="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
         )
         copia_cola_pix = res_link.get("checkout_url")
 

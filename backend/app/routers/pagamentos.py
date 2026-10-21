@@ -388,6 +388,27 @@ def baixar_pdf_parcela(
 
     total_parcelas = len(pagamento.parcelas)
 
+    if not parcela.copia_cola_pix:
+        order_nsu_parc = f"ORD-{inscricao.id}-PARC-{parcela.numero}"
+        try:
+            res = infinitepay_service.criar_checkout_link(
+                order_nsu=order_nsu_parc,
+                valor=parcela.valor,
+                descricao=f"Inscrição Evento #{inscricao.evento_id} - Parcela {parcela.numero}/{total_parcelas}",
+                customer_email=inscricao.usuario.email,
+                customer_name=inscricao.usuario.nome,
+                redirect_url="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
+            )
+            parcela.copia_cola_pix = res.get("checkout_url")
+        except Exception:
+            val_fmt = f"{float(parcela.valor):.2f}".replace(".", ",")
+            parcela.copia_cola_pix = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
+
+        from app.services.pix import gerar_qr_code_base64
+        parcela.qr_code_pix = gerar_qr_code_base64(parcela.copia_cola_pix)
+        db.commit()
+        db.refresh(parcela)
+
     pdf_bytes = gerar_pdf_parcela(
         parcela_id=parcela.id,
         numero_parcela=parcela.numero,
@@ -398,7 +419,8 @@ def baixar_pdf_parcela(
         nome_participante=inscricao.usuario.nome,
         cpf_participante=inscricao.usuario.cpf,
         nome_evento=inscricao.evento.titulo,
-        copia_cola_pix=parcela.copia_cola_pix
+        copia_cola_pix=parcela.copia_cola_pix,
+        customer_email=inscricao.usuario.email
     )
 
     filename = f"parcela_{parcela.numero}_inscricao_{inscricao.id}.pdf"

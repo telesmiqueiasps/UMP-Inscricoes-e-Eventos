@@ -954,3 +954,19 @@ def toggle_checkin_manual(
         "checkin_realizado": inscricao.checkin_realizado,
         "mensagem": mensagem
     }
+
+
+@router.post("/admin/reconciliar-pagamentos")
+async def disparar_reconciliacao_admin(
+    admin: Usuario = Depends(get_current_admin)
+):
+    """
+    Executa a reconciliação de pagamentos e parcelas pendentes com a InfinitePay sob demanda.
+    """
+    from app.services.reconciliation import reconciliar_pagamentos_pendentes
+    try:
+        await reconciliar_pagamentos_pendentes()
+        return {"sucesso": True, "mensagem": "Reconciliação executada com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao executar reconciliação: {str(e)}")
+

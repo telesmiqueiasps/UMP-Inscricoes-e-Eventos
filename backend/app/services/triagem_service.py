@@ -34,13 +34,29 @@ def converter_triagem_em_inscricao(
     Dispara o e-mail de confirmação de inscrição.
     """
     if triagem.status == "CONVERTIDA":
-        # Já convertida anteriormente, buscar e retornar inscrição existente
+        # Já convertida anteriormente, buscar inscrição existente
         inscricao_existente = db.query(Inscricao).filter(
             Inscricao.usuario_id == triagem.usuario_id,
             Inscricao.evento_id == triagem.evento_id,
             Inscricao.status != "CANCELADA"
         ).order_by(Inscricao.created_at.desc()).first()
         if inscricao_existente:
+            # Se for uma parcela subsequente sendo paga, dar baixa na parcela correspondente
+            if parcela_num_paga:
+                for pag_ex in inscricao_existente.pagamentos:
+                    for p_ex in pag_ex.parcelas:
+                        if p_ex.numero == parcela_num_paga:
+                            p_ex.status = "PAGO"
+                            if paid_amount:
+                                pag_ex.paid_amount = (pag_ex.paid_amount or Decimal("0.00")) + paid_amount
+                            if capture_method:
+                                pag_ex.capture_method = capture_method
+                            db.commit()
+                            if all(p.status == "PAGO" for p in pag_ex.parcelas):
+                                pag_ex.status = "PAGO"
+                                inscricao_existente.status = "CONFIRMADA"
+                                db.commit()
+                            logger.warning(f"Parcela #{parcela_num_paga} da Inscrição existente ID={inscricao_existente.id} baixada com sucesso!")
             return inscricao_existente
 
     evento = triagem.evento or db.query(Evento).filter(Evento.id == triagem.evento_id).first()
@@ -98,7 +114,10 @@ def converter_triagem_em_inscricao(
     db.commit()
     db.refresh(db_pagamento)
 
-    # 4. Criar Parcelas
+    # 4. Criar Parcelas com link e QR Code gerados
+    from app.services.infinitepay import infinitepay_service
+    from app.services.pix import gerar_qr_code_base64
+
     if is_parcelado:
         dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
         dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
@@ -116,11 +135,34 @@ def converter_triagem_em_inscricao(
         for p_item in parcelas_calc:
             num = p_item["numero"]
             st_parc = "PAGO" if num == parcela_num_paga else "PENDENTE"
+            order_nsu_parc = f"ORD-{db_inscricao.id}-PARC-{num}"
+            link_parc = None
+            qr_b64 = None
+
+            if st_parc != "PAGO":
+                try:
+                    res_chk = infinitepay_service.criar_checkout_link(
+                        order_nsu=order_nsu_parc,
+                        valor=p_item["valor"],
+                        descricao=f"Inscrição #{db_inscricao.id} ({evento.titulo}) - Parcela {num}/{n_parc}",
+                        customer_email=triagem.usuario.email if triagem.usuario else "",
+                        customer_name=triagem.usuario.nome if triagem.usuario else ""
+                    )
+                    link_parc = res_chk.get("checkout_url")
+                except Exception:
+                    val_fmt = f"{float(p_item['valor']):.2f}".replace(".", ",")
+                    link_parc = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
+                qr_b64 = gerar_qr_code_base64(link_parc)
+            else:
+                link_parc = receipt_url or f"https://pay.infinitepay.io/{infinitepay_service.handle}"
+
             parc = Parcela(
                 pagamento_id=db_pagamento.id,
                 numero=num,
                 vencimento=p_item["vencimento"],
                 valor=p_item["valor"],
+                copia_cola_pix=link_parc,
+                qr_code_pix=qr_b64,
                 status=st_parc
             )
             db.add(parc)
@@ -131,6 +173,7 @@ def converter_triagem_em_inscricao(
             numero=1,
             vencimento=get_hoje_brasil(),
             valor=triagem.valor_total,
+            copia_cola_pix=receipt_url,
             status="PAGO"
         )
         db.add(parc)
