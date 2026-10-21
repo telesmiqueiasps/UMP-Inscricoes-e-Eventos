@@ -240,7 +240,8 @@ def listar_inscricoes_admin(
         query = query.filter(
             or_(
                 cast(Inscricao.dados_extras["igreja"], String).ilike(f"%{igreja_clean}%"),
-                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(f"%{igreja_clean}%")
+                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(f"%{igreja_clean}%"),
+                cast(Inscricao.dados_extras["Igreja"], String).ilike(f"%{igreja_clean}%")
             )
         )
     if search and search.strip():
@@ -251,7 +252,8 @@ def listar_inscricoes_admin(
                 Usuario.email.ilike(search_pattern),
                 Usuario.cpf.ilike(search_pattern),
                 cast(Inscricao.dados_extras["igreja"], String).ilike(search_pattern),
-                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(search_pattern)
+                cast(Inscricao.dados_extras["dyn_igreja"], String).ilike(search_pattern),
+                cast(Inscricao.dados_extras["Igreja"], String).ilike(search_pattern)
             )
         )
 
@@ -273,13 +275,25 @@ def listar_igrejas_evento(
 
     igrejas_dict = {}
     for (extras,) in inscricoes:
+        if isinstance(extras, str):
+            try:
+                import json
+                extras = json.loads(extras)
+            except Exception:
+                extras = None
         if isinstance(extras, dict):
-            igreja = extras.get("igreja") or extras.get("dyn_igreja")
+            igreja = extras.get("igreja") or extras.get("dyn_igreja") or extras.get("Igreja")
+            if not igreja:
+                for k, v in extras.items():
+                    if k.lower() in ("igreja", "dyn_igreja"):
+                        igreja = v
+                        break
             if igreja and str(igreja).strip():
                 nome = str(igreja).strip()
-                key = nome.lower()
-                if key not in igrejas_dict:
-                    igrejas_dict[key] = nome
+                if nome.lower() not in ("none", "null", ""):
+                    key = nome.lower()
+                    if key not in igrejas_dict:
+                        igrejas_dict[key] = nome
 
     return sorted(list(igrejas_dict.values()), key=lambda s: s.lower())
 

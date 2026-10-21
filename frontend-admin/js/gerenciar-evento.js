@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializar o carregamento
   await loadEventoInfo();
-  await carregarIgrejasFiltro();
   await loadInscricoes();
+  await carregarIgrejasFiltro();
   await carregarDiaristas();
   await loadPagamentos();
   await loadListaPresenca();
@@ -140,7 +140,7 @@ function renderPaginationControls(containerId, currentPage, totalItems, onPageCh
   `;
 }
 
-// --- Carregar Lista de Igrejas para o Datalist do Filtro ---
+// --- Carregar Lista de Igrejas para o Datalist do Filtro (Apenas igrejas presentes nas inscrições) ---
 window.carregarIgrejasFiltro = async function() {
   const datalist = document.getElementById('datalist-igrejas');
   if (!datalist || !selectedEventoId) return;
@@ -149,20 +149,26 @@ window.carregarIgrejasFiltro = async function() {
     let listaIgrejas = [];
     try {
       const resEvento = await API.request(`/admin/eventos/${selectedEventoId}/igrejas`);
-      if (Array.isArray(resEvento)) listaIgrejas = resEvento;
-    } catch (e) {}
-
-    // Enriquecer com as igrejas cadastradas no sistema
-    try {
-      const todas = await API.request('/igrejas');
-      if (Array.isArray(todas)) {
-        todas.forEach(i => {
-          if (i && i.nome && !listaIgrejas.includes(i.nome)) {
-            listaIgrejas.push(i.nome);
-          }
-        });
+      if (Array.isArray(resEvento)) {
+        listaIgrejas = [...resEvento];
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Não foi possível carregar igrejas do evento via API:", e);
+    }
+
+    // Complementar com as igrejas presentes nas inscrições já em memória
+    if (Array.isArray(cachedInscricoesList)) {
+      cachedInscricoesList.forEach(ins => {
+        const extras = ins.dados_extras || {};
+        const ig = extras.igreja || extras.dyn_igreja || extras.Igreja;
+        if (ig && typeof ig === 'string' && ig.trim()) {
+          const nome = ig.trim();
+          if (!listaIgrejas.some(item => item.toLowerCase() === nome.toLowerCase())) {
+            listaIgrejas.push(nome);
+          }
+        }
+      });
+    }
 
     const sorted = Array.from(new Set(listaIgrejas)).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
     datalist.innerHTML = sorted.map(ig => `<option value="${ig}"></option>`).join('');
@@ -210,6 +216,12 @@ window.loadInscricoes = async function() {
     cachedInscricoesList = data;
     currentPageInscricoes = 1;
     renderInscricoesTable();
+
+    // Se o datalist estiver vazio e não houver filtro de igreja ativo, atualizar sugestões a partir das inscrições
+    const datalist = document.getElementById('datalist-igrejas');
+    if (datalist && datalist.children.length === 0 && !igreja && Array.isArray(data) && data.length > 0) {
+      carregarIgrejasFiltro();
+    }
   } catch (err) {
     const container = document.getElementById('inscricoes-table-body');
     if (container) {
