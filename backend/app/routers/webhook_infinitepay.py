@@ -41,6 +41,12 @@ async def webhook_infinitepay(
         or inner_data.get("order_nsu")
         or flat_metadata.get("order_nsu")
         or inner_metadata.get("order_nsu")
+        or data.get("external_order_nsu")
+        or inner_data.get("external_order_nsu")
+        or flat_metadata.get("external_order_nsu")
+        or inner_metadata.get("external_order_nsu")
+        or data.get("external_reference")
+        or inner_data.get("external_reference")
         or data.get("order_id")
         or inner_data.get("order_id")
         or data.get("external_id")
@@ -110,13 +116,23 @@ async def webhook_infinitepay(
             return {"message": "Webhook processado anteriormente para esta parcela.", "status": "PAGO"}
 
         parc_alvo.status = "PAGO"
+        db.flush()
         pagamento = parc_alvo.pagamento
         if pagamento:
-            pagamento.paid_amount = (pagamento.paid_amount or Decimal("0.00")) + (paid_amount_reais if paid_amount_reais > 0 else parc_alvo.valor)
+            # Recalcular soma real das parcelas pagas
+            total_pago = sum(
+                (p.valor for p in pagamento.parcelas if p.status == "PAGO"),
+                Decimal("0.00")
+            )
+            pagamento.paid_amount = total_pago
             if capture_method:
                 pagamento.capture_method = capture_method
+            if transaction_nsu and not pagamento.transaction_nsu:
+                pagamento.transaction_nsu = str(transaction_nsu)
+            if receipt_url and not pagamento.receipt_url:
+                pagamento.receipt_url = str(receipt_url)
             db.commit()
-            logger.warning(f"Parcela ID={parc_alvo.id} (Nº {parc_alvo.numero}) atualizada para PAGO.")
+            logger.warning(f"Parcela ID={parc_alvo.id} (Nº {parc_alvo.numero}) atualizada para PAGO. Total pago: {total_pago}.")
 
             # Se todas as parcelas do carnê estiverem pagas, dar baixa completa
             todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)

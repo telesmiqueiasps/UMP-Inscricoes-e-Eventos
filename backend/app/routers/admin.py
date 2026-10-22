@@ -420,6 +420,10 @@ def atualizar_status_parcela_admin(
     # Verificar status do pagamento pai
     pagamento = db.query(Pagamento).filter(Pagamento.id == parcela.pagamento_id).first()
     if pagamento:
+        from decimal import Decimal
+        total_pago = sum((p.valor for p in pagamento.parcelas if p.status == "PAGO"), Decimal("0.00"))
+        pagamento.paid_amount = total_pago
+
         todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
         todas_canceladas = all(p.status == "CANCELADO" for p in pagamento.parcelas)
         
@@ -440,6 +444,8 @@ def atualizar_status_parcela_admin(
                 )
         elif todas_canceladas:
             pagamento.status = "CANCELADO"
+            db.commit()
+        else:
             db.commit()
 
     return parcela

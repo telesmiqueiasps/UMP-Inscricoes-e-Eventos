@@ -155,8 +155,9 @@ def obter_dashboard_usuario(
                             res_parc = infinitepay_service.consultar_status_pagamento(order_nsu=cand)
                             if res_parc.get("paid") is True:
                                 parc.status = "PAGO"
-                                if res_parc.get("paid_amount"):
-                                    pag.paid_amount = (pag.paid_amount or Decimal("0.00")) + (Decimal(str(res_parc.get("paid_amount"))) / 100)
+                                db.flush()
+                                total_pago = sum((p.valor for p in pag.parcelas if p.status == "PAGO"), Decimal("0.00"))
+                                pag.paid_amount = total_pago
                                 if res_parc.get("capture_method"):
                                     pag.capture_method = str(res_parc.get("capture_method"))
                                 db.commit()

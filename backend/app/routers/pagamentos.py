@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
 from decimal import Decimal
+from app.services.email import enviar_email_confirmacao
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -498,4 +499,282 @@ def baixar_pdf_parcela_triagem(
         "Content-Disposition": f"inline; filename={filename}"
     }
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+class ConfirmarCheckoutSchema(BaseModel):
+    order_nsu: Optional[str] = None
+    transaction_nsu: Optional[str] = None
+    slug: Optional[str] = None
+    receipt_url: Optional[str] = None
+    capture_method: Optional[str] = None
+    status: Optional[str] = None
+
+
+@router.post("/confirmar-retorno-checkout")
+def confirmar_retorno_checkout(
+    payload: ConfirmarCheckoutSchema,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Recebe os dados de retorno do checkout da InfinitePay via frontend
+    (quando o participante é redirecionado de volta para a dashboard ou página de confirmação).
+    Verifica e confirma automaticamente a baixa do pagamento ou da parcela correspondente.
+    """
+    order_nsu_str = str(payload.order_nsu or "").strip()
+    transaction_nsu = payload.transaction_nsu
+    invoice_slug = payload.slug
+    receipt_url = payload.receipt_url
+    capture_method = payload.capture_method or ""
+    
+    logger.warning(
+        f"Confirmar Retorno Checkout recebido: order_nsu={order_nsu_str}, "
+        f"transaction_nsu={transaction_nsu}, slug={invoice_slug}, receipt={receipt_url}"
+    )
+
+    if not order_nsu_str and not transaction_nsu and not invoice_slug:
+        raise HTTPException(status_code=400, detail="Parâmetros de confirmação ausentes.")
+
+    # 1. Validação Antifraude e Verificação na InfinitePay:
+    # Se transaction_nsu ou slug forem fornecidos (retorno legítimo do checkout), consulta a API da InfinitePay
+    if transaction_nsu and (invoice_slug or order_nsu_str):
+        res_check = infinitepay_service.consultar_status_pagamento(
+            order_nsu=order_nsu_str,
+            transaction_nsu=transaction_nsu,
+            slug=invoice_slug
+        )
+        if res_check and res_check.get("paid") is False:
+            logger.warning(f"Confirmação rejeitada pela InfinitePay (não pago): {res_check}")
+            return {
+                "success": False,
+                "message": "A InfinitePay informou que este pagamento ainda não foi aprovado ou concluído."
+            }
+    elif not transaction_nsu and not invoice_slug:
+        # Se não há comprovante/NSU da operadora (ex: clique manual no botão "Já paguei" sem retorno do checkout),
+        # verifica apenas se a parcela já foi confirmada anteriormente via Webhook no banco.
+        # NUNCA dar baixa automática sem validação da operadora!
+        parc = None
+        if order_nsu_str.startswith("ORD-") and "-PARC-" in order_nsu_str:
+            parts = order_nsu_str.split("-")
+            parc = db.query(Parcela).join(Pagamento).filter(
+                Pagamento.inscricao_id == int(parts[1]),
+                Parcela.numero == int(parts[3])
+            ).first()
+        elif order_nsu_str.startswith("PARCELA-") or order_nsu_str.startswith("PARC-"):
+            clean_str = order_nsu_str.replace("PARCELA-", "").replace("PARC-", "").split("-")[0]
+            parc = db.query(Parcela).filter(Parcela.id == int(clean_str)).first()
+
+        if parc and parc.status == "PAGO":
+            return {"success": True, "message": f"A parcela #{parc.numero} já consta como PAGA no sistema!", "status": "PAGO"}
+
+        return {
+            "success": False,
+            "message": "O pagamento ainda não foi identificado pela operadora. A baixa ocorre automaticamente via webhook assim que o pagamento é compensado. Se você acabou de pagar, aguarde 1 a 2 minutos e atualize a página."
+        }
+
+    # Helper para dar baixa em parcela após validação
+    def dar_baixa_parcela(parc_alvo: Parcela):
+        if parc_alvo.status == "PAGO":
+            return {"success": True, "message": "Parcela já constava como paga.", "status": "PAGO", "parcela_id": parc_alvo.id}
+
+        parc_alvo.status = "PAGO"
+        db.flush()
+        pag = parc_alvo.pagamento
+        if pag:
+            total_pago = sum(
+                (p.valor for p in pag.parcelas if p.status == "PAGO"),
+                Decimal("0.00")
+            )
+            pag.paid_amount = total_pago
+            if capture_method:
+                pag.capture_method = capture_method
+            if transaction_nsu and not pag.transaction_nsu:
+                pag.transaction_nsu = str(transaction_nsu)
+            if receipt_url and not pag.receipt_url:
+                pag.receipt_url = str(receipt_url)
+            if invoice_slug and not pag.invoice_slug:
+                pag.invoice_slug = str(invoice_slug)
+            
+            todas_pagas = all(p.status == "PAGO" for p in pag.parcelas)
+            if todas_pagas:
+                status_ant = pag.status
+                pag.status = "PAGO"
+                if pag.inscricao:
+                    pag.inscricao.status = "CONFIRMADA"
+                db.commit()
+                if status_ant != "PAGO" and background_tasks and pag.inscricao and pag.inscricao.usuario:
+                    background_tasks.add_task(
+                        enviar_email_confirmacao,
+                        destinatario_email=pag.inscricao.usuario.email,
+                        destinatario_nome=pag.inscricao.usuario.nome,
+                        nome_evento=pag.inscricao.evento.titulo
+                    )
+            else:
+                db.commit()
+        else:
+            db.commit()
+        return {"success": True, "message": f"Parcela #{parc_alvo.numero} confirmada como PAGA!", "status": "PAGO", "parcela_id": parc_alvo.id}
+
+    # 1. Parcela direta: PARCELA-{id} ou PARC-{id}
+    if order_nsu_str.startswith("PARCELA-") or order_nsu_str.startswith("PARC-"):
+        try:
+            clean_str = order_nsu_str.replace("PARCELA-", "").replace("PARC-", "").split("-")[0]
+            parc_id = int(clean_str)
+            parc = db.query(Parcela).filter(Parcela.id == parc_id).first()
+            if parc:
+                return dar_baixa_parcela(parc)
+        except Exception as e:
+            logger.error(f"Erro ao buscar parcela por ID: {e}")
+
+    # 2. Parcela por inscrição: ORD-{inscricao_id}-PARC-{numero}
+    if order_nsu_str.startswith("ORD-") and "-PARC-" in order_nsu_str:
+        try:
+            parts = order_nsu_str.split("-")
+            inscricao_id = int(parts[1])
+            parcela_num = int(parts[3])
+            parc = db.query(Parcela).join(Pagamento).filter(
+                Pagamento.inscricao_id == inscricao_id,
+                Parcela.numero == parcela_num
+            ).first()
+            if parc:
+                return dar_baixa_parcela(parc)
+        except Exception as e:
+            logger.error(f"Erro ao buscar parcela ORD-PARC: {e}")
+
+    # 3. Parcela por Triagem: TRIAGEM-{triagem_id}-PARC-{numero}
+    if order_nsu_str.startswith("TRIAGEM-") and "-PARC-" in order_nsu_str:
+        try:
+            parts = order_nsu_str.split("-")
+            triagem_id = int(parts[1])
+            parcela_num = int(parts[3])
+
+            from app.services.triagem_service import converter_triagem_em_inscricao
+            triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
+            if triagem:
+                if triagem.status == "CONVERTIDA":
+                    inscricao = db.query(Inscricao).filter(
+                        Inscricao.usuario_id == triagem.usuario_id,
+                        Inscricao.evento_id == triagem.evento_id,
+                        Inscricao.status != "CANCELADA"
+                    ).order_by(Inscricao.created_at.desc()).first()
+                    if inscricao:
+                        parc = db.query(Parcela).join(Pagamento).filter(
+                            Pagamento.inscricao_id == inscricao.id,
+                            Parcela.numero == parcela_num
+                        ).first()
+                        if parc:
+                            return dar_baixa_parcela(parc)
+                else:
+                    converter_triagem_em_inscricao(
+                        db=db,
+                        triagem=triagem,
+                        order_nsu=order_nsu_str,
+                        transaction_nsu=str(transaction_nsu or ""),
+                        receipt_url=str(receipt_url or ""),
+                        invoice_slug=str(invoice_slug or ""),
+                        paid_amount=triagem.valor_total,
+                        capture_method=capture_method,
+                        parcela_num_paga=parcela_num,
+                        background_tasks=background_tasks
+                    )
+                    return {"success": True, "message": "Triagem convertida e parcela 1 confirmada!", "status": "CONFIRMADA"}
+        except Exception as e:
+            logger.error(f"Erro ao processar triagem parcela: {e}")
+
+    # 4. Triagem à vista: TRIAGEM-{triagem_id}
+    if order_nsu_str.startswith("TRIAGEM-"):
+        try:
+            parts = order_nsu_str.split("-")
+            triagem_id = int(parts[1])
+            from app.services.triagem_service import converter_triagem_em_inscricao
+            triagem = db.query(InscricaoTriagem).filter(InscricaoTriagem.id == triagem_id).first()
+            if triagem and triagem.status != "CONVERTIDA":
+                converter_triagem_em_inscricao(
+                    db=db,
+                    triagem=triagem,
+                    order_nsu=order_nsu_str,
+                    transaction_nsu=str(transaction_nsu or ""),
+                    receipt_url=str(receipt_url or ""),
+                    invoice_slug=str(invoice_slug or ""),
+                    paid_amount=triagem.valor_total,
+                    capture_method=capture_method,
+                    parcela_num_paga=1,
+                    background_tasks=background_tasks
+                )
+                return {"success": True, "message": "Inscrição à vista confirmada com sucesso!", "status": "CONFIRMADA"}
+        except Exception as e:
+            logger.error(f"Erro ao processar triagem à vista: {e}")
+
+    # 5. Diária: DIARIA_TRIAGEM-{triagem_id}
+    if order_nsu_str.startswith("DIARIA_TRIAGEM-"):
+        try:
+            parts = order_nsu_str.split("-")
+            triagem_id = int(parts[1])
+            from app.models.diaria import DiariaTriagem
+            from app.services.diaria_service import converter_triagem_em_diaria
+            triagem = db.query(DiariaTriagem).filter(DiariaTriagem.id == triagem_id).first()
+            if triagem and triagem.status != "CONVERTIDA":
+                converter_triagem_em_diaria(
+                    db=db,
+                    triagem=triagem,
+                    order_nsu=order_nsu_str,
+                    transaction_nsu=str(transaction_nsu or ""),
+                    receipt_url=str(receipt_url or ""),
+                    invoice_slug=str(invoice_slug or ""),
+                    paid_amount=triagem.valor_total,
+                    capture_method=capture_method,
+                    background_tasks=background_tasks
+                )
+                return {"success": True, "message": "Diária confirmada com sucesso!", "status": "CONFIRMADA"}
+        except Exception as e:
+            logger.error(f"Erro ao processar diária: {e}")
+
+    # 6. Pagamento à vista: ORD-{inscricao_id}
+    if order_nsu_str.startswith("ORD-"):
+        try:
+            inscricao_id = int(order_nsu_str.replace("ORD-", ""))
+            pagamento = db.query(Pagamento).filter(Pagamento.inscricao_id == inscricao_id).first()
+            if pagamento:
+                pagamento.status = "PAGO"
+                pagamento.paid_amount = pagamento.valor
+                if transaction_nsu:
+                    pagamento.transaction_nsu = str(transaction_nsu)
+                if receipt_url:
+                    pagamento.receipt_url = str(receipt_url)
+                if invoice_slug:
+                    pagamento.invoice_slug = str(invoice_slug)
+                if pagamento.inscricao:
+                    status_ant = pagamento.inscricao.status
+                    pagamento.inscricao.status = "CONFIRMADA"
+                    db.commit()
+                    if status_ant != "CONFIRMADA" and background_tasks and pagamento.inscricao.usuario:
+                        background_tasks.add_task(
+                            enviar_email_confirmacao,
+                            destinatario_email=pagamento.inscricao.usuario.email,
+                            destinatario_nome=pagamento.inscricao.usuario.nome,
+                            nome_evento=pagamento.inscricao.evento.titulo
+                        )
+                else:
+                    db.commit()
+                return {"success": True, "message": "Pagamento confirmado com sucesso!", "status": "PAGO"}
+        except Exception as e:
+            logger.error(f"Erro ao processar ORD direto: {e}")
+
+    # 7. Buscar por transaction_nsu ou invoice_slug existente
+    if transaction_nsu or invoice_slug:
+        pagamento = db.query(Pagamento).filter(
+            (Pagamento.transaction_nsu == transaction_nsu) | (Pagamento.invoice_slug == invoice_slug)
+        ).first()
+        if pagamento:
+            pagamento.status = "PAGO"
+            for p in pagamento.parcelas:
+                p.status = "PAGO"
+            pagamento.paid_amount = pagamento.valor
+            if pagamento.inscricao:
+                pagamento.inscricao.status = "CONFIRMADA"
+            db.commit()
+            return {"success": True, "message": "Pagamento localizado e confirmado com sucesso!", "status": "PAGO"}
+
+    return {"success": False, "message": "Não foi possível vincular o retorno da InfinitePay a um pedido específico."}
+
 

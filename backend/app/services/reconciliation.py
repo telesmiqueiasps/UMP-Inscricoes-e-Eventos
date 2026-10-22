@@ -116,8 +116,9 @@ async def reconciliar_pagamentos_pendentes():
                         parc.status = "PAGO"
                         
                         pagamento = parc.pagamento
-                        if res.get("paid_amount"):
-                            pagamento.paid_amount = (pagamento.paid_amount or Decimal("0.00")) + Decimal(str(res.get("paid_amount"))) / 100
+                        db.flush()
+                        total_pago = sum((p.valor for p in pagamento.parcelas if p.status == "PAGO"), Decimal("0.00"))
+                        pagamento.paid_amount = total_pago
                         if res.get("capture_method"):
                             pagamento.capture_method = str(res.get("capture_method"))
                         db.commit()

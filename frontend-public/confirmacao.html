@@ -120,5 +120,39 @@
     <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
   </footer>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderNsu = urlParams.get('order_nsu') || urlParams.get('external_order_nsu');
+      const txNsu = urlParams.get('transaction_nsu') || urlParams.get('id');
+      const slug = urlParams.get('slug') || urlParams.get('invoice_slug');
+      const receiptUrl = urlParams.get('receipt_url');
+      const captureMethod = urlParams.get('capture_method');
+      const statusParam = urlParams.get('status');
+
+      if (orderNsu || txNsu || slug) {
+        try {
+          const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:8000/api/v1'
+            : 'https://ump-inscricoes-e-eventos.onrender.com/api/v1';
+
+          await fetch(`${apiBase}/pagamentos/confirmar-retorno-checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_nsu: orderNsu,
+              transaction_nsu: txNsu,
+              slug: slug,
+              receipt_url: receiptUrl,
+              capture_method: captureMethod,
+              status: statusParam
+            })
+          });
+        } catch (e) {
+          console.warn('Erro ao homologar retorno:', e);
+        }
+      }
+    });
+  </script>
 </body>
 </html>

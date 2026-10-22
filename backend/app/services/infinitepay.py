@@ -35,11 +35,16 @@ class InfinitePayService:
 
         final_redirect_url = redirect_url or "https://inscricoessinodalpb.netlify.app/confirmacao.html"
         
+        webhook_endpoint = "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/infinitepay"
         payload = {
             "handle": self.handle,
             "order_nsu": order_nsu,
             "redirect_url": final_redirect_url,
-            "webhook_url": "https://ump-inscricoes-e-eventos.onrender.com/api/v1/webhook/infinitepay",
+            "webhook_url": webhook_endpoint,
+            "webhook": {
+                "url": webhook_endpoint,
+                "events": ["paid", "canceled", "refunded"]
+            },
             "items": [
                 {
                     "description": descricao,

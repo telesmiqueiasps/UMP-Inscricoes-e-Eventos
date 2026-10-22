@@ -16,6 +16,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   registrationCard = document.getElementById('registration-card');
   paymentsContainer = document.getElementById('payments-container');
 
+  // 1. Verificar se o participante acabou de retornar do checkout da InfinitePay
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderNsu = urlParams.get('order_nsu') || urlParams.get('external_order_nsu');
+  const txNsu = urlParams.get('transaction_nsu') || urlParams.get('id');
+  const slug = urlParams.get('slug') || urlParams.get('invoice_slug');
+  const receiptUrl = urlParams.get('receipt_url');
+  const captureMethod = urlParams.get('capture_method');
+  const statusParam = urlParams.get('status');
+
+  if (orderNsu || txNsu || slug) {
+    try {
+      showToast('Sincronizando pagamento com a InfinitePay...', 'info');
+      const confirmRes = await API.request('/pagamentos/confirmar-retorno-checkout', {
+        method: 'POST',
+        body: JSON.stringify({
+          order_nsu: orderNsu,
+          transaction_nsu: txNsu,
+          slug: slug,
+          receipt_url: receiptUrl,
+          capture_method: captureMethod,
+          status: statusParam
+        })
+      });
+      if (confirmRes && confirmRes.success) {
+        showToast('🎉 ' + (confirmRes.message || 'Pagamento confirmado com sucesso!'), 'success');
+      }
+    } catch (err) {
+      console.warn('Erro ao confirmar retorno do checkout:', err);
+    } finally {
+      // Limpar parâmetros da URL após o processamento
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
   // Inicializar carregamento de dados
   await loadDashboard();
 });
@@ -533,7 +567,7 @@ function renderRecentPayments(pagamentos) {
             <td><strong>${valorParcFmt}</strong></td>
             <td><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
             <td>
-              <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                 ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
                   (parc.copia_cola_pix.startsWith('http') ? 
                     `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
@@ -545,6 +579,12 @@ function renderRecentPayments(pagamentos) {
                       <span>Copiar Pix</span>
                     </button>`
                   ) : ''
+                }
+                ${!isCancelled && parc.status !== 'PAGO' ? 
+                  `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                    <span>Já paguei</span>
+                  </button>` : ''
                 }
                 ${!isCancelled ? 
                   `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
@@ -587,6 +627,12 @@ function renderRecentPayments(pagamentos) {
                     <span>Copiar Pix</span>
                   </button>`
                 ) : ''
+              }
+              ${!isCancelled && parc.status !== 'PAGO' ? 
+                `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                  <span>Já paguei</span>
+                </button>` : ''
               }
               ${!isCancelled ? 
                 `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
@@ -969,3 +1015,24 @@ window.closeQrModal = function() {
   const modal = document.getElementById('qr-code-modal');
   if (modal) modal.style.display = 'none';
 };
+
+window.verificarStatusParcela = async function(parcelaId, orderNsu) {
+  try {
+    showToast('Sincronizando status da parcela com o servidor...', 'info');
+    const res = await API.request('/pagamentos/confirmar-retorno-checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        order_nsu: orderNsu || `PARCELA-${parcelaId}`
+      })
+    });
+    if (res && res.success) {
+      showToast('🎉 ' + (res.message || 'Parcela confirmada com sucesso!'), 'success');
+      await loadDashboard();
+    } else {
+      showToast(res.message || 'O pagamento ainda não foi identificado ou está em processamento na InfinitePay.', 'warning');
+    }
+  } catch (err) {
+    showToast('Não foi possível sincronizar o status no momento. Tente novamente em instantes.', 'error');
+  }
+};
+
