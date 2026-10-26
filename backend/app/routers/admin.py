@@ -17,6 +17,7 @@ from app.models.usuario import Usuario
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.models.diaria import InscricaoDiaria, DiariaTriagem
+from app.models.inscricao_triagem import InscricaoTriagem
 from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
 from app.schemas.inscricao import InscricaoResponse
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
@@ -149,6 +150,14 @@ def atualizar_evento_admin(
         
     db.commit()
     db.refresh(evento)
+
+    # Se o valor do evento foi alterado, sincronizar com todas as triagens pendentes deste evento
+    if "valor" in update_data and evento.valor is not None:
+        db.query(InscricaoTriagem).filter(
+            InscricaoTriagem.evento_id == evento.id,
+            InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
+        ).update({"valor_total": evento.valor}, synchronize_session=False)
+        db.commit()
     
     total_inscritos = db.query(Inscricao).filter(
         Inscricao.evento_id == evento.id,

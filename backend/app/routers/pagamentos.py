@@ -49,8 +49,13 @@ def processar_pagamento_triagem(
     if triagem.usuario_id != current_user.id and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Acesso negado a esta triagem.")
 
-    forma_pag = (triagem.forma_pagamento or "PIX").upper()
     evento = triagem.evento
+    if evento and evento.valor is not None and triagem.status == "PENDENTE_PAGAMENTO" and triagem.valor_total != evento.valor:
+        triagem.valor_total = evento.valor
+        db.commit()
+        db.refresh(triagem)
+
+    forma_pag = (triagem.forma_pagamento or "PIX").upper()
 
     receipt_url = None
     copia_cola_pix = None
@@ -389,7 +394,11 @@ def baixar_pdf_parcela(
 
     total_parcelas = len(pagamento.parcelas)
 
-    if not parcela.copia_cola_pix:
+    link_duplicado = any(
+        p.id != parcela.id and p.copia_cola_pix and p.copia_cola_pix == parcela.copia_cola_pix
+        for p in pagamento.parcelas
+    )
+    if not parcela.copia_cola_pix or link_duplicado:
         order_nsu_parc = f"ORD-{inscricao.id}-PARC-{parcela.numero}"
         try:
             res = infinitepay_service.criar_checkout_link(
@@ -448,6 +457,11 @@ def baixar_pdf_parcela_triagem(
     evento = triagem.evento
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    if evento.valor is not None and triagem.status == "PENDENTE_PAGAMENTO" and triagem.valor_total != evento.valor:
+        triagem.valor_total = evento.valor
+        db.commit()
+        db.refresh(triagem)
 
     dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
     if dt_primeira < get_hoje_brasil():

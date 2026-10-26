@@ -197,5 +197,12 @@ def obter_triagem_pendente(
         InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
     ).order_by(InscricaoTriagem.created_at.desc()).first()
 
+    if triagem:
+        evento = triagem.evento or db.query(Evento).filter(Evento.id == evento_id).first()
+        if evento and evento.valor is not None and triagem.valor_total != evento.valor:
+            triagem.valor_total = evento.valor
+            db.commit()
+            db.refresh(triagem)
+
     return triagem
 

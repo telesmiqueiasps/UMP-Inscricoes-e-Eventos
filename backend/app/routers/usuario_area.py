@@ -165,9 +165,13 @@ def obter_dashboard_usuario(
                         except Exception:
                             pass
 
-                # Se a parcela ainda estiver pendente mas não possuir link gerado, gerar e persistir agora
+                # Se a parcela ainda estiver pendente mas não possuir link gerado ou possuir link duplicado de outra parcela, gerar e persistir agora
                 if parc.status != "PAGO" and parc.status != "CANCELADO" and ins.status != "CANCELADA":
-                    if not parc.copia_cola_pix:
+                    link_duplicado = any(
+                        p.id != parc.id and p.copia_cola_pix and p.copia_cola_pix == parc.copia_cola_pix
+                        for p in pag.parcelas
+                    )
+                    if not parc.copia_cola_pix or link_duplicado:
                         order_nsu_parc = f"ORD-{ins.id}-PARC-{parc.numero}"
                         try:
                             res_link = infinitepay_service.criar_checkout_link(
@@ -284,6 +288,11 @@ def obter_dashboard_usuario(
 
     triagens_data = []
     for tr in triagens:
+        if tr.evento and tr.evento.valor is not None and tr.valor_total != tr.evento.valor:
+            tr.valor_total = tr.evento.valor
+            db.commit()
+            db.refresh(tr)
+
         triagens_data.append({
             "id": tr.id,
             "tipo_registro": "REGULAR",

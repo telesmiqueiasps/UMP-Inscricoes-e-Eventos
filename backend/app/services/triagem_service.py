@@ -77,6 +77,11 @@ def converter_triagem_em_inscricao(
                 detail="Infelizmente as vagas para este evento foram esgotadas."
             )
 
+    # Garantir sincronização com o valor vigente do evento antes da conversão
+    if evento.valor is not None and triagem.valor_total != evento.valor and triagem.status == "PENDENTE_PAGAMENTO":
+        triagem.valor_total = evento.valor
+        db.commit()
+
     is_parcelado = (triagem.forma_pagamento == "PARCELADO" and triagem.num_parcelas > 1)
     status_inscricao_inicial = "PENDENTE" if is_parcelado else "CONFIRMADA"
 

@@ -146,8 +146,13 @@ async def reconciliar_pagamentos_pendentes():
                 except Exception as e_cons:
                     logger.error(f"Erro ao consultar NSU {order_nsu_parc}: {e_cons}")
 
-            # Se ainda não estiver pago, garantir que copia_cola_pix e qr_code estejam gerados e salvos
-            if not pago_confirmado and not parc.copia_cola_pix:
+            # Se ainda não estiver pago, garantir que copia_cola_pix e qr_code estejam gerados, válidos e não duplicados
+            link_duplicado = any(
+                p.id != parc.id and p.copia_cola_pix and p.copia_cola_pix == parc.copia_cola_pix
+                for p in parc.pagamento.parcelas
+            ) if (parc.pagamento and parc.pagamento.parcelas) else False
+
+            if not pago_confirmado and (not parc.copia_cola_pix or link_duplicado):
                 order_nsu_default = f"ORD-{inscricao.id}-PARC-{parc.numero}"
                 try:
                     res_chk = infinitepay_service.criar_checkout_link(
@@ -238,8 +243,14 @@ def processar_alertas_vencimento(db):
     logger.warning("Verificando lembretes de vencimento de parcelas...")
 
     def assegurar_link_parcela(parc):
-        if not parc.copia_cola_pix and parc.pagamento and parc.pagamento.inscricao:
-            ins = parc.pagamento.inscricao
+        if parc.pagamento and parc.pagamento.inscricao:
+            link_duplicado = any(
+                p.id != parc.id and p.copia_cola_pix and p.copia_cola_pix == parc.copia_cola_pix
+                for p in parc.pagamento.parcelas
+            ) if parc.pagamento.parcelas else False
+
+            if not parc.copia_cola_pix or link_duplicado:
+                ins = parc.pagamento.inscricao
             order_nsu_parc = f"ORD-{ins.id}-PARC-{parc.numero}"
             try:
                 res = infinitepay_service.criar_checkout_link(
