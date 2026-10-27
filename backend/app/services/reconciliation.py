@@ -107,6 +107,16 @@ async def reconciliar_pagamentos_pendentes():
                 except Exception:
                     pass
 
+            from app.models.inscricao_triagem import InscricaoTriagem
+            triagem = db.query(InscricaoTriagem).filter(
+                InscricaoTriagem.usuario_id == inscricao.usuario_id,
+                InscricaoTriagem.evento_id == inscricao.evento_id
+            ).first()
+            if triagem:
+                tr_cand = f"TRIAGEM-{triagem.id}-PARC-{parc.numero}"
+                if tr_cand not in candidate_nsus:
+                    candidate_nsus.append(tr_cand)
+
             pago_confirmado = False
             for order_nsu_parc in candidate_nsus:
                 try:
@@ -140,6 +150,13 @@ async def reconciliar_pagamentos_pendentes():
                                     )
                                 except Exception as e_mail:
                                     logger.error(f"Erro ao enviar e-mail de confirmação da parcela: {e_mail}")
+                        else:
+                            if pagamento.status == "PAGO":
+                                pagamento.status = "PENDENTE"
+                            if inscricao.status == "CONFIRMADA":
+                                inscricao.status = "PENDENTE"
+                            db.commit()
+                            logger.warning(f"Reconciliação: Parcela ID={parc.id} paga ({pagamento.paid_amount}/{pagamento.valor}). Inscrição mantida PENDENTE.")
 
                         pago_confirmado = True
                         break

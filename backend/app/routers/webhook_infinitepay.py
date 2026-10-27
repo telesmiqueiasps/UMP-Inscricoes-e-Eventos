@@ -392,28 +392,73 @@ async def webhook_infinitepay(
 
     # Verificar status do pagamento
     if is_approved:
-        pagamento.status = "PAGO"
-        
-        # Atualizar status das parcelas se houver
-        for p in pagamento.parcelas:
-            p.status = "PAGO"
+        if pagamento.forma_pagamento == "PARCELADO":
+            # NUNCA dar baixa geral em carnê! Identificar a parcela específica
+            parc_alvo = None
+            if order_nsu:
+                for p in pagamento.parcelas:
+                    if (f"-PARC-{p.numero}" in str(order_nsu)) or (p.copia_cola_pix and f"order_nsu={order_nsu}" in p.copia_cola_pix):
+                        parc_alvo = p
+                        break
+            if not parc_alvo:
+                # Buscar a primeira parcela ainda pendente
+                parc_alvo = next((p for p in pagamento.parcelas if p.status == "PENDENTE"), None)
 
-        # Confirmar inscrição do participante
-        if pagamento.inscricao:
-            status_anterior = pagamento.inscricao.status
-            pagamento.inscricao.status = "CONFIRMADA"
-            db.commit()
-            logger.warning(f"Inscrição ID={pagamento.inscricao_id} alterada para CONFIRMADA.")
+            if parc_alvo:
+                parc_alvo.status = "PAGO"
+                if receipt_url and not parc_alvo.copia_cola_pix:
+                    parc_alvo.copia_cola_pix = str(receipt_url)
+                db.flush()
+                logger.warning(f"Webhook genérico: Parcela #{parc_alvo.numero} do Pagamento ID={pagamento.id} baixada para PAGO.")
 
-            # Enviar e-mail em background se antes não estava confirmada
-            if status_anterior != "CONFIRMADA":
-                background_tasks.add_task(
-                    enviar_email_confirmacao,
-                    destinatario_email=pagamento.inscricao.usuario.email,
-                    destinatario_nome=pagamento.inscricao.usuario.nome,
-                    nome_evento=pagamento.inscricao.evento.titulo
-                )
-                logger.warning(f"E-mail de confirmação agendado para {pagamento.inscricao.usuario.email}")
+            total_pago = sum((p.valor for p in pagamento.parcelas if p.status == "PAGO"), Decimal("0.00"))
+            pagamento.paid_amount = total_pago
+            todas_pagas = all(p.status == "PAGO" for p in pagamento.parcelas)
+
+            if todas_pagas:
+                status_anterior = pagamento.status
+                pagamento.status = "PAGO"
+                if pagamento.inscricao:
+                    pagamento.inscricao.status = "CONFIRMADA"
+                db.commit()
+                logger.warning(f"Todas as parcelas pagas! Pagamento ID={pagamento.id} e Inscrição ID={pagamento.inscricao_id} CONFIRMADA.")
+
+                if status_anterior != "PAGO" and background_tasks and pagamento.inscricao and pagamento.inscricao.usuario:
+                    background_tasks.add_task(
+                        enviar_email_confirmacao,
+                        destinatario_email=pagamento.inscricao.usuario.email,
+                        destinatario_nome=pagamento.inscricao.usuario.nome,
+                        nome_evento=pagamento.inscricao.evento.titulo
+                    )
+            else:
+                pagamento.status = "PENDENTE"
+                if pagamento.inscricao:
+                    pagamento.inscricao.status = "PENDENTE"
+                db.commit()
+                logger.warning(f"Pagamento ID={pagamento.id} parcelado: {total_pago}/{pagamento.valor} pago. Inscrição mantida PENDENTE.")
+        else:
+            pagamento.status = "PAGO"
+            
+            # Atualizar status das parcelas se houver
+            for p in pagamento.parcelas:
+                p.status = "PAGO"
+
+            # Confirmar inscrição do participante
+            if pagamento.inscricao:
+                status_anterior = pagamento.inscricao.status
+                pagamento.inscricao.status = "CONFIRMADA"
+                db.commit()
+                logger.warning(f"Inscrição ID={pagamento.inscricao_id} alterada para CONFIRMADA.")
+
+                # Enviar e-mail em background se antes não estava confirmada
+                if status_anterior != "CONFIRMADA" and background_tasks and pagamento.inscricao and pagamento.inscricao.usuario:
+                    background_tasks.add_task(
+                        enviar_email_confirmacao,
+                        destinatario_email=pagamento.inscricao.usuario.email,
+                        destinatario_nome=pagamento.inscricao.usuario.nome,
+                        nome_evento=pagamento.inscricao.evento.titulo
+                    )
+                    logger.warning(f"E-mail de confirmação agendado para {pagamento.inscricao.usuario.email}")
 
     elif is_cancelled:
         pagamento.status = "CANCELADO"

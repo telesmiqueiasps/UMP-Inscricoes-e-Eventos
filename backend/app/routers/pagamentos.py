@@ -780,14 +780,28 @@ def confirmar_retorno_checkout(
             (Pagamento.transaction_nsu == transaction_nsu) | (Pagamento.invoice_slug == invoice_slug)
         ).first()
         if pagamento:
-            pagamento.status = "PAGO"
-            for p in pagamento.parcelas:
-                p.status = "PAGO"
-            pagamento.paid_amount = pagamento.valor
-            if pagamento.inscricao:
-                pagamento.inscricao.status = "CONFIRMADA"
-            db.commit()
-            return {"success": True, "message": "Pagamento localizado e confirmado com sucesso!", "status": "PAGO"}
+            if pagamento.forma_pagamento == "PARCELADO":
+                # NUNCA dar baixa geral em carnê por correspondência de NSU de uma parcela
+                parc_alvo = None
+                for p in pagamento.parcelas:
+                    if (order_nsu_str and f"-PARC-{p.numero}" in order_nsu_str) or (p.copia_cola_pix and order_nsu_str and order_nsu_str in p.copia_cola_pix):
+                        parc_alvo = p
+                        break
+                if not parc_alvo:
+                    parc_alvo = next((p for p in pagamento.parcelas if p.status == "PENDENTE"), None)
+                if parc_alvo:
+                    return dar_baixa_parcela(parc_alvo)
+                else:
+                    return {"success": True, "message": "Todas as parcelas do carnê já constam como pagas.", "status": "PAGO"}
+            else:
+                pagamento.status = "PAGO"
+                for p in pagamento.parcelas:
+                    p.status = "PAGO"
+                pagamento.paid_amount = pagamento.valor
+                if pagamento.inscricao:
+                    pagamento.inscricao.status = "CONFIRMADA"
+                db.commit()
+                return {"success": True, "message": "Pagamento localizado e confirmado com sucesso!", "status": "PAGO"}
 
     return {"success": False, "message": "Não foi possível vincular o retorno da InfinitePay a um pedido específico."}
 

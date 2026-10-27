@@ -150,6 +150,11 @@ def obter_dashboard_usuario(
                         except Exception:
                             pass
 
+                    if tr_chk:
+                        tr_cand = f"TRIAGEM-{tr_chk.id}-PARC-{parc.numero}"
+                        if tr_cand not in nsu_candidates:
+                            nsu_candidates.append(tr_cand)
+
                     for cand in nsu_candidates:
                         try:
                             res_parc = infinitepay_service.consultar_status_pagamento(order_nsu=cand)
@@ -209,6 +214,13 @@ def obter_dashboard_usuario(
                 pag.status = "PAGO"
                 pag_status = "PAGO"
                 ins.status = "CONFIRMADA"
+                db.commit()
+            elif pag.forma_pagamento == "PARCELADO" and pag.parcelas and any(p.status != "PAGO" for p in pag.parcelas):
+                if pag.status == "PAGO":
+                    pag.status = "PENDENTE"
+                    pag_status = "PENDENTE"
+                if ins.status == "CONFIRMADA":
+                    ins.status = "PENDENTE"
                 db.commit()
 
             if pag_status == "PENDENTE":

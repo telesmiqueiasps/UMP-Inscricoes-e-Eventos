@@ -47,16 +47,33 @@ def converter_triagem_em_inscricao(
                     for p_ex in pag_ex.parcelas:
                         if p_ex.numero == parcela_num_paga:
                             p_ex.status = "PAGO"
-                            if paid_amount:
-                                pag_ex.paid_amount = (pag_ex.paid_amount or Decimal("0.00")) + paid_amount
+                            if receipt_url and not p_ex.copia_cola_pix:
+                                p_ex.copia_cola_pix = receipt_url
+                            db.flush()
+                            total_pago = sum((p.valor for p in pag_ex.parcelas if p.status == "PAGO"), Decimal("0.00"))
+                            pag_ex.paid_amount = total_pago
                             if capture_method:
                                 pag_ex.capture_method = capture_method
-                            db.commit()
-                            if all(p.status == "PAGO" for p in pag_ex.parcelas):
+                            
+                            todas_pagas = all(p.status == "PAGO" for p in pag_ex.parcelas)
+                            if todas_pagas:
                                 pag_ex.status = "PAGO"
+                                status_ant = inscricao_existente.status
                                 inscricao_existente.status = "CONFIRMADA"
                                 db.commit()
-                            logger.warning(f"Parcela #{parcela_num_paga} da Inscrição existente ID={inscricao_existente.id} baixada com sucesso!")
+                                if status_ant != "CONFIRMADA" and background_tasks and inscricao_existente.usuario:
+                                    background_tasks.add_task(
+                                        enviar_email_confirmacao,
+                                        destinatario_email=inscricao_existente.usuario.email,
+                                        destinatario_nome=inscricao_existente.usuario.nome,
+                                        nome_evento=inscricao_existente.evento.titulo
+                                    )
+                                logger.warning(f"Todas as parcelas pagas! Inscrição ID={inscricao_existente.id} CONFIRMADA.")
+                            else:
+                                pag_ex.status = "PENDENTE"
+                                inscricao_existente.status = "PENDENTE"
+                                db.commit()
+                                logger.warning(f"Parcela #{parcela_num_paga} da Inscrição ID={inscricao_existente.id} paga ({pag_ex.paid_amount}/{pag_ex.valor}). Inscrição mantida PENDENTE.")
             return inscricao_existente
 
     evento = triagem.evento or db.query(Evento).filter(Evento.id == triagem.evento_id).first()
@@ -103,6 +120,10 @@ def converter_triagem_em_inscricao(
     is_parcelado = (triagem.forma_pagamento == "PARCELADO" and triagem.num_parcelas > 1)
     status_pagamento_global = "PENDENTE" if is_parcelado else "PAGO"
 
+    # Se for parcelado, o order_nsu e slug pertencem à parcela 1, não ao pagamento pai
+    order_nsu_pagamento = None if is_parcelado else order_nsu
+    invoice_slug_pagamento = None if is_parcelado else invoice_slug
+
     db_pagamento = Pagamento(
         inscricao_id=db_inscricao.id,
         forma_pagamento=triagem.forma_pagamento or "PIX",
@@ -110,8 +131,8 @@ def converter_triagem_em_inscricao(
         status=status_pagamento_global,
         transaction_nsu=transaction_nsu,
         receipt_url=receipt_url,
-        order_nsu=order_nsu,
-        invoice_slug=invoice_slug,
+        order_nsu=order_nsu_pagamento,
+        invoice_slug=invoice_slug_pagamento,
         paid_amount=paid_amount,
         capture_method=capture_method
     )
