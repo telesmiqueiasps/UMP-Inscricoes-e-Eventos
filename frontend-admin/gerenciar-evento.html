@@ -453,14 +453,14 @@
 
         <!-- Filtros de Pagamentos -->
         <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
-          <div class="filters-wrapper" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; align-items: end;">
+          <div class="filters-wrapper" style="display: grid; grid-template-columns: 1.6fr 1fr 1fr auto; gap: 0.75rem; align-items: end;">
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Buscar por Participante (Nome ou CPF)</label>
-              <input type="text" id="pay-filter-search" class="form-control" placeholder="Nome ou CPF..." onkeyup="filterPagamentosLocal()">
+              <label class="form-label">Buscar por Participante (Nome, CPF ou E-mail)</label>
+              <input type="text" id="pay-filter-search" class="form-control" placeholder="Nome, CPF ou e-mail..." onkeyup="filterPagamentosLocal()">
             </div>
             
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Filtrar por Forma de Pagamento</label>
+              <label class="form-label">Forma de Pagamento</label>
               <select id="pay-filter-method" class="form-control" onchange="filterPagamentosLocal()">
                 <option value="">Todas as Formas</option>
                 <option value="PIX">Pix Direto</option>
@@ -470,7 +470,7 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Filtrar por Status</label>
+              <label class="form-label">Status</label>
               <select id="pay-filter-status" class="form-control" onchange="filterPagamentosLocal()">
                 <option value="">Todos os Status</option>
                 <option value="PENDENTE">Pendente</option>
@@ -479,11 +479,42 @@
                 <option value="CANCELADO">Cancelado</option>
               </select>
             </div>
+
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+              <button class="btn btn-outline" id="btn-limpar-filtros-pagamentos" style="display: none; padding: 0 0.75rem; height: 38px; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; color: #DC2626; border-color: #FECACA; background: #FEF2F2;" onclick="limparFiltrosPagamentos()" title="Limpar todos os filtros de pagamentos">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Limpar</span>
+              </button>
+              <button class="btn btn-outline" style="padding: 0 0.75rem; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.8rem;" onclick="exportarPagamentosExcel()" title="Exportar lista de pagamentos para Excel (CSV)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Excel</span>
+              </button>
+              <button class="btn btn-outline" style="padding: 0 0.75rem; height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; font-size: 0.8rem;" onclick="imprimirPagamentos()" title="Imprimir relatório otimizado de pagamentos">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                <span>Imprimir</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="table-responsive">
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <!-- Barra de Informações e Ações Rápidas -->
+          <div style="padding: 0.75rem 1.25rem; background: var(--card-bg, #ffffff); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Mostrando <strong id="pay-count-showing" style="color: var(--text-color, #111827);">0</strong> lançamento(s) &bull; Total Filtrado: <strong id="pay-total-filtered" style="color: var(--primary, #4F46E5);">R$ 0,00</strong>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-outline btn-sm" onclick="exportarPagamentosExcel()" style="font-size: 0.775rem; padding: 0.25rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Excel</span>
+              </button>
+              <button class="btn btn-outline btn-sm" onclick="imprimirPagamentos()" style="font-size: 0.775rem; padding: 0.25rem 0.65rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                <span>Imprimir</span>
+              </button>
+            </div>
+          </div>
+          <div class="table-responsive" style="border: none; border-radius: 0;">
             <table>
               <thead>
                 <tr>

@@ -1362,13 +1362,14 @@ async function loadPagamentos() {
   }
 }
 
-window.updatePagamentosTable = function() {
-  const container = document.getElementById('pagamentos-table-body');
-  if (!container) return;
+function getFilteredPagamentosRows() {
+  const searchInput = document.getElementById('pay-filter-search');
+  const methodSelect = document.getElementById('pay-filter-method');
+  const statusSelect = document.getElementById('pay-filter-status');
 
-  const searchVal = document.getElementById('pay-filter-search').value.toLowerCase().trim();
-  const methodVal = document.getElementById('pay-filter-method').value;
-  const statusVal = document.getElementById('pay-filter-status').value;
+  const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const methodVal = methodSelect ? methodSelect.value : '';
+  const statusVal = statusSelect ? statusSelect.value : '';
 
   let rows = [];
   allPagamentosCached.forEach(pag => {
@@ -1378,21 +1379,35 @@ window.updatePagamentosTable = function() {
       const nameMatch = pag.usuario_nome && pag.usuario_nome.toLowerCase().includes(searchVal);
       const emailMatch = pag.usuario_email && pag.usuario_email.toLowerCase().includes(searchVal);
       const cpfMatch = pag.usuario_cpf && pag.usuario_cpf.toLowerCase().includes(searchVal);
-      if (!nameMatch && !emailMatch && !cpfMatch) return;
+      const inscMatch = String(pag.inscricao_id || '').includes(searchVal);
+      const pagIdMatch = String(pag.id || '').includes(searchVal);
+      if (!nameMatch && !emailMatch && !cpfMatch && !inscMatch && !pagIdMatch) return;
     }
 
+    const nome = pag.usuario_nome || 'N/A';
+    const cpf = pag.usuario_cpf || '';
+    const email = pag.usuario_email || '';
     const userDisplay = pag.usuario_nome ? `<strong>${pag.usuario_nome}</strong><br><small style="color:var(--text-muted);">${pag.usuario_email || ''}</small>` : 'N/A';
+    const formaPag = formatarFormaPagamento(pag.forma_pagamento, pag.capture_method);
 
     if (pag.parcelas && pag.parcelas.length > 0) {
       pag.parcelas.forEach(parc => {
         if (statusVal && parc.status !== statusVal) return;
+        const dtVenc = parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A';
         rows.push({
-          id: `Pag #${pag.id} (Parc ${parc.numero})`,
+          id: `Pag #${pag.id} (${parc.numero}/${pag.parcelas.length})`,
+          pagamentoId: pag.id,
+          parcelaNumero: parc.numero,
+          totalParcelas: pag.parcelas.length,
+          parcelaTexto: `${parc.numero}/${pag.parcelas.length}`,
+          nome,
+          cpf,
+          email,
           userDisplay,
           inscricaoId: pag.inscricao_id,
-          formaPag: formatarFormaPagamento(pag.forma_pagamento, pag.capture_method),
-          valor: parseFloat(parc.valor),
-          vencimento: new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR'),
+          formaPag,
+          valor: parseFloat(parc.valor || 0),
+          vencimento: dtVenc,
           status: parc.status,
           parcelaId: parc.id,
           isParcela: true
@@ -1402,10 +1417,17 @@ window.updatePagamentosTable = function() {
       if (statusVal && pag.status !== statusVal) return;
       rows.push({
         id: `Pag #${pag.id}`,
+        pagamentoId: pag.id,
+        parcelaNumero: 1,
+        totalParcelas: 1,
+        parcelaTexto: 'Única',
+        nome,
+        cpf,
+        email,
         userDisplay,
         inscricaoId: pag.inscricao_id,
-        formaPag: formatarFormaPagamento(pag.forma_pagamento, pag.capture_method),
-        valor: parseFloat(pag.valor),
+        formaPag,
+        valor: parseFloat(pag.valor || 0),
         vencimento: 'N/A',
         status: pag.status,
         isParcela: false
@@ -1413,13 +1435,40 @@ window.updatePagamentosTable = function() {
     }
   });
 
+  return rows;
+}
+
+window.updatePagamentosTable = function() {
+  const container = document.getElementById('pagamentos-table-body');
+  if (!container) return;
+
+  const rows = getFilteredPagamentosRows();
   const totalItems = rows.length;
+
+  // Atualizar visibilidade do botão Limpar Filtros
+  const searchVal = document.getElementById('pay-filter-search')?.value.trim() || '';
+  const methodVal = document.getElementById('pay-filter-method')?.value || '';
+  const statusVal = document.getElementById('pay-filter-status')?.value || '';
+  const btnLimpar = document.getElementById('btn-limpar-filtros-pagamentos');
+  if (btnLimpar) {
+    btnLimpar.style.display = (searchVal || methodVal || statusVal) ? 'inline-flex' : 'none';
+  }
+
+  // Atualizar contador e total filtrado na barra de cabeçalho
+  const countEl = document.getElementById('pay-count-showing');
+  const totalFiltEl = document.getElementById('pay-total-filtered');
+  if (countEl) countEl.textContent = totalItems;
+  if (totalFiltEl) {
+    const somaValor = rows.reduce((acc, r) => acc + r.valor, 0);
+    totalFiltEl.textContent = somaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
   const start = (currentPagePagamentos - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   const paginatedRows = rows.slice(start, end);
 
   if (totalItems === 0) {
-    container.innerHTML = `<tr><td colspan="8" style="text-align:center;">Nenhum pagamento correspondente aos filtros.</td></tr>`;
+    container.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 2rem; color: var(--text-muted);">Nenhum pagamento correspondente aos filtros.</td></tr>`;
     renderPaginationControls('pagamentos-pagination-container', currentPagePagamentos, totalItems, 'changePagePagamentos');
     return;
   }
@@ -1470,12 +1519,401 @@ window.filterPagamentosLocal = function() {
   updatePagamentosTable();
 };
 
+window.limparFiltrosPagamentos = function() {
+  const searchInput = document.getElementById('pay-filter-search');
+  const methodSelect = document.getElementById('pay-filter-method');
+  const statusSelect = document.getElementById('pay-filter-status');
+  if (searchInput) searchInput.value = '';
+  if (methodSelect) methodSelect.value = '';
+  if (statusSelect) statusSelect.value = '';
+  currentPagePagamentos = 1;
+  updatePagamentosTable();
+};
+
 window.alterarStatusParcela = async function(id, novoStatus) {
   try {
     await API.request(`/admin/parcelas/${id}/status?novo_status=${novoStatus}`, { method: 'PUT' });
     showToast('Status da parcela atualizado!', 'success');
     loadPagamentos();
   } catch (err) {}
+};
+
+// --- Exportar Lista de Pagamentos para Excel (CSV compatível) ---
+window.exportarPagamentosExcel = function() {
+  const rows = getFilteredPagamentosRows();
+  if (!rows || rows.length === 0) {
+    showToast("Nenhum pagamento correspondente aos filtros para exportar.", "warning");
+    return;
+  }
+
+  const nomeEvento = (eventoAtual && eventoAtual.titulo) ? eventoAtual.titulo : `Evento_${selectedEventoId}`;
+  
+  const headers = [
+    "Cód. Lançamento",
+    "Inscrição",
+    "Participante",
+    "CPF",
+    "E-mail",
+    "Forma de Pagamento",
+    "Parcela",
+    "Valor (R$)",
+    "Vencimento",
+    "Status"
+  ];
+
+  const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+
+  const lines = [headers.map(escapeCSV).join(';')];
+
+  rows.forEach(r => {
+    lines.push([
+      escapeCSV(r.id),
+      escapeCSV(`#${r.inscricaoId}`),
+      escapeCSV(r.nome),
+      escapeCSV(r.cpf),
+      escapeCSV(r.email),
+      escapeCSV(r.formaPag),
+      escapeCSV(r.parcelaTexto),
+      escapeCSV(r.valor.toFixed(2).replace('.', ',')),
+      escapeCSV(r.vencimento),
+      escapeCSV(r.status)
+    ].join(';'));
+  });
+
+  const csvContent = "\uFEFF" + lines.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const dataHoje = new Date().toISOString().slice(0, 10);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `pagamentos_${nomeEvento.toLowerCase().replace(/\s+/g, '_')}_${dataHoje}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast(`Exportação concluída! ${rows.length} lançamentos exportados.`, "success");
+};
+
+// --- Imprimir Relatório Otimizado de Pagamentos (Alta densidade para caber vários em 1 folha) ---
+window.imprimirPagamentos = function() {
+  const rows = getFilteredPagamentosRows();
+  if (!rows || rows.length === 0) {
+    showToast("Nenhum pagamento correspondente aos filtros para imprimir.", "warning");
+    return;
+  }
+
+  const nomeEvento = (eventoAtual && eventoAtual.titulo) ? eventoAtual.titulo : `Evento #${selectedEventoId}`;
+  
+  // Filtros aplicados
+  const searchVal = document.getElementById('pay-filter-search')?.value.trim() || '';
+  const methodVal = document.getElementById('pay-filter-method')?.value || '';
+  const statusVal = document.getElementById('pay-filter-status')?.value || '';
+
+  let filtrosDesc = [];
+  if (searchVal) filtrosDesc.push(`Busca: "${searchVal}"`);
+  if (methodVal) filtrosDesc.push(`Forma: ${methodVal}`);
+  if (statusVal) filtrosDesc.push(`Status: ${statusVal}`);
+  const filtrosTexto = filtrosDesc.length > 0 ? filtrosDesc.join(' &bull; ') : 'Todos os lançamentos';
+
+  // Métricas do conjunto filtrado
+  let totalSoma = 0;
+  let totalPago = 0;
+  let totalPendente = 0;
+  let totalVencido = 0;
+
+  rows.forEach(r => {
+    totalSoma += r.valor;
+    if (r.status === 'PAGO') totalPago += r.valor;
+    else if (r.status === 'VENCIDO' || r.status === 'VENCIDA') totalVencido += r.valor;
+    else if (r.status === 'PENDENTE') totalPendente += r.valor;
+  });
+
+  const fmtMoeda = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const dataEmissao = new Date().toLocaleString('pt-BR');
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast("Permita popups no navegador para abrir a impressão.", "error");
+    return;
+  }
+
+  const tableRowsHtml = rows.map((r, idx) => {
+    let badgeClass = 'badge-pendente';
+    if (r.status === 'PAGO') badgeClass = 'badge-pago';
+    else if (r.status === 'VENCIDO' || r.status === 'VENCIDA') badgeClass = 'badge-vencido';
+    else if (r.status === 'CANCELADO' || r.status === 'CANCELADA') badgeClass = 'badge-cancelado';
+
+    const cpfInfo = r.cpf ? `<span style="color:#6B7280; font-size:7pt; margin-left:4px;">(${r.cpf})</span>` : '';
+
+    return `
+      <tr>
+        <td class="text-center" style="width: 25px; color:#6B7280;">${idx + 1}</td>
+        <td style="width: 105px; font-weight:600;">${r.id}</td>
+        <td class="text-center" style="width: 50px;">#${r.inscricaoId}</td>
+        <td>
+          <span style="font-weight:600;">${r.nome}</span>${cpfInfo}
+        </td>
+        <td style="width: 120px;">${r.formaPag}</td>
+        <td class="text-center" style="width: 45px;">${r.parcelaTexto}</td>
+        <td class="text-center" style="width: 70px;">${r.vencimento}</td>
+        <td class="text-right" style="width: 75px; font-weight:700;">${fmtMoeda(r.valor)}</td>
+        <td class="text-center" style="width: 65px;">
+          <span class="badge-pill ${badgeClass}">${r.status}</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8">
+      <title>Relatório de Pagamentos - ${nomeEvento}</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 6mm 7mm 6mm 7mm;
+        }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          color: #111827;
+          background: #f8fafc;
+          padding: 12px;
+          font-size: 8pt;
+          line-height: 1.15;
+        }
+        @media print {
+          .no-print { display: none !important; }
+          body { background: #fff !important; padding: 0 !important; }
+        }
+        .action-bar {
+          background: #1E293B;
+          color: #fff;
+          padding: 8px 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
+          border-radius: 6px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .action-bar button {
+          cursor: pointer;
+          padding: 6px 14px;
+          font-weight: 700;
+          border-radius: 4px;
+          border: none;
+          font-size: 11px;
+        }
+        .btn-print { background: #10B981; color: white; }
+        .btn-close { background: #475569; color: white; margin-left: 8px; }
+        .header-box {
+          border-bottom: 1.5pt solid #1F2937;
+          padding-bottom: 4px;
+          margin-bottom: 5px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+        .header-title h1 {
+          font-size: 11pt;
+          font-weight: 800;
+          color: #111827;
+          letter-spacing: -0.2px;
+          text-transform: uppercase;
+          line-height: 1.1;
+        }
+        .header-title h2 {
+          font-size: 9pt;
+          color: #4F46E5;
+          font-weight: 700;
+          line-height: 1.2;
+        }
+        .header-meta {
+          font-size: 7pt;
+          color: #4B5563;
+          text-align: right;
+          line-height: 1.3;
+        }
+        .metrics-strip {
+          display: flex;
+          gap: 12px;
+          background: #F3F4F6;
+          border: 0.5pt solid #E5E7EB;
+          border-radius: 4px;
+          padding: 3px 8px;
+          margin-bottom: 5px;
+          font-size: 7.5pt;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        .metrics-strip span strong {
+          color: #111827;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 7.5pt;
+          line-height: 1.15;
+        }
+        thead {
+          display: table-header-group;
+        }
+        tr {
+          page-break-inside: avoid;
+        }
+        th {
+          background-color: #1F2937 !important;
+          color: #FFFFFF !important;
+          font-size: 7pt;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+          padding: 3px 4px;
+          border: 0.5pt solid #1F2937;
+          text-align: left;
+        }
+        td {
+          padding: 2.2px 4px;
+          border: 0.5pt solid #E5E7EB;
+          vertical-align: middle;
+        }
+        tr:nth-child(even) td {
+          background-color: #F9FAFB !important;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .badge-pill {
+          display: inline-block;
+          padding: 1px 4px;
+          font-size: 6.5pt;
+          font-weight: 700;
+          border-radius: 3px;
+          text-align: center;
+          line-height: 1.1;
+          text-transform: uppercase;
+        }
+        .badge-pago {
+          color: #065F46;
+          background: #D1FAE5 !important;
+          border: 0.5pt solid #A7F3D0;
+        }
+        .badge-pendente {
+          color: #92400E;
+          background: #FEF3C7 !important;
+          border: 0.5pt solid #FDE68A;
+        }
+        .badge-vencido {
+          color: #991B1B;
+          background: #FEE2E2 !important;
+          border: 0.5pt solid #FECACA;
+        }
+        .badge-cancelado {
+          color: #374151;
+          background: #F3F4F6 !important;
+          border: 0.5pt solid #E5E7EB;
+        }
+        tfoot td {
+          font-weight: 700;
+          background: #F3F4F6 !important;
+          border-top: 1pt solid #1F2937;
+          padding: 3.5px 4px;
+        }
+        .footer-note {
+          margin-top: 6px;
+          font-size: 6.5pt;
+          color: #9CA3AF;
+          display: flex;
+          justify-content: space-between;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="action-bar no-print">
+        <div style="font-size: 11px;">
+          <strong>Visualização de Impressão</strong> &bull; ${rows.length} lançamentos &bull; Otimizado para alta densidade (A4)
+        </div>
+        <div>
+          <button class="btn-print" onclick="window.print()">🖨️ Imprimir Agora</button>
+          <button class="btn-close" onclick="window.close()">✕ Fechar</button>
+        </div>
+      </div>
+
+      <div class="header-box">
+        <div class="header-title">
+          <h1>Relatório Financeiro de Pagamentos</h1>
+          <h2>${nomeEvento}</h2>
+        </div>
+        <div class="header-meta">
+          <div><strong>Emissão:</strong> ${dataEmissao}</div>
+          <div><strong>Filtro:</strong> ${filtrosTexto}</div>
+        </div>
+      </div>
+
+      <div class="metrics-strip">
+        <span>Lançamentos: <strong>${rows.length}</strong></span>
+        <span>&bull;</span>
+        <span>Total: <strong>${fmtMoeda(totalSoma)}</strong></span>
+        <span>&bull;</span>
+        <span style="color:#047857;">Recebido (Pago): <strong>${fmtMoeda(totalPago)}</strong></span>
+        <span>&bull;</span>
+        <span style="color:#B45309;">Pendente: <strong>${fmtMoeda(totalPendente)}</strong></span>
+        ${totalVencido > 0 ? `<span>&bull;</span><span style="color:#B91C1C;">Vencido: <strong>${fmtMoeda(totalVencido)}</strong></span>` : ''}
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th class="text-center">#</th>
+            <th>Cód. / Parcela</th>
+            <th class="text-center">Insc.</th>
+            <th>Participante (CPF)</th>
+            <th>Forma Pagamento</th>
+            <th class="text-center">Parc.</th>
+            <th class="text-center">Vencimento</th>
+            <th class="text-right">Valor</th>
+            <th class="text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRowsHtml}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="7" class="text-right">TOTAL GERAL FILTRADO:</td>
+            <td class="text-right">${fmtMoeda(totalSoma)}</td>
+            <td class="text-center">${rows.length} reg.</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="footer-note">
+        <span>Plataforma Sinodal PB &bull; UMP Inscrições e Eventos</span>
+        <span>Documento gerado para controle administrativo interno</span>
+      </div>
+
+      <script>
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            window.focus();
+            window.print();
+          }, 350);
+        });
+      </script>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
 };
 
 // --- Salvar Alterações do Evento (Tab 3) ---

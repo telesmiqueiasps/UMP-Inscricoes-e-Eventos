@@ -111,7 +111,7 @@ def obter_dashboard_usuario(
         # Buscar pagamentos associados e auto-reconciliar parcelas
         for pag in ins.pagamentos:
             # Reconciliação à vista caso esteja PENDENTE
-            if pag.status == "PENDENTE" and ins.status != "CANCELADA" and pag.order_nsu:
+            if pag.status == "PENDENTE" and ins.status != "CANCELADA" and pag.order_nsu and pag.forma_pagamento in ["PIX", "INFINITEPAY"]:
                 try:
                     res_pag = infinitepay_service.consultar_status_pagamento(
                         order_nsu=pag.order_nsu,

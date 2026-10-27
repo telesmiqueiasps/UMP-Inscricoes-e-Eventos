@@ -251,22 +251,23 @@ def processar_alertas_vencimento(db):
 
             if not parc.copia_cola_pix or link_duplicado:
                 ins = parc.pagamento.inscricao
-            order_nsu_parc = f"ORD-{ins.id}-PARC-{parc.numero}"
-            try:
-                res = infinitepay_service.criar_checkout_link(
-                    order_nsu=order_nsu_parc,
-                    valor=parc.valor,
-                    descricao=f"Inscrição {ins.evento.titulo if ins.evento else 'Evento'} - Parcela {parc.numero}",
-                    customer_email=ins.usuario.email,
-                    customer_name=ins.usuario.nome,
-                    redirect_url="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
-                )
-                parc.copia_cola_pix = res.get("checkout_url")
-            except Exception:
-                val_fmt = f"{float(parc.valor):.2f}".replace(".", ",")
-                parc.copia_cola_pix = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
-            parc.qr_code_pix = gerar_qr_code_base64(parc.copia_cola_pix)
-            db.commit()
+                order_nsu_parc = f"ORD-{ins.id}-PARC-{parc.numero}"
+                total_p = len(parc.pagamento.parcelas) if parc.pagamento.parcelas else 1
+                try:
+                    res = infinitepay_service.criar_checkout_link(
+                        order_nsu=order_nsu_parc,
+                        valor=parc.valor,
+                        descricao=f"Inscrição {ins.evento.titulo if ins.evento else 'Evento'} - Parcela {parc.numero}/{total_p}",
+                        customer_email=ins.usuario.email,
+                        customer_name=ins.usuario.nome,
+                        redirect_url="https://inscricoessinodalpb.netlify.app/usuario/dashboard.html"
+                    )
+                    parc.copia_cola_pix = res.get("checkout_url")
+                except Exception:
+                    val_fmt = f"{float(parc.valor):.2f}".replace(".", ",")
+                    parc.copia_cola_pix = f"https://pay.infinitepay.io/{infinitepay_service.handle}/{val_fmt}?order_nsu={order_nsu_parc}"
+                parc.qr_code_pix = gerar_qr_code_base64(parc.copia_cola_pix)
+                db.commit()
 
     # 1. Alerta prévio: nos próximos 3 dias (e ainda não enviado)
     data_previo = hoje + timedelta(days=3)
