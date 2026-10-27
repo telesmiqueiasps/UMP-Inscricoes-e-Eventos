@@ -150,8 +150,12 @@ def obter_dashboard_usuario(
                         except Exception:
                             pass
 
-                    if tr_chk:
-                        tr_cand = f"TRIAGEM-{tr_chk.id}-PARC-{parc.numero}"
+                    tr_vinculada = db.query(InscricaoTriagem).filter(
+                        InscricaoTriagem.usuario_id == current_user.id,
+                        InscricaoTriagem.evento_id == ins.evento_id
+                    ).first()
+                    if tr_vinculada:
+                        tr_cand = f"TRIAGEM-{tr_vinculada.id}-PARC-{parc.numero}"
                         if tr_cand not in nsu_candidates:
                             nsu_candidates.append(tr_cand)
 
