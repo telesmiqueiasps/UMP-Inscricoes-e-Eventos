@@ -197,6 +197,7 @@ CREATE TABLE IF NOT EXISTS gincana_pontos (
     titulo VARCHAR(200) NOT NULL,
     descricao TEXT,
     pontos INTEGER NOT NULL,
+    usuario_nome VARCHAR(150),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

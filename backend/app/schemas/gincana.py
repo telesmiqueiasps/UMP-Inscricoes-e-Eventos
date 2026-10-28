@@ -27,6 +27,7 @@ class GincanaPontoResponse(BaseModel):
     titulo: str
     descricao: Optional[str] = None
     pontos: int
+    usuario_nome: Optional[str] = None
     created_at: datetime
 
     class Config:

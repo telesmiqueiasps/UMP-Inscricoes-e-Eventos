@@ -36,6 +36,7 @@ class GincanaPonto(Base):
     titulo = Column(String(200), nullable=False)
     descricao = Column(Text, nullable=True)
     pontos = Column(Integer, nullable=False)
+    usuario_nome = Column(String(150), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     gincana = relationship("Gincana", back_populates="pontos")

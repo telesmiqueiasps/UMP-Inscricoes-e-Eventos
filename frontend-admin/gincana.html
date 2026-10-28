@@ -537,8 +537,12 @@
           </div>
           <div class="team-card-footer">
             <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;" id="pct-admin-eq1">50% do total</span>
-            <button class="btn btn-outline btn-sm" onclick="selecionarEquipeParaPontuar(1)" style="font-size: 0.8rem; padding: 0.4rem 0.85rem; font-weight: 700;">
-              + Pontuar
+            <button class="btn btn-primary btn-sm" onclick="abrirModalPontuarEquipe(1)" style="font-size: 0.82rem; padding: 0.45rem 0.95rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Pontuar</span>
             </button>
           </div>
         </div>
@@ -567,95 +571,16 @@
           </div>
           <div class="team-card-footer">
             <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;" id="pct-admin-eq2">50% do total</span>
-            <button class="btn btn-outline btn-sm" onclick="selecionarEquipeParaPontuar(2)" style="font-size: 0.8rem; padding: 0.4rem 0.85rem; font-weight: 700;">
-              + Pontuar
+            <button class="btn btn-primary btn-sm" onclick="abrirModalPontuarEquipe(2)" style="font-size: 0.82rem; padding: 0.45rem 0.95rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Pontuar</span>
             </button>
           </div>
         </div>
 
-      </div>
-
-      <!-- Formulário de Lançamento de Pontos -->
-      <div class="card" style="margin-bottom: 2rem;">
-        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 1.25rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-          </svg>
-          <span>Lançar Pontuação de Tarefa</span>
-        </h3>
-
-        <form id="form-lancar-pontos" onsubmit="salvarPontuacao(event)">
-          <div class="grid-2" style="gap: 1.25rem;">
-
-            <!-- Seletor da Equipe -->
-            <div class="form-group">
-              <label class="form-label" style="font-weight: 700;">Equipe Beneficiada *</label>
-              <div style="display: flex; gap: 0.75rem;">
-                <label style="flex: 1; display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border: 2px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" id="label-radio-eq1">
-                  <input type="radio" name="equipe_selecionada" value="1" checked onchange="atualizarEstiloRadiosEquipe()">
-                  <span style="font-weight: 700;" id="radio-nome-eq1">Equipe 1</span>
-                </label>
-                <label style="flex: 1; display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border: 2px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s;" id="label-radio-eq2">
-                  <input type="radio" name="equipe_selecionada" value="2" onchange="atualizarEstiloRadiosEquipe()">
-                  <span style="font-weight: 700;" id="radio-nome-eq2">Equipe 2</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Pontos -->
-            <div class="form-group">
-              <label class="form-label" style="font-weight: 700;">Quantidade de Pontos *</label>
-              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                <input type="number" id="ponto-valor" class="form-control" placeholder="ex: 50" required style="font-size: 1.1rem; font-weight: 700; height: 46px; margin-bottom: 0;">
-              </div>
-              <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
-                <span style="font-size: 0.75rem; color: var(--text-muted); align-self: center; font-weight: 600;">Atalhos:</span>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(10)">+10</button>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(25)">+25</button>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(50)">+50</button>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(100)">+100</button>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(200)">+200</button>
-                <button type="button" class="quick-pts-btn" onclick="definirPontos(-10)" style="color: #DC2626;">-10</button>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Título da Tarefa -->
-          <div class="form-group" style="margin-top: 1rem;">
-            <label class="form-label" style="font-weight: 700;">Nome da Tarefa / Prova *</label>
-            <input type="text" id="ponto-titulo" class="form-control" placeholder="ex: Quiz Bíblico Relâmpago, Grito de Guerra, Doação..." required style="height: 44px; margin-bottom: 0.5rem;">
-            <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
-              <span style="font-size: 0.75rem; color: var(--text-muted); align-self: center; font-weight: 600;">Sugestões:</span>
-              <span class="quick-tag" onclick="preencherTarefa('Grito de Guerra', 50)">Grito de Guerra (+50)</span>
-              <span class="quick-tag" onclick="preencherTarefa('Quiz Bíblico', 100)">Quiz Bíblico (+100)</span>
-              <span class="quick-tag" onclick="preencherTarefa('Prova Relâmpago', 50)">Prova Relâmpago (+50)</span>
-              <span class="quick-tag" onclick="preencherTarefa('Doação de Alimentos', 100)">Doação de Alimentos (+100)</span>
-              <span class="quick-tag" onclick="preencherTarefa('Competição Esportiva', 75)">Competição Esportiva (+75)</span>
-              <span class="quick-tag" onclick="preencherTarefa('Penalidade / Atraso', -20)" style="color: #DC2626;">Penalidade (-20)</span>
-            </div>
-          </div>
-
-          <!-- Descrição / Detalhes -->
-          <div class="form-group" style="margin-top: 1rem;">
-            <label class="form-label" style="font-weight: 600;">Observações / Detalhes (Opcional)</label>
-            <input type="text" id="ponto-descricao" class="form-control" placeholder="ex: 1º lugar na bateria final, melhor figurino..." style="height: 42px;">
-          </div>
-
-          <!-- Botão Submeter -->
-          <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
-            <button type="submit" id="btn-salvar-ponto" class="btn btn-primary" style="height: 46px; min-width: 190px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-              <span>Lançar Pontuação</span>
-            </button>
-          </div>
-        </form>
       </div>
 
       <!-- Tabela com Histórico de Lançamentos -->
@@ -665,7 +590,7 @@
             <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.2rem;">
               Histórico de Lançamentos
             </h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Todas as tarefas computadas nesta gincana</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Todas as tarefas computadas nesta gincana com registro de quem lançou</p>
           </div>
           <div>
             <button class="btn btn-outline btn-sm" onclick="zerarGincanaComConfirmacao()" style="color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700;">
@@ -683,16 +608,17 @@
             <thead>
               <tr>
                 <th style="width: 110px;">Horário</th>
-                <th style="width: 150px;">Equipe</th>
+                <th style="width: 140px;">Equipe</th>
                 <th>Tarefa / Prova</th>
                 <th>Observação</th>
-                <th style="width: 120px; text-align: right;">Pontos</th>
-                <th style="width: 80px; text-align: center;">Ações</th>
+                <th style="width: 140px;">Lançado por</th>
+                <th style="width: 110px; text-align: right;">Pontos</th>
+                <th style="width: 70px; text-align: center;">Ações</th>
               </tr>
             </thead>
             <tbody id="tabela-pontos-body">
               <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
                   Carregando pontuações...
                 </td>
               </tr>
@@ -708,6 +634,92 @@
 
     </main>
 
+  </div>
+
+  <!-- Modal Lançar Pontuação de Tarefa por Equipe -->
+  <div id="modal-lancar-pontos" class="modal-config-overlay" onclick="fecharModalPontuarBackdrop(event)">
+    <div class="modal-config-card" onclick="event.stopPropagation()">
+      <div class="modal-config-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.25rem;">
+            <h3 class="modal-config-title" style="margin: 0; font-size: 1.2rem;">Lançar Pontos</h3>
+            <span id="modal-pontuar-badge" class="team-pill-badge" style="font-size: 0.85rem; font-weight: 800;">Equipe</span>
+          </div>
+          <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">
+            Lançamento pontual para a equipe selecionada
+          </p>
+        </div>
+        <button type="button" class="modal-config-close-btn" onclick="fecharModalPontuarEquipe()" title="Fechar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="form-modal-lancar-pontos" onsubmit="salvarPontuacaoModal(event)">
+        <input type="hidden" id="modal-ponto-equipe" value="1">
+
+        <!-- Tarefa / Prova -->
+        <div class="form-group" style="margin-bottom: 1.15rem;">
+          <label class="form-label" style="font-weight: 700;">Nome da Tarefa / Prova *</label>
+          <input type="text" id="modal-ponto-titulo" class="form-control" placeholder="ex: Quiz Bíblico, Grito de Guerra, Prova Relâmpago..." required style="height: 44px; margin-bottom: 0.5rem;">
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+            <span style="font-size: 0.72rem; color: var(--text-muted); align-self: center; font-weight: 600;">Sugestões:</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Grito de Guerra', 50)">Grito de Guerra (+50)</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Quiz Bíblico', 100)">Quiz Bíblico (+100)</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Prova Relâmpago', 50)">Prova Relâmpago (+50)</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Doação de Alimentos', 100)">Doação de Alimentos (+100)</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Competição Esportiva', 75)">Competição Esportiva (+75)</span>
+            <span class="quick-tag" onclick="preencherTarefaModal('Penalidade / Atraso', -20)" style="color: #DC2626;">Penalidade (-20)</span>
+          </div>
+        </div>
+
+        <!-- Quantidade de Pontos -->
+        <div class="form-group" style="margin-bottom: 1.15rem;">
+          <label class="form-label" style="font-weight: 700;">Quantidade de Pontos *</label>
+          <input type="number" id="modal-ponto-valor" class="form-control" placeholder="ex: 50" required style="font-size: 1.25rem; font-weight: 800; height: 48px; margin-bottom: 0.5rem; text-align: center;">
+          <div style="display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center;">
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(10)">+10</button>
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(25)">+25</button>
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(50)">+50</button>
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(100)">+100</button>
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(200)">+200</button>
+            <button type="button" class="quick-pts-btn" onclick="definirPontosModal(-10)" style="color: #DC2626;">-10</button>
+          </div>
+        </div>
+
+        <!-- Descrição / Detalhes -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" style="font-weight: 600;">Observações / Detalhes (Opcional)</label>
+          <input type="text" id="modal-ponto-descricao" class="form-control" placeholder="ex: 1º lugar na bateria final, melhor figurino..." style="height: 42px;">
+        </div>
+
+        <!-- Badge autor do lançamento -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.82rem;">
+          <div style="display: flex; align-items: center; gap: 0.45rem; color: var(--text-muted);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>Lançador responsável:</span>
+          </div>
+          <span id="modal-pontuar-autor-nome" style="color: var(--text-main); font-weight: 700;">Admin</span>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-outline" onclick="fecharModalPontuarEquipe()" style="font-weight: 600;">Cancelar</button>
+          <button type="submit" id="btn-modal-salvar-ponto" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; min-width: 170px; justify-content: center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            <span>Gravar Pontuação</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Modal Configuração de Equipes - Estrutura Corrigida e Elegante -->

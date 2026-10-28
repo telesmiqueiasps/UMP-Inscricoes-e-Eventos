@@ -79,6 +79,7 @@ async def lifespan(app: FastAPI):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                conn.execute(text("ALTER TABLE gincana_pontos ADD COLUMN IF NOT EXISTS usuario_nome VARCHAR(150);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincanas_evento ON gincanas(evento_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincana_pontos_gincana ON gincana_pontos(gincana_id);"))
                 conn.commit()

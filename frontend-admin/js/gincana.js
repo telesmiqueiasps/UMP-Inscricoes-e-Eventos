@@ -125,7 +125,7 @@ function renderizarTabelaPontos(historico) {
   if (!historico || historico.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
           Nenhuma tarefa ou pontuação foi lançada nesta gincana ainda.
         </td>
       </tr>
@@ -140,6 +140,7 @@ function renderizarTabelaPontos(historico) {
     const dataStr = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const ptsTexto = p.pontos > 0 ? `+${p.pontos}` : `${p.pontos}`;
     const ptsCor = p.pontos >= 0 ? '#10B981' : '#EF4444';
+    const autorNome = p.usuario_nome || 'Admin';
 
     html += `
       <tr>
@@ -157,6 +158,15 @@ function renderizarTabelaPontos(historico) {
         <td style="color: var(--text-muted); font-size: 0.85rem;">
           ${p.descricao ? escapeHTML(p.descricao) : '<span style="opacity: 0.5;">-</span>'}
         </td>
+        <td>
+          <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; font-weight: 600; color: #475569; background: #F1F5F9; padding: 0.2rem 0.6rem; border-radius: 9999px; border: 1px solid #E2E8F0;" title="Lançado por ${escapeHTML(autorNome)}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>${escapeHTML(autorNome)}</span>
+          </span>
+        </td>
         <td style="text-align: right; font-weight: 800; font-size: 1rem; color: ${ptsCor};">
           ${ptsTexto} pts
         </td>
@@ -172,15 +182,90 @@ function renderizarTabelaPontos(historico) {
   tbody.innerHTML = html;
 }
 
-async function salvarPontuacao(e) {
+// Modal de Lançamento de Pontos por Equipe
+function abrirModalPontuarEquipe(equipeNum) {
+  if (!gincanaAtual) return;
+
+  const equipe = equipeNum === 2 ? gincanaAtual.equipe_2 : gincanaAtual.equipe_1;
+  const nomeEq = equipe ? equipe.nome : (equipeNum === 2 ? 'Equipe 2' : 'Equipe 1');
+  const corEq = equipe ? equipe.cor : (equipeNum === 2 ? '#DC2626' : '#2563EB');
+
+  const inputEquipe = document.getElementById('modal-ponto-equipe');
+  if (inputEquipe) inputEquipe.value = equipeNum;
+
+  const badge = document.getElementById('modal-pontuar-badge');
+  if (badge) {
+    badge.textContent = nomeEq;
+    badge.style.background = `${corEq}18`;
+    badge.style.color = corEq;
+    badge.style.border = `1px solid ${corEq}40`;
+  }
+
+  // Nome do usuário logado que está realizando o lançamento
+  const user = API.getUser();
+  const autorEl = document.getElementById('modal-pontuar-autor-nome');
+  if (autorEl) {
+    autorEl.textContent = user ? (user.nome || user.email || 'Admin') : 'Admin';
+  }
+
+  // Limpar campos anteriores
+  const inputTitulo = document.getElementById('modal-ponto-titulo');
+  const inputValor = document.getElementById('modal-ponto-valor');
+  const inputDesc = document.getElementById('modal-ponto-descricao');
+  if (inputTitulo) inputTitulo.value = '';
+  if (inputValor) inputValor.value = '';
+  if (inputDesc) inputDesc.value = '';
+
+  const modal = document.getElementById('modal-lancar-pontos');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    if (inputTitulo) {
+      setTimeout(() => inputTitulo.focus(), 100);
+    }
+  }
+}
+
+function fecharModalPontuarEquipe() {
+  const modal = document.getElementById('modal-lancar-pontos');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+function fecharModalPontuarBackdrop(e) {
+  if (e && e.target && e.target.id === 'modal-lancar-pontos') {
+    fecharModalPontuarEquipe();
+  }
+}
+
+function preencherTarefaModal(nome, pts) {
+  const t = document.getElementById('modal-ponto-titulo');
+  const v = document.getElementById('modal-ponto-valor');
+  const d = document.getElementById('modal-ponto-descricao');
+  if (t) t.value = nome;
+  if (v) v.value = pts;
+  if (d) d.focus();
+}
+
+function definirPontosModal(pts) {
+  const v = document.getElementById('modal-ponto-valor');
+  if (v) {
+    v.value = pts;
+    v.focus();
+  }
+}
+
+async function salvarPontuacaoModal(e) {
   e.preventDefault();
   if (!gincanaAtual) return;
 
-  const equipeRadio = document.querySelector('input[name="equipe_selecionada"]:checked');
-  const equipe = equipeRadio ? parseInt(equipeRadio.value) : 1;
-  const titulo = document.getElementById('ponto-titulo').value.trim();
-  const pontos = parseInt(document.getElementById('ponto-valor').value);
-  const descricao = document.getElementById('ponto-descricao').value.trim();
+  const equipeInput = document.getElementById('modal-ponto-equipe');
+  const equipe = equipeInput ? parseInt(equipeInput.value) : 1;
+  const titulo = document.getElementById('modal-ponto-titulo').value.trim();
+  const pontos = parseInt(document.getElementById('modal-ponto-valor').value);
+  const descricao = document.getElementById('modal-ponto-descricao').value.trim();
 
   if (!titulo) {
     showToast('Informe o nome da tarefa ou prova.', 'warning');
@@ -191,7 +276,7 @@ async function salvarPontuacao(e) {
     return;
   }
 
-  const submitBtn = document.getElementById('btn-salvar-ponto');
+  const submitBtn = document.getElementById('btn-modal-salvar-ponto');
   const originalHtml = submitBtn.innerHTML;
   submitBtn.disabled = true;
   submitBtn.innerHTML = 'Gravando...';
@@ -207,12 +292,10 @@ async function salvarPontuacao(e) {
       })
     });
 
-    showToast(`Pontuação lançada com sucesso! (${pontos > 0 ? '+' : ''}${pontos} pts)`, 'success');
+    const nomeEquipe = (equipe === 2 ? gincanaAtual.equipe_2 : gincanaAtual.equipe_1)?.nome || `Equipe ${equipe}`;
+    showToast(`Pontuação lançada para ${nomeEquipe}! (${pontos > 0 ? '+' : ''}${pontos} pts)`, 'success');
     
-    // Limpar campos
-    document.getElementById('ponto-titulo').value = '';
-    document.getElementById('ponto-valor').value = '';
-    document.getElementById('ponto-descricao').value = '';
+    fecharModalPontuarEquipe();
 
     if (updated) {
       gincanaAtual = updated;
@@ -228,100 +311,12 @@ async function salvarPontuacao(e) {
   }
 }
 
-async function deletarPonto(id) {
-  if (!confirm('Deseja realmente remover este lançamento de pontos? O placar será recalculado.')) {
-    return;
-  }
-
-  try {
-    await API.request(`/admin/gincana/pontos/${id}`, {
-      method: 'DELETE'
-    });
-
-    showToast('Lançamento removido com sucesso!', 'success');
-    carregarGincanaAdmin();
-  } catch (err) {
-    showToast(err.message || 'Erro ao remover pontuação.', 'error');
-  }
-}
-
-async function zerarGincanaComConfirmacao() {
-  if (!gincanaAtual) return;
-  const confirmacao = prompt('ATENÇÃO: Isso irá apagar TODAS as tarefas e pontuações registradas nesta gincana.\n\nDigite ZERAR para confirmar:');
-  if (confirmacao !== 'ZERAR') {
-    return;
-  }
-
-  try {
-    const updated = await API.request(`/admin/gincana/${gincanaAtual.id}/zerar`, {
-      method: 'POST'
-    });
-
-    showToast('O placar da gincana foi zerado com sucesso!', 'success');
-    if (updated) {
-      gincanaAtual = updated;
-      renderizarPainelAdmin(updated);
-    } else {
-      carregarGincanaAdmin();
-    }
-  } catch (err) {
-    showToast(err.message || 'Erro ao zerar gincana.', 'error');
-  }
-}
-
-// Helpers de Formulário
-function preencherTarefa(nome, pts) {
-  document.getElementById('ponto-titulo').value = nome;
-  document.getElementById('ponto-valor').value = pts;
-  document.getElementById('ponto-descricao').focus();
-}
-
-function definirPontos(pts) {
-  document.getElementById('ponto-valor').value = pts;
-}
-
-function selecionarEquipeParaPontuar(num) {
-  const radio = document.querySelector(`input[name="equipe_selecionada"][value="${num}"]`);
-  if (radio) {
-    radio.checked = true;
-    atualizarEstiloRadiosEquipe();
-  }
-  document.getElementById('ponto-titulo').focus();
-}
-
-function atualizarEstiloRadiosEquipe() {
-  const radio1 = document.querySelector('input[name="equipe_selecionada"][value="1"]');
-  const radio2 = document.querySelector('input[name="equipe_selecionada"][value="2"]');
-  const label1 = document.getElementById('label-radio-eq1');
-  const label2 = document.getElementById('label-radio-eq2');
-
-  const cor1 = (gincanaAtual && gincanaAtual.equipe_1) ? gincanaAtual.equipe_1.cor : '#2563EB';
-  const cor2 = (gincanaAtual && gincanaAtual.equipe_2) ? gincanaAtual.equipe_2.cor : '#DC2626';
-
-  if (label1 && radio1) {
-    if (radio1.checked) {
-      label1.style.borderColor = cor1;
-      label1.style.background = `${cor1}15`;
-      label1.style.color = cor1;
-    } else {
-      label1.style.borderColor = 'var(--border-color)';
-      label1.style.background = 'transparent';
-      label1.style.color = 'var(--text-main)';
-    }
-  }
-
-  if (label2 && radio2) {
-    if (radio2.checked) {
-      label2.style.borderColor = cor2;
-      label2.style.background = `${cor2}15`;
-      label2.style.color = cor2;
-    } else {
-      label2.style.borderColor = 'var(--border-color)';
-      label2.style.background = 'transparent';
-      label2.style.color = 'var(--text-main)';
-    }
-  }
-}
+// Aliases para compatibilidade retroativa
+function preencherTarefa(nome, pts) { preencherTarefaModal(nome, pts); }
+function definirPontos(pts) { definirPontosModal(pts); }
+function selecionarEquipeParaPontuar(num) { abrirModalPontuarEquipe(num); }
+function salvarPontuacao(e) { salvarPontuacaoModal(e); }
+function atualizarEstiloRadiosEquipe() {}
 
 // Modal de Configuração das Equipes
 function abrirModalConfigEquipes() {
@@ -391,6 +386,7 @@ function definirCorPreset(num, cor) {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     fecharModalConfigEquipes();
+    fecharModalPontuarEquipe();
   }
 });
 

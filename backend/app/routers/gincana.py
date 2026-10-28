@@ -108,6 +108,7 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesRe
                 titulo=p.titulo,
                 descricao=p.descricao,
                 pontos=p.pontos,
+                usuario_nome=p.usuario_nome,
                 created_at=p.created_at
             )
         )
@@ -212,12 +213,14 @@ def lancar_pontos_tarefa(
     if not gincana:
         raise HTTPException(status_code=404, detail="Gincana não encontrada.")
 
+    nome_usuario = admin.nome.strip() if admin and admin.nome else (admin.email if admin else "Administrador")
     novo_ponto = GincanaPonto(
         gincana_id=gincana.id,
         equipe=req.equipe,
         titulo=req.titulo.strip(),
         descricao=req.descricao.strip() if req.descricao else None,
-        pontos=req.pontos
+        pontos=req.pontos,
+        usuario_nome=nome_usuario
     )
     db.add(novo_ponto)
     db.commit()
