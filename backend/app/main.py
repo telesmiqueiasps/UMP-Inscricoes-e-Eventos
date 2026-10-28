@@ -17,7 +17,8 @@ from app.routers import (
     usuario_area,
     presbiterio,
     igreja,
-    diarias
+    diarias,
+    gincana
 )
 
 
@@ -127,6 +128,7 @@ app.include_router(usuario_area.router, prefix=settings.API_V1_STR)
 app.include_router(presbiterio.router, prefix=settings.API_V1_STR)
 app.include_router(igreja.router, prefix=settings.API_V1_STR)
 app.include_router(diarias.router, prefix=settings.API_V1_STR)
+app.include_router(gincana.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

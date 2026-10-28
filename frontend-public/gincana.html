@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placar ao Vivo - Gincana UMP</title>
+  <link rel="icon" href="img/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root {
+      --bg-dark: #0B0F19;
+      --card-dark: #111827;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --eq1-color: #2563EB;
+      --eq2-color: #DC2626;
+      --gold: #F59E0B;
+    }
+
+    body.gincana-body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 10% 20%, rgba(37, 99, 235, 0.12) 0px, transparent 50%),
+        radial-gradient(at 90% 80%, rgba(220, 38, 38, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.5) 0px, transparent 100%);
+      color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    .gincana-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem 1.25rem;
+    }
+
+    /* Topbar */
+    .gincana-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.45rem 0.9rem;
+      border-radius: 30px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10B981;
+      animation: pulseLive 1.8s infinite;
+    }
+
+    @keyframes pulseLive {
+      0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .btn-header {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: #E2E8F0;
+      padding: 0.5rem 0.9rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    /* Placar Arena (Versus) */
+    .arena-scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1.5rem;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .arena-scoreboard {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+    }
+
+    .team-card {
+      background: var(--card-dark);
+      border-radius: 24px;
+      padding: 2.25rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid var(--card-border);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .team-card.team-1 {
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .team-card.team-1:hover {
+      border-color: var(--eq1-color);
+      box-shadow: 0 20px 50px rgba(37, 99, 235, 0.25);
+    }
+
+    .team-card.team-2 {
+      border-color: rgba(220, 38, 38, 0.35);
+    }
+
+    .team-card.team-2:hover {
+      border-color: var(--eq2-color);
+      box-shadow: 0 20px 50px rgba(220, 38, 38, 0.25);
+    }
+
+    .team-card.is-winner {
+      border-color: var(--gold) !important;
+      box-shadow: 0 20px 50px rgba(245, 158, 11, 0.25) !important;
+    }
+
+    .leader-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: #000;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      visibility: hidden;
+    }
+
+    .leader-badge.show {
+      visibility: visible;
+      animation: bounceLeader 1s ease infinite alternate;
+    }
+
+    @keyframes bounceLeader {
+      from { transform: translateY(0); }
+      to { transform: translateY(-4px); }
+    }
+
+    .team-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .team-card.team-1 .team-name {
+      color: var(--eq1-color);
+      text-shadow: 0 0 25px rgba(37, 99, 235, 0.4);
+    }
+
+    .team-card.team-2 .team-name {
+      color: var(--eq2-color);
+      text-shadow: 0 0 25px rgba(220, 38, 38, 0.4);
+    }
+
+    .team-score {
+      font-family: 'Outfit', sans-serif;
+      font-size: 5rem;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1;
+      margin: 1.25rem 0;
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.2s ease;
+    }
+
+    .team-score.bump {
+      transform: scale(1.15);
+      color: #38BDF8;
+    }
+
+    .team-label {
+      font-size: 0.9rem;
+      color: #94A3B8;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* Central VS Badge */
+    .vs-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .vs-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #E2E8F0;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      letter-spacing: -0.03em;
+    }
+
+    .diff-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #CBD5E1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    /* Dispute Progress Bar */
+    .dispute-bar-section {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.25rem 1.75rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .bar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .bar-track {
+      height: 18px;
+      background: #1E293B;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bar-fill-1 {
+      height: 100%;
+      background: var(--eq1-color);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+    }
+
+    .bar-fill-2 {
+      height: 100%;
+      background: var(--eq2-color);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
+    }
+
+    /* Task History Feed */
+    .history-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .history-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      color: #FFFFFF;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      transition: transform 0.2s ease, background 0.2s ease;
+      animation: fadeInTask 0.4s ease-out;
+    }
+
+    @keyframes fadeInTask {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateX(4px);
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .task-team-pill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    .task-info h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 0 0 0.2rem 0;
+    }
+
+    .task-info p {
+      font-size: 0.825rem;
+      color: #94A3B8;
+      margin: 0;
+    }
+
+    .task-points {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      white-space: nowrap;
+      margin-left: 1rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748B;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 0.75rem;
+      opacity: 0.5;
+    }
+
+    /* Toast */
+    .toast-live {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1E293B;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #FFFFFF;
+      padding: 0.9rem 1.4rem;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 9999;
+    }
+
+    .toast-live.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="gincana-body">
+
+  <div class="gincana-container">
+
+    <!-- Topbar -->
+    <header class="gincana-header">
+      <div class="brand-group">
+        <img src="img/logo.png" alt="Logo UMP" class="brand-logo" onerror="this.style.display='none';">
+        <div>
+          <div class="brand-title" id="gincana-titulo">Gincana UMP 2026</div>
+          <div class="brand-subtitle" id="gincana-evento-sub">Placar Oficial em Tempo Real</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="badge-live">
+          <span class="pulse-dot"></span>
+          <span>Ao Vivo</span>
+        </div>
+        <button class="btn-header" onclick="alternarTelaCheia()" title="Modo Telão para Projetor">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <span style="display: none; sm: inline;">Modo Telão</span>
+        </button>
+        <button class="btn-header" onclick="compartilharPlacar()" title="Compartilhar Link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Arena do Placar (Versus) -->
+    <div class="arena-scoreboard">
+      
+      <!-- Card Equipe 1 -->
+      <div class="team-card team-1" id="card-eq1">
+        <div class="leader-badge" id="badge-lider-eq1">👑 Na Liderança</div>
+        <div class="team-name" id="nome-eq1">Equipe 1</div>
+        <div class="team-score" id="pontos-eq1">0</div>
+        <div class="team-label">Pontos Acumulados</div>
+      </div>
+
+      <!-- Centro Versus -->
+      <div class="vs-container">
+        <div class="vs-circle">VS</div>
+        <div class="diff-badge" id="diff-badge">Empate Técnico</div>
+      </div>
+
+      <!-- Card Equipe 2 -->
+      <div class="team-card team-2" id="card-eq2">
+        <div class="leader-badge" id="badge-lider-eq2">👑 Na Liderança</div>
+        <div class="team-name" id="nome-eq2">Equipe 2</div>
+        <div class="team-score" id="pontos-eq2">0</div>
+        <div class="team-label">Pontos Acumulados</div>
+      </div>
+
+    </div>
+
+    <!-- Barra de Disputa Geral -->
+    <div class="dispute-bar-section">
+      <div class="bar-labels">
+        <span id="bar-label-eq1" style="color: var(--eq1-color);">Equipe 1 (50%)</span>
+        <span style="color: #94A3B8; font-size: 0.8rem; font-weight: 500;">Disputa de Pontuação</span>
+        <span id="bar-label-eq2" style="color: var(--eq2-color);">Equipe 2 (50%)</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill-1" id="bar-fill-1" style="width: 50%;"></div>
+        <div class="bar-fill-2" id="bar-fill-2" style="width: 50%;"></div>
+      </div>
+    </div>
+
+    <!-- Histórico de Tarefas -->
+    <div class="history-card">
+      <div class="history-header">
+        <div class="history-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+          <span>Últimas Tarefas & Provas Pontuadas</span>
+        </div>
+        <div style="font-size: 0.8rem; color: #94A3B8;">
+          Sincronização em tempo real (a cada 4s)
+        </div>
+      </div>
+
+      <div class="history-list" id="history-list">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p>Nenhuma pontuação foi registrada ainda. As provas começarão em breve!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer style="margin-top: 3rem; text-align: center; color: #64748B; font-size: 0.85rem;">
+      <p>&copy; 2026 UMP Eventos &bull; Sistema de Apuração e Placar Oficial</p>
+    </footer>
+
+  </div>
+
+  <!-- Toast de Notificação -->
+  <div class="toast-live" id="toast-live">
+    <span id="toast-msg">🎉 Pontuação atualizada!</span>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/gincana-publica.js"></script>
+</body>
+</html>
