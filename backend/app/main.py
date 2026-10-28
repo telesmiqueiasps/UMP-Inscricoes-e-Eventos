@@ -65,6 +65,9 @@ async def lifespan(app: FastAPI):
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                conn.execute(text("UPDATE gincanas SET titulo = 'Gincana Acamp Sinodal' WHERE titulo = 'Gincana UMP';"))
+                conn.execute(text("UPDATE gincanas SET nome_equipe_1 = 'Equipe Verde', cor_equipe_1 = '#00B894' WHERE nome_equipe_1 = 'Equipe 1';"))
+                conn.execute(text("UPDATE gincanas SET nome_equipe_2 = 'Equipe Laranja', cor_equipe_2 = '#FF7900' WHERE nome_equipe_2 = 'Equipe 2';"))
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS gincana_pontos (
                         id SERIAL PRIMARY KEY,

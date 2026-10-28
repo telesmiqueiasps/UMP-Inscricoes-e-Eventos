@@ -32,15 +32,15 @@ def _obter_ou_criar_gincana_ativa(db: Session, evento_id: Optional[int] = None) 
             gincana = db.query(Gincana).filter(Gincana.ativa == True).order_by(Gincana.id.desc()).first()
 
     if not gincana:
-        # Criar gincana padrão inicial
+        # Criar gincana padrão inicial com a identidade do Acamp Sinodal
         gincana = Gincana(
-            titulo="Gincana UMP",
+            titulo="Gincana Acamp Sinodal",
             evento_id=evento_id,
             ativa=True,
-            nome_equipe_1="Equipe 1",
-            cor_equipe_1="#2563EB",
-            nome_equipe_2="Equipe 2",
-            cor_equipe_2="#DC2626"
+            nome_equipe_1="Equipe Verde",
+            cor_equipe_1="#00B894",
+            nome_equipe_2="Equipe Laranja",
+            cor_equipe_2="#FF7900"
         )
         db.add(gincana)
         db.commit()

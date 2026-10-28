@@ -124,22 +124,21 @@ function atualizarInterface(data) {
     badgeLider1.classList.remove('show');
     badgeLider2.classList.remove('show');
 
-    const svgTrend = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
-    const svgEqual = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/></svg>`;
+    const svgThunder = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
 
     if (data.lider === 1) {
       card1.classList.add('is-winner');
       badgeLider1.classList.add('show');
-      diffBadge.innerHTML = `${svgTrend}<span>Vantagem: +${data.diferenca_pontos} pts</span>`;
-      diffBadge.style.color = data.equipe_1.cor;
+      diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_1.nome} (+${data.diferenca_pontos} pts)</span>`;
+      diffBadge.style.color = '#F8FAFC';
     } else if (data.lider === 2) {
       card2.classList.add('is-winner');
       badgeLider2.classList.add('show');
-      diffBadge.innerHTML = `${svgTrend}<span>Vantagem: +${data.diferenca_pontos} pts</span>`;
-      diffBadge.style.color = data.equipe_2.cor;
+      diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_2.nome} (+${data.diferenca_pontos} pts)</span>`;
+      diffBadge.style.color = '#F8FAFC';
     } else {
-      diffBadge.innerHTML = `${svgEqual}<span>Empate Técnico</span>`;
-      diffBadge.style.color = '#CBD5E1';
+      diffBadge.innerHTML = `${svgThunder}<span>Empate Técnico</span>`;
+      diffBadge.style.color = '#F8FAFC';
     }
   }
 
@@ -167,12 +166,9 @@ function renderizarHistorico(historico) {
   if (!historico || historico.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <p>Nenhuma pontuação foi registrada ainda. As provas começarão em breve!</p>
+        <div class="empty-state-icon-circle">!</div>
+        <p class="empty-state-title">Nenhuma pontuação foi registrada ainda.</p>
+        <p class="empty-state-sub">As provas começarão em breve!</p>
       </div>
     `;
     return;

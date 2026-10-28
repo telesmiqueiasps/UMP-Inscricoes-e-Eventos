@@ -176,12 +176,12 @@ CREATE INDEX IF NOT EXISTS ix_igrejas_nome ON igrejas(nome);
 CREATE TABLE IF NOT EXISTS gincanas (
     id SERIAL PRIMARY KEY,
     evento_id INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
-    titulo VARCHAR(200) DEFAULT 'Gincana UMP' NOT NULL,
+    titulo VARCHAR(200) DEFAULT 'Gincana Acamp Sinodal' NOT NULL,
     ativa BOOLEAN DEFAULT TRUE NOT NULL,
-    nome_equipe_1 VARCHAR(100) DEFAULT 'Equipe 1' NOT NULL,
-    cor_equipe_1 VARCHAR(30) DEFAULT '#2563EB' NOT NULL,
-    nome_equipe_2 VARCHAR(100) DEFAULT 'Equipe 2' NOT NULL,
-    cor_equipe_2 VARCHAR(30) DEFAULT '#DC2626' NOT NULL,
+    nome_equipe_1 VARCHAR(100) DEFAULT 'Equipe Verde' NOT NULL,
+    cor_equipe_1 VARCHAR(30) DEFAULT '#00B894' NOT NULL,
+    nome_equipe_2 VARCHAR(100) DEFAULT 'Equipe Laranja' NOT NULL,
+    cor_equipe_2 VARCHAR(30) DEFAULT '#FF7900' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
