@@ -870,3 +870,13 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==============================================================
+   Controle de Visibilidade por Perfil de Acesso
+   ============================================================== */
+body.perfil-admin-gincana li[data-aba="eventos"],
+body.perfil-admin-gincana li[data-aba="configuracoes"],
+body.perfil-admin-gincana .sidebar-link[href*="index.html"],
+body.perfil-admin-gincana .sidebar-link[href*="configuracoes.html"] {
+  display: none !important;
+}

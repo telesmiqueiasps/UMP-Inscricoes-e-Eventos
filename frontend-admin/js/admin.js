@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
-  const user = API.getUser();
+  let user = API.getUser();
 
   // Se não estiver logado ou não for administrador, solicitar login admin
   if (!token || !user || !user.is_admin) {
@@ -14,8 +14,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Aplicar restrições de perfil de acesso do administrador
-  aplicarRestricoesPerfilAdmin(user);
+  // 1. Aplicar restrições de imediato com o dado em cache
+  if (user && user.perfil_acesso) {
+    aplicarRestricoesPerfilAdmin(user);
+  }
+
+  // 2. Sincronizar OBRIGATORIAMENTE com o servidor (/auth/me) para atualizar perfil_acesso do banco de dados
+  try {
+    const me = await API.request('/auth/me');
+    if (me && me.is_admin) {
+      API.setUser(me);
+      user = me;
+      aplicarRestricoesPerfilAdmin(user);
+    }
+  } catch (err) {
+    console.warn('Não foi possível sincronizar perfil do usuário com o servidor:', err);
+    if (user) {
+      aplicarRestricoesPerfilAdmin(user);
+    }
+  }
 
   // Identificar página atual
   if (document.getElementById('admin-dashboard')) {
@@ -915,8 +932,12 @@ function initGincana() {
 function aplicarRestricoesPerfilAdmin(user) {
   if (!user || !user.is_admin) return;
 
-  const perfil = (user.perfil_acesso || 'global').toLowerCase().trim();
+  const perfil = String(user.perfil_acesso || 'global').toLowerCase().trim();
   const path = window.location.pathname.toLowerCase();
+
+  // 1. Adicionar classe no body para ativação de estilos CSS imediatos
+  document.body.classList.remove('perfil-admin-global', 'perfil-admin-gincana');
+  document.body.classList.add(`perfil-admin-${perfil}`);
 
   const temPermissao = (modulo) => {
     if (perfil === 'global') return true;
@@ -924,61 +945,88 @@ function aplicarRestricoesPerfilAdmin(user) {
     return permissoes.includes('global') || permissoes.includes(modulo);
   };
 
-  // 1. Ocultar itens da sidebar de abas às quais o perfil não tem acesso
-  document.querySelectorAll('.sidebar-link').forEach(link => {
-    const href = (link.getAttribute('href') || '').toLowerCase();
-    
-    // Gincana
-    if (href.includes('gincana.html')) {
+  const apenasGincana = (perfil === 'gincana');
+
+  // 2. Proteção de rota no lado do cliente: Redirecionar se acessar página não autorizada
+  if (apenasGincana) {
+    const emGincana = path.includes('gincana');
+    if (!emGincana) {
+      window.location.replace('gincana.html');
+      return;
+    }
+  } else if (!temPermissao('global')) {
+    if (path.includes('configuracoes') && !temPermissao('configuracoes')) {
+      window.location.replace(temPermissao('gincana') ? 'gincana.html' : 'index.html');
+      return;
+    }
+    if ((path.includes('index') || path.includes('gerenciar-evento') || path.endsWith('/admin/') || path.endsWith('/admin')) && !temPermissao('eventos')) {
+      window.location.replace(temPermissao('gincana') ? 'gincana.html' : 'index.html');
+      return;
+    }
+  }
+
+  // 3. Ocultar itens da sidebar de abas às quais o perfil não tem acesso
+  document.querySelectorAll('.sidebar-menu li, .sidebar-link').forEach(el => {
+    const link = el.tagName === 'A' ? el : el.querySelector('a');
+    if (!link) return;
+    const li = el.tagName === 'LI' ? el : el.closest('li');
+
+    // Botão de logout nunca oculta
+    if (link.classList.contains('btn-logout') || link.textContent.toLowerCase().includes('sair')) {
+      return;
+    }
+
+    const dataAba = (li && li.getAttribute('data-aba')) || (link && link.getAttribute('data-aba')) || '';
+    const href = (link.getAttribute('href') || link.href || '').toLowerCase();
+    const text = (link.textContent || '').toLowerCase();
+
+    const isGincana = dataAba === 'gincana' || href.includes('gincana') || text.includes('gincana');
+    const isEventos = dataAba === 'eventos' || href.includes('index') || text.includes('dashboard') || text.includes('evento');
+    const isConfig = dataAba === 'configuracoes' || href.includes('configura') || text.includes('configura');
+
+    if (isGincana) {
       if (!temPermissao('gincana')) {
-        const li = link.closest('li');
-        if (li) li.style.display = 'none';
+        if (li) li.style.setProperty('display', 'none', 'important');
+        link.style.setProperty('display', 'none', 'important');
+      } else {
+        if (li) li.style.removeProperty('display');
+        link.style.removeProperty('display');
       }
-    }
-    // Dashboard & Eventos
-    else if (href.includes('index.html') && !link.classList.contains('btn-logout')) {
-      if (!temPermissao('eventos') && !temPermissao('global')) {
-        const li = link.closest('li');
-        if (li) li.style.display = 'none';
+    } else if (isEventos) {
+      if (apenasGincana || (!temPermissao('eventos') && !temPermissao('global'))) {
+        if (li) li.style.setProperty('display', 'none', 'important');
+        link.style.setProperty('display', 'none', 'important');
+      } else {
+        if (li) li.style.removeProperty('display');
+        link.style.removeProperty('display');
       }
-    }
-    // Configurações
-    else if (href.includes('configuracoes.html')) {
-      if (!temPermissao('configuracoes') && !temPermissao('global')) {
-        const li = link.closest('li');
-        if (li) li.style.display = 'none';
+    } else if (isConfig) {
+      if (apenasGincana || (!temPermissao('configuracoes') && !temPermissao('global'))) {
+        if (li) li.style.setProperty('display', 'none', 'important');
+        link.style.setProperty('display', 'none', 'important');
+      } else {
+        if (li) li.style.removeProperty('display');
+        link.style.removeProperty('display');
       }
     }
   });
 
-  // 2. Proteção de rota no lado do cliente: Redirecionar se acessar página não autorizada
-  if (perfil === 'gincana') {
-    const emGincana = path.includes('gincana.html');
-    if (!emGincana) {
-      window.location.href = 'gincana.html';
-      return;
-    }
-  } else if (!temPermissao('global')) {
-    if (path.includes('configuracoes.html') && !temPermissao('configuracoes')) {
-      window.location.href = temPermissao('gincana') ? 'gincana.html' : 'index.html';
-      return;
-    }
-    if ((path.includes('index.html') || path.includes('gerenciar-evento.html')) && !temPermissao('eventos')) {
-      window.location.href = temPermissao('gincana') ? 'gincana.html' : 'index.html';
-      return;
-    }
-  }
-
-  // 3. Exibir badge do perfil no menu
+  // 4. Exibir badge do perfil no menu
   const brandSub = document.querySelector('.sidebar-brand');
-  if (brandSub && perfil !== 'global' && !document.getElementById('badge-perfil-sidebar')) {
-    const badge = document.createElement('div');
-    badge.id = 'badge-perfil-sidebar';
-    badge.style.cssText = 'font-size: 0.68rem; color: #F59E0B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.15rem;';
+  if (brandSub && perfil !== 'global') {
+    let badge = document.getElementById('badge-perfil-sidebar');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'badge-perfil-sidebar';
+      brandSub.appendChild(badge);
+    }
+    badge.style.cssText = 'font-size: 0.68rem; color: #F59E0B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; display: block;';
     badge.textContent = `Acesso: ${perfil.toUpperCase()}`;
-    brandSub.appendChild(badge);
   }
 }
+
+// Tornar global para acesso de outras páginas/scripts se necessário
+window.aplicarRestricoesPerfilAdmin = aplicarRestricoesPerfilAdmin;
 
 let cachedAdmins = [];
 let debounceBuscaAdmin = null;

@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = API.getToken();
   const user = API.getUser();
   if (token && user && user.is_admin) {
+    if (typeof window.aplicarRestricoesPerfilAdmin === 'function') {
+      window.aplicarRestricoesPerfilAdmin(user);
+    }
     inicializarGincanaAdmin();
   }
 });
