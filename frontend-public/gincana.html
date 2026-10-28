@@ -12,26 +12,31 @@
   <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
-      --bg-petroleum-dark: #001E21;
-      --bg-petroleum-base: #00363A;
-      --bg-petroleum-light: #004C50;
-      --card-bg: rgba(0, 42, 46, 0.82);
+      /* Paleta Oficial Acamp Sinodal: "Um só Corpo — Uma só Igreja" */
+      --bg-petroleum-dark: #001618;
+      --bg-petroleum-base: #00282C;
+      --bg-petroleum-light: #003F44;
+      --card-bg: rgba(0, 32, 36, 0.85);
       --card-border: rgba(255, 255, 255, 0.12);
-      --card-border-hover: rgba(255, 255, 255, 0.25);
+      --card-border-hover: rgba(255, 255, 255, 0.28);
       
-      /* Cores Oficiais das Equipes Acamp Sinodal */
+      /* Cores das Equipes */
       --team-green: #00B894;
+      --team-green-glow: rgba(0, 184, 148, 0.45);
       --team-orange: #FF7900;
+      --team-orange-glow: rgba(255, 121, 0, 0.45);
       --eq1-color: #00B894;
       --eq2-color: #FF7900;
       
-      --text-main: #F8FAFC;
+      /* Textos e Acentos */
+      --text-main: #FFFFFF;
       --text-muted: #94A3B8;
-      --gold: #FFB703;
-      --gold-glow: rgba(255, 183, 3, 0.45);
+      --text-dim: #64748B;
+      --gold-cup: #FFB703;
+      --gold-glow: rgba(255, 183, 3, 0.55);
     }
 
-    /* Reset estrito para anular qualquer overflow lateral */
+    /* Reset Estrito de Layout Mobile (Zero Horizontal Drag) */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -49,8 +54,8 @@
     body.gincana-body {
       background-color: var(--bg-petroleum-dark);
       background-image: 
-        radial-gradient(circle at 15% 15%, rgba(0, 76, 80, 0.55) 0%, transparent 55%),
-        radial-gradient(circle at 85% 85%, rgba(255, 121, 0, 0.18) 0%, transparent 50%),
+        radial-gradient(circle at 10% 15%, rgba(0, 63, 68, 0.6) 0%, transparent 55%),
+        radial-gradient(circle at 90% 85%, rgba(255, 121, 0, 0.22) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, var(--bg-petroleum-base) 0%, var(--bg-petroleum-dark) 100%);
       background-attachment: fixed;
       color: var(--text-main);
@@ -69,10 +74,7 @@
        ============================================================== */
     .bg-decorations-wrapper {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       width: 100%;
       max-width: 100vw;
       height: 100%;
@@ -83,32 +85,32 @@
 
     .bg-splash-top-left {
       position: absolute;
-      top: -80px;
-      left: -80px;
-      width: 380px;
-      height: 380px;
-      opacity: 0.75;
-      background: radial-gradient(circle at 25% 25%, rgba(255, 121, 0, 0.75) 0%, rgba(255, 121, 0, 0.25) 45%, transparent 70%);
-      filter: blur(35px);
+      top: -90px;
+      left: -90px;
+      width: 420px;
+      height: 420px;
+      opacity: 0.7;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 121, 0, 0.7) 0%, rgba(255, 121, 0, 0.2) 45%, transparent 70%);
+      filter: blur(45px);
     }
 
     .bg-splash-bottom-right {
       position: absolute;
-      bottom: -90px;
-      right: -90px;
-      width: 420px;
-      height: 420px;
-      opacity: 0.75;
-      background: radial-gradient(circle at 75% 75%, rgba(255, 121, 0, 0.7) 0%, rgba(0, 184, 148, 0.3) 50%, transparent 75%);
-      filter: blur(40px);
+      bottom: -100px;
+      right: -100px;
+      width: 460px;
+      height: 460px;
+      opacity: 0.7;
+      background: radial-gradient(circle at 70% 70%, rgba(255, 121, 0, 0.65) 0%, rgba(0, 184, 148, 0.35) 50%, transparent 75%);
+      filter: blur(50px);
     }
 
     .corner-brush-tl {
       position: absolute;
       top: 0;
       left: 0;
-      width: 250px;
-      height: 210px;
+      width: 260px;
+      height: 220px;
       opacity: 0.85;
     }
 
@@ -116,23 +118,24 @@
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 300px;
-      height: 230px;
+      width: 320px;
+      height: 240px;
       opacity: 0.85;
     }
 
+    /* Marca d'água tipográfica editorial na lateral direita */
     .watermark-right {
       position: absolute;
       right: 2vw;
-      top: 15vh;
+      top: 14vh;
       user-select: none;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      opacity: 0.06;
+      opacity: 0.055;
       text-transform: uppercase;
       font-family: 'Bebas Neue', sans-serif;
-      line-height: 0.88;
+      line-height: 0.86;
       letter-spacing: 0.05em;
     }
 
@@ -157,11 +160,11 @@
 
     .watermark-callout-left {
       position: absolute;
-      left: 3vw;
-      bottom: 12vh;
+      left: 3.2vw;
+      bottom: 10vh;
       user-select: none;
       font-family: 'Caveat', cursive;
-      font-size: 2.5rem;
+      font-size: 2.6rem;
       color: #FFA048;
       transform: rotate(-10deg);
       line-height: 1.05;
@@ -184,19 +187,21 @@
       overflow-x: hidden;
     }
 
-    /* Topbar Header Compacto & Glassmorphism */
+    /* ==============================================================
+       Topbar Header: Estilo Arena Broadcast
+       ============================================================== */
     .gincana-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0.85rem 1.5rem;
       background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
       border-radius: 20px;
       margin-bottom: 2rem;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -223,7 +228,7 @@
       width: auto;
       max-width: 140px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
     }
 
     .brand-badge-fallback {
@@ -238,7 +243,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      border: 1px solid rgba(255,255,255,0.25);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       box-shadow: 0 4px 12px rgba(255, 121, 0, 0.35);
     }
 
@@ -250,7 +255,7 @@
 
     .brand-divider {
       width: 1px;
-      height: 32px;
+      height: 34px;
       background: rgba(255, 255, 255, 0.15);
       flex-shrink: 0;
     }
@@ -269,7 +274,7 @@
 
     .brand-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.25rem;
+      font-size: 1.28rem;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.01em;
@@ -280,13 +285,14 @@
     }
 
     .brand-subtitle {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       font-weight: 600;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      text-transform: uppercase;
     }
 
     .header-actions {
@@ -300,15 +306,16 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: #FF7900;
+      background: linear-gradient(135deg, #FF7900 0%, #D96000 100%);
       color: #FFFFFF;
       font-size: 0.78rem;
       font-weight: 800;
-      padding: 0.4rem 0.95rem;
+      padding: 0.42rem 0.95rem;
       border-radius: 30px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      box-shadow: 0 4px 15px rgba(255, 121, 0, 0.4);
+      letter-spacing: 0.08em;
+      box-shadow: 0 4px 15px rgba(255, 121, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       white-space: nowrap;
     }
 
@@ -322,7 +329,7 @@
 
     @keyframes pulseDot {
       0%, 100% { transform: scale(0.85); opacity: 0.6; }
-      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px #FFFFFF; }
+      50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 10px #FFFFFF; }
     }
 
     .btn-icon-header {
@@ -342,13 +349,12 @@
 
     .btn-icon-header:hover {
       background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.35);
       transform: translateY(-1px);
     }
 
     /* ==============================================================
-       Arena de Duelo (Cards das Equipes & VS)
-       Design Esportivo Profissional / Tournament HUD (Sem cara de IA)
+       Arena de Duelo (Cards Esportivos de Campeonato)
        ============================================================== */
     .arena-scoreboard {
       display: grid;
@@ -365,13 +371,13 @@
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border-radius: 24px;
+      border-radius: 26px;
       padding: 2.25rem 1.75rem 1.75rem 1.75rem;
       text-align: center;
       position: relative;
       overflow: hidden;
       border: 2px solid var(--card-border);
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
       display: flex;
       flex-direction: column;
@@ -383,43 +389,43 @@
       box-sizing: border-box;
     }
 
-    /* Cantoneiras Esportivas HUD / Táticas (Corner Brackets) */
+    /* Cantoneiras Táticas HUD (Corner Brackets) */
     .card-bracket {
       position: absolute;
       width: 16px;
       height: 16px;
       pointer-events: none;
       z-index: 4;
-      opacity: 0.8;
+      opacity: 0.85;
       transition: all 0.3s ease;
     }
 
     .bracket-tl {
       top: 10px;
       left: 10px;
-      border-top: 2px solid;
-      border-left: 2px solid;
+      border-top: 2.5px solid;
+      border-left: 2.5px solid;
     }
 
     .bracket-tr {
       top: 10px;
       right: 10px;
-      border-top: 2px solid;
-      border-right: 2px solid;
+      border-top: 2.5px solid;
+      border-right: 2.5px solid;
     }
 
     .bracket-bl {
       bottom: 10px;
       left: 10px;
-      border-bottom: 2px solid;
-      border-left: 2px solid;
+      border-bottom: 2.5px solid;
+      border-left: 2.5px solid;
     }
 
     .bracket-br {
       bottom: 10px;
       right: 10px;
-      border-bottom: 2px solid;
-      border-right: 2px solid;
+      border-bottom: 2.5px solid;
+      border-right: 2.5px solid;
     }
 
     .team-card.team-1 .card-bracket {
@@ -439,25 +445,25 @@
         radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
         repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255, 255, 255, 0.015) 12px, rgba(255, 255, 255, 0.015) 24px);
       background-size: 8px 8px, 24px 24px;
-      opacity: 0.65;
+      opacity: 0.7;
       z-index: 1;
     }
 
-    /* Pincelada / Mancha Gráfica Orgânica do Acamp Sinodal no Card */
+    /* Pincelada / Mancha Gráfica Orgânica do Acamp Sinodal */
     .card-splatter {
       position: absolute;
       pointer-events: none;
       z-index: 1;
-      opacity: 0.28;
+      opacity: 0.3;
       border-radius: 50%;
-      filter: blur(25px);
+      filter: blur(28px);
     }
 
     .card-splatter-top {
       top: -30px;
       right: -30px;
-      width: 140px;
-      height: 140px;
+      width: 150px;
+      height: 150px;
     }
 
     .team-card.team-1 .card-splatter-top {
@@ -473,7 +479,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      opacity: 0.18;
+      opacity: 0.2;
       pointer-events: none;
       transition: opacity 0.3s ease;
       z-index: 1;
@@ -487,7 +493,7 @@
       background: radial-gradient(circle at 50% 12%, var(--eq2-color, #FF7900) 0%, transparent 75%);
     }
 
-    /* Bordas temáticas e sombras */
+    /* Bordas temáticas e sombras dinâmicas */
     .team-card.team-1 {
       border-color: rgba(0, 184, 148, 0.45);
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(0, 184, 148, 0.08);
@@ -495,7 +501,7 @@
 
     .team-card.team-1:hover {
       border-color: var(--eq1-color, #00B894);
-      box-shadow: 0 20px 50px rgba(0, 184, 148, 0.32), inset 0 0 35px rgba(0, 184, 148, 0.15);
+      box-shadow: 0 22px 55px rgba(0, 184, 148, 0.32), inset 0 0 35px rgba(0, 184, 148, 0.15);
       transform: translateY(-2px);
     }
 
@@ -506,16 +512,16 @@
 
     .team-card.team-2:hover {
       border-color: var(--eq2-color, #FF7900);
-      box-shadow: 0 20px 50px rgba(255, 121, 0, 0.32), inset 0 0 35px rgba(255, 121, 0, 0.15);
+      box-shadow: 0 22px 55px rgba(255, 121, 0, 0.32), inset 0 0 35px rgba(255, 121, 0, 0.15);
       transform: translateY(-2px);
     }
 
     .team-card.is-winner {
       border-color: #FFB703 !important;
-      box-shadow: 0 20px 60px rgba(255, 183, 3, 0.35), inset 0 0 40px rgba(255, 183, 3, 0.12) !important;
+      box-shadow: 0 22px 65px rgba(255, 183, 3, 0.4), inset 0 0 40px rgba(255, 183, 3, 0.14) !important;
     }
 
-    /* Tag Cápsula de Identificação da Equipe / Divisão Esportiva */
+    /* Tag Cápsula de Identificação da Equipe */
     .team-capsule-tag {
       display: inline-flex;
       align-items: center;
@@ -528,10 +534,10 @@
       text-transform: uppercase;
       margin-bottom: 0.95rem;
       z-index: 3;
-      background: rgba(0, 24, 28, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(0, 20, 24, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     }
 
     .team-card.team-1 .team-capsule-tag {
@@ -599,12 +605,12 @@
       width: 52px;
       height: 52px;
       border-radius: 16px;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.4));
-      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.45));
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
       transition: transform 0.3s ease, border-color 0.3s ease;
     }
 
@@ -619,7 +625,7 @@
     .team-card.is-winner .emblem-shield {
       transform: scale(1.08);
       border-color: #FFB703;
-      box-shadow: 0 0 20px rgba(255, 183, 3, 0.4);
+      box-shadow: 0 0 22px rgba(255, 183, 3, 0.45);
     }
 
     /* Ícone de Coroa de Liderança */
@@ -649,7 +655,7 @@
       50% { filter: drop-shadow(0 0 14px rgba(255, 183, 3, 1)); transform: scale(1.12); }
     }
 
-    /* Badge de status de liderança (JS toggles .show) */
+    /* Badge de status de liderança (JS ativa com .show) */
     .leader-badge {
       display: inline-flex;
       align-items: center;
@@ -693,7 +699,7 @@
       fill: currentColor;
     }
 
-    /* Nome da Equipe com Tipografia de Campeonato */
+    /* Nome da Equipe */
     .team-title-wrapper {
       position: relative;
       display: inline-flex;
@@ -727,7 +733,6 @@
       text-shadow: 0 0 25px rgba(255, 121, 0, 0.45);
     }
 
-    /* Pincelada / Underline decorativo abaixo do nome */
     .team-brush-underline {
       width: 100%;
       max-width: 180px;
@@ -744,7 +749,7 @@
       fill: var(--eq2-color, #FF7900);
     }
 
-    /* Caixa do Placar 3D / Stadium Counter */
+    /* Placar Estádio 3D */
     .score-display-box {
       position: relative;
       display: flex;
@@ -776,15 +781,14 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Placa de Reflexo Glow no Chão do Placar */
     .score-glow-plate {
       position: absolute;
-      width: 120px;
-      height: 35px;
+      width: 130px;
+      height: 38px;
       bottom: -6px;
       border-radius: 50%;
-      filter: blur(20px);
-      opacity: 0.35;
+      filter: blur(22px);
+      opacity: 0.38;
       pointer-events: none;
       z-index: -1;
     }
@@ -797,7 +801,6 @@
       background: var(--eq2-color, #FF7900);
     }
 
-    /* Faixa de Rótulo "PONTOS ACUMULADOS" */
     .team-label-strip {
       display: flex;
       align-items: center;
@@ -808,7 +811,7 @@
     .label-decor {
       width: 14px;
       height: 1px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.22);
     }
 
     .team-label {
@@ -858,7 +861,9 @@
       display: none;
     }
 
-    /* Elemento Central Versus */
+    /* ==============================================================
+       Elemento Central Versus
+       ============================================================== */
     .vs-container {
       display: flex;
       flex-direction: column;
@@ -929,7 +934,7 @@
     }
 
     /* ==============================================================
-       Barra de Comparação Geral
+       Barra de Comparação Geral (Tug-of-War Stadium Meter)
        ============================================================== */
     .dispute-bar-section {
       background: var(--card-bg);
@@ -997,7 +1002,7 @@
       overflow: hidden;
       display: flex;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
       width: 100%;
     }
 
@@ -1263,7 +1268,7 @@
       pointer-events: auto;
     }
 
-    /* Rodapé Compacto */
+    /* Rodapé Oficial */
     .gincana-footer {
       margin-top: 3.5rem;
       text-align: center;
@@ -1477,7 +1482,7 @@
       }
 
       .bar-center-title {
-        display: none; /* Oculta no mobile para evitar colisão com os dois nomes */
+        display: none;
       }
 
       .bar-track {
@@ -1560,7 +1565,6 @@
       }
     }
 
-    /* Redução de Movimento Acessível */
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -1664,7 +1668,7 @@
       </div>
     </header>
 
-    <!-- Arena do Placar (Duelo Lado a Lado com Design Esportivo Autêntico) -->
+    <!-- Arena do Placar (Duelo Lado a Lado) -->
     <div class="arena-scoreboard">
 
       <!-- Card Equipe 1 (Verde) -->
