@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initPagamentos();
   } else if (document.getElementById('admin-configuracoes')) {
     initConfiguracoes();
+  } else if (document.getElementById('admin-gincana')) {
+    initGincana();
   }
 });
 
@@ -891,3 +893,8 @@ window.deletarIgreja = async function(id) {
     }
   }
 };
+
+function initGincana() {
+  // Módulo Gincana (em desenvolvimento)
+}
+
