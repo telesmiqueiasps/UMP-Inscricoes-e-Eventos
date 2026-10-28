@@ -236,6 +236,16 @@ def gerar_pdf_parcela(
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#94A3B8'), spaceAfter=10, hAlign='CENTER'))
     story.append(Paragraph("Documento emitido eletronicamente pela Plataforma de Eventos. Não vale como documento fiscal tributário.", subtitle_style))
 
-    doc.build(story)
-    buffer.seek(0)
-    return buffer.getvalue()
+    try:
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
+    finally:
+        try:
+            qr_img_buffer.close()
+        except Exception:
+            pass
+        try:
+            buffer.close()
+        except Exception:
+            pass

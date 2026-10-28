@@ -508,6 +508,8 @@ def atualizar_configuracoes_admin(
             else:
                 config.valor = valor
     db.commit()
+    from app.services.config import clear_config_cache
+    clear_config_cache()
     return {"message": "Configurações salvas com sucesso!"}
 
 

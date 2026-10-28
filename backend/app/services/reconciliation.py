@@ -83,6 +83,8 @@ async def reconciliar_pagamentos_pendentes():
             
             await asyncio.sleep(0.5)
 
+        db.expire_all()
+
         # --- 2. RECONCILIAR PARCELAS INDIVIDUAIS DE CARNÊS ---
         parcelas_pendentes = db.query(Parcela).join(Pagamento).join(Inscricao).filter(
             Parcela.status == "PENDENTE",
@@ -189,6 +191,8 @@ async def reconciliar_pagamentos_pendentes():
             
             await asyncio.sleep(0.5)
 
+        db.expire_all()
+
         # --- 3. RECONCILIAR TRIAGENS PENDENTES (REGULAR E DIÁRIA) ---
         triagens_pendentes = db.query(InscricaoTriagem).filter(
             InscricaoTriagem.status == "PENDENTE_PAGAMENTO"
@@ -216,6 +220,8 @@ async def reconciliar_pagamentos_pendentes():
                     logger.error(f"Erro ao consultar triagem {tr.id}: {e_tr}")
             await asyncio.sleep(0.5)
 
+        db.expire_all()
+
         diarias_pendentes = db.query(DiariaTriagem).filter(
             DiariaTriagem.status == "PENDENTE_PAGAMENTO"
         ).all()
@@ -237,6 +243,8 @@ async def reconciliar_pagamentos_pendentes():
                 logger.error(f"Erro ao consultar triagem de diária {td.id}: {e_td}")
             await asyncio.sleep(0.5)
 
+        db.expire_all()
+
         # --- 4. PROCESSAR ALERTAS E LEMBRETES DE VENCIMENTO ---
         try:
             processar_alertas_vencimento(db)
@@ -246,7 +254,19 @@ async def reconciliar_pagamentos_pendentes():
     except Exception as e:
         logger.error(f"Erro durante a execução do job de reconciliação: {e}")
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
+        del db
+        import gc
+        gc.collect()
+        try:
+            import ctypes
+            libc = ctypes.CDLL("libc.so.6")
+            libc.malloc_trim(0)
+        except Exception:
+            pass
 
 
 def processar_alertas_vencimento(db):
@@ -344,6 +364,8 @@ def processar_alertas_vencimento(db):
             logger.info(f"Lembrete de atraso enviado para Parcela ID={parc.id}")
         except Exception as e:
             logger.error(f"Erro ao enviar lembrete de atraso para parcela ID={parc.id}: {e}")
+
+    db.expire_all()
 
 
 async def reconciliation_loop():

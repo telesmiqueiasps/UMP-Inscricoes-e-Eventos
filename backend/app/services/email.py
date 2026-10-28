@@ -4,6 +4,32 @@ from typing import Optional
 from app.core.config import settings
 
 
+_brevo_client: Optional[httpx.Client] = None
+
+
+def _get_brevo_client() -> httpx.Client:
+    global _brevo_client
+    if _brevo_client is None or _brevo_client.is_closed:
+        _brevo_client = httpx.Client(
+            timeout=10.0,
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=30.0)
+        )
+    return _brevo_client
+
+
+def fechar_brevo_client():
+    """Fecha o cliente Brevo liberando recursos e sockets."""
+    global _brevo_client
+    if _brevo_client is not None:
+        try:
+            if not _brevo_client.is_closed:
+                _brevo_client.close()
+        except Exception:
+            pass
+        finally:
+            _brevo_client = None
+
+
 def enviar_email_brevo(destinatario_email: str, destinatario_nome: str, assunto: str, conteudo_html: str) -> bool:
     """
     Função base para envio de e-mails usando a API do Brevo (antigo Sendinblue).
@@ -31,16 +57,18 @@ def enviar_email_brevo(destinatario_email: str, destinatario_nome: str, assunto:
     }
 
     try:
-        with httpx.Client(timeout=10.0) as client:
-            response = client.post(url, json=payload, headers=headers)
-            if response.status_code in [200, 201, 202]:
-                logging.info(f"E-mail enviado com sucesso para {destinatario_email}: {assunto}")
-                return True
-            else:
-                logging.error(f"Erro ao enviar e-mail Brevo ({response.status_code}): {response.text}")
-                return False
+        client = _get_brevo_client()
+        response = client.post(url, json=payload, headers=headers)
+        if response.status_code in [200, 201, 202]:
+            logging.info(f"E-mail enviado com sucesso para {destinatario_email}: {assunto}")
+            return True
+        else:
+            logging.error(f"Erro ao enviar e-mail Brevo ({response.status_code}): {response.text}")
+            return False
     except Exception as e:
         logging.error(f"Exceção ao enviar e-mail Brevo: {e}")
+        if isinstance(e, (httpx.TransportError, httpx.NetworkError)):
+            fechar_brevo_client()
         return False
 
 

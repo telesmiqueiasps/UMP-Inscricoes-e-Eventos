@@ -1,13 +1,36 @@
 import httpx
+import logging
 from typing import Dict, Any, Optional
 from decimal import Decimal
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class InfinitePayService:
     def __init__(self):
         self.api_url = settings.INFINITEPAY_API_URL
         self.api_key = settings.INFINITEPAY_API_KEY
+        self._client: Optional[httpx.Client] = None
+
+    def _get_client(self) -> httpx.Client:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(
+                timeout=10.0,
+                limits=httpx.Limits(max_keepalive_connections=10, max_connections=20, keepalive_expiry=30.0)
+            )
+        return self._client
+
+    def close(self):
+        """Fecha a sessão HTTP persistente liberando recursos e sockets."""
+        if self._client is not None:
+            try:
+                if not self._client.is_closed:
+                    self._client.close()
+            except Exception:
+                pass
+            finally:
+                self._client = None
 
     @property
     def handle(self) -> str:
@@ -55,23 +78,21 @@ class InfinitePayService:
         }
 
         try:
-            # Caso a API de checkout da InfinitePay seja chamada diretamente via HTTP (não precisa de token de autorização)
             headers = {
                 "Content-Type": "application/json"
             }
-            # Tentativa de chamada HTTP externa para o endpoint de Links do Checkout Integrado
-            with httpx.Client(timeout=10.0) as client:
-                resp = client.post("https://api.checkout.infinitepay.io/links", json=payload, headers=headers)
-                if resp.status_code in [200, 201]:
-                    data = resp.json()
-                    return {
-                        "checkout_url": data.get("url") or data.get("checkout_url") or checkout_url,
-                        "order_nsu": order_nsu,
-                        "invoice_slug": data.get("invoice_slug") or data.get("slug") or order_nsu
-                    }
-        except Exception:
-            # Fallback para o formato padrão do InfinitePay Smart Link
-            pass
+            client = self._get_client()
+            resp = client.post("https://api.checkout.infinitepay.io/links", json=payload, headers=headers)
+            if resp.status_code in [200, 201]:
+                data = resp.json()
+                return {
+                    "checkout_url": data.get("url") or data.get("checkout_url") or checkout_url,
+                    "order_nsu": order_nsu,
+                    "invoice_slug": data.get("invoice_slug") or data.get("slug") or order_nsu
+                }
+        except Exception as e:
+            if isinstance(e, (httpx.TransportError, httpx.NetworkError)):
+                self.close()
 
         # Formatar valor em reais com vírgula para o link amigável estático
         valor_str = f"{valor_reais:.2f}".replace(".", ",")
@@ -102,13 +123,13 @@ class InfinitePayService:
             headers = {
                 "Content-Type": "application/json"
             }
-            with httpx.Client(timeout=10.0) as client:
-                resp = client.post("https://api.checkout.infinitepay.io/payment_check", json=payload, headers=headers)
-                if resp.status_code == 200:
-                    return resp.json()
+            client = self._get_client()
+            resp = client.post("https://api.checkout.infinitepay.io/payment_check", json=payload, headers=headers)
+            if resp.status_code == 200:
+                return resp.json()
         except Exception as e:
-            # Silencioso, retorna vazio
-            pass
+            if isinstance(e, (httpx.TransportError, httpx.NetworkError)):
+                self.close()
         return {}
 
 

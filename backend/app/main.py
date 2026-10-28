@@ -92,6 +92,27 @@ async def lifespan(app: FastAPI):
 
     # Cancelar a task em background no encerramento da aplicação
     reconciliation_task.cancel()
+    
+    # Liberar clientes HTTP persistentes, conexões e memória
+    try:
+        from app.services.infinitepay import infinitepay_service
+        infinitepay_service.close()
+    except Exception:
+        pass
+
+    try:
+        from app.services.email import fechar_brevo_client
+        fechar_brevo_client()
+    except Exception:
+        pass
+
+    try:
+        engine.dispose()
+    except Exception:
+        pass
+
+    import gc
+    gc.collect()
 
 
 app = FastAPI(

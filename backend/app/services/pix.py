@@ -51,7 +51,9 @@ def gerar_qr_code_base64(texto_copia_cola: str) -> str:
     qr.make(fit=True)
 
     img = qr.make_image(fill_color="black", back_color="white")
-    buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
-    img_str = base64.b64encode(buffer.getvalue()).decode()
+    with io.BytesIO() as buffer:
+        img.save(buffer, format="PNG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+    del img
+    del qr
     return f"data:image/png;base64,{img_str}"
