@@ -8,6 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarDadosGincana();
   // Polling em tempo real a cada 3.5 segundos
   pollingInterval = setInterval(carregarDadosGincana, 3500);
+
+  // Sincronizar ícones de tela cheia
+  document.addEventListener('fullscreenchange', () => {
+    const enterIcon = document.getElementById('icon-fs-enter');
+    const exitIcon = document.getElementById('icon-fs-exit');
+    if (enterIcon && exitIcon) {
+      if (document.fullscreenElement) {
+        enterIcon.style.display = 'none';
+        exitIcon.style.display = 'block';
+      } else {
+        enterIcon.style.display = 'block';
+        exitIcon.style.display = 'none';
+      }
+    }
+  });
 });
 
 async function carregarDadosGincana() {
@@ -80,7 +95,7 @@ function atualizarInterface(data) {
       animarNumero(elScore1, pontosAnterioresEq1, novoP1, 800);
       destacarCard('card-eq1', elScore1);
       if (novoP1 > pontosAnterioresEq1) {
-        dispararNotificacao(`${data.equipe_1.nome} marcou pontos! (+${novoP1 - pontosAnterioresEq1} pts)`);
+        dispararNotificacao(`${data.equipe_1.nome} marcou +${novoP1 - pontosAnterioresEq1} pts!`);
       }
     }
     // Detectar alteração na equipe 2
@@ -88,7 +103,7 @@ function atualizarInterface(data) {
       animarNumero(elScore2, pontosAnterioresEq2, novoP2, 800);
       destacarCard('card-eq2', elScore2);
       if (novoP2 > pontosAnterioresEq2) {
-        dispararNotificacao(`${data.equipe_2.nome} marcou pontos! (+${novoP2 - pontosAnterioresEq2} pts)`);
+        dispararNotificacao(`${data.equipe_2.nome} marcou +${novoP2 - pontosAnterioresEq2} pts!`);
       }
     }
   }
@@ -109,18 +124,21 @@ function atualizarInterface(data) {
     badgeLider1.classList.remove('show');
     badgeLider2.classList.remove('show');
 
+    const svgTrend = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+    const svgEqual = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/></svg>`;
+
     if (data.lider === 1) {
       card1.classList.add('is-winner');
       badgeLider1.classList.add('show');
-      diffBadge.textContent = `Vantagem: +${data.diferenca_pontos} pts`;
+      diffBadge.innerHTML = `${svgTrend}<span>Vantagem: +${data.diferenca_pontos} pts</span>`;
       diffBadge.style.color = data.equipe_1.cor;
     } else if (data.lider === 2) {
       card2.classList.add('is-winner');
       badgeLider2.classList.add('show');
-      diffBadge.textContent = `Vantagem: +${data.diferenca_pontos} pts`;
+      diffBadge.innerHTML = `${svgTrend}<span>Vantagem: +${data.diferenca_pontos} pts</span>`;
       diffBadge.style.color = data.equipe_2.cor;
     } else {
-      diffBadge.textContent = 'Empate Técnico';
+      diffBadge.innerHTML = `${svgEqual}<span>Empate Técnico</span>`;
       diffBadge.style.color = '#CBD5E1';
     }
   }
@@ -149,7 +167,11 @@ function renderizarHistorico(historico) {
   if (!historico || historico.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
         <p>Nenhuma pontuação foi registrada ainda. As provas começarão em breve!</p>
       </div>
     `;
@@ -173,12 +195,21 @@ function renderizarHistorico(historico) {
     html += `
       <div class="task-item">
         <div class="task-left">
-          <span class="task-team-pill" style="background: ${item.equipe_cor}20; color: ${item.equipe_cor}; border: 1px solid ${item.equipe_cor}50;">
-            ${item.equipe_nome}
+          <span class="task-team-pill" style="background: ${item.equipe_cor}18; color: ${item.equipe_cor}; border: 1px solid ${item.equipe_cor}45;">
+            ${escapeHTML(item.equipe_nome)}
           </span>
           <div class="task-info">
             <h4>${escapeHTML(item.titulo)}</h4>
-            <p>${item.descricao ? escapeHTML(item.descricao) + ' &bull; ' : ''}<span>${horaFormatada}</span></p>
+            <p>
+              ${item.descricao ? `<span>${escapeHTML(item.descricao)}</span> &bull; ` : ''}
+              <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                ${horaFormatada}
+              </span>
+            </p>
           </div>
         </div>
         <div class="task-points" style="color: ${ptsCor};">
@@ -219,7 +250,7 @@ function dispararNotificacao(texto) {
   const msg = document.getElementById('toast-msg');
   if (!toast || !msg) return;
 
-  msg.textContent = `🎉 ${texto}`;
+  msg.textContent = texto;
   toast.classList.add('show');
   setTimeout(() => {
     toast.classList.remove('show');
@@ -243,14 +274,14 @@ function compartilharPlacar() {
   if (navigator.share) {
     navigator.share({
       title: 'Placar ao Vivo - Gincana UMP',
-      text: 'Acompanhe a pontuação da Gincana em tempo real!',
+      text: 'Acompanhe o placar da gincana em tempo real!',
       url: url
     }).catch(() => {});
   } else {
     navigator.clipboard.writeText(url).then(() => {
       dispararNotificacao('Link do placar copiado para a área de transferência!');
     }).catch(() => {
-      alert('Link do placar: ' + url);
+      prompt('Copie o link do placar:', url);
     });
   }
 }

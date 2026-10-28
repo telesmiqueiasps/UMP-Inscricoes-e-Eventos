@@ -75,7 +75,7 @@ function renderizarPainelAdmin(data) {
     }
     if (pct1) pct1.textContent = `${data.porcentagem_eq1}% do total`;
     if (radio1) radio1.textContent = eq1.nome;
-    if (lider1) lider1.style.display = data.lider === 1 ? 'inline' : 'none';
+    if (lider1) lider1.style.display = data.lider === 1 ? 'inline-flex' : 'none';
     if (box1) {
       box1.style.borderColor = data.lider === 1 ? '#F59E0B' : `${eq1.cor}50`;
     }
@@ -105,7 +105,7 @@ function renderizarPainelAdmin(data) {
     }
     if (pct2) pct2.textContent = `${data.porcentagem_eq2}% do total`;
     if (radio2) radio2.textContent = eq2.nome;
-    if (lider2) lider2.style.display = data.lider === 2 ? 'inline' : 'none';
+    if (lider2) lider2.style.display = data.lider === 2 ? 'inline-flex' : 'none';
     if (box2) {
       box2.style.borderColor = data.lider === 2 ? '#F59E0B' : `${eq2.cor}50`;
     }
@@ -324,18 +324,72 @@ function atualizarEstiloRadiosEquipe() {
 function abrirModalConfigEquipes() {
   if (!gincanaAtual) return;
 
-  document.getElementById('config-titulo-gincana').value = gincanaAtual.titulo || 'Gincana UMP';
-  document.getElementById('config-nome-eq1').value = gincanaAtual.equipe_1.nome || 'Equipe 1';
-  document.getElementById('config-cor-eq1').value = gincanaAtual.equipe_1.cor || '#2563EB';
-  document.getElementById('config-nome-eq2').value = gincanaAtual.equipe_2.nome || 'Equipe 2';
-  document.getElementById('config-cor-eq2').value = gincanaAtual.equipe_2.cor || '#DC2626';
+  const tituloEl = document.getElementById('config-titulo-gincana');
+  if (tituloEl) tituloEl.value = gincanaAtual.titulo || 'Gincana UMP';
 
-  document.getElementById('modal-config-equipes').style.display = 'flex';
+  const n1 = gincanaAtual.equipe_1 ? gincanaAtual.equipe_1.nome : 'Equipe 1';
+  const c1 = gincanaAtual.equipe_1 ? gincanaAtual.equipe_1.cor : '#2563EB';
+  const nome1El = document.getElementById('config-nome-eq1');
+  const cor1El = document.getElementById('config-cor-eq1');
+  if (nome1El) nome1El.value = n1;
+  if (cor1El) cor1El.value = c1;
+  atualizarPreviewCorEq(1, c1);
+  const b1 = document.getElementById('preview-badge-eq1');
+  if (b1) b1.textContent = n1;
+
+  const n2 = gincanaAtual.equipe_2 ? gincanaAtual.equipe_2.nome : 'Equipe 2';
+  const c2 = gincanaAtual.equipe_2 ? gincanaAtual.equipe_2.cor : '#DC2626';
+  const nome2El = document.getElementById('config-nome-eq2');
+  const cor2El = document.getElementById('config-cor-eq2');
+  if (nome2El) nome2El.value = n2;
+  if (cor2El) cor2El.value = c2;
+  atualizarPreviewCorEq(2, c2);
+  const b2 = document.getElementById('preview-badge-eq2');
+  if (b2) b2.textContent = n2;
+
+  const modal = document.getElementById('modal-config-equipes');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function fecharModalConfigEquipes() {
-  document.getElementById('modal-config-equipes').style.display = 'none';
+  const modal = document.getElementById('modal-config-equipes');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
 }
+
+function fecharModalConfigBackdrop(e) {
+  if (e && e.target && e.target.id === 'modal-config-equipes') {
+    fecharModalConfigEquipes();
+  }
+}
+
+function atualizarPreviewCorEq(num, cor) {
+  const badge = document.getElementById(`preview-badge-eq${num}`);
+  if (badge) {
+    badge.style.background = `${cor}18`;
+    badge.style.color = cor;
+    badge.style.border = `1px solid ${cor}40`;
+  }
+}
+
+function definirCorPreset(num, cor) {
+  const input = document.getElementById(`config-cor-eq${num}`);
+  if (input) {
+    input.value = cor;
+    atualizarPreviewCorEq(num, cor);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    fecharModalConfigEquipes();
+  }
+});
 
 async function salvarConfiguracaoEquipes(e) {
   e.preventDefault();
