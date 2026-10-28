@@ -72,3 +72,45 @@ def get_current_admin(
             detail="Acesso negado. Requer privilégios de administrador."
         )
     return current_user
+
+
+def tem_permissao_admin(usuario, modulo: str) -> bool:
+    """
+    Verifica se o usuário é administrador e possui acesso ao módulo especificado.
+    - Se perfil_acesso for 'global', tem acesso a todas as abas.
+    - Se perfil_acesso contiver o nome do módulo (ex: 'gincana'), tem acesso.
+    """
+    if not usuario or not getattr(usuario, "is_admin", False):
+        return False
+    perfil = str(getattr(usuario, "perfil_acesso", "global") or "global").lower().strip()
+    if perfil == "global":
+        return True
+    permissoes = [p.strip() for p in perfil.split(",") if p.strip()]
+    return modulo.lower() in permissoes or "global" in permissoes
+
+
+def require_permissao(modulo: str):
+    """
+    Dependency do FastAPI que exige permissão em um módulo específico.
+    Administradores com perfil 'global' têm acesso irrestrito.
+    """
+    def dependency(current_user = Depends(get_current_admin)):
+        if not tem_permissao_admin(current_user, modulo):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Acesso negado. Seu perfil de administrador não possui permissão para o módulo '{modulo}'."
+            )
+        return current_user
+    return dependency
+
+
+def require_admin_global(current_user = Depends(get_current_admin)):
+    """
+    Dependency que restringe a rota exclusivamente a administradores com perfil 'global'.
+    """
+    if not tem_permissao_admin(current_user, "global"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Esta operação exige privilégios de Administrador Global."
+        )
+    return current_user

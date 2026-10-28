@@ -10,7 +10,8 @@ import os
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import get_current_admin, get_current_user
+from app.core.security import get_current_admin, get_current_user, require_admin_global, require_permissao
+from app.schemas.usuario import UsuarioResponse, UsuarioPerfilUpdate
 from app.models.evento import Evento
 from app.models.inscricao import Inscricao
 from app.models.usuario import Usuario
@@ -59,7 +60,7 @@ def obter_evento_publico(id: int, db: Session = Depends(get_db)):
 @router.get("/admin/metrics")
 def obter_metricas_admin(
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     total_eventos = db.query(Evento).count()
     total_eventos_ativos = db.query(Evento).filter(Evento.ativo == True).count()
@@ -81,7 +82,7 @@ def obter_metricas_admin(
 @router.get("/admin/eventos", response_model=List[EventoResponse])
 def listar_eventos_admin(
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     eventos = db.query(Evento).order_by(Evento.created_at.desc()).all()
     for ev in eventos:
@@ -97,7 +98,7 @@ def listar_eventos_admin(
 def criar_evento_admin(
     evento_in: EventoCreate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     from datetime import datetime, timedelta
     event_data = evento_in.model_dump()
@@ -120,7 +121,7 @@ def criar_evento_admin(
 def obter_evento_admin(
     id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
@@ -138,7 +139,7 @@ def atualizar_evento_admin(
     id: int,
     evento_in: EventoUpdate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
@@ -195,7 +196,7 @@ def deletar_evento_admin(
     id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
@@ -214,7 +215,7 @@ def deletar_evento_admin(
 def toggle_status_evento_admin(
     id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
@@ -236,7 +237,7 @@ def listar_inscricoes_admin(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=1000),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     query = db.query(Inscricao).join(Usuario).join(Evento)
 
@@ -275,7 +276,7 @@ def listar_inscricoes_admin(
 def listar_igrejas_evento(
     evento_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     inscricoes = db.query(Inscricao.dados_extras).filter(
         Inscricao.evento_id == evento_id,
@@ -313,7 +314,7 @@ def atualizar_status_inscricao_admin(
     background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, CONFIRMADA, CANCELADA"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     inscricao = db.query(Inscricao).filter(Inscricao.id == id).first()
     if not inscricao:
@@ -349,7 +350,7 @@ def atualizar_status_inscricao_admin(
 def listar_pagamentos_admin(
     evento_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     query = db.query(Pagamento)
     if evento_id is not None:
@@ -389,7 +390,7 @@ def atualizar_status_pagamento_admin(
     id: int,
     novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     pagamento = db.query(Pagamento).filter(Pagamento.id == id).first()
     if not pagamento:
@@ -416,7 +417,7 @@ def atualizar_status_parcela_admin(
     background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     parcela = db.query(Parcela).filter(Parcela.id == id).first()
     if not parcela:
@@ -472,7 +473,7 @@ class AtualizarConfiguracoesRequest(BaseModel):
 @router.get("/admin/configuracoes")
 def obter_configuracoes_admin(
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     from app.services.config import (
         get_infinitepay_handle,
@@ -491,7 +492,7 @@ def obter_configuracoes_admin(
 def atualizar_configuracoes_admin(
     req: AtualizarConfiguracoesRequest,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     updates = {
         "infinitepay_handle": req.infinitepay_handle,
@@ -516,7 +517,7 @@ def atualizar_configuracoes_admin(
 @router.post("/admin/eventos/upload")
 async def upload_foto_evento(
     file: UploadFile = File(...),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
         raise HTTPException(
@@ -574,7 +575,7 @@ def listar_diarias_evento_admin(
     dia_filtro: Optional[str] = Query(None, alias="dia"),
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     query = db.query(InscricaoDiaria).join(Usuario).filter(InscricaoDiaria.evento_id == evento_id)
 
@@ -609,7 +610,7 @@ def atualizar_status_diaria_admin(
     diaria_id: int,
     req: DiariaUpdateStatus,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     diaria = db.query(InscricaoDiaria).filter(
         InscricaoDiaria.id == diaria_id,
@@ -629,7 +630,7 @@ def excluir_diaria_admin(
     evento_id: int,
     diaria_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     diaria = db.query(InscricaoDiaria).filter(
         InscricaoDiaria.id == diaria_id,
@@ -648,7 +649,7 @@ def atualizar_config_diarias_admin(
     evento_id: int,
     req: DiariaConfigUpdate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
     if not evento:
@@ -675,7 +676,7 @@ def atualizar_config_diarias_admin(
 def obter_detalhes_checkin(
     evento_id: int,
     codigo_checkin: str,
-    admin: Usuario = Depends(get_current_admin),
+    admin: Usuario = Depends(require_admin_global),
     db: Session = Depends(get_db)
 ):
     codigo_clean = codigo_checkin.strip()
@@ -748,7 +749,7 @@ def obter_detalhes_checkin(
 def realizar_checkin(
     evento_id: int,
     req: CheckinRequest,
-    admin: Usuario = Depends(get_current_admin),
+    admin: Usuario = Depends(require_admin_global),
     db: Session = Depends(get_db)
 ):
     codigo_clean = req.codigo_checkin.strip()
@@ -845,7 +846,7 @@ def listar_participantes_checkin(
     evento_id: int,
     search: Optional[str] = Query(None),
     tipo_filtro: Optional[str] = Query(None, alias="tipo"),
-    admin: Usuario = Depends(get_current_admin),
+    admin: Usuario = Depends(require_admin_global),
     db: Session = Depends(get_db)
 ):
     search_pattern = f"%{search}%" if search else None
@@ -918,7 +919,7 @@ def toggle_checkin_manual(
     evento_id: int,
     inscricao_id: int,
     tipo: str = Query("REGULAR"),
-    admin: Usuario = Depends(get_current_admin),
+    admin: Usuario = Depends(require_admin_global),
     db: Session = Depends(get_db)
 ):
     from datetime import datetime
@@ -975,7 +976,7 @@ def toggle_checkin_manual(
 
 @router.post("/admin/reconciliar-pagamentos")
 async def disparar_reconciliacao_admin(
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_admin_global)
 ):
     """
     Executa a reconciliação de pagamentos e parcelas pendentes com a InfinitePay sob demanda.
@@ -987,3 +988,67 @@ async def disparar_reconciliacao_admin(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao executar reconciliação: {str(e)}")
 
+
+
+# --- Gerenciamento de Administradores & Perfis de Acesso ---
+
+@router.get("/admin/administradores", response_model=List[UsuarioResponse])
+def listar_administradores(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin_global)
+):
+    """
+    Retorna a lista de todos os usuários com status de administrador e seus respectivos perfis de acesso.
+    """
+    admins = db.query(Usuario).filter(Usuario.is_admin == True).order_by(Usuario.nome.asc()).all()
+    return admins
+
+
+@router.get("/admin/usuarios-busca", response_model=List[UsuarioResponse])
+def buscar_usuarios_admin(
+    q: str = Query(..., min_length=2, description="Termo de busca (nome, e-mail ou CPF)"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin_global)
+):
+    """
+    Busca usuários pelo nome, e-mail ou CPF para conceder ou gerenciar acessos de administrador.
+    """
+    termo = f"%{q.strip()}%"
+    usuarios = db.query(Usuario).filter(
+        or_(
+            Usuario.nome.ilike(termo),
+            Usuario.email.ilike(termo),
+            Usuario.cpf.ilike(termo)
+        )
+    ).order_by(Usuario.nome.asc()).limit(20).all()
+    return usuarios
+
+
+@router.put("/admin/usuarios/{usuario_id}/perfil", response_model=UsuarioResponse)
+def atualizar_perfil_usuario(
+    usuario_id: int,
+    req: UsuarioPerfilUpdate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin_global)
+):
+    """
+    Atualiza o perfil de acesso ou status de administrador de um usuário.
+    """
+    alvo = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    # Prevenir que o próprio administrador logado remova seu próprio admin ou perfil global
+    if alvo.id == admin.id:
+        if not req.is_admin:
+            raise HTTPException(status_code=400, detail="Você não pode revogar seus próprios privilégios de administrador.")
+        perfil_normalizado = (req.perfil_acesso or "global").lower().strip()
+        if perfil_normalizado != "global" and "global" not in [p.strip() for p in perfil_normalizado.split(",")]:
+            raise HTTPException(status_code=400, detail="Você não pode remover seu próprio perfil global.")
+
+    perfil = (req.perfil_acesso or "global").lower().strip()
+    alvo.is_admin = req.is_admin
+    alvo.perfil_acesso = perfil
+    db.commit()
+    db.refresh(alvo)
+    return alvo

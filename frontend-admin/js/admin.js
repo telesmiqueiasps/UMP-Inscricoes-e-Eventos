@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Aplicar restrições de perfil de acesso do administrador
+  aplicarRestricoesPerfilAdmin(user);
+
   // Identificar página atual
   if (document.getElementById('admin-dashboard')) {
     initDashboard();
@@ -67,7 +70,13 @@ function promptAdminLogin() {
         API.setToken(res.access_token);
         API.setUser(res.user);
         modal.style.display = 'none';
-        window.location.reload();
+
+        const perfil = (res.user.perfil_acesso || 'global').toLowerCase().trim();
+        if (perfil === 'gincana') {
+          window.location.href = 'gincana.html';
+        } else {
+          window.location.reload();
+        }
       } catch (err) {
         if (errorDiv) {
           errorDiv.textContent = err.message || 'Credenciais de admin inválidas. Por favor, tente novamente.';
@@ -612,6 +621,7 @@ async function initConfiguracoes() {
   }
   loadPresbiterios();
   loadIgrejas();
+  loadAdministradores();
 }
 
 async function salvarConfiguracoes(e) {
@@ -897,4 +907,275 @@ window.deletarIgreja = async function(id) {
 function initGincana() {
   // Módulo Gincana (em desenvolvimento)
 }
+
+// ==============================================================
+// Controle de Perfis de Acesso & Gerenciamento de Administradores
+// ==============================================================
+
+function aplicarRestricoesPerfilAdmin(user) {
+  if (!user || !user.is_admin) return;
+
+  const perfil = (user.perfil_acesso || 'global').toLowerCase().trim();
+  const path = window.location.pathname.toLowerCase();
+
+  const temPermissao = (modulo) => {
+    if (perfil === 'global') return true;
+    const permissoes = perfil.split(',').map(p => p.trim());
+    return permissoes.includes('global') || permissoes.includes(modulo);
+  };
+
+  // 1. Ocultar itens da sidebar de abas às quais o perfil não tem acesso
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    const href = (link.getAttribute('href') || '').toLowerCase();
+    
+    // Gincana
+    if (href.includes('gincana.html')) {
+      if (!temPermissao('gincana')) {
+        const li = link.closest('li');
+        if (li) li.style.display = 'none';
+      }
+    }
+    // Dashboard & Eventos
+    else if (href.includes('index.html') && !link.classList.contains('btn-logout')) {
+      if (!temPermissao('eventos') && !temPermissao('global')) {
+        const li = link.closest('li');
+        if (li) li.style.display = 'none';
+      }
+    }
+    // Configurações
+    else if (href.includes('configuracoes.html')) {
+      if (!temPermissao('configuracoes') && !temPermissao('global')) {
+        const li = link.closest('li');
+        if (li) li.style.display = 'none';
+      }
+    }
+  });
+
+  // 2. Proteção de rota no lado do cliente: Redirecionar se acessar página não autorizada
+  if (perfil === 'gincana') {
+    const emGincana = path.includes('gincana.html');
+    if (!emGincana) {
+      window.location.href = 'gincana.html';
+      return;
+    }
+  } else if (!temPermissao('global')) {
+    if (path.includes('configuracoes.html') && !temPermissao('configuracoes')) {
+      window.location.href = temPermissao('gincana') ? 'gincana.html' : 'index.html';
+      return;
+    }
+    if ((path.includes('index.html') || path.includes('gerenciar-evento.html')) && !temPermissao('eventos')) {
+      window.location.href = temPermissao('gincana') ? 'gincana.html' : 'index.html';
+      return;
+    }
+  }
+
+  // 3. Exibir badge do perfil no menu
+  const brandSub = document.querySelector('.sidebar-brand');
+  if (brandSub && perfil !== 'global' && !document.getElementById('badge-perfil-sidebar')) {
+    const badge = document.createElement('div');
+    badge.id = 'badge-perfil-sidebar';
+    badge.style.cssText = 'font-size: 0.68rem; color: #F59E0B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.15rem;';
+    badge.textContent = `Acesso: ${perfil.toUpperCase()}`;
+    brandSub.appendChild(badge);
+  }
+}
+
+let cachedAdmins = [];
+let debounceBuscaAdmin = null;
+let usuarioSelecionadoNovoAdmin = null;
+
+async function loadAdministradores() {
+  const container = document.getElementById('admins-table-body');
+  if (!container) return;
+
+  const currentUser = API.getUser() || {};
+
+  try {
+    const data = await API.request('/admin/administradores');
+    cachedAdmins = data;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">Nenhum administrador encontrado.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = data.map(adm => {
+      const perfil = (adm.perfil_acesso || 'global').toLowerCase().trim();
+      let badgePerfil = '';
+      if (perfil === 'global') {
+        badgePerfil = `<span class="badge" style="background: rgba(37,99,235,0.1); color: #2563EB; border: 1px solid rgba(37,99,235,0.25); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">🛡️ Admin Global</span>`;
+      } else if (perfil === 'gincana') {
+        badgePerfil = `<span class="badge" style="background: rgba(245,158,11,0.12); color: #D97706; border: 1px solid rgba(245,158,11,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">🏆 Gincana</span>`;
+      } else {
+        badgePerfil = `<span class="badge" style="background: rgba(100,116,139,0.12); color: #475569; border: 1px solid rgba(100,116,139,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">⚙️ ${perfil.toUpperCase()}</span>`;
+      }
+
+      const isCurrent = (adm.id === currentUser.id);
+      const btnRevogar = isCurrent
+        ? `<button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; opacity: 0.5; cursor: not-allowed;" title="Você não pode revogar seu próprio acesso" disabled>Revogar</button>`
+        : `<button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;" onclick="revogarAdmin(${adm.id}, '${adm.nome.replace(/'/g, "\\'")}')">Revogar</button>`;
+
+      return `
+        <tr>
+          <td>
+            <strong>${adm.nome}</strong>
+            ${isCurrent ? '<span style="font-size: 0.72rem; color: #10B981; font-weight: 700; margin-left: 0.35rem;">(Você)</span>' : ''}
+          </td>
+          <td>${adm.email}</td>
+          <td>${adm.telefone || adm.cpf || '-'}</td>
+          <td>${badgePerfil}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; margin-right: 0.35rem;" onclick="abrirModalEditarPerfil(${adm.id}, '${adm.nome.replace(/'/g, "\\'")}', '${perfil}')">✏️ Perfil</button>
+            ${btnRevogar}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    container.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-danger); padding: 1.5rem 0;">${err.message || 'Erro ao carregar administradores.'}</td></tr>`;
+  }
+}
+
+window.abrirModalEditarPerfil = function(id, nome, perfil) {
+  const modal = document.getElementById('modal-editar-perfil');
+  if (!modal) return;
+  document.getElementById('modal-editar-usuario-id').value = id;
+  document.getElementById('modal-editar-nome-admin').textContent = nome;
+  document.getElementById('modal-editar-select-perfil').value = perfil || 'global';
+  modal.style.display = 'flex';
+};
+
+window.fecharModalEditarPerfil = function() {
+  const modal = document.getElementById('modal-editar-perfil');
+  if (modal) modal.style.display = 'none';
+};
+
+window.salvarPerfilAdmin = async function() {
+  const id = document.getElementById('modal-editar-usuario-id').value;
+  const perfil = document.getElementById('modal-editar-select-perfil').value;
+
+  try {
+    await API.request(`/admin/usuarios/${id}/perfil`, {
+      method: 'PUT',
+      body: JSON.stringify({ is_admin: true, perfil_acesso: perfil })
+    });
+
+    showToast('Perfil de acesso atualizado com sucesso!', 'success');
+    fecharModalEditarPerfil();
+    loadAdministradores();
+  } catch (err) {
+    showToast(err.message || 'Erro ao atualizar perfil.', 'error');
+  }
+};
+
+window.revogarAdmin = async function(id, nome) {
+  if (confirm(`Deseja realmente revogar os privilégios de administrador de "${nome}"?`)) {
+    try {
+      await API.request(`/admin/usuarios/${id}/perfil`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_admin: false, perfil_acesso: 'global' })
+      });
+      showToast('Acesso de administrador revogado.', 'success');
+      loadAdministradores();
+    } catch (err) {
+      showToast(err.message || 'Erro ao revogar administrador.', 'error');
+    }
+  }
+};
+
+window.abrirModalNovoAdmin = function() {
+  const modal = document.getElementById('modal-novo-admin');
+  if (!modal) return;
+  document.getElementById('busca-novo-admin-input').value = '';
+  document.getElementById('busca-novo-admin-resultados').style.display = 'none';
+  document.getElementById('busca-novo-admin-resultados').innerHTML = '';
+  document.getElementById('selecao-novo-admin-detalhes').style.display = 'none';
+  document.getElementById('grupo-perfil-novo-admin').style.display = 'none';
+  document.getElementById('btn-confirmar-novo-admin').style.display = 'none';
+  document.getElementById('novo-admin-usuario-id').value = '';
+  usuarioSelecionadoNovoAdmin = null;
+  modal.style.display = 'flex';
+};
+
+window.fecharModalNovoAdmin = function() {
+  const modal = document.getElementById('modal-novo-admin');
+  if (modal) modal.style.display = 'none';
+};
+
+window.onBuscarUsuarioAdminDebounced = function(termo) {
+  clearTimeout(debounceBuscaAdmin);
+  const container = document.getElementById('busca-novo-admin-resultados');
+  if (!container) return;
+
+  if (!termo || termo.trim().length < 2) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  debounceBuscaAdmin = setTimeout(async () => {
+    container.style.display = 'block';
+    container.innerHTML = `<div style="padding: 0.85rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Buscando usuários...</div>`;
+
+    try {
+      const data = await API.request(`/admin/usuarios-busca?q=${encodeURIComponent(termo.trim())}`);
+      if (!data || data.length === 0) {
+        container.innerHTML = `<div style="padding: 0.85rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Nenhum usuário encontrado com esse termo.</div>`;
+        return;
+      }
+
+      container.innerHTML = data.map(u => {
+        const jaAdmin = u.is_admin ? `<span style="font-size: 0.72rem; color: #2563EB; font-weight: 700;">(Já é Admin - ${u.perfil_acesso || 'global'})</span>` : '';
+        return `
+          <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
+               onmouseover="this.style.background='#F1F5F9'" 
+               onmouseout="this.style.background='transparent'"
+               onclick="selecionarUsuarioParaPromover(${u.id}, '${u.nome.replace(/'/g, "\\'")}', '${u.email}', '${u.perfil_acesso || 'global'}')">
+            <div>
+              <strong style="font-size: 0.9rem; color: var(--text-main);">${u.nome}</strong> ${jaAdmin}
+              <div style="font-size: 0.8rem; color: var(--text-muted);">${u.email} ${u.cpf ? '• ' + u.cpf : ''}</div>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" style="pointer-events: none; font-size: 0.75rem;">Selecionar</button>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      container.innerHTML = `<div style="padding: 0.85rem; text-align: center; color: var(--text-danger); font-size: 0.85rem;">Erro ao buscar usuários.</div>`;
+    }
+  }, 300);
+};
+
+window.selecionarUsuarioParaPromover = function(id, nome, email, perfil) {
+  document.getElementById('novo-admin-usuario-id').value = id;
+  document.getElementById('selecao-novo-admin-nome').textContent = nome;
+  document.getElementById('selecao-novo-admin-email').textContent = email;
+  document.getElementById('selecao-novo-admin-detalhes').style.display = 'block';
+  document.getElementById('novo-admin-select-perfil').value = perfil || 'global';
+  document.getElementById('grupo-perfil-novo-admin').style.display = 'block';
+  document.getElementById('btn-confirmar-novo-admin').style.display = 'inline-block';
+  document.getElementById('busca-novo-admin-resultados').style.display = 'none';
+};
+
+window.confirmarNovoAdmin = async function() {
+  const id = document.getElementById('novo-admin-usuario-id').value;
+  const perfil = document.getElementById('novo-admin-select-perfil').value;
+
+  if (!id) {
+    showToast('Selecione um usuário para promover.', 'error');
+    return;
+  }
+
+  try {
+    await API.request(`/admin/usuarios/${id}/perfil`, {
+      method: 'PUT',
+      body: JSON.stringify({ is_admin: true, perfil_acesso: perfil })
+    });
+
+    showToast('Novo administrador configurado com sucesso!', 'success');
+    fecharModalNovoAdmin();
+    loadAdministradores();
+  } catch (err) {
+    showToast(err.message || 'Erro ao configurar administrador.', 'error');
+  }
+};
 

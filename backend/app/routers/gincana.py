@@ -5,7 +5,7 @@ from typing import Optional
 from datetime import datetime
 
 from app.core.database import get_db
-from app.core.security import get_current_admin
+from app.core.security import get_current_admin, require_permissao
 from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.gincana import Gincana, GincanaPonto
@@ -177,7 +177,7 @@ def atualizar_equipes_gincana(
     gincana_id: int,
     req: GincanaEquipeUpdate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_permissao("gincana"))
 ):
     """Atualiza nomes e cores das duas equipes da gincana."""
     gincana = db.query(Gincana).filter(Gincana.id == gincana_id).first()
@@ -205,7 +205,7 @@ def lancar_pontos_tarefa(
     gincana_id: int,
     req: GincanaPontoCreate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_permissao("gincana"))
 ):
     """Lança pontuação de uma tarefa para a Equipe 1 ou Equipe 2."""
     gincana = db.query(Gincana).filter(Gincana.id == gincana_id).first()
@@ -229,7 +229,7 @@ def lancar_pontos_tarefa(
 def remover_ponto_tarefa(
     ponto_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_permissao("gincana"))
 ):
     """Remove um lançamento de ponto específico."""
     ponto = db.query(GincanaPonto).filter(GincanaPonto.id == ponto_id).first()
@@ -248,7 +248,7 @@ def remover_ponto_tarefa(
 def zerar_pontuacao_gincana(
     gincana_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(get_current_admin)
+    admin: Usuario = Depends(require_permissao("gincana"))
 ):
     """Zera todos os lançamentos de pontos da gincana selecionada."""
     gincana = db.query(Gincana).filter(Gincana.id == gincana_id).first()

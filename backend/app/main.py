@@ -42,6 +42,8 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS capture_method VARCHAR(50);"))
                 conn.execute(text("ALTER TABLE parcelas ADD COLUMN IF NOT EXISTS alerta_previo_enviado BOOLEAN DEFAULT FALSE;"))
                 conn.execute(text("ALTER TABLE parcelas ADD COLUMN IF NOT EXISTS alerta_atraso_enviado BOOLEAN DEFAULT FALSE;"))
+                conn.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS perfil_acesso VARCHAR(100) DEFAULT 'global';"))
+                conn.execute(text("UPDATE usuarios SET perfil_acesso = 'global' WHERE perfil_acesso IS NULL;"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_pagamentos_order_nsu ON pagamentos(order_nsu);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_pagamentos_transaction_nsu ON pagamentos(transaction_nsu);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_diarias_triagem_usuario ON diarias_triagem(usuario_id);"))

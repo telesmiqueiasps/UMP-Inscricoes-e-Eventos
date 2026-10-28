@@ -74,7 +74,8 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             "id": user.id,
             "nome": user.nome,
             "email": user.email,
-            "is_admin": user.is_admin
+            "is_admin": user.is_admin,
+            "perfil_acesso": getattr(user, "perfil_acesso", "global") or "global"
         }
     }
 
@@ -96,7 +97,8 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
             "id": user.id,
             "nome": user.nome,
             "email": user.email,
-            "is_admin": user.is_admin
+            "is_admin": user.is_admin,
+            "perfil_acesso": getattr(user, "perfil_acesso", "global") or "global"
         }
     }
 

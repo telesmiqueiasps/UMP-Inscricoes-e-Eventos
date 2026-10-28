@@ -15,6 +15,7 @@ class Usuario(Base):
     cpf = Column(String(14), unique=True, index=True, nullable=True)
     telefone = Column(String(20), nullable=True)
     is_admin = Column(Boolean, default=False, nullable=False)
+    perfil_acesso = Column(String(100), default="global", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

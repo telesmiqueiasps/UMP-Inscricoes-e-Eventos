@@ -25,7 +25,13 @@ class UsuarioUpdate(BaseModel):
 class UsuarioResponse(UsuarioBase):
     id: int
     is_admin: bool
+    perfil_acesso: Optional[str] = "global"
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class UsuarioPerfilUpdate(BaseModel):
+    is_admin: bool = True
+    perfil_acesso: str = "global"

@@ -178,6 +178,62 @@
         </div>
       </div>
 
+      <!-- Gerenciamento de Administradores & Perfis de Acesso Card -->
+      <div class="card" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span>Administradores & Perfis de Acesso</span>
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0;">
+              Controle quem tem acesso ao painel administrativo e configure suas permissões por módulo (ex: Global ou apenas Gincana).
+            </p>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="abrirModalNovoAdmin()" style="height: 40px; display: inline-flex; align-items: center; gap: 0.4rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Novo Administrador</span>
+          </button>
+        </div>
+
+        <!-- Banner Explicativo dos Perfis -->
+        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.82rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2563EB;"></span>
+            <span><strong>Global:</strong> Acesso total a todas as abas (Dashboard, Eventos, Configurações, Gincana)</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #F59E0B;"></span>
+            <span><strong>Gincana:</strong> Acesso exclusivo à aba de Gincana (sem acesso aos dados de eventos, finanças e configurações)</span>
+          </div>
+        </div>
+
+        <!-- Tabela de Administradores -->
+        <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: 8px;">
+          <table style="margin-bottom: 0;">
+            <thead>
+              <tr>
+                <th>Administrador</th>
+                <th>E-mail</th>
+                <th>Telefone / CPF</th>
+                <th>Perfil de Acesso</th>
+                <th style="width: 170px; text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admins-table-body">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Carregando administradores...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Footer -->
       <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
         <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
@@ -185,6 +241,77 @@
 
     </main>
 
+  </div>
+
+  <!-- Modal Editar Perfil de Administrador -->
+  <div class="modal" id="modal-editar-perfil" style="display: none;">
+    <div class="modal-content" style="max-width: 440px;">
+      <button type="button" class="modal-close" onclick="fecharModalEditarPerfil()">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Editar Perfil de Acesso</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Administrador: <strong id="modal-editar-nome-admin" style="color: var(--text-main);">...</strong>
+      </p>
+
+      <input type="hidden" id="modal-editar-usuario-id">
+
+      <div class="form-group">
+        <label class="form-label" style="font-weight: 600;">Selecione o Perfil de Permissões</label>
+        <select id="modal-editar-select-perfil" class="form-control" style="height: 42px;">
+          <option value="global">🛡️ Admin Global (Acesso Completo)</option>
+          <option value="gincana">🏆 Gincana (Acesso apenas à aba Gincana)</option>
+        </select>
+        <small style="color: var(--text-muted); display: block; margin-top: 0.4rem; font-size: 0.78rem;">
+          Define quais módulos e telas este usuário poderá visualizar e gerenciar no sistema.
+        </small>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalEditarPerfil()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="salvarPerfilAdmin()">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Adicionar Novo Administrador -->
+  <div class="modal" id="modal-novo-admin" style="display: none;">
+    <div class="modal-content" style="max-width: 520px;">
+      <button type="button" class="modal-close" onclick="fecharModalNovoAdmin()">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Promover Novo Administrador</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Busque um usuário cadastrado pelo nome, e-mail ou CPF para conceder acesso de administrador.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Buscar Usuário</label>
+        <input type="text" id="busca-novo-admin-input" class="form-control" placeholder="Digite nome, e-mail ou CPF..." oninput="onBuscarUsuarioAdminDebounced(this.value)">
+      </div>
+
+      <!-- Resultados da Busca -->
+      <div id="busca-novo-admin-resultados" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 1.25rem; display: none;">
+        <!-- Lista injetada via JS -->
+      </div>
+
+      <div id="selecao-novo-admin-detalhes" style="display: none; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+        <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.3rem;">Usuário Selecionado</div>
+        <div id="selecao-novo-admin-nome" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">-</div>
+        <div id="selecao-novo-admin-email" style="font-size: 0.82rem; color: var(--text-muted);">-</div>
+      </div>
+
+      <input type="hidden" id="novo-admin-usuario-id">
+
+      <div class="form-group" id="grupo-perfil-novo-admin" style="display: none;">
+        <label class="form-label" style="font-weight: 600;">Perfil de Acesso Desejado</label>
+        <select id="novo-admin-select-perfil" class="form-control" style="height: 42px;">
+          <option value="global">🛡️ Admin Global (Acesso Completo)</option>
+          <option value="gincana">🏆 Gincana (Acesso apenas à aba Gincana)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalNovoAdmin()">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btn-confirmar-novo-admin" style="display: none;" onclick="confirmarNovoAdmin()">Conceder Acesso Admin</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/api.js"></script>
