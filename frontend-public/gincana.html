@@ -12,31 +12,26 @@
   <link rel="stylesheet" href="css/style.css">
   <style>
     :root {
-      /* Paleta Oficial Acamp Sinodal: "Um só Corpo — Uma só Igreja" */
+      /* Identidade Visual Acamp Sinodal: "Um só Corpo — Uma só Igreja" */
       --bg-petroleum-dark: #001618;
-      --bg-petroleum-base: #00282C;
-      --bg-petroleum-light: #003F44;
-      --card-bg: rgba(0, 32, 36, 0.85);
-      --card-border: rgba(255, 255, 255, 0.12);
-      --card-border-hover: rgba(255, 255, 255, 0.28);
+      --bg-petroleum-base: #00262A;
+      --bg-petroleum-light: #003D42;
       
       /* Cores das Equipes */
       --team-green: #00B894;
-      --team-green-glow: rgba(0, 184, 148, 0.45);
       --team-orange: #FF7900;
-      --team-orange-glow: rgba(255, 121, 0, 0.45);
       --eq1-color: #00B894;
       --eq2-color: #FF7900;
       
-      /* Textos e Acentos */
+      --card-bg: rgba(0, 26, 30, 0.92);
+      --card-border: rgba(255, 255, 255, 0.12);
+      
       --text-main: #FFFFFF;
       --text-muted: #94A3B8;
-      --text-dim: #64748B;
-      --gold-cup: #FFB703;
-      --gold-glow: rgba(255, 183, 3, 0.55);
+      --gold: #FFB703;
     }
 
-    /* Reset Estrito de Layout Mobile (Zero Horizontal Drag) */
+    /* Reset Estrito de Layout (Zero Rolagem Lateral) */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -54,8 +49,8 @@
     body.gincana-body {
       background-color: var(--bg-petroleum-dark);
       background-image: 
-        radial-gradient(circle at 10% 15%, rgba(0, 63, 68, 0.6) 0%, transparent 55%),
-        radial-gradient(circle at 90% 85%, rgba(255, 121, 0, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 15% 15%, rgba(0, 61, 66, 0.55) 0%, transparent 55%),
+        radial-gradient(circle at 85% 85%, rgba(255, 121, 0, 0.18) 0%, transparent 50%),
         radial-gradient(circle at 50% 50%, var(--bg-petroleum-base) 0%, var(--bg-petroleum-dark) 100%);
       background-attachment: fixed;
       color: var(--text-main);
@@ -69,9 +64,7 @@
       position: relative;
     }
 
-    /* ==============================================================
-       Envelope Seguro de Decorações Gráficas (Evita Overflow Horizontal)
-       ============================================================== */
+    /* Envelope Seguro para Decorações Gráficas */
     .bg-decorations-wrapper {
       position: fixed;
       inset: 0;
@@ -85,45 +78,44 @@
 
     .bg-splash-top-left {
       position: absolute;
-      top: -90px;
-      left: -90px;
-      width: 420px;
-      height: 420px;
-      opacity: 0.7;
-      background: radial-gradient(circle at 30% 30%, rgba(255, 121, 0, 0.7) 0%, rgba(255, 121, 0, 0.2) 45%, transparent 70%);
-      filter: blur(45px);
+      top: -80px;
+      left: -80px;
+      width: 380px;
+      height: 380px;
+      opacity: 0.65;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 121, 0, 0.65) 0%, rgba(255, 121, 0, 0.2) 45%, transparent 70%);
+      filter: blur(40px);
     }
 
     .bg-splash-bottom-right {
       position: absolute;
-      bottom: -100px;
-      right: -100px;
-      width: 460px;
-      height: 460px;
-      opacity: 0.7;
-      background: radial-gradient(circle at 70% 70%, rgba(255, 121, 0, 0.65) 0%, rgba(0, 184, 148, 0.35) 50%, transparent 75%);
-      filter: blur(50px);
+      bottom: -90px;
+      right: -90px;
+      width: 420px;
+      height: 420px;
+      opacity: 0.65;
+      background: radial-gradient(circle at 70% 70%, rgba(255, 121, 0, 0.6) 0%, rgba(0, 184, 148, 0.3) 50%, transparent 75%);
+      filter: blur(45px);
     }
 
     .corner-brush-tl {
       position: absolute;
       top: 0;
       left: 0;
-      width: 260px;
-      height: 220px;
-      opacity: 0.85;
+      width: 240px;
+      height: 200px;
+      opacity: 0.8;
     }
 
     .corner-brush-br {
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 320px;
-      height: 240px;
-      opacity: 0.85;
+      width: 290px;
+      height: 220px;
+      opacity: 0.8;
     }
 
-    /* Marca d'água tipográfica editorial na lateral direita */
     .watermark-right {
       position: absolute;
       right: 2vw;
@@ -132,7 +124,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      opacity: 0.055;
+      opacity: 0.05;
       text-transform: uppercase;
       font-family: 'Bebas Neue', sans-serif;
       line-height: 0.86;
@@ -160,48 +152,44 @@
 
     .watermark-callout-left {
       position: absolute;
-      left: 3.2vw;
+      left: 3vw;
       bottom: 10vh;
       user-select: none;
       font-family: 'Caveat', cursive;
-      font-size: 2.6rem;
+      font-size: 2.5rem;
       color: #FFA048;
       transform: rotate(-10deg);
       line-height: 1.05;
-      text-shadow: 0 4px 20px rgba(255, 121, 0, 0.45);
+      text-shadow: 0 4px 18px rgba(255, 121, 0, 0.45);
       opacity: 0.85;
       max-width: 220px;
     }
 
-    /* ==============================================================
-       Container Principal
-       ============================================================== */
+    /* Container Principal */
     .gincana-container {
       width: 100%;
-      max-width: 1260px;
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 1.75rem 1.25rem 3.5rem 1.25rem;
+      padding: 1.5rem 1.25rem 3rem 1.25rem;
       position: relative;
       z-index: 10;
       box-sizing: border-box;
       overflow-x: hidden;
     }
 
-    /* ==============================================================
-       Topbar Header: Estilo Arena Broadcast
-       ============================================================== */
+    /* Header Topbar */
     .gincana-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.85rem 1.5rem;
+      padding: 0.75rem 1.35rem;
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      margin-bottom: 2rem;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      margin-bottom: 1.75rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -211,7 +199,7 @@
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 1.15rem;
+      gap: 1rem;
       min-width: 0;
       flex: 1 1 auto;
     }
@@ -224,27 +212,26 @@
     }
 
     .brand-logo-acamp {
-      height: 44px;
+      height: 40px;
       width: auto;
-      max-width: 140px;
+      max-width: 130px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
     }
 
     .brand-badge-fallback {
       background: linear-gradient(135deg, #FF7900 0%, #D96000 100%);
       color: #FFFFFF;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       letter-spacing: 0.05em;
-      padding: 0.35rem 0.75rem;
+      padding: 0.3rem 0.7rem;
       border-radius: 8px;
       line-height: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       border: 1px solid rgba(255, 255, 255, 0.25);
-      box-shadow: 0 4px 12px rgba(255, 121, 0, 0.35);
     }
 
     .brand-badge-fallback span {
@@ -255,14 +242,14 @@
 
     .brand-divider {
       width: 1px;
-      height: 34px;
+      height: 30px;
       background: rgba(255, 255, 255, 0.15);
       flex-shrink: 0;
     }
 
     .brand-icon-trophy {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       stroke: var(--team-orange);
       flex-shrink: 0;
     }
@@ -274,7 +261,7 @@
 
     .brand-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.28rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.01em;
@@ -285,10 +272,10 @@
     }
 
     .brand-subtitle {
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
       font-weight: 600;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -298,30 +285,28 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       flex-shrink: 0;
     }
 
     .badge-live {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, #FF7900 0%, #D96000 100%);
+      gap: 0.45rem;
+      background: #FF7900;
       color: #FFFFFF;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 800;
-      padding: 0.42rem 0.95rem;
+      padding: 0.35rem 0.85rem;
       border-radius: 30px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      box-shadow: 0 4px 15px rgba(255, 121, 0, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      letter-spacing: 0.06em;
       white-space: nowrap;
     }
 
     .pulse-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       background-color: #FFFFFF;
       border-radius: 50%;
       animation: pulseDot 1.6s infinite ease-in-out;
@@ -329,16 +314,16 @@
 
     @keyframes pulseDot {
       0%, 100% { transform: scale(0.85); opacity: 0.6; }
-      50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 10px #FFFFFF; }
+      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px #FFFFFF; }
     }
 
     .btn-icon-header {
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--card-border);
       color: #F8FAFC;
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -349,19 +334,19 @@
 
     .btn-icon-header:hover {
       background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.3);
       transform: translateY(-1px);
     }
 
     /* ==============================================================
-       Arena de Duelo (Cards Esportivos de Campeonato)
+       Arena de Duelo — Cards Compactos com Identidade Spray Paint
        ============================================================== */
     .arena-scoreboard {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-      gap: 1.75rem;
+      gap: 1.25rem;
       align-items: center;
-      margin-bottom: 2.25rem;
+      margin-bottom: 2rem;
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -369,16 +354,16 @@
 
     .team-card {
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: 26px;
-      padding: 2.25rem 1.75rem 1.75rem 1.75rem;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 1.4rem 1.25rem 1.25rem 1.25rem;
       text-align: center;
       position: relative;
       overflow: hidden;
       border: 2px solid var(--card-border);
-      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: transform 0.25s ease, border-color 0.25s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -389,537 +374,235 @@
       box-sizing: border-box;
     }
 
-    /* Cantoneiras Táticas HUD (Corner Brackets) */
-    .card-bracket {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      pointer-events: none;
-      z-index: 4;
-      opacity: 0.85;
-      transition: all 0.3s ease;
-    }
-
-    .bracket-tl {
-      top: 10px;
-      left: 10px;
-      border-top: 2.5px solid;
-      border-left: 2.5px solid;
-    }
-
-    .bracket-tr {
-      top: 10px;
-      right: 10px;
-      border-top: 2.5px solid;
-      border-right: 2.5px solid;
-    }
-
-    .bracket-bl {
-      bottom: 10px;
-      left: 10px;
-      border-bottom: 2.5px solid;
-      border-left: 2.5px solid;
-    }
-
-    .bracket-br {
-      bottom: 10px;
-      right: 10px;
-      border-bottom: 2.5px solid;
-      border-right: 2.5px solid;
-    }
-
-    .team-card.team-1 .card-bracket {
-      border-color: var(--eq1-color, #00B894);
-    }
-
-    .team-card.team-2 .card-bracket {
-      border-color: var(--eq2-color, #FF7900);
-    }
-
-    /* Textura de Malha Esportiva (Athletic Jersey Mesh) */
-    .card-mesh-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image: 
-        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255, 255, 255, 0.015) 12px, rgba(255, 255, 255, 0.015) 24px);
-      background-size: 8px 8px, 24px 24px;
-      opacity: 0.7;
-      z-index: 1;
-    }
-
-    /* Pincelada / Mancha Gráfica Orgânica do Acamp Sinodal */
-    .card-splatter {
-      position: absolute;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0.3;
-      border-radius: 50%;
-      filter: blur(28px);
-    }
-
-    .card-splatter-top {
-      top: -30px;
-      right: -30px;
-      width: 150px;
-      height: 150px;
-    }
-
-    .team-card.team-1 .card-splatter-top {
-      background: var(--eq1-color, #00B894);
-    }
-
-    .team-card.team-2 .card-splatter-top {
-      background: var(--eq2-color, #FF7900);
-    }
-
-    /* Brilho Radial Interno no Card */
-    .team-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      opacity: 0.2;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 1;
-    }
-
-    .team-card.team-1::before {
-      background: radial-gradient(circle at 50% 12%, var(--eq1-color, #00B894) 0%, transparent 75%);
-    }
-
-    .team-card.team-2::before {
-      background: radial-gradient(circle at 50% 12%, var(--eq2-color, #FF7900) 0%, transparent 75%);
-    }
-
-    /* Bordas temáticas e sombras dinâmicas */
+    /* Bordas e acentos sem neon exagerado */
     .team-card.team-1 {
-      border-color: rgba(0, 184, 148, 0.45);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(0, 184, 148, 0.08);
-    }
-
-    .team-card.team-1:hover {
       border-color: var(--eq1-color, #00B894);
-      box-shadow: 0 22px 55px rgba(0, 184, 148, 0.32), inset 0 0 35px rgba(0, 184, 148, 0.15);
-      transform: translateY(-2px);
+      color: var(--eq1-color, #00B894);
     }
 
     .team-card.team-2 {
-      border-color: rgba(255, 121, 0, 0.45);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(255, 121, 0, 0.08);
-    }
-
-    .team-card.team-2:hover {
       border-color: var(--eq2-color, #FF7900);
-      box-shadow: 0 22px 55px rgba(255, 121, 0, 0.32), inset 0 0 35px rgba(255, 121, 0, 0.15);
-      transform: translateY(-2px);
+      color: var(--eq2-color, #FF7900);
     }
 
     .team-card.is-winner {
-      border-color: #FFB703 !important;
-      box-shadow: 0 22px 65px rgba(255, 183, 3, 0.4), inset 0 0 40px rgba(255, 183, 3, 0.14) !important;
+      border-color: var(--gold) !important;
     }
 
-    /* Tag Cápsula de Identificação da Equipe */
-    .team-capsule-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.95rem;
-      border-radius: 30px;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 0.95rem;
-      z-index: 3;
-      background: rgba(0, 20, 24, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    /* Marca / Mancha de Tinta Spray no Card */
+    .spray-splatter-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      z-index: 1;
     }
 
-    .team-card.team-1 .team-capsule-tag {
-      color: #A7F3D0;
-      border-color: rgba(0, 184, 148, 0.4);
+    .team-card.team-1 .spray-splatter-bg {
+      background: radial-gradient(circle at 80% 20%, var(--eq1-color, #00B894) 0%, transparent 60%);
     }
 
-    .team-card.team-2 .team-capsule-tag {
-      color: #FDBA74;
-      border-color: rgba(255, 121, 0, 0.4);
+    .team-card.team-2 .spray-splatter-bg {
+      background: radial-gradient(circle at 80% 20%, var(--eq2-color, #FF7900) 0%, transparent 60%);
     }
 
-    .tag-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    /* Cantos em Spray Stencil */
+    .card-spray-corner {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.45;
     }
 
-    .team-card.team-1 .tag-dot {
-      background: var(--eq1-color, #00B894);
-      box-shadow: 0 0 8px var(--eq1-color, #00B894);
+    .card-spray-corner.corner-tl {
+      top: -2px;
+      left: -2px;
     }
 
-    .team-card.team-2 .tag-dot {
-      background: var(--eq2-color, #FF7900);
-      box-shadow: 0 0 8px var(--eq2-color, #FF7900);
+    .card-spray-corner.corner-br {
+      bottom: -2px;
+      right: -2px;
+      transform: rotate(180deg);
     }
 
-    /* Brasão / Emblema Esportivo com Estrelas de Campeão */
-    .team-emblem-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 0.5rem;
-      z-index: 3;
-    }
-
-    .emblem-stars {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      margin-bottom: 0.25rem;
-      user-select: none;
-    }
-
-    .star-side {
-      font-size: 0.75rem;
-      color: rgba(255, 255, 255, 0.35);
-      transition: color 0.3s ease;
-    }
-
-    .star-center {
-      font-size: 1.05rem;
-      color: #FFD166;
-      text-shadow: 0 0 8px rgba(255, 209, 102, 0.7);
-    }
-
-    .team-card.is-winner .star-side {
-      color: #FFD166;
-      text-shadow: 0 0 6px rgba(255, 209, 102, 0.5);
-    }
-
-    .emblem-shield {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.45));
-      border: 1.5px solid rgba(255, 255, 255, 0.18);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-      transition: transform 0.3s ease, border-color 0.3s ease;
-    }
-
-    .team-card.team-1 .emblem-shield {
-      border-color: rgba(0, 184, 148, 0.45);
-    }
-
-    .team-card.team-2 .emblem-shield {
-      border-color: rgba(255, 121, 0, 0.45);
-    }
-
-    .team-card.is-winner .emblem-shield {
-      transform: scale(1.08);
-      border-color: #FFB703;
-      box-shadow: 0 0 22px rgba(255, 183, 3, 0.45);
-    }
-
-    /* Ícone de Coroa de Liderança */
+    /* Ícone de Coroa Simples na Cor da Equipe (Sem card e sem estrelas) */
     .card-crown-icon {
-      width: 28px;
-      height: 28px;
-      transition: transform 0.3s ease;
+      width: 32px;
+      height: 32px;
+      margin-bottom: 0.45rem;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      z-index: 3;
+      flex-shrink: 0;
+      transition: transform 0.25s ease;
     }
 
     .team-card.team-1 .card-crown-icon {
       stroke: var(--eq1-color, #00B894);
-      fill: none;
     }
 
     .team-card.team-2 .card-crown-icon {
       stroke: var(--eq2-color, #FF7900);
-      fill: none;
     }
 
     .team-card.is-winner .card-crown-icon {
-      stroke: #FFB703;
-      animation: crownPulse 2s infinite ease-in-out;
+      stroke: var(--gold);
+      transform: scale(1.1);
     }
 
-    @keyframes crownPulse {
-      0%, 100% { filter: drop-shadow(0 0 4px rgba(255, 183, 3, 0.6)); transform: scale(1); }
-      50% { filter: drop-shadow(0 0 14px rgba(255, 183, 3, 1)); transform: scale(1.12); }
-    }
-
-    /* Badge de status de liderança (JS ativa com .show) */
-    .leader-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.72rem;
-      font-weight: 800;
-      padding: 0.28rem 0.85rem;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-top: 0.45rem;
-      margin-bottom: 0.6rem;
-      visibility: hidden;
-      opacity: 0;
-      transform: translateY(-4px);
-      transition: all 0.3s ease;
-      z-index: 3;
-    }
-
-    .leader-badge.show {
-      visibility: visible;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .team-card.team-1 .leader-badge {
-      background: rgba(0, 184, 148, 0.18);
-      border: 1px solid rgba(0, 184, 148, 0.45);
-      color: #00B894;
-    }
-
-    .team-card.team-2 .leader-badge {
-      background: rgba(255, 121, 0, 0.18);
-      border: 1px solid rgba(255, 121, 0, 0.45);
-      color: #FF7900;
-    }
-
-    .badge-star-icon {
-      width: 13px;
-      height: 13px;
-      fill: currentColor;
-    }
-
-    /* Nome da Equipe */
+    /* Nome da Equipe com Identidade de Pintura em Spray */
     .team-title-wrapper {
       position: relative;
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.25rem;
       z-index: 3;
       max-width: 100%;
     }
 
     .team-name {
-      font-family: 'Teko', 'Bebas Neue', sans-serif;
-      font-size: 3.2rem;
+      font-family: 'Bebas Neue', 'Teko', sans-serif;
+      font-size: 2.6rem;
       font-weight: 700;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.05em;
       line-height: 1;
       text-transform: uppercase;
       word-break: break-word;
       overflow-wrap: break-word;
       text-align: center;
       max-width: 100%;
-    }
-
-    .team-card.team-1 .team-name {
       color: #FFFFFF;
-      text-shadow: 0 0 25px rgba(0, 184, 148, 0.45);
+      /* Efeito de tinta spray stencil na tipografia */
+      text-shadow: 
+        0 0 2px currentColor,
+        1px 1px 1px rgba(0, 0, 0, 0.9),
+        -1px 1px 1px rgba(0, 0, 0, 0.9);
     }
 
-    .team-card.team-2 .team-name {
-      color: #FFFFFF;
-      text-shadow: 0 0 25px rgba(255, 121, 0, 0.45);
-    }
-
-    .team-brush-underline {
+    /* Faixa de Spray Underline (Traço de aerosol com respingos) */
+    .spray-streak-underline {
       width: 100%;
-      max-width: 180px;
-      height: 9px;
-      margin-top: -2px;
+      max-width: 160px;
+      height: 12px;
+      margin-top: 1px;
       display: block;
     }
 
-    .team-card.team-1 .team-brush-underline path {
+    .team-card.team-1 .spray-streak-underline path,
+    .team-card.team-1 .spray-streak-underline circle {
       fill: var(--eq1-color, #00B894);
     }
 
-    .team-card.team-2 .team-brush-underline path {
+    .team-card.team-2 .spray-streak-underline path,
+    .team-card.team-2 .spray-streak-underline circle {
       fill: var(--eq2-color, #FF7900);
     }
 
-    /* Placar Estádio 3D */
+    /* Placar Estádio Compacto */
     .score-display-box {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0.75rem 0 0.45rem 0;
+      margin: 0.45rem 0 0.35rem 0;
       z-index: 3;
       width: 100%;
     }
 
     .team-score {
       font-family: 'Outfit', sans-serif;
-      font-size: 6.25rem;
+      font-size: 4.85rem;
       font-weight: 900;
       line-height: 0.95;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.04em;
-      background: linear-gradient(180deg, #FFFFFF 30%, #E2E8F0 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65));
-      transition: transform 0.25s ease, filter 0.25s ease;
+      color: #FFFFFF;
+      text-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+      transition: transform 0.25s ease, color 0.25s ease;
     }
 
     .team-score.bump {
       transform: scale(1.15);
-      background: linear-gradient(180deg, #FFFFFF 0%, #FFA048 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .score-glow-plate {
-      position: absolute;
-      width: 130px;
-      height: 38px;
-      bottom: -6px;
-      border-radius: 50%;
-      filter: blur(22px);
-      opacity: 0.38;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .team-card.team-1 .score-glow-plate {
-      background: var(--eq1-color, #00B894);
-    }
-
-    .team-card.team-2 .score-glow-plate {
-      background: var(--eq2-color, #FF7900);
-    }
-
-    .team-label-strip {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      z-index: 3;
-    }
-
-    .label-decor {
-      width: 14px;
-      height: 1px;
-      background: rgba(255, 255, 255, 0.22);
+      color: #FFA048;
     }
 
     .team-label {
-      font-size: 0.8rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       font-weight: 800;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    /* Rodapé de Telemetria do Card */
-    .card-telemetry-row {
-      margin-top: 1.25rem;
-      padding-top: 0.85rem;
-      border-top: 1px dashed rgba(255, 255, 255, 0.1);
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       z-index: 3;
     }
 
-    .telemetry-status-win {
-      display: none;
-      align-items: center;
-      gap: 0.4rem;
-      color: #FFB703;
-      text-shadow: 0 0 10px rgba(255, 183, 3, 0.5);
-    }
-
-    .telemetry-status-chase {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      color: var(--text-muted);
-    }
-
-    .team-card.is-winner .telemetry-status-win {
-      display: inline-flex;
-    }
-
-    .team-card.is-winner .telemetry-status-chase {
-      display: none;
-    }
-
-    /* ==============================================================
-       Elemento Central Versus
-       ============================================================== */
-    .vs-container {
+    /* Centro Versus (Fixo no meio entre os dois cards) */
+    .vs-center-slot {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1.25rem;
-      padding: 0 0.5rem;
       z-index: 5;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
+      flex-shrink: 0;
+      padding: 0 0.25rem;
     }
 
     .vs-stamp-circle {
-      width: 78px;
-      height: 78px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       background: radial-gradient(circle, #FF7900 0%, #D96000 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Teko', sans-serif;
-      font-size: 2.4rem;
+      font-size: 2rem;
       font-weight: 700;
       font-style: italic;
       color: #FFFFFF;
-      box-shadow: 0 10px 25px rgba(255, 121, 0, 0.45);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
       letter-spacing: 0.02em;
       position: relative;
-      border: 3px solid rgba(255, 255, 255, 0.25);
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
       flex-shrink: 0;
     }
 
     .vs-stamp-circle::after {
       content: "";
       position: absolute;
-      inset: -7px;
+      inset: -5px;
       border-radius: 50%;
-      border: 2px dashed rgba(255, 121, 0, 0.65);
+      border: 1.5px dashed rgba(255, 121, 0, 0.7);
       pointer-events: none;
     }
 
+    /* Badge de Diferença Centralizado Logo Abaixo dos Cards */
+    .diff-badge-container {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      margin-top: 0.25rem;
+      width: 100%;
+    }
+
     .diff-badge {
-      font-size: 0.825rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: #F8FAFC;
-      background: rgba(0, 54, 58, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(0, 42, 46, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       backdrop-filter: blur(10px);
-      padding: 0.45rem 1.1rem;
-      border-radius: 14px;
+      padding: 0.4rem 1rem;
+      border-radius: 12px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      gap: 0.45rem;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
       max-width: 100%;
       box-sizing: border-box;
       white-space: nowrap;
@@ -934,17 +617,17 @@
     }
 
     /* ==============================================================
-       Barra de Comparação Geral (Tug-of-War Stadium Meter)
+       Barra de Comparação Geral
        ============================================================== */
     .dispute-bar-section {
       background: var(--card-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 1.25rem 2rem;
-      margin-bottom: 2.25rem;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+      border-radius: 18px;
+      padding: 1.15rem 1.75rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -955,24 +638,24 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.75rem;
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       gap: 0.75rem;
     }
 
     .bar-label-team {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .bar-dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       display: inline-block;
       flex-shrink: 0;
@@ -980,11 +663,11 @@
 
     .bar-center-title {
       color: #F8FAFC;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       flex-shrink: 0;
@@ -996,13 +679,13 @@
     }
 
     .bar-track {
-      height: 20px;
-      background: #00181A;
-      border-radius: 12px;
+      height: 16px;
+      background: #001416;
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
       width: 100%;
     }
 
@@ -1010,14 +693,12 @@
       height: 100%;
       background: var(--eq1-color, #00B894);
       transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 0 16px rgba(0, 184, 148, 0.5);
     }
 
     .bar-fill-2 {
       height: 100%;
       background: var(--eq2-color, #FF7900);
       transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 0 16px rgba(255, 121, 0, 0.5);
     }
 
     /* ==============================================================
@@ -1028,9 +709,9 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 2rem 2.25rem;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+      border-radius: 20px;
+      padding: 1.75rem 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -1041,11 +722,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       flex-wrap: wrap;
-      gap: 1rem;
-      padding-bottom: 1.15rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 0.75rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       width: 100%;
       box-sizing: border-box;
     }
@@ -1053,20 +734,20 @@
     .history-title-group {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.75rem;
       min-width: 0;
     }
 
     .history-icon-trophy {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       stroke: var(--team-orange);
       flex-shrink: 0;
     }
 
     .history-title {
       font-family: 'Teko', sans-serif;
-      font-size: 1.9rem;
+      font-size: 1.8rem;
       font-weight: 700;
       color: #FFFFFF;
       letter-spacing: 0.03em;
@@ -1080,20 +761,20 @@
       content: "";
       position: absolute;
       left: 0;
-      bottom: -6px;
-      width: 60px;
+      bottom: -4px;
+      width: 50px;
       height: 3px;
       background: var(--team-orange);
       border-radius: 2px;
     }
 
     .history-live-sync {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
       font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.4rem;
       flex-shrink: 0;
     }
 
@@ -1110,7 +791,7 @@
     .history-list {
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
+      gap: 0.75rem;
       width: 100%;
       box-sizing: border-box;
     }
@@ -1119,12 +800,12 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.1rem 1.4rem;
-      background: rgba(0, 30, 33, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-      animation: fadeInTask 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 1rem 1.25rem;
+      background: rgba(0, 20, 24, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      transition: transform 0.2s ease, background 0.2s ease;
+      animation: fadeInTask 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -1132,30 +813,30 @@
     }
 
     @keyframes fadeInTask {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     .task-item:hover {
-      background: rgba(0, 30, 33, 0.9);
-      border-color: rgba(255, 255, 255, 0.18);
-      transform: translateX(4px);
+      background: rgba(0, 20, 24, 0.95);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateX(3px);
     }
 
     .task-left {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.85rem;
       min-width: 0;
       flex: 1 1 auto;
       overflow: hidden;
     }
 
     .task-team-pill {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
-      padding: 0.35rem 0.8rem;
-      border-radius: 8px;
+      padding: 0.3rem 0.7rem;
+      border-radius: 7px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       white-space: nowrap;
@@ -1169,22 +850,22 @@
     }
 
     .task-info h4 {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #FFFFFF;
-      margin: 0 0 0.25rem 0;
+      margin: 0 0 0.2rem 0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .task-info p {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       margin: 0;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1192,17 +873,17 @@
 
     .task-points {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-weight: 800;
       white-space: nowrap;
-      margin-left: 1.25rem;
+      margin-left: 1rem;
       flex-shrink: 0;
     }
 
     /* Estado Vazio */
     .empty-state {
       text-align: center;
-      padding: 3.5rem 1rem;
+      padding: 3rem 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1210,29 +891,29 @@
     }
 
     .empty-state-icon-circle {
-      width: 52px;
-      height: 52px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       border: 2px solid #64748B;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 1.15rem;
+      margin-bottom: 1rem;
       color: #64748B;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
       font-family: 'Outfit', sans-serif;
     }
 
     .empty-state-title {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       color: #F8FAFC;
-      margin-bottom: 0.35rem;
+      margin-bottom: 0.3rem;
     }
 
     .empty-state-sub {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
       font-weight: 500;
     }
@@ -1240,20 +921,20 @@
     /* Toast Flutuante em Tempo Real */
     .toast-live {
       position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      background: #002B2E;
+      bottom: 1.75rem;
+      right: 1.75rem;
+      background: #00262A;
       border: 1px solid var(--team-orange);
       color: #FFFFFF;
-      padding: 0.85rem 1.4rem;
-      border-radius: 14px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       font-weight: 700;
-      font-size: 0.9rem;
-      transform: translateY(80px);
+      font-size: 0.85rem;
+      transform: translateY(70px);
       opacity: 0;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 9999;
@@ -1268,27 +949,24 @@
       pointer-events: auto;
     }
 
-    /* Rodapé Oficial */
+    /* Rodapé Compacto */
     .gincana-footer {
-      margin-top: 3.5rem;
+      margin-top: 3rem;
       text-align: center;
       color: var(--text-muted);
-      font-size: 0.825rem;
+      font-size: 0.8rem;
       font-weight: 500;
       opacity: 0.75;
       padding-bottom: 1.5rem;
     }
 
     /* ==============================================================
-       RESPONSIVIDADE MOBILE RIGOROSA (Zero Horizontal Overflow)
+       RESPONSIVIDADE MOBILE RIGOROSA
+       No mobile: VS estritamente no meio dos 2 cards [Card1][VS][Card2]
        ============================================================== */
     @media (max-width: 900px) {
-      .watermark-right {
-        display: none !important;
-      }
-      .watermark-callout-left {
-        display: none !important;
-      }
+      .watermark-right,
+      .watermark-callout-left,
       .corner-brush-tl,
       .corner-brush-br {
         display: none !important;
@@ -1297,188 +975,135 @@
 
     @media (max-width: 768px) {
       .gincana-container {
-        padding: 0.75rem 0.65rem 2.25rem 0.65rem;
+        padding: 0.65rem 0.5rem 2rem 0.5rem;
         max-width: 100vw;
       }
 
       .gincana-header {
-        padding: 0.6rem 0.75rem;
-        border-radius: 16px;
-        margin-bottom: 0.95rem;
-        gap: 0.5rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 14px;
+        margin-bottom: 0.85rem;
+        gap: 0.45rem;
       }
 
       .brand-group {
-        gap: 0.5rem;
+        gap: 0.45rem;
       }
 
       .brand-logo-acamp {
-        height: 32px;
-        max-width: 95px;
+        height: 28px;
+        max-width: 85px;
       }
 
-      .brand-divider {
-        display: none;
-      }
-
+      .brand-divider,
       .brand-icon-trophy {
         display: none;
       }
 
       .brand-title {
-        font-size: 0.98rem;
+        font-size: 0.95rem;
       }
 
       .brand-subtitle {
-        font-size: 0.64rem;
+        font-size: 0.62rem;
       }
 
       .header-actions {
-        gap: 0.35rem;
+        gap: 0.3rem;
       }
 
       .badge-live {
-        font-size: 0.68rem;
-        padding: 0.28rem 0.55rem;
-        letter-spacing: 0.04em;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
       }
 
       .btn-icon-header {
         width: 32px;
         height: 32px;
-        border-radius: 9px;
+        border-radius: 8px;
       }
 
-      /* Arena de Duelo no Celular */
+      /* Arena no Celular: Mantém os 2 Cards e o VS estritamente no Meio */
       .arena-scoreboard {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 0.55rem;
-        margin-bottom: 0.95rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: 0.4rem;
+        align-items: center;
+        margin-bottom: 0.85rem;
       }
 
-      .vs-container {
-        grid-column: 1 / -1;
-        order: 3;
-        flex-direction: row;
-        justify-content: center;
-        gap: 0.65rem;
-        margin-top: 0.2rem;
+      .vs-center-slot {
+        padding: 0;
       }
 
       .vs-stamp-circle {
-        width: 44px;
-        height: 44px;
-        font-size: 1.35rem;
+        width: 36px;
+        height: 36px;
+        font-size: 1.15rem;
+        border-width: 1.5px;
       }
 
       .vs-stamp-circle::after {
-        inset: -4px;
+        inset: -3px;
+        border-width: 1px;
       }
 
-      .diff-badge {
-        font-size: 0.72rem;
-        padding: 0.35rem 0.75rem;
-        max-width: calc(100vw - 110px);
-      }
-
-      /* Card no Mobile: Refinado, proporcional e sem cortes */
+      /* Cards no Mobile: Super compactos e limpos */
       .team-card {
-        padding: 1.25rem 0.65rem 1rem 0.65rem !important;
-        border-radius: 16px !important;
-      }
-
-      .card-bracket {
-        width: 10px;
-        height: 10px;
-      }
-
-      .bracket-tl { top: 6px; left: 6px; }
-      .bracket-tr { top: 6px; right: 6px; }
-      .bracket-bl { bottom: 6px; left: 6px; }
-      .bracket-br { bottom: 6px; right: 6px; }
-
-      .team-capsule-tag {
-        font-size: 0.58rem !important;
-        padding: 0.2rem 0.55rem !important;
-        margin-bottom: 0.5rem !important;
-        letter-spacing: 0.06em !important;
-      }
-
-      .tag-dot {
-        width: 5px;
-        height: 5px;
-      }
-
-      .emblem-shield {
-        width: 40px !important;
-        height: 40px !important;
-        border-radius: 12px !important;
+        padding: 0.85rem 0.55rem 0.75rem 0.55rem !important;
+        border-radius: 14px !important;
       }
 
       .card-crown-icon {
         width: 22px !important;
         height: 22px !important;
-      }
-
-      .star-side { font-size: 0.65rem !important; }
-      .star-center { font-size: 0.85rem !important; }
-
-      .leader-badge {
-        font-size: 0.62rem !important;
-        padding: 0.2rem 0.55rem !important;
-        margin-top: 0.3rem !important;
-        margin-bottom: 0.4rem !important;
+        margin-bottom: 0.25rem !important;
       }
 
       .team-name {
-        font-size: 1.65rem !important;
+        font-size: 1.4rem !important;
         line-height: 1 !important;
       }
 
-      .team-brush-underline {
-        max-width: 120px !important;
-        height: 6px !important;
+      .spray-streak-underline {
+        max-width: 95px !important;
+        height: 8px !important;
       }
 
       .score-display-box {
-        margin: 0.5rem 0 0.35rem 0 !important;
+        margin: 0.25rem 0 0.15rem 0 !important;
       }
 
       .team-score {
-        font-size: 3.25rem !important;
-      }
-
-      .score-glow-plate {
-        width: 80px !important;
-        height: 25px !important;
-      }
-
-      .label-decor {
-        width: 8px !important;
+        font-size: 2.75rem !important;
       }
 
       .team-label {
-        font-size: 0.58rem !important;
+        font-size: 0.55rem !important;
         letter-spacing: 0.08em !important;
       }
 
-      .card-telemetry-row {
-        margin-top: 0.85rem !important;
-        padding-top: 0.55rem !important;
-        font-size: 0.6rem !important;
-        letter-spacing: 0.04em !important;
+      /* Barra de Diferença */
+      .diff-badge-container {
+        margin-top: 0.25rem;
+      }
+
+      .diff-badge {
+        font-size: 0.68rem;
+        padding: 0.3rem 0.65rem;
+        max-width: calc(100vw - 2rem);
       }
 
       /* Barra de Disputa */
       .dispute-bar-section {
-        padding: 0.85rem 0.95rem;
-        border-radius: 16px;
-        margin-bottom: 1.25rem;
+        padding: 0.75rem 0.85rem;
+        border-radius: 14px;
+        margin-bottom: 1rem;
       }
 
       .bar-labels {
-        font-size: 0.74rem;
-        margin-bottom: 0.65rem;
+        font-size: 0.72rem;
+        margin-bottom: 0.5rem;
       }
 
       .bar-center-title {
@@ -1486,60 +1111,59 @@
       }
 
       .bar-track {
-        height: 12px;
+        height: 10px;
       }
 
       /* Histórico */
       .history-card {
-        padding: 1.15rem 0.85rem;
-        border-radius: 18px;
+        padding: 1rem 0.75rem;
+        border-radius: 16px;
       }
 
       .history-header {
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.65rem;
       }
 
       .history-title {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
       }
 
       .history-icon-trophy {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
       }
 
       .history-live-sync {
-        font-size: 0.72rem;
-      }
-
-      .task-item {
-        padding: 0.75rem 0.85rem;
-        border-radius: 12px;
-        gap: 0.5rem;
-      }
-
-      .task-left {
-        gap: 0.55rem;
-      }
-
-      .task-team-pill {
-        font-size: 0.65rem;
-        padding: 0.25rem 0.55rem;
-      }
-
-      .task-info h4 {
-        font-size: 0.88rem;
-      }
-
-      .task-info p {
         font-size: 0.7rem;
       }
 
+      .task-item {
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        gap: 0.45rem;
+      }
+
+      .task-left {
+        gap: 0.5rem;
+      }
+
+      .task-team-pill {
+        font-size: 0.62rem;
+        padding: 0.2rem 0.45rem;
+      }
+
+      .task-info h4 {
+        font-size: 0.84rem;
+      }
+
+      .task-info p {
+        font-size: 0.68rem;
+      }
+
       .task-points {
-        font-size: 1.15rem;
-        margin-left: 0.5rem;
+        font-size: 1.05rem;
+        margin-left: 0.4rem;
       }
 
       .toast-live {
@@ -1550,21 +1174,23 @@
       }
     }
 
-    @media (max-width: 420px) {
+    @media (max-width: 380px) {
       .team-name {
-        font-size: 1.35rem !important;
+        font-size: 1.25rem !important;
       }
 
       .team-score {
-        font-size: 2.75rem !important;
+        font-size: 2.35rem !important;
       }
 
-      .team-capsule-tag {
-        font-size: 0.52rem !important;
-        padding: 0.15rem 0.45rem !important;
+      .vs-stamp-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 1.05rem;
       }
     }
 
+    /* Redução de Movimento Acessível */
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -1582,22 +1208,21 @@
     <div class="bg-splash-top-left"></div>
     <div class="bg-splash-bottom-right"></div>
 
-    <!-- SVG Pincelada Angular Top-Left (Identidade Acamp Sinodal) -->
+    <!-- Pinceladas Angulares da Identidade do Acamp Sinodal -->
     <svg class="corner-brush-tl" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M-40 -20 Q 80 40 180 30 T 260 120 Q 180 160 80 120 T -40 220 Z" fill="#FF7900" opacity="0.4" />
-      <path d="M-20 -10 Q 100 20 160 50 T 210 110 Q 150 140 60 100 T -20 170 Z" fill="#FF7900" opacity="0.6" />
-      <circle cx="210" cy="130" r="4" fill="#FF7900" opacity="0.5" />
-      <circle cx="230" cy="115" r="3" fill="#FF7900" opacity="0.4" />
+      <path d="M-40 -20 Q 80 40 180 30 T 260 120 Q 180 160 80 120 T -40 220 Z" fill="#FF7900" opacity="0.35" />
+      <path d="M-20 -10 Q 100 20 160 50 T 210 110 Q 150 140 60 100 T -20 170 Z" fill="#FF7900" opacity="0.55" />
+      <circle cx="210" cy="130" r="4" fill="#FF7900" opacity="0.45" />
+      <circle cx="230" cy="115" r="3" fill="#FF7900" opacity="0.35" />
     </svg>
 
-    <!-- SVG Pincelada Angular Bottom-Right -->
     <svg class="corner-brush-br" viewBox="0 0 320 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M60 260 Q 140 180 240 160 T 340 60 Q 300 130 200 180 T 60 260 Z" fill="#FF7900" opacity="0.5" />
-      <path d="M120 240 Q 180 170 270 140 T 330 30 Q 280 110 190 160 T 120 240 Z" fill="#00B894" opacity="0.35" />
-      <circle cx="130" cy="150" r="4" fill="#FF7900" opacity="0.45" />
+      <path d="M60 260 Q 140 180 240 160 T 340 60 Q 300 130 200 180 T 60 260 Z" fill="#FF7900" opacity="0.45" />
+      <path d="M120 240 Q 180 170 270 140 T 330 30 Q 280 110 190 160 T 120 240 Z" fill="#00B894" opacity="0.3" />
+      <circle cx="130" cy="150" r="4" fill="#FF7900" opacity="0.4" />
     </svg>
 
-    <!-- Marca d'Água Tipográfica Acamp Sinodal Direita (Visível em Telas Médias e Grandes) -->
+    <!-- Marca d'Água Tipográfica Acamp Sinodal Direita -->
     <div class="watermark-right" aria-hidden="true">
       <div class="wm-sub">UM SÓ POVO</div>
       <div class="wm-main">UM SÓ CORPO</div>
@@ -1668,166 +1293,110 @@
       </div>
     </header>
 
-    <!-- Arena do Placar (Duelo Lado a Lado) -->
+    <!-- Arena do Placar (Duelo Lado a Lado com VS no Centro) -->
     <div class="arena-scoreboard">
 
       <!-- Card Equipe 1 (Verde) -->
       <div class="team-card team-1" id="card-eq1">
-        <!-- Cantoneiras Táticas HUD Esportivas -->
-        <span class="card-bracket bracket-tl" aria-hidden="true"></span>
-        <span class="card-bracket bracket-tr" aria-hidden="true"></span>
-        <span class="card-bracket bracket-bl" aria-hidden="true"></span>
-        <span class="card-bracket bracket-br" aria-hidden="true"></span>
+        <!-- Mancha Gráfica de Tinta Spray -->
+        <div class="spray-splatter-bg" aria-hidden="true"></div>
 
-        <!-- Texturas Internas de Malha Esportiva e Splatter -->
-        <div class="card-mesh-overlay" aria-hidden="true"></div>
-        <div class="card-splatter card-splatter-top" aria-hidden="true"></div>
+        <!-- Cantos em Spray Stencil -->
+        <svg class="card-spray-corner corner-tl" viewBox="0 0 50 50" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.3" />
+          <circle cx="26" cy="10" r="4" fill="currentColor" opacity="0.4" />
+          <circle cx="10" cy="26" r="4.5" fill="currentColor" opacity="0.35" />
+          <circle cx="36" cy="8" r="1.5" fill="currentColor" opacity="0.5" />
+          <circle cx="8" cy="36" r="1.5" fill="currentColor" opacity="0.5" />
+        </svg>
 
-        <!-- Tag Cápsula de Divisão / Equipe -->
-        <div class="team-capsule-tag">
-          <span class="tag-dot"></span>
-          <span>TIME 01 &bull; LADO VERDE</span>
-        </div>
+        <!-- Ícone de Coroa Simples na Cor da Equipe -->
+        <svg class="card-crown-icon" viewBox="0 0 24 24">
+          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z" />
+        </svg>
 
-        <!-- Brasão / Emblema Esportivo com Estrelas -->
-        <div class="team-emblem-wrap">
-          <div class="emblem-stars" aria-hidden="true">
-            <span class="star-side">★</span>
-            <span class="star-center">★</span>
-            <span class="star-side">★</span>
-          </div>
-          <div class="emblem-shield">
-            <svg class="card-crown-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z" />
-            </svg>
-          </div>
-        </div>
+        <!-- Elemento de Compatibilidade JS (invisível para lógica do script) -->
+        <div id="badge-lider-eq1" style="display:none !important;" aria-hidden="true"></div>
 
-        <!-- Badge Dinâmico de Liderança (ativado por JS com .show) -->
-        <div class="leader-badge" id="badge-lider-eq1">
-          <svg class="badge-star-icon" viewBox="0 0 24 24">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          <span>Na Liderança</span>
-        </div>
-
-        <!-- Nome da Equipe -->
+        <!-- Nome da Equipe com Identidade Spray Paint -->
         <div class="team-title-wrapper">
           <div class="team-name" id="nome-eq1">EQUIPE VERDE</div>
-          <!-- Pincelada Orgânica de Sublinhado Acamp Sinodal -->
-          <svg class="team-brush-underline" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
-            <path d="M2 7 C 50 2, 150 10, 198 5 C 160 11, 40 12, 2 7 Z" />
+          <!-- Traço de Tinta Spray de Sublinhado com Respingos -->
+          <svg class="spray-streak-underline" viewBox="0 0 160 14" fill="none" preserveAspectRatio="none">
+            <path d="M2 7 C25 3, 60 10, 95 6 C125 3, 145 9, 158 7 C140 11, 100 10, 60 12 C25 13, 10 10, 2 7 Z" />
+            <circle cx="15" cy="2" r="1.2" />
+            <circle cx="45" cy="12" r="1.4" />
+            <circle cx="85" cy="2" r="1" />
+            <circle cx="120" cy="13" r="1.5" />
+            <circle cx="148" cy="3" r="1.1" />
           </svg>
         </div>
 
-        <!-- Placar Dimensional com Base Glow -->
+        <!-- Placar Estádio Compacto -->
         <div class="score-display-box">
           <div class="team-score" id="pontos-eq1">0</div>
-          <div class="score-glow-plate" aria-hidden="true"></div>
         </div>
 
-        <div class="team-label-strip">
-          <span class="label-decor"></span>
-          <span class="team-label">PONTOS ACUMULADOS</span>
-          <span class="label-decor"></span>
-        </div>
-
-        <!-- Rodapé de Telemetria do Card -->
-        <div class="card-telemetry-row">
-          <span class="telemetry-status-win">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            LÍDER DO PLACAR
-          </span>
-          <span class="telemetry-status-chase">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            EM DISPUTA NA ARENA
-          </span>
-        </div>
+        <div class="team-label">PONTOS</div>
       </div>
 
-      <!-- Centro Versus -->
-      <div class="vs-container">
+      <!-- Centro Versus (Fixo no meio entre os dois cards) -->
+      <div class="vs-center-slot">
         <div class="vs-stamp-circle">VS</div>
+      </div>
+
+      <!-- Card Equipe 2 (Laranja) -->
+      <div class="team-card team-2" id="card-eq2">
+        <!-- Mancha Gráfica de Tinta Spray -->
+        <div class="spray-splatter-bg" aria-hidden="true"></div>
+
+        <!-- Cantos em Spray Stencil -->
+        <svg class="card-spray-corner corner-tl" viewBox="0 0 50 50" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.3" />
+          <circle cx="26" cy="10" r="4" fill="currentColor" opacity="0.4" />
+          <circle cx="10" cy="26" r="4.5" fill="currentColor" opacity="0.35" />
+          <circle cx="36" cy="8" r="1.5" fill="currentColor" opacity="0.5" />
+          <circle cx="8" cy="36" r="1.5" fill="currentColor" opacity="0.5" />
+        </svg>
+
+        <!-- Ícone de Coroa Simples na Cor da Equipe -->
+        <svg class="card-crown-icon" viewBox="0 0 24 24">
+          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z" />
+        </svg>
+
+        <!-- Elemento de Compatibilidade JS (invisível para lógica do script) -->
+        <div id="badge-lider-eq2" style="display:none !important;" aria-hidden="true"></div>
+
+        <!-- Nome da Equipe com Identidade Spray Paint -->
+        <div class="team-title-wrapper">
+          <div class="team-name" id="nome-eq2">EQUIPE LARANJA</div>
+          <!-- Traço de Tinta Spray de Sublinhado com Respingos -->
+          <svg class="spray-streak-underline" viewBox="0 0 160 14" fill="none" preserveAspectRatio="none">
+            <path d="M2 7 C25 3, 60 10, 95 6 C125 3, 145 9, 158 7 C140 11, 100 10, 60 12 C25 13, 10 10, 2 7 Z" />
+            <circle cx="15" cy="2" r="1.2" />
+            <circle cx="45" cy="12" r="1.4" />
+            <circle cx="85" cy="2" r="1" />
+            <circle cx="120" cy="13" r="1.5" />
+            <circle cx="148" cy="3" r="1.1" />
+          </svg>
+        </div>
+
+        <!-- Placar Estádio Compacto -->
+        <div class="score-display-box">
+          <div class="team-score" id="pontos-eq2">0</div>
+        </div>
+
+        <div class="team-label">PONTOS</div>
+      </div>
+
+      <!-- Badge de Diferença Centralizado Logo Abaixo dos Cards -->
+      <div class="diff-badge-container">
         <div class="diff-badge" id="diff-badge">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="5" y1="9" x2="19" y2="9" />
             <line x1="5" y1="15" x2="19" y2="15" />
           </svg>
           <span>Empate Técnico</span>
-        </div>
-      </div>
-
-      <!-- Card Equipe 2 (Laranja) -->
-      <div class="team-card team-2" id="card-eq2">
-        <!-- Cantoneiras Táticas HUD Esportivas -->
-        <span class="card-bracket bracket-tl" aria-hidden="true"></span>
-        <span class="card-bracket bracket-tr" aria-hidden="true"></span>
-        <span class="card-bracket bracket-bl" aria-hidden="true"></span>
-        <span class="card-bracket bracket-br" aria-hidden="true"></span>
-
-        <!-- Texturas Internas de Malha Esportiva e Splatter -->
-        <div class="card-mesh-overlay" aria-hidden="true"></div>
-        <div class="card-splatter card-splatter-top" aria-hidden="true"></div>
-
-        <!-- Tag Cápsula de Divisão / Equipe -->
-        <div class="team-capsule-tag">
-          <span class="tag-dot"></span>
-          <span>TIME 02 &bull; LADO LARANJA</span>
-        </div>
-
-        <!-- Brasão / Emblema Esportivo com Estrelas -->
-        <div class="team-emblem-wrap">
-          <div class="emblem-stars" aria-hidden="true">
-            <span class="star-side">★</span>
-            <span class="star-center">★</span>
-            <span class="star-side">★</span>
-          </div>
-          <div class="emblem-shield">
-            <svg class="card-crown-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z" />
-            </svg>
-          </div>
-        </div>
-
-        <!-- Badge Dinâmico de Liderança (ativado por JS com .show) -->
-        <div class="leader-badge" id="badge-lider-eq2">
-          <svg class="badge-star-icon" viewBox="0 0 24 24">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          <span>Na Liderança</span>
-        </div>
-
-        <!-- Nome da Equipe -->
-        <div class="team-title-wrapper">
-          <div class="team-name" id="nome-eq2">EQUIPE LARANJA</div>
-          <!-- Pincelada Orgânica de Sublinhado Acamp Sinodal -->
-          <svg class="team-brush-underline" viewBox="0 0 200 12" fill="none" preserveAspectRatio="none">
-            <path d="M2 7 C 50 2, 150 10, 198 5 C 160 11, 40 12, 2 7 Z" />
-          </svg>
-        </div>
-
-        <!-- Placar Dimensional com Base Glow -->
-        <div class="score-display-box">
-          <div class="team-score" id="pontos-eq2">0</div>
-          <div class="score-glow-plate" aria-hidden="true"></div>
-        </div>
-
-        <div class="team-label-strip">
-          <span class="label-decor"></span>
-          <span class="team-label">PONTOS ACUMULADOS</span>
-          <span class="label-decor"></span>
-        </div>
-
-        <!-- Rodapé de Telemetria do Card -->
-        <div class="card-telemetry-row">
-          <span class="telemetry-status-win">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            LÍDER DO PLACAR
-          </span>
-          <span class="telemetry-status-chase">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            EM DISPUTA NA ARENA
-          </span>
         </div>
       </div>
 
