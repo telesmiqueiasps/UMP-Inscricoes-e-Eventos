@@ -171,6 +171,37 @@ CREATE TABLE IF NOT EXISTS igrejas (
 CREATE INDEX IF NOT EXISTS ix_igrejas_presbiterio_id ON igrejas(presbiterio_id);
 CREATE INDEX IF NOT EXISTS ix_igrejas_nome ON igrejas(nome);
 
+-- 10. Tabela de Gincanas
+CREATE TABLE IF NOT EXISTS gincanas (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
+    titulo VARCHAR(200) DEFAULT 'Gincana UMP' NOT NULL,
+    ativa BOOLEAN DEFAULT TRUE NOT NULL,
+    nome_equipe_1 VARCHAR(100) DEFAULT 'Equipe 1' NOT NULL,
+    cor_equipe_1 VARCHAR(30) DEFAULT '#2563EB' NOT NULL,
+    nome_equipe_2 VARCHAR(100) DEFAULT 'Equipe 2' NOT NULL,
+    cor_equipe_2 VARCHAR(30) DEFAULT '#DC2626' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_gincanas_evento_id ON gincanas(evento_id);
+CREATE INDEX IF NOT EXISTS ix_gincanas_ativa ON gincanas(ativa);
+
+-- 11. Tabela de Pontos da Gincana
+CREATE TABLE IF NOT EXISTS gincana_pontos (
+    id SERIAL PRIMARY KEY,
+    gincana_id INTEGER NOT NULL REFERENCES gincanas(id) ON DELETE CASCADE,
+    equipe INTEGER NOT NULL,
+    titulo VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    pontos INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_gincana_pontos_gincana_id ON gincana_pontos(gincana_id);
+CREATE INDEX IF NOT EXISTS ix_gincana_pontos_created_at ON gincana_pontos(created_at);
+
 -- ====================================================================
 -- TRIGGERS DE ATUALIZAÇÃO AUTOMÁTICA DA COLUNA updated_at
 -- ====================================================================
@@ -191,3 +222,5 @@ CREATE OR REPLACE TRIGGER update_parcelas_updated_at BEFORE UPDATE ON parcelas F
 CREATE OR REPLACE TRIGGER update_diarias_triagem_updated_at BEFORE UPDATE ON diarias_triagem FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_inscricoes_diarias_updated_at BEFORE UPDATE ON inscricoes_diarias FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_igrejas_updated_at BEFORE UPDATE ON igrejas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE TRIGGER update_gincanas_updated_at BEFORE UPDATE ON gincanas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

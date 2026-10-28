@@ -49,6 +49,33 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_diarias_usuario ON inscricoes_diarias(usuario_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_diarias_evento ON inscricoes_diarias(evento_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_diarias_checkin ON inscricoes_diarias(codigo_checkin);"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS gincanas (
+                        id SERIAL PRIMARY KEY,
+                        evento_id INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
+                        titulo VARCHAR(200) DEFAULT 'Gincana UMP' NOT NULL,
+                        ativa BOOLEAN DEFAULT TRUE NOT NULL,
+                        nome_equipe_1 VARCHAR(100) DEFAULT 'Equipe 1' NOT NULL,
+                        cor_equipe_1 VARCHAR(30) DEFAULT '#2563EB' NOT NULL,
+                        nome_equipe_2 VARCHAR(100) DEFAULT 'Equipe 2' NOT NULL,
+                        cor_equipe_2 VARCHAR(30) DEFAULT '#DC2626' NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS gincana_pontos (
+                        id SERIAL PRIMARY KEY,
+                        gincana_id INTEGER NOT NULL REFERENCES gincanas(id) ON DELETE CASCADE,
+                        equipe INTEGER NOT NULL,
+                        titulo VARCHAR(200) NOT NULL,
+                        descricao TEXT,
+                        pontos INTEGER NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincanas_evento ON gincanas(evento_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincana_pontos_gincana ON gincana_pontos(gincana_id);"))
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
             except Exception as err:
