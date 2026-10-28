@@ -311,6 +311,47 @@ async function salvarPontuacaoModal(e) {
   }
 }
 
+async function deletarPonto(id) {
+  if (!confirm('Deseja realmente remover este lançamento de pontos? O placar será recalculado.')) {
+    return;
+  }
+
+  try {
+    await API.request(`/admin/gincana/pontos/${id}`, {
+      method: 'DELETE'
+    });
+
+    showToast('Lançamento removido com sucesso!', 'success');
+    carregarGincanaAdmin();
+  } catch (err) {
+    showToast(err.message || 'Erro ao remover pontuação.', 'error');
+  }
+}
+
+async function zerarGincanaComConfirmacao() {
+  if (!gincanaAtual) return;
+  const confirmacao = prompt('ATENÇÃO: Isso irá apagar TODAS as tarefas e pontuações registradas nesta gincana.\n\nDigite ZERAR para confirmar:');
+  if (confirmacao !== 'ZERAR') {
+    return;
+  }
+
+  try {
+    const updated = await API.request(`/admin/gincana/${gincanaAtual.id}/zerar`, {
+      method: 'POST'
+    });
+
+    showToast('O placar da gincana foi zerado com sucesso!', 'success');
+    if (updated) {
+      gincanaAtual = updated;
+      renderizarPainelAdmin(updated);
+    } else {
+      carregarGincanaAdmin();
+    }
+  } catch (err) {
+    showToast(err.message || 'Erro ao zerar gincana.', 'error');
+  }
+}
+
 // Aliases para compatibilidade retroativa
 function preencherTarefa(nome, pts) { preencherTarefaModal(nome, pts); }
 function definirPontos(pts) { definirPontosModal(pts); }
