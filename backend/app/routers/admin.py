@@ -555,7 +555,9 @@ def obter_dashboard_stats_evento(
         "status_resumo": {
             "confirmadas": total_confirmadas,
             "pendentes": total_pendentes,
-            "canceladas": total_canceladas
+            "canceladas": total_canceladas,
+            "normais": total_confirmadas + total_pendentes,
+            "total_geral": total_geral
         },
         "checkin_resumo": {
             "realizados": total_checkin,

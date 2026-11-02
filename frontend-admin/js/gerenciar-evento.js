@@ -3491,12 +3491,75 @@ function atualizarKPICardsDashboard(stats, filtroStatus) {
     }
   }
 
-  // 1. Total Inscrições
+  // 1. Total Inscrições (Distinção entre Inscrições Normais e Canceladas)
   const elTotal = document.getElementById('dash-kpi-total');
+  const elTotalLabel = document.getElementById('dash-kpi-total-label');
   const elTotalSub = document.getElementById('dash-kpi-total-sub');
-  if (elTotal) elTotal.textContent = totalAnalisado;
+  const elCanceladasBox = document.getElementById('dash-kpi-canceladas-box');
+  const elCanceladasText = document.getElementById('dash-kpi-canceladas-text');
+
+  const conf = statusResumo.confirmadas || 0;
+  const pend = statusResumo.pendentes || 0;
+  const canc = statusResumo.canceladas || 0;
+  const normais = conf + pend;
+  const totalGeral = statusResumo.total_geral !== undefined ? statusResumo.total_geral : (normais + canc);
+
+  if (elCanceladasText) {
+    elCanceladasText.textContent = `${canc} Cancelada${canc === 1 ? '' : 's'}`;
+  }
+
+  if (elCanceladasBox) {
+    if (canc > 0) {
+      elCanceladasBox.style.display = 'inline-flex';
+    } else {
+      elCanceladasBox.style.display = 'none';
+    }
+  }
+
+  if (elTotal) {
+    if (filtroStatus === 'CANCELADA') {
+      elTotal.textContent = canc;
+      elTotal.style.color = '#DC2626';
+      if (elTotalLabel) {
+        elTotalLabel.textContent = 'Canceladas';
+        elTotalLabel.style.color = '#DC2626';
+      }
+    } else if (filtroStatus === 'CONFIRMADA') {
+      elTotal.textContent = conf;
+      elTotal.style.color = '#10B981';
+      if (elTotalLabel) {
+        elTotalLabel.textContent = 'Confirmadas';
+        elTotalLabel.style.color = '#10B981';
+      }
+    } else if (filtroStatus === 'PENDENTE') {
+      elTotal.textContent = pend;
+      elTotal.style.color = '#F59E0B';
+      if (elTotalLabel) {
+        elTotalLabel.textContent = 'Pendentes';
+        elTotalLabel.style.color = '#F59E0B';
+      }
+    } else {
+      // Todas as Inscrições: destaque principal para as inscrições Normais (Ativas)
+      elTotal.textContent = normais;
+      elTotal.style.color = '#1D4ED8';
+      if (elTotalLabel) {
+        elTotalLabel.textContent = 'Normais';
+        elTotalLabel.style.color = '#1D4ED8';
+      }
+    }
+  }
+
   if (elTotalSub) {
-    elTotalSub.textContent = `${statusResumo.confirmadas || 0} confirmadas • ${statusResumo.pendentes || 0} pendentes`;
+    if (filtroStatus === 'CANCELADA') {
+      elTotalSub.innerHTML = `Exibindo apenas canceladas • Total de registros: <strong>${canc}</strong>`;
+    } else if (filtroStatus === 'CONFIRMADA') {
+      elTotalSub.innerHTML = `<strong>${conf}</strong> confirmadas válidas • ${canc} canceladas no evento`;
+    } else if (filtroStatus === 'PENDENTE') {
+      elTotalSub.innerHTML = `<strong>${pend}</strong> pendentes de pagamento • ${canc} canceladas no evento`;
+    } else {
+      // Todas
+      elTotalSub.innerHTML = `<strong>${conf}</strong> confirmadas • <strong>${pend}</strong> pendentes <span style="color:#94A3B8;">(Total geral: ${totalGeral})</span>`;
+    }
   }
 
   // 2. Abaixo de 19 Anos (Até 18 anos, 11 meses e 29 dias)
@@ -4170,9 +4233,12 @@ window.imprimirResumoDashboard = function() {
 
       <div class="grid-kpis">
         <div class="kpi-box">
-          <div class="kpi-box-title">Total Inscrições</div>
-          <div class="kpi-box-val">${s.total_analisado || 0}</div>
-          <div style="font-size: 0.75rem; color: #64748B;">${s.status_resumo?.confirmadas || 0} confirmadas</div>
+          <div class="kpi-box-title">Inscrições Normais (Ativas)</div>
+          <div class="kpi-box-val" style="color: #1D4ED8;">${(s.status_resumo?.confirmadas || 0) + (s.status_resumo?.pendentes || 0)}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">
+            ${s.status_resumo?.confirmadas || 0} confirmadas • ${s.status_resumo?.pendentes || 0} pendentes<br>
+            <span style="color: #DC2626; font-weight: 700;">${s.status_resumo?.canceladas || 0} canceladas</span> (Total geral: ${s.total_analisado || 0})
+          </div>
         </div>
         <div class="kpi-box">
           <div class="kpi-box-title">Abaixo de 19 Anos</div>
