@@ -367,10 +367,20 @@ def obter_dashboard_stats_evento(
                 data_clean = data_clean.split("T")[0]
             if "-" in data_clean:
                 p = data_clean.split("-")
-                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+                if len(p[0]) == 4:
+                    ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+                elif len(p[2]) == 4:
+                    dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+                else:
+                    return None
             elif "/" in data_clean:
                 p = data_clean.split("/")
-                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+                if len(p[2]) == 4:
+                    dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+                elif len(p[0]) == 4:
+                    ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+                else:
+                    return None
             else:
                 return None
             d_nasc = date(ano, mes, dia)
@@ -384,9 +394,13 @@ def obter_dashboard_stats_evento(
     contagem_abaixo_19 = 0
     contagem_19_ou_mais = 0
     contagem_menores_18 = 0
+    contagem_exatamente_18 = 0
     contagem_maiores_18 = 0
     contagem_idade_nao_informada = 0
     idades_lista = []
+    participantes_abaixo_19 = []
+    participantes_18_anos = []
+    participantes_menores_18 = []
 
     faixas_etarias = {
         "< 19 anos": 0,
@@ -418,14 +432,30 @@ def obter_dashboard_stats_evento(
         idade = calcular_idade(d_nasc)
         if idade is not None:
             idades_lista.append(idade)
+            p_resumo = {
+                "id": ins.id,
+                "nome": ins.usuario.nome if ins.usuario else "Não informado",
+                "data_nascimento": str(d_nasc),
+                "idade": idade,
+                "tipo_faixa": "18 anos completos" if idade == 18 else "Menor (<18)",
+                "igreja": get_campo(ext, "igreja") or "Não informada",
+                "status": ins.status
+            }
+
             if idade < 18:
                 contagem_menores_18 += 1
-            else:
+                participantes_menores_18.append(p_resumo)
+            elif idade == 18:
+                contagem_exatamente_18 += 1
+                participantes_18_anos.append(p_resumo)
+
+            if idade >= 18:
                 contagem_maiores_18 += 1
 
             if idade < 19:
                 contagem_abaixo_19 += 1
                 faixas_etarias["< 19 anos"] += 1
+                participantes_abaixo_19.append(p_resumo)
             else:
                 contagem_19_ou_mais += 1
                 if 19 <= idade <= 21:
@@ -540,12 +570,16 @@ def obter_dashboard_stats_evento(
             "abaixo_19": contagem_abaixo_19,
             "19_ou_mais": contagem_19_ou_mais,
             "menores_18": contagem_menores_18,
+            "exatamente_18": contagem_exatamente_18,
             "maiores_18": contagem_maiores_18,
             "nao_informada": contagem_idade_nao_informada,
             "media": media_idade,
             "minima": min_idade,
             "maxima": max_idade,
-            "faixas": faixas_etarias
+            "faixas": faixas_etarias,
+            "participantes_abaixo_19": participantes_abaixo_19,
+            "participantes_18_anos": participantes_18_anos,
+            "participantes_menores_18": participantes_menores_18
         },
         "sexo": sexo_contagem,
         "estado_civil": estado_civil_contagem,

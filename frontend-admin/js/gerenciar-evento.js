@@ -3195,6 +3195,26 @@ window.carregarDashboardEvento = async function(forceReload = false) {
     atualizarKPICardsDashboard(stats, filtroStatus);
     renderizarGraficosDashboard(stats);
 
+    // Auditoria para o Administrador no Console
+    const p18 = stats.idade?.participantes_18_anos || [];
+    const pMenores = stats.idade?.participantes_menores_18 || [];
+    console.group("📊 Auditoria de Idade: Abaixo de 19 Anos");
+    console.log(`Total abaixo de 19 anos: ${stats.idade?.abaixo_19 || 0}`);
+    console.log(`• Menores de 18 anos (<18): ${pMenores.length}`);
+    console.log(`• Exatamente 18 anos completos: ${p18.length}`);
+    if (p18.length > 0) {
+      console.log("Participantes com exatamente 18 anos completos:");
+      console.table(p18.map(p => ({
+        ID: p.id,
+        Nome: p.nome,
+        "Data Nascimento": p.data_nascimento,
+        Idade: p.idade,
+        Igreja: p.igreja,
+        Status: p.status
+      })));
+    }
+    console.groupEnd();
+
   } catch (err) {
     console.error("Erro ao carregar dados do dashboard:", err);
     if (typeof showToast === 'function') {
@@ -3208,7 +3228,7 @@ window.carregarDashboardEvento = async function(forceReload = false) {
 function calcularStatsInscricoesLocal(lista, statusFiltro) {
   const todas = Array.isArray(lista) ? lista : [];
   const stUpper = (statusFiltro || '').toUpperCase().trim();
-  const filtradas = (stUpper && stUpper !== 'TODAS' && stUpper !== 'ALL')
+  const filtradas = (stUpper && stUpper !== 'TODAS' && stUpper !== 'TODOS' && stUpper !== 'ALL')
     ? todas.filter(i => (i.status || '').toUpperCase() === stUpper)
     : todas;
 
@@ -3233,6 +3253,9 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
   let maiores18 = 0;
   let idadeNaoInformada = 0;
   const idades = [];
+  const listaAbaixo19 = [];
+  const listaExatamente18 = [];
+  const listaMenores18 = [];
 
   const faixas = {
     "< 19 anos": 0,
@@ -3268,14 +3291,30 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
     if (dtStr.includes('T')) dtStr = dtStr.split('T')[0];
     if (dtStr.includes('-')) {
       const p = dtStr.split('-');
-      ano = parseInt(p[0], 10);
-      mes = parseInt(p[1], 10) - 1;
-      dia = parseInt(p[2], 10);
+      if (p[0].length === 4) {
+        ano = parseInt(p[0], 10);
+        mes = parseInt(p[1], 10) - 1;
+        dia = parseInt(p[2], 10);
+      } else if (p[2].length === 4) {
+        dia = parseInt(p[0], 10);
+        mes = parseInt(p[1], 10) - 1;
+        ano = parseInt(p[2], 10);
+      } else {
+        return null;
+      }
     } else if (dtStr.includes('/')) {
       const p = dtStr.split('/');
-      dia = parseInt(p[0], 10);
-      mes = parseInt(p[1], 10) - 1;
-      ano = parseInt(p[2], 10);
+      if (p[2].length === 4) {
+        dia = parseInt(p[0], 10);
+        mes = parseInt(p[1], 10) - 1;
+        ano = parseInt(p[2], 10);
+      } else if (p[0].length === 4) {
+        ano = parseInt(p[0], 10);
+        mes = parseInt(p[1], 10) - 1;
+        dia = parseInt(p[2], 10);
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
@@ -3297,15 +3336,31 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
     const id = parseIdade(dtNasc);
     if (id !== null) {
       idades.push(id);
+      const pAudit = {
+        id: ins.id,
+        nome: ins.usuario?.nome || 'Participante',
+        data_nascimento: dtNasc,
+        idade: id,
+        tipo_faixa: id === 18 ? '18 anos completos' : 'Menor (<18)',
+        igreja: extrairCampo(ext, 'igreja') || 'Não informada',
+        status: ins.status || 'PENDENTE'
+      };
+
       if (id < 18) {
         menores18++;
-      } else {
+        listaMenores18.push(pAudit);
+      } else if (id === 18) {
+        listaExatamente18.push(pAudit);
+      }
+
+      if (id >= 18) {
         maiores18++;
       }
 
       if (id < 19) {
         abaixo19++;
         faixas["< 19 anos"]++;
+        listaAbaixo19.push(pAudit);
       } else {
         mais19++;
         if (id <= 21) faixas["19 a 21 anos"]++;
@@ -3385,12 +3440,16 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
       abaixo_19: abaixo19,
       "19_ou_mais": mais19,
       menores_18: menores18,
+      exatamente_18: listaExatamente18.length,
       maiores_18: maiores18,
       nao_informada: idadeNaoInformada,
       media: mediaId ? parseFloat(mediaId) : null,
       minima: idades.length ? Math.min(...idades) : null,
       maxima: idades.length ? Math.max(...idades) : null,
-      faixas: faixas
+      faixas: faixas,
+      participantes_abaixo_19: listaAbaixo19,
+      participantes_18_anos: listaExatamente18,
+      participantes_menores_18: listaMenores18
     },
     sexo: sexoContagem,
     estado_civil: estadoCivilContagem,
@@ -3443,6 +3502,8 @@ function atualizarKPICardsDashboard(stats, filtroStatus) {
   // 2. Abaixo de 19 Anos (Até 18 anos, 11 meses e 29 dias)
   const abaixo19 = (idade.abaixo_19 !== undefined) ? idade.abaixo_19 : (idade.menores_18 || 0);
   const mais19 = (idade['19_ou_mais'] !== undefined) ? idade['19_ou_mais'] : (idade.maiores_18 || 0);
+  const total18 = (idade.exatamente_18 !== undefined) ? idade.exatamente_18 : Math.max(0, abaixo19 - (idade.menores_18 || 0));
+  const menores18 = (idade.menores_18 !== undefined) ? idade.menores_18 : Math.max(0, abaixo19 - total18);
   const totalComIdade = abaixo19 + mais19;
   const pctAbaixo19 = totalComIdade > 0 ? Math.round((abaixo19 / totalComIdade) * 100) : 0;
 
@@ -3452,7 +3513,7 @@ function atualizarKPICardsDashboard(stats, filtroStatus) {
   if (elMenores) elMenores.textContent = abaixo19;
   if (elIdadeBadge) elIdadeBadge.textContent = `${pctAbaixo19}% <19`;
   if (elIdadeSub) {
-    elIdadeSub.textContent = `${abaixo19} abaixo de 19 (<19) • ${mais19} a partir de 19 (≥19)`;
+    elIdadeSub.innerHTML = `<strong>${menores18}</strong> &lt;18 anos • <strong>${total18}</strong> com 18 anos • <strong>${mais19}</strong> com 19+`;
   }
 
   // 3. Média de Idade
@@ -4180,3 +4241,188 @@ window.imprimirResumoDashboard = function() {
   `);
   win.document.close();
 };
+
+// =============================================================
+// MODAL DE AUDITORIA: PARTICIPANTES ABAIXO DE 19 ANOS
+// =============================================================
+let filtroAuditoriaAtivo = 'TODOS';
+
+window.abrirModalAuditoriaIdade = function(filtro = 'TODOS') {
+  const modal = document.getElementById('modal-auditoria-idade');
+  if (!modal) return;
+  filtroAuditoriaAtivo = filtro;
+  renderizarTabelaAuditoriaIdade();
+  modal.style.display = 'flex';
+};
+
+window.fecharModalAuditoriaIdade = function() {
+  const modal = document.getElementById('modal-auditoria-idade');
+  if (modal) modal.style.display = 'none';
+};
+
+window.fecharModalAuditoriaIdadeBackdrop = function(e) {
+  if (e.target && e.target.id === 'modal-auditoria-idade') {
+    window.fecharModalAuditoriaIdade();
+  }
+};
+
+window.filtrarAuditoriaIdade = function(tipo) {
+  filtroAuditoriaAtivo = tipo;
+  renderizarTabelaAuditoriaIdade();
+};
+
+window.abrirFichaParticipanteAuditoria = function(id) {
+  window.fecharModalAuditoriaIdade();
+  if (typeof abrirModalInscricao === 'function') {
+    abrirModalInscricao(id);
+  }
+};
+
+function renderizarTabelaAuditoriaIdade() {
+  const tbody = document.getElementById('auditoria-idade-table-body');
+  if (!tbody) return;
+
+  const stats = dashboardStatsData || {};
+  const idade = stats.idade || {};
+
+  // Se a lista de participantes veio da API ou do cálculo local
+  let listaCompleta = (idade.participantes_abaixo_19 && idade.participantes_abaixo_19.length > 0)
+    ? [...idade.participantes_abaixo_19]
+    : [];
+
+  // Se não tem lista no objeto (fallback), reconstruir a partir da cachedInscricoesList
+  if (listaCompleta.length === 0 && Array.isArray(cachedInscricoesList)) {
+    const hoje = new Date();
+    cachedInscricoesList.forEach(ins => {
+      const ext = ins.dados_extras || {};
+      const dt = extrairCampo(ext, 'data_nascimento', 'nascimento');
+      if (dt) {
+        let ano, mes, dia;
+        if (dt.includes('-')) {
+          const p = dt.split('T')[0].split('-');
+          if (p[0].length === 4) { ano = parseInt(p[0], 10); mes = parseInt(p[1], 10) - 1; dia = parseInt(p[2], 10); }
+          else if (p[2].length === 4) { dia = parseInt(p[0], 10); mes = parseInt(p[1], 10) - 1; ano = parseInt(p[2], 10); }
+        } else if (dt.includes('/')) {
+          const p = dt.split('/');
+          if (p[2].length === 4) { dia = parseInt(p[0], 10); mes = parseInt(p[1], 10) - 1; ano = parseInt(p[2], 10); }
+          else if (p[0].length === 4) { ano = parseInt(p[0], 10); mes = parseInt(p[1], 10) - 1; dia = parseInt(p[2], 10); }
+        }
+        if (!isNaN(ano) && !isNaN(mes) && !isNaN(dia)) {
+          let idCalc = hoje.getFullYear() - ano;
+          const m = hoje.getMonth() - mes;
+          if (m < 0 || (m === 0 && hoje.getDate() < dia)) idCalc--;
+          if (idCalc >= 0 && idCalc < 19) {
+            listaCompleta.push({
+              id: ins.id,
+              nome: ins.usuario?.nome || 'Participante',
+              data_nascimento: dt,
+              idade: idCalc,
+              tipo_faixa: idCalc === 18 ? '18 anos completos' : 'Menor (<18)',
+              igreja: extrairCampo(ext, 'igreja') || 'Não informada',
+              status: ins.status || 'PENDENTE'
+            });
+          }
+        }
+      }
+    });
+  }
+
+  const totalGeral = listaCompleta.length;
+  const total18 = listaCompleta.filter(p => p.idade === 18).length;
+  const totalMenores = listaCompleta.filter(p => p.idade < 18).length;
+
+  // Atualizar contadores no modal
+  const elBadgeTotal = document.getElementById('auditoria-badge-total');
+  const elCountTodos = document.getElementById('count-audit-todos');
+  const elCount18 = document.getElementById('count-audit-18');
+  const elCountMenores = document.getElementById('count-audit-menores');
+  if (elBadgeTotal) elBadgeTotal.textContent = `${totalGeral} inscritos`;
+  if (elCountTodos) elCountTodos.textContent = totalGeral;
+  if (elCount18) elCount18.textContent = total18;
+  if (elCountMenores) elCountMenores.textContent = totalMenores;
+
+  // Estilos dos botões de filtro
+  const btnTodos = document.getElementById('btn-filtro-audit-todos');
+  const btn18 = document.getElementById('btn-filtro-audit-18');
+  const btnMenores = document.getElementById('btn-filtro-audit-menores');
+  [btnTodos, btn18, btnMenores].forEach(b => {
+    if (b) {
+      b.style.background = '#FFFFFF';
+      b.style.color = 'var(--text-main)';
+      b.style.borderColor = 'var(--border-color)';
+      b.style.fontWeight = '600';
+    }
+  });
+
+  let dadosFiltrados = listaCompleta;
+  if (filtroAuditoriaAtivo === '18') {
+    dadosFiltrados = listaCompleta.filter(p => p.idade === 18);
+    if (btn18) {
+      btn18.style.background = '#FEF3C7';
+      btn18.style.color = '#92400E';
+      btn18.style.borderColor = '#D97706';
+      btn18.style.fontWeight = '700';
+    }
+  } else if (filtroAuditoriaAtivo === 'MENORES') {
+    dadosFiltrados = listaCompleta.filter(p => p.idade < 18);
+    if (btnMenores) {
+      btnMenores.style.background = '#EDE9FE';
+      btnMenores.style.color = '#6D28D9';
+      btnMenores.style.borderColor = '#8B5CF6';
+      btnMenores.style.fontWeight = '700';
+    }
+  } else {
+    if (btnTodos) {
+      btnTodos.style.background = '#FEF3C7';
+      btnTodos.style.color = '#92400E';
+      btnTodos.style.borderColor = '#D97706';
+      btnTodos.style.fontWeight = '700';
+    }
+  }
+
+  // Ordenar: primeiro os de 18 anos, depois por idade descrescente e nome
+  dadosFiltrados.sort((a, b) => b.idade - a.idade || a.nome.localeCompare(b.nome));
+
+  if (dadosFiltrados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum participante encontrado neste filtro.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = dadosFiltrados.map(p => {
+    const is18 = p.idade === 18;
+    const badgeFaixa = is18 ?
+      `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-weight: 800; font-size: 0.725rem;">18 anos completos</span>` :
+      `<span class="badge" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; font-weight: 700; font-size: 0.725rem;">Menor (${p.idade} anos)</span>`;
+
+    const statusBadge = p.status === 'CONFIRMADA' ? 'badge-success' : p.status === 'PENDENTE' ? 'badge-warning' : 'badge-danger';
+
+    // Formatar data dd/mm/aaaa
+    let dtFmt = p.data_nascimento || '-';
+    if (dtFmt.includes('-')) {
+      const parts = dtFmt.split('T')[0].split('-');
+      if (parts[0].length === 4) dtFmt = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    return `
+      <tr style="border-bottom: 1px solid #F1F5F9; ${is18 ? 'background: #FFFBEB;' : ''}">
+        <td style="padding: 0.6rem 0.85rem; font-weight: 700; color: var(--text-muted);">#${p.id}</td>
+        <td style="padding: 0.6rem 0.85rem; font-weight: 700; color: var(--text-main);">
+          ${p.nome}
+          ${is18 ? `<span style="font-size: 0.72rem; color: #D97706; margin-left: 0.35rem; font-weight: 700;">[18 ANOS]</span>` : ''}
+        </td>
+        <td style="padding: 0.6rem 0.85rem; font-family: monospace; font-size: 0.82rem; color: #475569;">${dtFmt}</td>
+        <td style="padding: 0.6rem 0.85rem;">
+          <strong style="color: ${is18 ? '#D97706' : 'var(--text-main)'}; font-size: 0.95rem;">${p.idade} anos</strong>
+        </td>
+        <td style="padding: 0.6rem 0.85rem;">${badgeFaixa}</td>
+        <td style="padding: 0.6rem 0.85rem; color: var(--text-muted); font-size: 0.8rem;">${p.igreja}</td>
+        <td style="padding: 0.6rem 0.85rem; text-align: center;">
+          <button class="btn btn-outline" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;" onclick="abrirFichaParticipanteAuditoria(${p.id})" title="Ver Ficha Completa">
+            Ver Ficha
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+

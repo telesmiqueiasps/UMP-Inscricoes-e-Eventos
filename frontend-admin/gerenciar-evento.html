@@ -202,14 +202,18 @@
             </div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card" id="dash-kpi-card-idade" style="cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;" onclick="abrirModalAuditoriaIdade()" title="Clique para conferir detalhadamente quem são os participantes desta faixa">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Abaixo de 19 Anos</span>
               <span class="badge" id="dash-kpi-idade-badge" style="font-size: 0.7rem; background: #FEF3C7; color: #92400E;">0% &lt;19</span>
             </div>
             <div class="metric-val" id="dash-kpi-menores" style="color: #D97706;">0</div>
             <div style="font-size: 0.775rem; color: var(--text-muted); margin-top: 0.35rem;" id="dash-kpi-idade-sub">
-              0 abaixo de 19 (&lt;19) • 0 com 19+ (≥19)
+              0 menores (&lt;18) • 0 com 18 anos • 0 com 19+
+            </div>
+            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #D97706; font-weight: 700; display: flex; align-items: center; gap: 0.3rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>Conferir Lista de Inscritos</span>
             </div>
           </div>
 
@@ -1285,6 +1289,61 @@
         <div class="modal-content modal-detalhes-dialog" onclick="event.stopPropagation()">
           <div id="modal-detalhes-diaria-conteudo">
             <!-- Conteúdo montado via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Auditoria de Faixa Etária: Abaixo de 19 Anos -->
+      <div class="modal" id="modal-auditoria-idade" onclick="fecharModalAuditoriaIdadeBackdrop(event)">
+        <div class="modal-content modal-detalhes-dialog" style="max-width: 820px; height: auto !important; max-height: 88vh !important;" onclick="event.stopPropagation()">
+          <div class="modal-detalhes-header" style="border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">Auditoria da Faixa: Abaixo de 19 Anos</h3>
+                <span class="badge" id="auditoria-badge-total" style="background: #FEF3C7; color: #92400E; font-size: 0.8rem; font-weight: 800;">0 inscritos</span>
+              </div>
+              <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                Inscritos com até 18 anos, 11 meses e 29 dias (que ainda não completaram 19 anos).
+              </p>
+            </div>
+            <button type="button" class="btn-action-icon" onclick="fecharModalAuditoriaIdade()" style="background:#F1F5F9; color:var(--text-muted);" title="Fechar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <div style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; overflow: hidden; height: calc(100% - 75px);">
+            <!-- Resumo Rápido e Filtros -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-outline" id="btn-filtro-audit-todos" onclick="filtrarAuditoriaIdade('TODOS')" style="font-size: 0.8rem; padding: 0.4rem 0.85rem; border-color: #D97706; background: #FEF3C7; color: #92400E; font-weight: 700;">
+                Todos Abaixo de 19 (<span id="count-audit-todos">0</span>)
+              </button>
+              <button class="btn btn-outline" id="btn-filtro-audit-18" onclick="filtrarAuditoriaIdade('18')" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;">
+                Exatamente 18 Anos (<span id="count-audit-18">0</span>)
+              </button>
+              <button class="btn btn-outline" id="btn-filtro-audit-menores" onclick="filtrarAuditoriaIdade('MENORES')" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;">
+                Menores de 18 Anos (<span id="count-audit-menores">0</span>)
+              </button>
+            </div>
+
+            <!-- Tabela com Scroll -->
+            <div class="table-responsive" style="overflow-y: auto; flex: 1; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+              <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                <thead style="background: #F8FAFC; position: sticky; top: 0; z-index: 1;">
+                  <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                    <th style="padding: 0.65rem 0.85rem; width: 50px;">ID</th>
+                    <th style="padding: 0.65rem 0.85rem;">Nome do Participante</th>
+                    <th style="padding: 0.65rem 0.85rem; width: 110px;">Nascimento</th>
+                    <th style="padding: 0.65rem 0.85rem; width: 100px;">Idade</th>
+                    <th style="padding: 0.65rem 0.85rem; width: 140px;">Classificação</th>
+                    <th style="padding: 0.65rem 0.85rem;">Igreja</th>
+                    <th style="padding: 0.65rem 0.85rem; width: 80px; text-align: center;">Ficha</th>
+                  </tr>
+                </thead>
+                <tbody id="auditoria-idade-table-body">
+                  <tr><td colspan="7" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Carregando dados...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
