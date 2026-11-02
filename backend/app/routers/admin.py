@@ -381,14 +381,16 @@ def obter_dashboard_stats_evento(
             return None
         return None
 
-    contagem_menores = 0
-    contagem_maiores = 0
+    contagem_abaixo_19 = 0
+    contagem_19_ou_mais = 0
+    contagem_menores_18 = 0
+    contagem_maiores_18 = 0
     contagem_idade_nao_informada = 0
     idades_lista = []
 
     faixas_etarias = {
-        "< 18 anos": 0,
-        "18 a 21 anos": 0,
+        "< 19 anos": 0,
+        "19 a 21 anos": 0,
         "22 a 25 anos": 0,
         "26 a 30 anos": 0,
         "31 a 40 anos": 0,
@@ -417,12 +419,17 @@ def obter_dashboard_stats_evento(
         if idade is not None:
             idades_lista.append(idade)
             if idade < 18:
-                contagem_menores += 1
-                faixas_etarias["< 18 anos"] += 1
+                contagem_menores_18 += 1
             else:
-                contagem_maiores += 1
-                if 18 <= idade <= 21:
-                    faixas_etarias["18 a 21 anos"] += 1
+                contagem_maiores_18 += 1
+
+            if idade < 19:
+                contagem_abaixo_19 += 1
+                faixas_etarias["< 19 anos"] += 1
+            else:
+                contagem_19_ou_mais += 1
+                if 19 <= idade <= 21:
+                    faixas_etarias["19 a 21 anos"] += 1
                 elif 22 <= idade <= 25:
                     faixas_etarias["22 a 25 anos"] += 1
                 elif 26 <= idade <= 30:
@@ -530,8 +537,10 @@ def obter_dashboard_stats_evento(
             "valor_pendente": valor_pendente
         },
         "idade": {
-            "menores_18": contagem_menores,
-            "maiores_18": contagem_maiores,
+            "abaixo_19": contagem_abaixo_19,
+            "19_ou_mais": contagem_19_ou_mais,
+            "menores_18": contagem_menores_18,
+            "maiores_18": contagem_maiores_18,
             "nao_informada": contagem_idade_nao_informada,
             "media": media_idade,
             "minima": min_idade,

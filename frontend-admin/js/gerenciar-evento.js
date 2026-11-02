@@ -3207,8 +3207,9 @@ window.carregarDashboardEvento = async function(forceReload = false) {
 
 function calcularStatsInscricoesLocal(lista, statusFiltro) {
   const todas = Array.isArray(lista) ? lista : [];
-  const filtradas = statusFiltro 
-    ? todas.filter(i => (i.status || '').toUpperCase() === statusFiltro.toUpperCase())
+  const stUpper = (statusFiltro || '').toUpperCase().trim();
+  const filtradas = (stUpper && stUpper !== 'TODAS' && stUpper !== 'ALL')
+    ? todas.filter(i => (i.status || '').toUpperCase() === stUpper)
     : todas;
 
   const totalGeral = todas.length;
@@ -3226,14 +3227,16 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
     .reduce((acc, cur) => acc + parseFloat(cur.valor_total || 0), 0);
 
   const hoje = new Date();
-  let menores = 0;
-  let maiores = 0;
+  let abaixo19 = 0;
+  let mais19 = 0;
+  let menores18 = 0;
+  let maiores18 = 0;
   let idadeNaoInformada = 0;
   const idades = [];
 
   const faixas = {
-    "< 18 anos": 0,
-    "18 a 21 anos": 0,
+    "< 19 anos": 0,
+    "19 a 21 anos": 0,
     "22 a 25 anos": 0,
     "26 a 30 anos": 0,
     "31 a 40 anos": 0,
@@ -3295,11 +3298,17 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
     if (id !== null) {
       idades.push(id);
       if (id < 18) {
-        menores++;
-        faixas["< 18 anos"]++;
+        menores18++;
       } else {
-        maiores++;
-        if (id <= 21) faixas["18 a 21 anos"]++;
+        maiores18++;
+      }
+
+      if (id < 19) {
+        abaixo19++;
+        faixas["< 19 anos"]++;
+      } else {
+        mais19++;
+        if (id <= 21) faixas["19 a 21 anos"]++;
         else if (id <= 25) faixas["22 a 25 anos"]++;
         else if (id <= 30) faixas["26 a 30 anos"]++;
         else if (id <= 40) faixas["31 a 40 anos"]++;
@@ -3373,8 +3382,10 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
       valor_pendente: valorPendente
     },
     idade: {
-      menores_18: menores,
-      maiores_18: maiores,
+      abaixo_19: abaixo19,
+      "19_ou_mais": mais19,
+      menores_18: menores18,
+      maiores_18: maiores18,
       nao_informada: idadeNaoInformada,
       media: mediaId ? parseFloat(mediaId) : null,
       minima: idades.length ? Math.min(...idades) : null,
@@ -3429,19 +3440,19 @@ function atualizarKPICardsDashboard(stats, filtroStatus) {
     elTotalSub.textContent = `${statusResumo.confirmadas || 0} confirmadas • ${statusResumo.pendentes || 0} pendentes`;
   }
 
-  // 2. Menores de 18
-  const menores = idade.menores_18 || 0;
-  const maiores = idade.maiores_18 || 0;
-  const totalComIdade = menores + maiores;
-  const pctMenores = totalComIdade > 0 ? Math.round((menores / totalComIdade) * 100) : 0;
+  // 2. Abaixo de 19 Anos (Até 18 anos, 11 meses e 29 dias)
+  const abaixo19 = (idade.abaixo_19 !== undefined) ? idade.abaixo_19 : (idade.menores_18 || 0);
+  const mais19 = (idade['19_ou_mais'] !== undefined) ? idade['19_ou_mais'] : (idade.maiores_18 || 0);
+  const totalComIdade = abaixo19 + mais19;
+  const pctAbaixo19 = totalComIdade > 0 ? Math.round((abaixo19 / totalComIdade) * 100) : 0;
 
   const elMenores = document.getElementById('dash-kpi-menores');
   const elIdadeBadge = document.getElementById('dash-kpi-idade-badge');
   const elIdadeSub = document.getElementById('dash-kpi-idade-sub');
-  if (elMenores) elMenores.textContent = menores;
-  if (elIdadeBadge) elIdadeBadge.textContent = `${pctMenores}% <18`;
+  if (elMenores) elMenores.textContent = abaixo19;
+  if (elIdadeBadge) elIdadeBadge.textContent = `${pctAbaixo19}% <19`;
   if (elIdadeSub) {
-    elIdadeSub.textContent = `${menores} menores (<18) • ${maiores} adultos (≥18)`;
+    elIdadeSub.textContent = `${abaixo19} abaixo de 19 (<19) • ${mais19} a partir de 19 (≥19)`;
   }
 
   // 3. Média de Idade
@@ -3506,17 +3517,17 @@ function renderizarGraficosDashboard(stats) {
   };
 
   // -------------------------------------------------------------
-  // 1. Gráfico Menores vs Maiores de 18 Anos (Donut)
+  // 1. Gráfico Abaixo de 19 Anos vs 19+ Anos (Donut)
   // -------------------------------------------------------------
   const ctxIdade = document.getElementById('chart-idade-menor-maior')?.getContext('2d');
   if (ctxIdade) {
-    const menores = stats.idade?.menores_18 || 0;
-    const maiores = stats.idade?.maiores_18 || 0;
+    const abaixo19 = (stats.idade?.abaixo_19 !== undefined) ? stats.idade.abaixo_19 : (stats.idade?.menores_18 || 0);
+    const mais19 = (stats.idade?.['19_ou_mais'] !== undefined) ? stats.idade['19_ou_mais'] : (stats.idade?.maiores_18 || 0);
     const naoInf = stats.idade?.nao_informada || 0;
-    const totalComIdade = menores + maiores;
+    const totalComIdade = abaixo19 + mais19;
 
-    const labels = ['Menores (<18)', 'Maiores (≥18)'];
-    const dataVals = [menores, maiores];
+    const labels = ['Abaixo de 19 (<19)', '19 anos ou mais (≥19)'];
+    const dataVals = [abaixo19, mais19];
     const bgColors = ['#F59E0B', '#1D4ED8'];
     const hoverColors = ['#D97706', '#1E40AF'];
 
@@ -3557,7 +3568,9 @@ function renderizarGraficosDashboard(stats) {
                 if (totalTotal === 0) return ' Nenhuma inscrição';
                 const val = ctx.raw;
                 const pct = totalTotal > 0 ? Math.round((val / totalTotal) * 100) : 0;
-                return ` ${ctx.label}: ${val} (${pct}%)`;
+                let extraHint = '';
+                if (ctx.label.includes('<19')) extraHint = ' (até 18 anos completos)';
+                return ` ${ctx.label}${extraHint}: ${val} (${pct}%)`;
               }
             }
           }
@@ -3568,11 +3581,11 @@ function renderizarGraficosDashboard(stats) {
     const footerIdade = document.getElementById('footer-idade-resumo');
     if (footerIdade) {
       if (totalComIdade > 0) {
-        const pctMen = Math.round((menores / totalComIdade) * 100);
-        const pctMai = Math.round((maiores / totalComIdade) * 100);
+        const pctAbaixo = Math.round((abaixo19 / totalComIdade) * 100);
+        const pctMais = Math.round((mais19 / totalComIdade) * 100);
         footerIdade.innerHTML = `
-          <span><strong>${menores} menores</strong> (${pctMen}%)</span>
-          <span><strong>${maiores} maiores</strong> (${pctMai}%)</span>
+          <span><strong>${abaixo19} abaixo de 19 anos</strong> (${pctAbaixo}%)</span>
+          <span><strong>${mais19} com 19+ anos</strong> (${pctMais}%)</span>
         `;
       } else {
         footerIdade.innerHTML = `<span>Nenhuma data de nascimento informada.</span>`;
@@ -3586,7 +3599,7 @@ function renderizarGraficosDashboard(stats) {
   const ctxFaixas = document.getElementById('chart-faixas-etarias')?.getContext('2d');
   if (ctxFaixas) {
     const faixasObj = stats.idade?.faixas || {};
-    const labelsFaixas = ['< 18 anos', '18 a 21 anos', '22 a 25 anos', '26 a 30 anos', '31 a 40 anos', '40+ anos'];
+    const labelsFaixas = ['< 19 anos', '19 a 21 anos', '22 a 25 anos', '26 a 30 anos', '31 a 40 anos', '40+ anos'];
     const dataFaixas = labelsFaixas.map(l => faixasObj[l] || 0);
 
     if ((faixasObj['Não informada'] || 0) > 0) {
@@ -3611,7 +3624,17 @@ function renderizarGraficosDashboard(stats) {
         maintainAspectRatio: false,
         plugins: {
           legend: { display: false },
-          tooltip: pluginTooltip
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              afterLabel: function(ctx) {
+                if (ctx.label === '< 19 anos') {
+                  return 'Participantes até 18 anos, 11 meses e 29 dias (não completaram 19 anos)';
+                }
+                return '';
+              }
+            }
+          }
         },
         scales: {
           y: {
@@ -3630,14 +3653,14 @@ function renderizarGraficosDashboard(stats) {
     const footerFaixas = document.getElementById('footer-faixas-resumo');
     if (footerFaixas) {
       const media = stats.idade?.media;
-      const minI = stats.idade?.minima;
-      const maxI = stats.idade?.maxima;
+      const totalAbaixo19 = faixasObj['< 19 anos'] || 0;
       footerFaixas.innerHTML = `
+        <span>Abaixo de 19 anos: <strong>${totalAbaixo19} participantes</strong></span>
         <span>Média: <strong>${media ? media + ' anos' : '-'}</strong></span>
-        <span>Faixa: <strong>${minI !== null ? minI : '-'} a ${maxI !== null ? maxI : '-'} anos</strong></span>
       `;
     }
   }
+
 
   // -------------------------------------------------------------
   // 3. Gráfico Distribuição por Sexo (Donut)
@@ -4091,9 +4114,9 @@ window.imprimirResumoDashboard = function() {
           <div style="font-size: 0.75rem; color: #64748B;">${s.status_resumo?.confirmadas || 0} confirmadas</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-box-title">Menores de 18 Anos</div>
-          <div class="kpi-box-val">${s.idade?.menores_18 || 0}</div>
-          <div style="font-size: 0.75rem; color: #64748B;">${s.idade?.maiores_18 || 0} maiores de idade</div>
+          <div class="kpi-box-title">Abaixo de 19 Anos</div>
+          <div class="kpi-box-val">${(s.idade?.abaixo_19 !== undefined) ? s.idade.abaixo_19 : (s.idade?.menores_18 || 0)}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">${(s.idade?.['19_ou_mais'] !== undefined) ? s.idade['19_ou_mais'] : (s.idade?.maiores_18 || 0)} com 19 anos ou mais</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-box-title">Média de Idade</div>
@@ -4115,8 +4138,8 @@ window.imprimirResumoDashboard = function() {
         <tbody>
           <tr><td>Participantes Masculinos</td><td>${s.sexo?.Masculino || 0}</td><td>${s.total_analisado ? Math.round(((s.sexo?.Masculino || 0) / s.total_analisado) * 100) : 0}%</td></tr>
           <tr><td>Participantes Femininos</td><td>${s.sexo?.Feminino || 0}</td><td>${s.total_analisado ? Math.round(((s.sexo?.Feminino || 0) / s.total_analisado) * 100) : 0}%</td></tr>
-          <tr><td>Menores de 18 anos (&lt;18)</td><td>${s.idade?.menores_18 || 0}</td><td>${s.total_analisado ? Math.round(((s.idade?.menores_18 || 0) / s.total_analisado) * 100) : 0}%</td></tr>
-          <tr><td>Adultos (&ge;18)</td><td>${s.idade?.maiores_18 || 0}</td><td>${s.total_analisado ? Math.round(((s.idade?.maiores_18 || 0) / s.total_analisado) * 100) : 0}%</td></tr>
+          <tr><td>Abaixo de 19 anos (&lt;19 - até 18 anos completos)</td><td>${(s.idade?.abaixo_19 !== undefined) ? s.idade.abaixo_19 : (s.idade?.menores_18 || 0)}</td><td>${s.total_analisado ? Math.round((((s.idade?.abaixo_19 !== undefined) ? s.idade.abaixo_19 : (s.idade?.menores_18 || 0)) / s.total_analisado) * 100) : 0}%</td></tr>
+          <tr><td>19 anos ou mais (&ge;19)</td><td>${(s.idade?.['19_ou_mais'] !== undefined) ? s.idade['19_ou_mais'] : (s.idade?.maiores_18 || 0)}</td><td>${s.total_analisado ? Math.round((((s.idade?.['19_ou_mais'] !== undefined) ? s.idade['19_ou_mais'] : (s.idade?.maiores_18 || 0)) / s.total_analisado) * 100) : 0}%</td></tr>
         </tbody>
       </table>
 
