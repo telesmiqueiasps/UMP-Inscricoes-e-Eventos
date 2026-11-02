@@ -308,6 +308,252 @@ def listar_igrejas_evento(
     return sorted(list(igrejas_dict.values()), key=lambda s: s.lower())
 
 
+@router.get("/admin/eventos/{evento_id}/dashboard-stats")
+def obter_dashboard_stats_evento(
+    evento_id: int,
+    status_filtro: Optional[str] = Query(None, description="Filtro opcional: CONFIRMADA, PENDENTE, CANCELADA"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(get_current_admin)
+):
+    from datetime import date
+    evento = db.query(Evento).filter(Evento.id == evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    todas_inscricoes = db.query(Inscricao).filter(Inscricao.evento_id == evento_id).all()
+    
+    total_geral = len(todas_inscricoes)
+    total_confirmadas = sum(1 for i in todas_inscricoes if i.status == "CONFIRMADA")
+    total_pendentes = sum(1 for i in todas_inscricoes if i.status == "PENDENTE")
+    total_canceladas = sum(1 for i in todas_inscricoes if i.status == "CANCELADA")
+    total_checkin = sum(1 for i in todas_inscricoes if i.checkin_realizado)
+    
+    valor_arrecadado = sum(float(i.valor_total or 0) for i in todas_inscricoes if i.status == "CONFIRMADA")
+    valor_pendente = sum(float(i.valor_total or 0) for i in todas_inscricoes if i.status == "PENDENTE")
+
+    if status_filtro and status_filtro.strip().upper() in ("CONFIRMADA", "PENDENTE", "CANCELADA"):
+        alvo = status_filtro.strip().upper()
+        inscricoes_analise = [i for i in todas_inscricoes if i.status == alvo]
+    else:
+        inscricoes_analise = todas_inscricoes
+
+    hoje = date.today()
+
+    def extrair_extras(ins):
+        ext = ins.dados_extras
+        if isinstance(ext, str):
+            try:
+                import json
+                return json.loads(ext)
+            except Exception:
+                return {}
+        return ext if isinstance(ext, dict) else {}
+
+    def get_campo(ext, *nomes):
+        for n in nomes:
+            val = ext.get(n) or ext.get(f"dyn_{n}") or ext.get(n.lower()) or ext.get(n.capitalize())
+            if val is not None and str(val).strip():
+                return str(val).strip()
+        return None
+
+    def calcular_idade(data_str):
+        if not data_str:
+            return None
+        data_clean = str(data_str).strip()
+        if not data_clean:
+            return None
+        try:
+            if "T" in data_clean:
+                data_clean = data_clean.split("T")[0]
+            if "-" in data_clean:
+                p = data_clean.split("-")
+                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+            elif "/" in data_clean:
+                p = data_clean.split("/")
+                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+            else:
+                return None
+            d_nasc = date(ano, mes, dia)
+            idade = hoje.year - d_nasc.year - ((hoje.month, hoje.day) < (d_nasc.month, d_nasc.day))
+            if 0 <= idade <= 125:
+                return idade
+        except Exception:
+            return None
+        return None
+
+    contagem_menores = 0
+    contagem_maiores = 0
+    contagem_idade_nao_informada = 0
+    idades_lista = []
+
+    faixas_etarias = {
+        "< 18 anos": 0,
+        "18 a 21 anos": 0,
+        "22 a 25 anos": 0,
+        "26 a 30 anos": 0,
+        "31 a 40 anos": 0,
+        "40+ anos": 0,
+        "Não informada": 0
+    }
+
+    igrejas_contagem = {}
+    presbiterios_contagem = {}
+    sexo_contagem = {
+        "Masculino": 0,
+        "Feminino": 0,
+        "Não informado": 0
+    }
+    estado_civil_contagem = {}
+    camisetas_contagem = {}
+    tipos_sanguineos_contagem = {}
+    formas_pagamento_contagem = {}
+
+    for ins in inscricoes_analise:
+        ext = extrair_extras(ins)
+        
+        # Idade
+        d_nasc = get_campo(ext, "data_nascimento", "nascimento")
+        idade = calcular_idade(d_nasc)
+        if idade is not None:
+            idades_lista.append(idade)
+            if idade < 18:
+                contagem_menores += 1
+                faixas_etarias["< 18 anos"] += 1
+            else:
+                contagem_maiores += 1
+                if 18 <= idade <= 21:
+                    faixas_etarias["18 a 21 anos"] += 1
+                elif 22 <= idade <= 25:
+                    faixas_etarias["22 a 25 anos"] += 1
+                elif 26 <= idade <= 30:
+                    faixas_etarias["26 a 30 anos"] += 1
+                elif 31 <= idade <= 40:
+                    faixas_etarias["31 a 40 anos"] += 1
+                else:
+                    faixas_etarias["40+ anos"] += 1
+        else:
+            contagem_idade_nao_informada += 1
+            faixas_etarias["Não informada"] += 1
+
+        # Igreja
+        igreja = get_campo(ext, "igreja")
+        if igreja:
+            igreja_limpa = igreja.strip()
+            igrejas_contagem[igreja_limpa] = igrejas_contagem.get(igreja_limpa, 0) + 1
+        else:
+            igrejas_contagem["Não informada"] = igrejas_contagem.get("Não informada", 0) + 1
+
+        # Presbitério
+        presb = get_campo(ext, "presbiterio")
+        if presb:
+            presb_limpo = presb.strip()
+            presbiterios_contagem[presb_limpo] = presbiterios_contagem.get(presb_limpo, 0) + 1
+        else:
+            presbiterios_contagem["Não informado"] = presbiterios_contagem.get("Não informado", 0) + 1
+
+        # Sexo / Gênero
+        sexo = get_campo(ext, "genero", "sexo")
+        if sexo:
+            s_clean = sexo.strip().lower()
+            if s_clean.startswith("m"):
+                sexo_contagem["Masculino"] += 1
+            elif s_clean.startswith("f"):
+                sexo_contagem["Feminino"] += 1
+            else:
+                sexo_contagem["Não informado"] += 1
+        else:
+            sexo_contagem["Não informado"] += 1
+
+        # Estado Civil
+        ec = get_campo(ext, "estado_civil")
+        if ec:
+            ec_limpo = ec.strip().title()
+            estado_civil_contagem[ec_limpo] = estado_civil_contagem.get(ec_limpo, 0) + 1
+        else:
+            estado_civil_contagem["Não informado"] = estado_civil_contagem.get("Não informado", 0) + 1
+
+        # Camiseta
+        cam = get_campo(ext, "tamanho_camiseta", "camiseta")
+        if cam:
+            cam_limpo = cam.strip().upper()
+            camisetas_contagem[cam_limpo] = camisetas_contagem.get(cam_limpo, 0) + 1
+
+        # Tipo Sanguíneo
+        ts = get_campo(ext, "tipo_sanguineo")
+        if ts:
+            ts_limpo = ts.strip().upper()
+            tipos_sanguineos_contagem[ts_limpo] = tipos_sanguineos_contagem.get(ts_limpo, 0) + 1
+
+        # Forma de Pagamento
+        fp = ins.forma_pagamento or "Não informada"
+        fp_limpa = fp.strip().upper()
+        formas_pagamento_contagem[fp_limpa] = formas_pagamento_contagem.get(fp_limpa, 0) + 1
+
+    top_igrejas = sorted(
+        [{"nome": k, "quantidade": v} for k, v in igrejas_contagem.items()],
+        key=lambda x: x["quantidade"],
+        reverse=True
+    )
+
+    top_presbiterios = sorted(
+        [{"nome": k, "quantidade": v} for k, v in presbiterios_contagem.items()],
+        key=lambda x: x["quantidade"],
+        reverse=True
+    )
+
+    media_idade = round(sum(idades_lista) / len(idades_lista), 1) if idades_lista else None
+    min_idade = min(idades_lista) if idades_lista else None
+    max_idade = max(idades_lista) if idades_lista else None
+
+    diarias = db.query(InscricaoDiaria).filter(InscricaoDiaria.evento_id == evento_id).all()
+    total_diarias = len(diarias)
+    diarias_confirmadas = sum(1 for d in diarias if d.status == "CONFIRMADA")
+
+    return {
+        "evento_id": evento_id,
+        "evento_titulo": evento.titulo,
+        "status_filtro": status_filtro or "TODOS",
+        "total_geral": total_geral,
+        "total_analisado": len(inscricoes_analise),
+        "status_resumo": {
+            "confirmadas": total_confirmadas,
+            "pendentes": total_pendentes,
+            "canceladas": total_canceladas
+        },
+        "checkin_resumo": {
+            "realizados": total_checkin,
+            "pendentes": max(0, total_confirmadas - total_checkin),
+            "taxa_presenca": round((total_checkin / total_confirmadas * 100), 1) if total_confirmadas > 0 else 0
+        },
+        "financeiro": {
+            "valor_arrecadado": valor_arrecadado,
+            "valor_pendente": valor_pendente
+        },
+        "idade": {
+            "menores_18": contagem_menores,
+            "maiores_18": contagem_maiores,
+            "nao_informada": contagem_idade_nao_informada,
+            "media": media_idade,
+            "minima": min_idade,
+            "maxima": max_idade,
+            "faixas": faixas_etarias
+        },
+        "sexo": sexo_contagem,
+        "estado_civil": estado_civil_contagem,
+        "igrejas": top_igrejas,
+        "presbiterios": top_presbiterios,
+        "camisetas": camisetas_contagem,
+        "tipos_sanguineos": tipos_sanguineos_contagem,
+        "formas_pagamento": formas_pagamento_contagem,
+        "diarias": {
+            "total": total_diarias,
+            "confirmadas": diarias_confirmadas
+        }
+    }
+
+
+
+
 @router.put("/admin/inscricoes/{id}/status", response_model=InscricaoResponse)
 def atualizar_status_inscricao_admin(
     id: int,

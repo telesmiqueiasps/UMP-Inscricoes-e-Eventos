@@ -38,6 +38,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   await carregarDiaristas();
   await loadPagamentos();
   await loadListaPresenca();
+
+  // Inicializar Dashboard
+  const initialTab = urlParams.get('tab');
+  if (initialTab) {
+    const targetBtn = document.getElementById(`tab-btn-${initialTab}`);
+    if (targetBtn) {
+      switchSubTab(`pane-${initialTab}`, targetBtn);
+    }
+  } else {
+    // Tab ativa por padrão no HTML: Dashboard
+    carregarDashboardEvento();
+  }
 });
 
 // --- Tabs Switcher ---
@@ -45,12 +57,18 @@ window.switchSubTab = function(tabId, btn) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   
-  document.getElementById(tabId).classList.add('active');
-  btn.classList.add('active');
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) targetPane.classList.add('active');
+  if (btn) btn.classList.add('active');
 
   // Parar scanner de QR Code caso saia da aba de check-in
   if (tabId !== 'pane-checkin') {
     pararLeitorCheckin();
+  }
+
+  // Se ativou a aba do Dashboard, carregar e redimensionar gráficos
+  if (tabId === 'pane-dashboard') {
+    carregarDashboardEvento();
   }
 };
 
@@ -492,6 +510,9 @@ window.alterarStatusInscricao = async function(id, novoStatus) {
     await API.request(`/admin/inscricoes/${id}/status?novo_status=${novoStatus}`, { method: 'PUT' });
     showToast(`Inscrição #${id} atualizada para ${novoStatus}!`, 'success');
     await loadInscricoes();
+    if (typeof carregarDashboardEvento === 'function') {
+      carregarDashboardEvento();
+    }
     // Se o modal estiver aberto com essa mesma inscrição, atualiza ele também
     const modal = document.getElementById('modal-detalhes-inscricao');
     if (modal && modal.style.display === 'flex') {
@@ -2647,6 +2668,9 @@ window.realizarCheckinManual = async function(inscricaoId, tipo = 'REGULAR') {
     showToast(res.mensagem, "success");
     await loadListaPresenca();
     buscarParticipantesCheckin();
+    if (typeof carregarDashboardEvento === 'function') {
+      carregarDashboardEvento();
+    }
     if (tipo === 'DIARIA') {
       await carregarDiaristas();
     }
@@ -3112,4 +3136,1024 @@ window.exportarDiaristasExcel = function() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+// ==========================================================================
+// ABA DASHBOARD & GRÁFICOS DO EVENTO
+// ==========================================================================
+
+let dashboardStatsData = null;
+let chartInstances = {
+  idadeMenorMaior: null,
+  faixasEtarias: null,
+  sexo: null,
+  estadoCivil: null,
+  presbiterios: null,
+  igrejas: null,
+  camisetas: null,
+  statusInscricoes: null
+};
+
+function destruirGraficosDashboard() {
+  Object.keys(chartInstances).forEach(k => {
+    if (chartInstances[k]) {
+      try { chartInstances[k].destroy(); } catch (e) {}
+      chartInstances[k] = null;
+    }
+  });
+}
+
+window.recarregarDashboardFiltro = function() {
+  carregarDashboardEvento(true);
+};
+
+window.carregarDashboardEvento = async function(forceReload = false) {
+  if (!selectedEventoId) return;
+
+  const filtroStatus = document.getElementById('dashboard-filtro-status')?.value || '';
+  const iconRefresh = document.getElementById('icon-refresh-dashboard');
+  if (iconRefresh) iconRefresh.style.animation = 'spin 1s linear infinite';
+
+  try {
+    let stats = null;
+
+    // 1. Tentar obter dados do endpoint do servidor
+    try {
+      let url = `/admin/eventos/${selectedEventoId}/dashboard-stats`;
+      if (filtroStatus) url += `?status_filtro=${encodeURIComponent(filtroStatus)}`;
+      stats = await API.request(url);
+    } catch (apiErr) {
+      console.warn("Endpoint /dashboard-stats indisponível, usando cálculo em memória:", apiErr);
+    }
+
+    // 2. Se a API falhou ou não retornou, calcular a partir de cachedInscricoesList
+    if (!stats) {
+      stats = calcularStatsInscricoesLocal(cachedInscricoesList, filtroStatus);
+    }
+
+    dashboardStatsData = stats;
+    atualizarKPICardsDashboard(stats, filtroStatus);
+    renderizarGraficosDashboard(stats);
+
+  } catch (err) {
+    console.error("Erro ao carregar dados do dashboard:", err);
+    if (typeof showToast === 'function') {
+      showToast("Erro ao carregar gráficos do evento.", "error");
+    }
+  } finally {
+    if (iconRefresh) iconRefresh.style.animation = 'none';
+  }
+};
+
+function calcularStatsInscricoesLocal(lista, statusFiltro) {
+  const todas = Array.isArray(lista) ? lista : [];
+  const filtradas = statusFiltro 
+    ? todas.filter(i => (i.status || '').toUpperCase() === statusFiltro.toUpperCase())
+    : todas;
+
+  const totalGeral = todas.length;
+  const totalConfirmadas = todas.filter(i => (i.status || '').toUpperCase() === 'CONFIRMADA').length;
+  const totalPendentes = todas.filter(i => (i.status || '').toUpperCase() === 'PENDENTE').length;
+  const totalCanceladas = todas.filter(i => (i.status || '').toUpperCase() === 'CANCELADA').length;
+  const totalCheckin = todas.filter(i => i.checkin_realizado).length;
+
+  const valorArrecadado = todas
+    .filter(i => (i.status || '').toUpperCase() === 'CONFIRMADA')
+    .reduce((acc, cur) => acc + parseFloat(cur.valor_total || 0), 0);
+
+  const valorPendente = todas
+    .filter(i => (i.status || '').toUpperCase() === 'PENDENTE')
+    .reduce((acc, cur) => acc + parseFloat(cur.valor_total || 0), 0);
+
+  const hoje = new Date();
+  let menores = 0;
+  let maiores = 0;
+  let idadeNaoInformada = 0;
+  const idades = [];
+
+  const faixas = {
+    "< 18 anos": 0,
+    "18 a 21 anos": 0,
+    "22 a 25 anos": 0,
+    "26 a 30 anos": 0,
+    "31 a 40 anos": 0,
+    "40+ anos": 0,
+    "Não informada": 0
+  };
+
+  const igrejasContagem = {};
+  const presbiteriosContagem = {};
+  const sexoContagem = { "Masculino": 0, "Feminino": 0, "Não informado": 0 };
+  const estadoCivilContagem = {};
+  const camisetasContagem = {};
+  const statusContagem = { "CONFIRMADA": 0, "PENDENTE": 0, "CANCELADA": 0 };
+
+  function extrairCampo(extras, ...nomes) {
+    if (!extras || typeof extras !== 'object') return null;
+    for (const n of nomes) {
+      const v = extras[n] || extras[`dyn_${n}`] || extras[n.toLowerCase()];
+      if (v !== undefined && v !== null && String(v).trim()) {
+        return String(v).trim();
+      }
+    }
+    return null;
+  }
+
+  function parseIdade(dtStr) {
+    if (!dtStr || typeof dtStr !== 'string') return null;
+    let dia, mes, ano;
+    if (dtStr.includes('T')) dtStr = dtStr.split('T')[0];
+    if (dtStr.includes('-')) {
+      const p = dtStr.split('-');
+      ano = parseInt(p[0], 10);
+      mes = parseInt(p[1], 10) - 1;
+      dia = parseInt(p[2], 10);
+    } else if (dtStr.includes('/')) {
+      const p = dtStr.split('/');
+      dia = parseInt(p[0], 10);
+      mes = parseInt(p[1], 10) - 1;
+      ano = parseInt(p[2], 10);
+    } else {
+      return null;
+    }
+    if (isNaN(ano) || isNaN(mes) || isNaN(dia)) return null;
+    let id = hoje.getFullYear() - ano;
+    const m = hoje.getMonth() - mes;
+    if (m < 0 || (m === 0 && hoje.getDate() < dia)) id--;
+    if (id >= 0 && id <= 125) return id;
+    return null;
+  }
+
+  filtradas.forEach(ins => {
+    const ext = ins.dados_extras || {};
+    const st = (ins.status || 'PENDENTE').toUpperCase();
+    statusContagem[st] = (statusContagem[st] || 0) + 1;
+
+    // Idade
+    const dtNasc = extrairCampo(ext, 'data_nascimento', 'nascimento');
+    const id = parseIdade(dtNasc);
+    if (id !== null) {
+      idades.push(id);
+      if (id < 18) {
+        menores++;
+        faixas["< 18 anos"]++;
+      } else {
+        maiores++;
+        if (id <= 21) faixas["18 a 21 anos"]++;
+        else if (id <= 25) faixas["22 a 25 anos"]++;
+        else if (id <= 30) faixas["26 a 30 anos"]++;
+        else if (id <= 40) faixas["31 a 40 anos"]++;
+        else faixas["40+ anos"]++;
+      }
+    } else {
+      idadeNaoInformada++;
+      faixas["Não informada"]++;
+    }
+
+    // Igreja
+    const ig = extrairCampo(ext, 'igreja') || 'Não informada';
+    igrejasContagem[ig] = (igrejasContagem[ig] || 0) + 1;
+
+    // Presbitério
+    const presb = extrairCampo(ext, 'presbiterio') || 'Não informado';
+    presbiteriosContagem[presb] = (presbiteriosContagem[presb] || 0) + 1;
+
+    // Sexo
+    const sx = extrairCampo(ext, 'genero', 'sexo');
+    if (sx) {
+      const sLower = sx.toLowerCase();
+      if (sLower.startsWith('m')) sexoContagem["Masculino"]++;
+      else if (sLower.startsWith('f')) sexoContagem["Feminino"]++;
+      else sexoContagem["Não informado"]++;
+    } else {
+      sexoContagem["Não informado"]++;
+    }
+
+    // Estado Civil
+    const ec = extrairCampo(ext, 'estado_civil') || 'Não informado';
+    estadoCivilContagem[ec] = (estadoCivilContagem[ec] || 0) + 1;
+
+    // Camiseta
+    const cam = extrairCampo(ext, 'tamanho_camiseta', 'camiseta');
+    if (cam) {
+      const camUp = cam.toUpperCase();
+      camisetasContagem[camUp] = (camisetasContagem[camUp] || 0) + 1;
+    }
+  });
+
+  const topIgrejas = Object.keys(igrejasContagem)
+    .map(k => ({ nome: k, quantidade: igrejasContagem[k] }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+
+  const topPresb = Object.keys(presbiteriosContagem)
+    .map(k => ({ nome: k, quantidade: presbiteriosContagem[k] }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+
+  const mediaId = idades.length > 0 
+    ? (idades.reduce((a, b) => a + b, 0) / idades.length).toFixed(1) 
+    : null;
+
+  return {
+    evento_id: selectedEventoId,
+    status_filtro: statusFiltro || "TODOS",
+    total_geral: totalGeral,
+    total_analisado: filtradas.length,
+    status_resumo: {
+      confirmadas: totalConfirmadas,
+      pendentes: totalPendentes,
+      canceladas: totalCanceladas
+    },
+    checkin_resumo: {
+      realizados: totalCheckin,
+      pendentes: Math.max(0, totalConfirmadas - totalCheckin),
+      taxa_presenca: totalConfirmadas > 0 ? ((totalCheckin / totalConfirmadas) * 100).toFixed(1) : 0
+    },
+    financeiro: {
+      valor_arrecadado: valorArrecadado,
+      valor_pendente: valorPendente
+    },
+    idade: {
+      menores_18: menores,
+      maiores_18: maiores,
+      nao_informada: idadeNaoInformada,
+      media: mediaId ? parseFloat(mediaId) : null,
+      minima: idades.length ? Math.min(...idades) : null,
+      maxima: idades.length ? Math.max(...idades) : null,
+      faixas: faixas
+    },
+    sexo: sexoContagem,
+    estado_civil: estadoCivilContagem,
+    igrejas: topIgrejas,
+    presbiterios: topPresb,
+    camisetas: camisetasContagem,
+    formas_pagamento: {}
+  };
+}
+
+function atualizarKPICardsDashboard(stats, filtroStatus) {
+  if (!stats) return;
+
+  const totalAnalisado = stats.total_analisado || 0;
+  const statusResumo = stats.status_resumo || {};
+  const idade = stats.idade || {};
+  const checkin = stats.checkin_resumo || {};
+  const financeiro = stats.financeiro || {};
+
+  // Badge do Filtro
+  const badgeFiltro = document.getElementById('dash-badge-status-filtro');
+  if (badgeFiltro) {
+    if (!filtroStatus) {
+      badgeFiltro.textContent = 'Todas';
+      badgeFiltro.style.background = '#E0E7FF';
+      badgeFiltro.style.color = '#3730A3';
+    } else if (filtroStatus === 'CONFIRMADA') {
+      badgeFiltro.textContent = 'Apenas Confirmadas';
+      badgeFiltro.style.background = '#DCFCE7';
+      badgeFiltro.style.color = '#15803D';
+    } else if (filtroStatus === 'PENDENTE') {
+      badgeFiltro.textContent = 'Apenas Pendentes';
+      badgeFiltro.style.background = '#FEF3C7';
+      badgeFiltro.style.color = '#92400E';
+    } else {
+      badgeFiltro.textContent = 'Canceladas';
+      badgeFiltro.style.background = '#FEE2E2';
+      badgeFiltro.style.color = '#B91C1C';
+    }
+  }
+
+  // 1. Total Inscrições
+  const elTotal = document.getElementById('dash-kpi-total');
+  const elTotalSub = document.getElementById('dash-kpi-total-sub');
+  if (elTotal) elTotal.textContent = totalAnalisado;
+  if (elTotalSub) {
+    elTotalSub.textContent = `${statusResumo.confirmadas || 0} confirmadas • ${statusResumo.pendentes || 0} pendentes`;
+  }
+
+  // 2. Menores de 18
+  const menores = idade.menores_18 || 0;
+  const maiores = idade.maiores_18 || 0;
+  const totalComIdade = menores + maiores;
+  const pctMenores = totalComIdade > 0 ? Math.round((menores / totalComIdade) * 100) : 0;
+
+  const elMenores = document.getElementById('dash-kpi-menores');
+  const elIdadeBadge = document.getElementById('dash-kpi-idade-badge');
+  const elIdadeSub = document.getElementById('dash-kpi-idade-sub');
+  if (elMenores) elMenores.textContent = menores;
+  if (elIdadeBadge) elIdadeBadge.textContent = `${pctMenores}% <18`;
+  if (elIdadeSub) {
+    elIdadeSub.textContent = `${menores} menores (<18) • ${maiores} adultos (≥18)`;
+  }
+
+  // 3. Média de Idade
+  const elMedia = document.getElementById('dash-kpi-media-idade');
+  const elMediaSub = document.getElementById('dash-kpi-media-idade-sub');
+  if (elMedia) {
+    elMedia.textContent = idade.media ? `${idade.media} anos` : '-';
+  }
+  if (elMediaSub) {
+    const minTxt = idade.minima !== null && idade.minima !== undefined ? `${idade.minima} anos` : '-';
+    const maxTxt = idade.maxima !== null && idade.maxima !== undefined ? `${idade.maxima} anos` : '-';
+    elMediaSub.textContent = `Mín: ${minTxt} • Máx: ${maxTxt}`;
+  }
+
+  // 4. Check-in
+  const elCheckin = document.getElementById('dash-kpi-checkin');
+  const elCheckinTaxa = document.getElementById('dash-kpi-checkin-taxa');
+  const elCheckinSub = document.getElementById('dash-kpi-checkin-sub');
+  if (elCheckin) elCheckin.textContent = checkin.realizados || 0;
+  if (elCheckinTaxa) elCheckinTaxa.textContent = `${checkin.taxa_presenca || 0}%`;
+  if (elCheckinSub) {
+    elCheckinSub.textContent = `${checkin.realizados || 0} de ${statusResumo.confirmadas || 0} confirmados presentes`;
+  }
+
+  // 5. Total Arrecadado
+  const elFin = document.getElementById('dash-kpi-financeiro');
+  const elFinSub = document.getElementById('dash-kpi-financeiro-sub');
+  if (elFin) {
+    const arrecadado = parseFloat(financeiro.valor_arrecadado || 0);
+    elFin.textContent = arrecadado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  if (elFinSub) {
+    const pendente = parseFloat(financeiro.valor_pendente || 0);
+    elFinSub.textContent = `Pendente: ${pendente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`;
+  }
+}
+
+function renderizarGraficosDashboard(stats) {
+  if (!stats) return;
+
+  if (typeof Chart === 'undefined') {
+    setTimeout(() => renderizarGraficosDashboard(stats), 300);
+    return;
+  }
+
+  // Destruir gráficos anteriores para evitar sobreposição
+  destruirGraficosDashboard();
+
+  // Configurações globais padrão do Chart.js
+  Chart.defaults.font.family = "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+  Chart.defaults.color = '#64748B';
+
+  const pluginTooltip = {
+    backgroundColor: '#0F172A',
+    titleColor: '#F8FAFC',
+    bodyColor: '#F1F5F9',
+    titleFont: { size: 13, weight: '700' },
+    bodyFont: { size: 12 },
+    padding: 10,
+    cornerRadius: 8,
+    boxPadding: 4
+  };
+
+  // -------------------------------------------------------------
+  // 1. Gráfico Menores vs Maiores de 18 Anos (Donut)
+  // -------------------------------------------------------------
+  const ctxIdade = document.getElementById('chart-idade-menor-maior')?.getContext('2d');
+  if (ctxIdade) {
+    const menores = stats.idade?.menores_18 || 0;
+    const maiores = stats.idade?.maiores_18 || 0;
+    const naoInf = stats.idade?.nao_informada || 0;
+    const totalComIdade = menores + maiores;
+
+    const labels = ['Menores (<18)', 'Maiores (≥18)'];
+    const dataVals = [menores, maiores];
+    const bgColors = ['#F59E0B', '#1D4ED8'];
+    const hoverColors = ['#D97706', '#1E40AF'];
+
+    if (naoInf > 0) {
+      labels.push('Não informado');
+      dataVals.push(naoInf);
+      bgColors.push('#CBD5E1');
+      hoverColors.push('#94A3B8');
+    }
+
+    const totalTotal = dataVals.reduce((a, b) => a + b, 0);
+
+    chartInstances.idadeMenorMaior = new Chart(ctxIdade, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: totalTotal > 0 ? dataVals : [1],
+          backgroundColor: totalTotal > 0 ? bgColors : ['#E2E8F0'],
+          hoverBackgroundColor: totalTotal > 0 ? hoverColors : ['#CBD5E1'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: '600' } }
+          },
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              label: function(ctx) {
+                if (totalTotal === 0) return ' Nenhuma inscrição';
+                const val = ctx.raw;
+                const pct = totalTotal > 0 ? Math.round((val / totalTotal) * 100) : 0;
+                return ` ${ctx.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const footerIdade = document.getElementById('footer-idade-resumo');
+    if (footerIdade) {
+      if (totalComIdade > 0) {
+        const pctMen = Math.round((menores / totalComIdade) * 100);
+        const pctMai = Math.round((maiores / totalComIdade) * 100);
+        footerIdade.innerHTML = `
+          <span><strong>${menores} menores</strong> (${pctMen}%)</span>
+          <span><strong>${maiores} maiores</strong> (${pctMai}%)</span>
+        `;
+      } else {
+        footerIdade.innerHTML = `<span>Nenhuma data de nascimento informada.</span>`;
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 2. Gráfico Faixas Etárias (Barra Vertical)
+  // -------------------------------------------------------------
+  const ctxFaixas = document.getElementById('chart-faixas-etarias')?.getContext('2d');
+  if (ctxFaixas) {
+    const faixasObj = stats.idade?.faixas || {};
+    const labelsFaixas = ['< 18 anos', '18 a 21 anos', '22 a 25 anos', '26 a 30 anos', '31 a 40 anos', '40+ anos'];
+    const dataFaixas = labelsFaixas.map(l => faixasObj[l] || 0);
+
+    if ((faixasObj['Não informada'] || 0) > 0) {
+      labelsFaixas.push('Não inf.');
+      dataFaixas.push(faixasObj['Não informada']);
+    }
+
+    chartInstances.faixasEtarias = new Chart(ctxFaixas, {
+      type: 'bar',
+      data: {
+        labels: labelsFaixas,
+        datasets: [{
+          label: 'Inscritos',
+          data: dataFaixas,
+          backgroundColor: ['#F59E0B', '#3B82F6', '#1D4ED8', '#7C3AED', '#8B5CF6', '#10B981', '#94A3B8'],
+          borderRadius: 6,
+          maxBarThickness: 38
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: pluginTooltip
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            grid: { color: '#F1F5F9' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10 } }
+          }
+        }
+      }
+    });
+
+    const footerFaixas = document.getElementById('footer-faixas-resumo');
+    if (footerFaixas) {
+      const media = stats.idade?.media;
+      const minI = stats.idade?.minima;
+      const maxI = stats.idade?.maxima;
+      footerFaixas.innerHTML = `
+        <span>Média: <strong>${media ? media + ' anos' : '-'}</strong></span>
+        <span>Faixa: <strong>${minI !== null ? minI : '-'} a ${maxI !== null ? maxI : '-'} anos</strong></span>
+      `;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 3. Gráfico Distribuição por Sexo (Donut)
+  // -------------------------------------------------------------
+  const ctxSexo = document.getElementById('chart-sexo')?.getContext('2d');
+  if (ctxSexo) {
+    const sexoObj = stats.sexo || {};
+    const masc = sexoObj['Masculino'] || 0;
+    const fem = sexoObj['Feminino'] || 0;
+    const outro = sexoObj['Não informado'] || 0;
+
+    const labelsSexo = ['Masculino', 'Feminino'];
+    const dataSexo = [masc, fem];
+    const colorsSexo = ['#3B82F6', '#EC4899'];
+
+    if (outro > 0) {
+      labelsSexo.push('Não informado');
+      dataSexo.push(outro);
+      colorsSexo.push('#CBD5E1');
+    }
+
+    const totalSexo = dataSexo.reduce((a, b) => a + b, 0);
+
+    chartInstances.sexo = new Chart(ctxSexo, {
+      type: 'doughnut',
+      data: {
+        labels: labelsSexo,
+        datasets: [{
+          data: totalSexo > 0 ? dataSexo : [1],
+          backgroundColor: totalSexo > 0 ? colorsSexo : ['#E2E8F0'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: '600' } }
+          },
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              label: function(ctx) {
+                if (totalSexo === 0) return ' Nenhuma informação';
+                const val = ctx.raw;
+                const pct = totalSexo > 0 ? Math.round((val / totalSexo) * 100) : 0;
+                return ` ${ctx.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const footerSexo = document.getElementById('footer-sexo-resumo');
+    if (footerSexo) {
+      if (totalSexo > 0) {
+        const pctM = Math.round((masc / totalSexo) * 100);
+        const pctF = Math.round((fem / totalSexo) * 100);
+        footerSexo.innerHTML = `
+          <span>👨 <strong>${masc}</strong> (${pctM}%) Masculino</span>
+          <span>👩 <strong>${fem}</strong> (${pctF}%) Feminino</span>
+        `;
+      } else {
+        footerSexo.innerHTML = `<span>Dados de sexo não informados.</span>`;
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 4. Gráfico Estado Civil (Donut)
+  // -------------------------------------------------------------
+  const ctxEC = document.getElementById('chart-estado-civil')?.getContext('2d');
+  if (ctxEC) {
+    const ecObj = stats.estado_civil || {};
+    const labelsEC = Object.keys(ecObj);
+    const dataEC = labelsEC.map(k => ecObj[k]);
+    const paletteEC = ['#6366F1', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6', '#94A3B8'];
+
+    const totalEC = dataEC.reduce((a, b) => a + b, 0);
+
+    chartInstances.estadoCivil = new Chart(ctxEC, {
+      type: 'doughnut',
+      data: {
+        labels: labelsEC.length ? labelsEC : ['Sem dados'],
+        datasets: [{
+          data: totalEC > 0 ? dataEC : [1],
+          backgroundColor: totalEC > 0 ? paletteEC.slice(0, labelsEC.length) : ['#E2E8F0'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '66%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 10, font: { size: 11, weight: '600' } }
+          },
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              label: function(ctx) {
+                if (totalEC === 0) return ' Nenhuma informação';
+                const val = ctx.raw;
+                const pct = totalEC > 0 ? Math.round((val / totalEC) * 100) : 0;
+                return ` ${ctx.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const footerEC = document.getElementById('footer-estado-civil-resumo');
+    if (footerEC) {
+      const topEC = labelsEC.length ? labelsEC.reduce((a, b) => (ecObj[a] >= ecObj[b] ? a : b), labelsEC[0]) : null;
+      if (topEC && ecObj[topEC] > 0) {
+        footerEC.innerHTML = `<span>Perfil predominante: <strong>${topEC} (${ecObj[topEC]} inscritos)</strong></span>`;
+      } else {
+        footerEC.innerHTML = `<span>Dados de estado civil não informados.</span>`;
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 5. Gráfico Presbitérios (Barra Horizontal)
+  // -------------------------------------------------------------
+  const ctxPresb = document.getElementById('chart-presbiterios')?.getContext('2d');
+  if (ctxPresb) {
+    const presbLista = stats.presbiterios || [];
+    const topPresb = presbLista.slice(0, 10);
+    const labelsPresb = topPresb.map(p => p.nome || 'Não informado');
+    const dataPresb = topPresb.map(p => p.quantidade || 0);
+
+    chartInstances.presbiterios = new Chart(ctxPresb, {
+      type: 'bar',
+      data: {
+        labels: labelsPresb.length ? labelsPresb : ['Nenhum registro'],
+        datasets: [{
+          label: 'Inscritos',
+          data: dataPresb.length ? dataPresb : [0],
+          backgroundColor: '#0891B2',
+          borderRadius: 6,
+          maxBarThickness: 24
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: pluginTooltip
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            grid: { color: '#F1F5F9' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11, weight: '600' } }
+          }
+        }
+      }
+    });
+
+    const footerPresb = document.getElementById('footer-presbiterios-resumo');
+    if (footerPresb) {
+      footerPresb.innerHTML = `
+        <span>Total de presbitérios representados: <strong>${presbLista.length}</strong></span>
+        <span>Mais representado: <strong>${topPresb[0] ? topPresb[0].nome + ' (' + topPresb[0].quantidade + ')' : '-'}</strong></span>
+      `;
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 6. Gráfico Igrejas (Top 10 Horizontal Bar + Ranking Box)
+  // -------------------------------------------------------------
+  const ctxIgrejas = document.getElementById('chart-igrejas')?.getContext('2d');
+  const igrejasLista = stats.igrejas || [];
+  const top10Igrejas = igrejasLista.slice(0, 8);
+  const totalInscritosAnalisados = stats.total_analisado || 1;
+
+  if (ctxIgrejas) {
+    const labelsIgrejas = top10Igrejas.map(ig => {
+      const n = ig.nome || 'Não informada';
+      return n.length > 28 ? n.substring(0, 26) + '...' : n;
+    });
+    const dataIgrejas = top10Igrejas.map(ig => ig.quantidade || 0);
+
+    chartInstances.igrejas = new Chart(ctxIgrejas, {
+      type: 'bar',
+      data: {
+        labels: labelsIgrejas.length ? labelsIgrejas : ['Nenhuma igreja'],
+        datasets: [{
+          label: 'Inscritos',
+          data: dataIgrejas.length ? dataIgrejas : [0],
+          backgroundColor: '#10B981',
+          hoverBackgroundColor: '#059669',
+          borderRadius: 6,
+          maxBarThickness: 24
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: pluginTooltip
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            grid: { color: '#F1F5F9' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11, weight: '600' } }
+          }
+        }
+      }
+    });
+
+    const footerIgrejas = document.getElementById('footer-igrejas-resumo');
+    if (footerIgrejas) {
+      footerIgrejas.innerHTML = `
+        <span>Total de igrejas presentes: <strong>${igrejasLista.length}</strong></span>
+        <span>Maior delegação: <strong>${top10Igrejas[0] ? top10Igrejas[0].nome + ' (' + top10Igrejas[0].quantidade + ')' : '-'}</strong></span>
+      `;
+    }
+  }
+
+  // Preencher Ranking Box das Igrejas
+  const rankingList = document.getElementById('ranking-igrejas-list');
+  const rankingTotal = document.getElementById('ranking-igrejas-total');
+  if (rankingTotal) rankingTotal.textContent = `${igrejasLista.length} igrejas`;
+
+  if (rankingList) {
+    if (igrejasLista.length === 0) {
+      rankingList.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1.5rem 0;">Nenhuma igreja registrada.</div>`;
+    } else {
+      rankingList.innerHTML = igrejasLista.slice(0, 10).map((ig, idx) => {
+        const pos = idx + 1;
+        let posClass = 'ranking-pos-other';
+        if (pos === 1) posClass = 'ranking-pos-1';
+        else if (pos === 2) posClass = 'ranking-pos-2';
+        else if (pos === 3) posClass = 'ranking-pos-3';
+
+        const pct = Math.round((ig.quantidade / totalInscritosAnalisados) * 100);
+
+        return `
+          <div class="ranking-row">
+            <div style="display: flex; align-items: center; gap: 0.4rem; overflow: hidden;">
+              <span class="ranking-pos ${posClass}">${pos}</span>
+              <span style="font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px;" title="${ig.nome}">
+                ${ig.nome}
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <span class="badge" style="background: #DCFCE7; color: #15803D; font-weight: 700; font-size: 0.75rem;">
+                ${ig.quantidade}
+              </span>
+              <span style="font-size: 0.725rem; color: var(--text-muted); min-width: 32px; text-align: right;">
+                ${pct}%
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 7. Gráfico Tamanhos de Camiseta (Barra Vertical)
+  // -------------------------------------------------------------
+  const ctxCam = document.getElementById('chart-camisetas')?.getContext('2d');
+  if (ctxCam) {
+    const camObj = stats.camisetas || {};
+    const tamanhosPadrao = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG'];
+    const outrosTamanhos = Object.keys(camObj).filter(k => !tamanhosPadrao.includes(k));
+    const labelsCam = [...tamanhosPadrao, ...outrosTamanhos].filter(t => (camObj[t] || 0) > 0 || tamanhosPadrao.includes(t));
+    const dataCam = labelsCam.map(t => camObj[t] || 0);
+
+    const totalCam = dataCam.reduce((a, b) => a + b, 0);
+
+    chartInstances.camisetas = new Chart(ctxCam, {
+      type: 'bar',
+      data: {
+        labels: labelsCam,
+        datasets: [{
+          label: 'Camisetas',
+          data: dataCam,
+          backgroundColor: '#EAB308',
+          hoverBackgroundColor: '#CA8A04',
+          borderRadius: 6,
+          maxBarThickness: 32
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: pluginTooltip
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 },
+            grid: { color: '#F1F5F9' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { weight: '700' } }
+          }
+        }
+      }
+    });
+
+    const footerCam = document.getElementById('footer-camisetas-resumo');
+    if (footerCam) {
+      if (totalCam > 0) {
+        const topCam = labelsCam.reduce((a, b) => ((camObj[a] || 0) >= (camObj[b] || 0) ? a : b), labelsCam[0]);
+        footerCam.innerHTML = `
+          <span>Total de camisas solicitadas: <strong>${totalCam}</strong></span>
+          <span>Mais pedido: <strong>Tamanho ${topCam} (${camObj[topCam] || 0})</strong></span>
+        `;
+      } else {
+        footerCam.innerHTML = `<span>Nenhum tamanho informado nas inscrições.</span>`;
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 8. Gráfico Status Geral das Inscrições (Donut)
+  // -------------------------------------------------------------
+  const ctxStatus = document.getElementById('chart-status-inscricoes')?.getContext('2d');
+  if (ctxStatus) {
+    const statusResumo = stats.status_resumo || {};
+    const conf = statusResumo.confirmadas || 0;
+    const pend = statusResumo.pendentes || 0;
+    const canc = statusResumo.canceladas || 0;
+    const totalGeral = conf + pend + canc;
+
+    chartInstances.statusInscricoes = new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: ['Confirmadas', 'Pendentes', 'Canceladas'],
+        datasets: [{
+          data: totalGeral > 0 ? [conf, pend, canc] : [1],
+          backgroundColor: totalGeral > 0 ? ['#10B981', '#F59E0B', '#EF4444'] : ['#E2E8F0'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, padding: 12, font: { size: 11, weight: '600' } }
+          },
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              label: function(ctx) {
+                if (totalGeral === 0) return ' Nenhuma inscrição';
+                const val = ctx.raw;
+                const pct = totalGeral > 0 ? Math.round((val / totalGeral) * 100) : 0;
+                return ` ${ctx.label}: ${val} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const footerStatus = document.getElementById('footer-status-resumo');
+    if (footerStatus) {
+      const taxa = totalGeral > 0 ? Math.round((conf / totalGeral) * 100) : 0;
+      footerStatus.innerHTML = `
+        <span>Taxa de Confirmação: <strong>${taxa}%</strong></span>
+        <span>Aguardando Pagamento: <strong>${pend}</strong></span>
+      `;
+    }
+  }
+}
+
+window.imprimirResumoDashboard = function() {
+  if (!dashboardStatsData) {
+    if (typeof showToast === 'function') showToast("Carregando estatísticas...", "info");
+    return;
+  }
+
+  const s = dashboardStatsData;
+  const evTitulo = eventoAtual?.titulo || 'Evento';
+  const dataHoje = new Date().toLocaleDateString('pt-BR');
+  const horaHoje = new Date().toLocaleTimeString('pt-BR');
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Relatório Executivo - ${evTitulo}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 2rem; color: #1E293B; line-height: 1.5; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.25rem; color: #1D4ED8; font-weight: 800; }
+        .meta { font-size: 0.85rem; color: #64748B; margin-bottom: 1.75rem; border-bottom: 1px solid #E2E8F0; padding-bottom: 0.75rem; }
+        .grid-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+        .kpi-box { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0.85rem 1rem; }
+        .kpi-box-title { font-size: 0.72rem; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 0.05em; }
+        .kpi-box-val { font-size: 1.45rem; font-weight: 800; color: #0F172A; margin-top: 0.2rem; }
+        .section-title { font-size: 1.05rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.65rem; border-bottom: 2px solid #E2E8F0; padding-bottom: 0.35rem; color: #1E293B; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.85rem; }
+        th, td { border: 1px solid #E2E8F0; padding: 0.45rem 0.65rem; text-align: left; }
+        th { background: #F1F5F9; font-weight: 700; color: #334155; }
+        @media print { body { padding: 0.4cm; } button { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <div>
+          <h1>Relatório Executivo do Evento</h1>
+          <div style="font-size: 0.95rem; font-weight: 600; color: #334155;">${evTitulo}</div>
+        </div>
+        <button onclick="window.print()" style="padding: 0.5rem 1rem; background: #1D4ED8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Imprimir</button>
+      </div>
+      <div class="meta">
+        <strong>Data de Emissão:</strong> ${dataHoje} às ${horaHoje} &bull; <strong>Filtro Aplicado:</strong> ${s.status_filtro || 'TODAS'}
+      </div>
+
+      <div class="grid-kpis">
+        <div class="kpi-box">
+          <div class="kpi-box-title">Total Inscrições</div>
+          <div class="kpi-box-val">${s.total_analisado || 0}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">${s.status_resumo?.confirmadas || 0} confirmadas</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-box-title">Menores de 18 Anos</div>
+          <div class="kpi-box-val">${s.idade?.menores_18 || 0}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">${s.idade?.maiores_18 || 0} maiores de idade</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-box-title">Média de Idade</div>
+          <div class="kpi-box-val">${s.idade?.media ? s.idade.media + ' anos' : '-'}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">Mín: ${s.idade?.minima !== null ? s.idade.minima : '-'} | Máx: ${s.idade?.maxima !== null ? s.idade.maxima : '-'}</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-box-title">Total Arrecadado</div>
+          <div class="kpi-box-val" style="color: #059669;">${(s.financeiro?.valor_arrecadado || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+          <div style="font-size: 0.75rem; color: #64748B;">Pendente: ${(s.financeiro?.valor_pendente || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+        </div>
+      </div>
+
+      <div class="section-title">Demografia & Faixa Etária</div>
+      <table>
+        <thead>
+          <tr><th>Métrica</th><th>Quantidade</th><th>Proporção (%)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Participantes Masculinos</td><td>${s.sexo?.Masculino || 0}</td><td>${s.total_analisado ? Math.round(((s.sexo?.Masculino || 0) / s.total_analisado) * 100) : 0}%</td></tr>
+          <tr><td>Participantes Femininos</td><td>${s.sexo?.Feminino || 0}</td><td>${s.total_analisado ? Math.round(((s.sexo?.Feminino || 0) / s.total_analisado) * 100) : 0}%</td></tr>
+          <tr><td>Menores de 18 anos (&lt;18)</td><td>${s.idade?.menores_18 || 0}</td><td>${s.total_analisado ? Math.round(((s.idade?.menores_18 || 0) / s.total_analisado) * 100) : 0}%</td></tr>
+          <tr><td>Adultos (&ge;18)</td><td>${s.idade?.maiores_18 || 0}</td><td>${s.total_analisado ? Math.round(((s.idade?.maiores_18 || 0) / s.total_analisado) * 100) : 0}%</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">Ranking das Igrejas Representadas</div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Igreja</th><th>Inscritos</th><th>Percentual</th></tr>
+        </thead>
+        <tbody>
+          ${(s.igrejas || []).slice(0, 15).map((ig, i) => `
+            <tr>
+              <td><strong>${i + 1}º</strong></td>
+              <td>${ig.nome}</td>
+              <td><strong>${ig.quantidade}</strong></td>
+              <td>${s.total_analisado ? Math.round((ig.quantidade / s.total_analisado) * 100) : 0}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <div class="section-title">Presbitérios Representados</div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Presbitério</th><th>Inscritos</th></tr>
+        </thead>
+        <tbody>
+          ${(s.presbiterios || []).map((p, i) => `
+            <tr>
+              <td>${i + 1}º</td>
+              <td>${p.nome}</td>
+              <td><strong>${p.quantidade}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `);
+  win.document.close();
 };
