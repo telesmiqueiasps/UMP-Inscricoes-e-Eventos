@@ -1041,7 +1041,7 @@ function aplicarRestricoesPerfilAdmin(user) {
     }
   }
 
-  ['pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
+  ['dashboard', 'inscricoes', 'diarias', 'pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
     const btnTab = document.getElementById(`tab-btn-${abaRestrita}`);
     const paneTab = document.getElementById(`pane-${abaRestrita}`);
     if (!isGlobal) {

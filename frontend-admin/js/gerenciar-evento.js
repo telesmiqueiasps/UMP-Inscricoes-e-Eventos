@@ -69,12 +69,15 @@ function aplicarRestricoesPerfilNoEvento(user) {
     }
   });
 
-  // Ocultar abas restritas no gerenciar-evento para perfil secretaria
-  ['pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
+  // Ocultar abas restritas no gerenciar-evento para perfil secretaria (deixar apenas check-in)
+  ['dashboard', 'inscricoes', 'diarias', 'pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
     const btnTab = document.getElementById(`tab-btn-${abaRestrita}`);
     const paneTab = document.getElementById(`pane-${abaRestrita}`);
     if (!isGlobal) {
-      if (btnTab) btnTab.style.setProperty('display', 'none', 'important');
+      if (btnTab) {
+        btnTab.classList.remove('active');
+        btnTab.style.setProperty('display', 'none', 'important');
+      }
       if (paneTab) {
         paneTab.classList.remove('active');
         paneTab.style.setProperty('display', 'none', 'important');
@@ -84,6 +87,13 @@ function aplicarRestricoesPerfilNoEvento(user) {
       if (paneTab) paneTab.style.removeProperty('display');
     }
   });
+
+  if (!isGlobal) {
+    const btnCheckin = document.getElementById('tab-btn-checkin');
+    const paneCheckin = document.getElementById('pane-checkin');
+    if (btnCheckin) btnCheckin.classList.add('active');
+    if (paneCheckin) paneCheckin.classList.add('active');
+  }
 
   // Exibir badge do perfil na sidebar
   const brandSub = document.querySelector('.sidebar-brand');
@@ -133,32 +143,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Inicializar o carregamento
   await loadEventoInfo();
-  await loadInscricoes();
-  await carregarIgrejasFiltro();
-  await carregarDiaristas();
   if (isUsuarioAdminGlobal(user)) {
+    await loadInscricoes();
+    await carregarIgrejasFiltro();
+    await carregarDiaristas();
     await loadPagamentos();
   }
   await loadListaPresenca();
 
-  // Inicializar Dashboard
-  const initialTab = urlParams.get('tab');
-  const abasRestritasSecretaria = ['pagamentos', 'editar', 'excluir'];
-  if (initialTab && (isUsuarioAdminGlobal(user) || !abasRestritasSecretaria.includes(initialTab))) {
-    const targetBtn = document.getElementById(`tab-btn-${initialTab}`);
-    if (targetBtn) {
-      switchSubTab(`pane-${initialTab}`, targetBtn);
-    }
+  // Inicializar aba inicial conforme perfil
+  if (!isUsuarioAdminGlobal(user)) {
+    const btnCheckin = document.getElementById('tab-btn-checkin');
+    switchSubTab('pane-checkin', btnCheckin);
   } else {
-    // Tab ativa por padrão no HTML: Dashboard
-    carregarDashboardEvento();
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+      const targetBtn = document.getElementById(`tab-btn-${initialTab}`);
+      if (targetBtn) {
+        switchSubTab(`pane-${initialTab}`, targetBtn);
+      }
+    } else {
+      // Tab ativa por padrão no HTML para Admin Global: Dashboard
+      carregarDashboardEvento();
+    }
   }
 });
 
 // --- Tabs Switcher ---
 window.switchSubTab = function(tabId, btn) {
   const user = API.getUser();
-  if (!isUsuarioAdminGlobal(user) && ['pane-pagamentos', 'pane-editar', 'pane-excluir'].includes(tabId)) {
+  if (!isUsuarioAdminGlobal(user) && tabId !== 'pane-checkin') {
     return;
   }
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));

@@ -237,7 +237,7 @@ def listar_inscricoes_admin(
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=1000),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     query = db.query(Inscricao).join(Usuario).join(Evento)
 
@@ -276,7 +276,7 @@ def listar_inscricoes_admin(
 def listar_igrejas_evento(
     evento_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     inscricoes = db.query(Inscricao.dados_extras).filter(
         Inscricao.evento_id == evento_id,
@@ -313,7 +313,7 @@ def obter_dashboard_stats_evento(
     evento_id: int,
     status_filtro: Optional[str] = Query(None, description="Filtro opcional: CONFIRMADA, PENDENTE, CANCELADA"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     from datetime import date
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
@@ -605,7 +605,7 @@ def atualizar_status_inscricao_admin(
     background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, CONFIRMADA, CANCELADA"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     inscricao = db.query(Inscricao).filter(Inscricao.id == id).first()
     if not inscricao:
@@ -708,7 +708,7 @@ def atualizar_status_parcela_admin(
     background_tasks: BackgroundTasks,
     novo_status: str = Query(..., description="PENDENTE, PAGO, CANCELADO"),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     parcela = db.query(Parcela).filter(Parcela.id == id).first()
     if not parcela:
@@ -866,7 +866,7 @@ def listar_diarias_evento_admin(
     dia_filtro: Optional[str] = Query(None, alias="dia"),
     search: Optional[str] = Query(None),
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     query = db.query(InscricaoDiaria).join(Usuario).filter(InscricaoDiaria.evento_id == evento_id)
 
@@ -901,7 +901,7 @@ def atualizar_status_diaria_admin(
     diaria_id: int,
     req: DiariaUpdateStatus,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     diaria = db.query(InscricaoDiaria).filter(
         InscricaoDiaria.id == diaria_id,
@@ -921,7 +921,7 @@ def excluir_diaria_admin(
     evento_id: int,
     diaria_id: int,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     diaria = db.query(InscricaoDiaria).filter(
         InscricaoDiaria.id == diaria_id,
@@ -940,7 +940,7 @@ def atualizar_config_diarias_admin(
     evento_id: int,
     req: DiariaConfigUpdate,
     db: Session = Depends(get_db),
-    admin: Usuario = Depends(require_permissao("secretaria"))
+    admin: Usuario = Depends(require_admin_global)
 ):
     evento = db.query(Evento).filter(Evento.id == evento_id).first()
     if not evento:
