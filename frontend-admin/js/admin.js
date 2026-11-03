@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initConfiguracoes();
   } else if (document.getElementById('admin-gincana')) {
     initGincana();
+  } else if (document.getElementById('admin-cantina')) {
+    initCantina();
   }
 });
 
@@ -91,6 +93,8 @@ function promptAdminLogin() {
         const perfil = (res.user.perfil_acesso || 'global').toLowerCase().trim();
         if (perfil === 'gincana') {
           window.location.href = 'gincana.html';
+        } else if (perfil === 'cantina') {
+          window.location.href = 'cantina.html';
         } else {
           window.location.reload();
         }
@@ -922,7 +926,11 @@ window.deletarIgreja = async function(id) {
 };
 
 function initGincana() {
-  // Módulo Gincana (em desenvolvimento)
+  // Módulo Gincana
+}
+
+function initCantina() {
+  // Módulo Cantina (em desenvolvimento)
 }
 
 // ==============================================================
@@ -936,31 +944,48 @@ function aplicarRestricoesPerfilAdmin(user) {
   const path = window.location.pathname.toLowerCase();
 
   // 1. Adicionar classe no body para ativação de estilos CSS imediatos
-  document.body.classList.remove('perfil-admin-global', 'perfil-admin-gincana');
+  document.body.classList.remove(
+    'perfil-admin-global',
+    'perfil-admin-gincana',
+    'perfil-admin-cantina',
+    'perfil-admin-secretaria'
+  );
   document.body.classList.add(`perfil-admin-${perfil}`);
 
+  const permissoes = perfil.split(',').map(p => p.trim()).filter(Boolean);
+  const isGlobal = perfil === 'global' || permissoes.includes('global');
+
   const temPermissao = (modulo) => {
-    if (perfil === 'global') return true;
-    const permissoes = perfil.split(',').map(p => p.trim());
-    return permissoes.includes('global') || permissoes.includes(modulo);
+    if (isGlobal) return true;
+    const mod = modulo.toLowerCase();
+    if (permissoes.includes(mod)) return true;
+    if ((mod === 'eventos' || mod === 'secretaria') && permissoes.includes('secretaria')) return true;
+    return false;
   };
 
-  const apenasGincana = (perfil === 'gincana');
+  const obterPaginaInicialPerfil = () => {
+    if (temPermissao('eventos')) return 'index.html';
+    if (temPermissao('gincana')) return 'gincana.html';
+    if (temPermissao('cantina')) return 'cantina.html';
+    return 'index.html';
+  };
 
   // 2. Proteção de rota no lado do cliente: Redirecionar se acessar página não autorizada
-  if (apenasGincana) {
-    const emGincana = path.includes('gincana');
-    if (!emGincana) {
-      window.location.replace('gincana.html');
+  if (!isGlobal) {
+    if (path.includes('gincana') && !temPermissao('gincana')) {
+      window.location.replace(obterPaginaInicialPerfil());
       return;
     }
-  } else if (!temPermissao('global')) {
+    if (path.includes('cantina') && !temPermissao('cantina')) {
+      window.location.replace(obterPaginaInicialPerfil());
+      return;
+    }
     if (path.includes('configuracoes') && !temPermissao('configuracoes')) {
-      window.location.replace(temPermissao('gincana') ? 'gincana.html' : 'index.html');
+      window.location.replace(obterPaginaInicialPerfil());
       return;
     }
     if ((path.includes('index') || path.includes('gerenciar-evento') || path.endsWith('/admin/') || path.endsWith('/admin')) && !temPermissao('eventos')) {
-      window.location.replace(temPermissao('gincana') ? 'gincana.html' : 'index.html');
+      window.location.replace(obterPaginaInicialPerfil());
       return;
     }
   }
@@ -981,39 +1006,56 @@ function aplicarRestricoesPerfilAdmin(user) {
     const text = (link.textContent || '').toLowerCase();
 
     const isGincana = dataAba === 'gincana' || href.includes('gincana') || text.includes('gincana');
+    const isCantina = dataAba === 'cantina' || href.includes('cantina') || text.includes('cantina');
     const isEventos = dataAba === 'eventos' || href.includes('index') || text.includes('dashboard') || text.includes('evento');
     const isConfig = dataAba === 'configuracoes' || href.includes('configura') || text.includes('configura');
 
+    const toggleItem = (permitido) => {
+      if (!permitido) {
+        if (li) li.style.setProperty('display', 'none', 'important');
+        link.style.setProperty('display', 'none', 'important');
+      } else {
+        if (li) li.style.removeProperty('display');
+        link.style.removeProperty('display');
+      }
+    };
+
     if (isGincana) {
-      if (!temPermissao('gincana')) {
-        if (li) li.style.setProperty('display', 'none', 'important');
-        link.style.setProperty('display', 'none', 'important');
-      } else {
-        if (li) li.style.removeProperty('display');
-        link.style.removeProperty('display');
-      }
+      toggleItem(temPermissao('gincana'));
+    } else if (isCantina) {
+      toggleItem(temPermissao('cantina'));
     } else if (isEventos) {
-      if (apenasGincana || (!temPermissao('eventos') && !temPermissao('global'))) {
-        if (li) li.style.setProperty('display', 'none', 'important');
-        link.style.setProperty('display', 'none', 'important');
-      } else {
-        if (li) li.style.removeProperty('display');
-        link.style.removeProperty('display');
-      }
+      toggleItem(temPermissao('eventos'));
     } else if (isConfig) {
-      if (apenasGincana || (!temPermissao('configuracoes') && !temPermissao('global'))) {
-        if (li) li.style.setProperty('display', 'none', 'important');
-        link.style.setProperty('display', 'none', 'important');
-      } else {
-        if (li) li.style.removeProperty('display');
-        link.style.removeProperty('display');
-      }
+      toggleItem(temPermissao('configuracoes'));
     }
   });
 
-  // 4. Exibir badge do perfil no menu
+  // 4. Restrições específicas de elementos internos (ex: Secretaria não cria/edita/exclui evento nem vê Pagamentos)
+  const btnNovoEvento = document.getElementById('btn-novo-evento');
+  if (btnNovoEvento) {
+    if (!isGlobal) {
+      btnNovoEvento.style.setProperty('display', 'none', 'important');
+    } else {
+      btnNovoEvento.style.removeProperty('display');
+    }
+  }
+
+  ['pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
+    const btnTab = document.getElementById(`tab-btn-${abaRestrita}`);
+    const paneTab = document.getElementById(`pane-${abaRestrita}`);
+    if (!isGlobal) {
+      if (btnTab) btnTab.style.setProperty('display', 'none', 'important');
+      if (paneTab) paneTab.style.setProperty('display', 'none', 'important');
+    } else {
+      if (btnTab) btnTab.style.removeProperty('display');
+      if (paneTab) paneTab.style.removeProperty('display');
+    }
+  });
+
+  // 5. Exibir badge do perfil no menu
   const brandSub = document.querySelector('.sidebar-brand');
-  if (brandSub && perfil !== 'global') {
+  if (brandSub && !isGlobal) {
     let badge = document.getElementById('badge-perfil-sidebar');
     if (!badge) {
       badge = document.createElement('div');
@@ -1052,8 +1094,12 @@ async function loadAdministradores() {
       let badgePerfil = '';
       if (perfil === 'global') {
         badgePerfil = `<span class="badge" style="background: rgba(37,99,235,0.1); color: #2563EB; border: 1px solid rgba(37,99,235,0.25); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">🛡️ Admin Global</span>`;
+      } else if (perfil === 'secretaria') {
+        badgePerfil = `<span class="badge" style="background: rgba(13,148,136,0.12); color: #0D9488; border: 1px solid rgba(13,148,136,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">📋 Secretaria</span>`;
       } else if (perfil === 'gincana') {
         badgePerfil = `<span class="badge" style="background: rgba(245,158,11,0.12); color: #D97706; border: 1px solid rgba(245,158,11,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">🏆 Gincana</span>`;
+      } else if (perfil === 'cantina') {
+        badgePerfil = `<span class="badge" style="background: rgba(234,88,12,0.12); color: #EA580C; border: 1px solid rgba(234,88,12,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">🍔 Cantina</span>`;
       } else {
         badgePerfil = `<span class="badge" style="background: rgba(100,116,139,0.12); color: #475569; border: 1px solid rgba(100,116,139,0.3); font-weight: 700; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">⚙️ ${perfil.toUpperCase()}</span>`;
       }

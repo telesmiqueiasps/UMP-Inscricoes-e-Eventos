@@ -78,7 +78,8 @@ def tem_permissao_admin(usuario, modulo: str) -> bool:
     """
     Verifica se o usuário é administrador e possui acesso ao módulo especificado.
     - Se perfil_acesso for 'global', tem acesso a todas as abas.
-    - Se perfil_acesso contiver o nome do módulo (ex: 'gincana'), tem acesso.
+    - Se perfil_acesso contiver o nome do módulo (ex: 'gincana', 'cantina', 'secretaria'), tem acesso.
+    - O perfil 'secretaria' também concede permissão para rotas marcadas como 'eventos' ou 'secretaria'.
     """
     if not usuario or not getattr(usuario, "is_admin", False):
         return False
@@ -86,7 +87,14 @@ def tem_permissao_admin(usuario, modulo: str) -> bool:
     if perfil == "global":
         return True
     permissoes = [p.strip() for p in perfil.split(",") if p.strip()]
-    return modulo.lower() in permissoes or "global" in permissoes
+    if "global" in permissoes:
+        return True
+    mod = modulo.lower()
+    if mod in permissoes:
+        return True
+    if mod in ("eventos", "secretaria") and "secretaria" in permissoes:
+        return True
+    return False
 
 
 def require_permissao(modulo: str):

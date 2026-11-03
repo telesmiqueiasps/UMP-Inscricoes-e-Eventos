@@ -1010,3 +1010,30 @@ body.perfil-admin-gincana .sidebar-link[href*="configuracoes.html"] {
   }
 }
 
+
+
+/* Restrições Visuais por Perfil de Acesso Administrativo */
+body.perfil-admin-gincana .sidebar-menu li[data-aba="eventos"],
+body.perfil-admin-gincana .sidebar-menu li[data-aba="cantina"],
+body.perfil-admin-gincana .sidebar-menu li[data-aba="configuracoes"] {
+  display: none !important;
+}
+
+body.perfil-admin-cantina .sidebar-menu li[data-aba="eventos"],
+body.perfil-admin-cantina .sidebar-menu li[data-aba="gincana"],
+body.perfil-admin-cantina .sidebar-menu li[data-aba="configuracoes"] {
+  display: none !important;
+}
+
+body.perfil-admin-secretaria .sidebar-menu li[data-aba="gincana"],
+body.perfil-admin-secretaria .sidebar-menu li[data-aba="cantina"],
+body.perfil-admin-secretaria .sidebar-menu li[data-aba="configuracoes"],
+body.perfil-admin-secretaria #btn-novo-evento,
+body.perfil-admin-secretaria #tab-btn-pagamentos,
+body.perfil-admin-secretaria #tab-btn-editar,
+body.perfil-admin-secretaria #tab-btn-excluir,
+body.perfil-admin-secretaria #pane-pagamentos,
+body.perfil-admin-secretaria #pane-editar,
+body.perfil-admin-secretaria #pane-excluir {
+  display: none !important;
+}

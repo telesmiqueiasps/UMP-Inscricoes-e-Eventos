@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cantina - Admin UMP Eventos</title>
+  <link class="icon-link" rel="icon" href="img/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .cantina-dev-hero {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 85% 15%, rgba(0, 184, 148, 0.18) 0%, transparent 45%),
+                  radial-gradient(circle at 15% 85%, rgba(255, 121, 0, 0.16) 0%, transparent 50%),
+                  linear-gradient(145deg, #001E21 0%, #00363A 55%, #004C50 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 3.5rem 2rem;
+      color: #FFFFFF;
+      box-shadow: 0 20px 45px -15px rgba(0, 30, 33, 0.45),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .cantina-dev-mesh {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      opacity: 0.65;
+    }
+
+    .card-bracket {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      border-color: rgba(255, 183, 3, 0.55);
+      border-style: solid;
+    }
+    .card-bracket.tl { top: 14px; left: 14px; border-width: 2px 0 0 2px; }
+    .card-bracket.tr { top: 14px; right: 14px; border-width: 2px 2px 0 0; }
+    .card-bracket.bl { bottom: 14px; left: 14px; border-width: 0 0 2px 2px; }
+    .card-bracket.br { bottom: 14px; right: 14px; border-width: 0 2px 2px 0; }
+
+    .cantina-icon-badge {
+      position: relative;
+      z-index: 1;
+      width: 76px;
+      height: 76px;
+      border-radius: 20px;
+      background: rgba(255, 121, 0, 0.14);
+      border: 1px solid rgba(255, 121, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FF7900;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 25px rgba(255, 121, 0, 0.2);
+    }
+
+    .cantina-status-pill {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      background: rgba(0, 184, 148, 0.16);
+      border: 1px solid rgba(0, 184, 148, 0.4);
+      color: #FFD166;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .cantina-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #FF7900;
+      box-shadow: 0 0 10px #FF7900;
+    }
+
+    .cantina-dev-title {
+      position: relative;
+      z-index: 1;
+      font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 0 0 0.75rem 0;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .cantina-dev-desc {
+      position: relative;
+      z-index: 1;
+      max-width: 540px;
+      color: #CBD5E1;
+      font-size: 0.98rem;
+      line-height: 1.65;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-layout" id="admin-cantina">
+    
+    <!-- Sidebar / Topbar Mobile -->
+    <aside class="sidebar">
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li data-aba="eventos">
+          <a href="index.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard & Eventos</span>
+          </a>
+        </li>
+        <li data-aba="gincana">
+          <a href="gincana.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            <span>Gincana</span>
+          </a>
+        </li>
+        <li data-aba="cantina">
+          <a href="cantina.html" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Cantina</span>
+          </a>
+        </li>
+        <li data-aba="configuracoes">
+          <a href="configuracoes.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div class="top-header">
+        <div>
+          <h1 class="welcome-title">Cantina</h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Gestão de produtos, pedidos e ponto de venda dos eventos</p>
+        </div>
+      </div>
+
+      <section class="cantina-dev-hero">
+        <div class="cantina-dev-mesh"></div>
+        <span class="card-bracket tl"></span>
+        <span class="card-bracket tr"></span>
+        <span class="card-bracket bl"></span>
+        <span class="card-bracket br"></span>
+
+        <div class="cantina-icon-badge">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+
+        <div class="cantina-status-pill">
+          <span class="cantina-status-dot"></span>
+          <span>Módulo em Desenvolvimento</span>
+        </div>
+
+        <h2 class="cantina-dev-title">Aba de Cantina em Construção</h2>
+        <p class="cantina-dev-desc">
+          Esta área está em desenvolvimento e em breve contará com ferramentas completas para controle de cardápio, vendas, fichas e fechamento de caixa da cantina.
+        </p>
+      </section>
+
+      <!-- Footer -->
+      <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+        <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- Modal Admin Login -->
+  <div class="modal" id="login-modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="img/logo.png" alt="Logo UMP" style="height: 48px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
+        <h3 style="font-size: 1.35rem; font-weight: 800; margin: 0; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">Login Administrativo</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Painel de gestão de eventos e inscrições</p>
+      </div>
+      
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label class="form-label">E-mail Admin</label>
+          <input type="email" id="admin-email" class="form-control" required placeholder="admin@ump.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" id="admin-senha" class="form-control" required placeholder="******">
+        </div>
+        <div id="admin-login-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+
+        <button type="submit" id="admin-login-submit-btn" class="btn btn-primary" style="width: 100%; height: 44px;">
+          Entrar no Painel
+        </button>
+        
+        <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+          <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; height: 42px;" onclick="window.location.href='/'">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>Voltar para o Site Público</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
+

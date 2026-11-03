@@ -33,6 +33,12 @@
             <span>Gincana</span>
           </a>
         </li>
+        <li data-aba="cantina">
+          <a href="cantina.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Cantina</span>
+          </a>
+        </li>
         <li data-aba="configuracoes">
           <a href="configuracoes.html" class="sidebar-link active">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -192,7 +198,7 @@
               <span>Administradores & Perfis de Acesso</span>
             </h3>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0;">
-              Controle quem tem acesso ao painel administrativo e configure suas permissões por módulo (ex: Global ou apenas Gincana).
+              Controle quem tem acesso ao painel administrativo e configure suas permissões por módulo (Global, Secretaria, Gincana ou Cantina).
             </p>
           </div>
           <button type="button" class="btn btn-primary" onclick="abrirModalNovoAdmin()" style="height: 40px; display: inline-flex; align-items: center; gap: 0.4rem;">
@@ -204,73 +210,24 @@
         </div>
 
         <!-- Banner Explicativo dos Perfis -->
-        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.82rem;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2563EB;"></span>
-            <span><strong>Global:</strong> Acesso total a todas as abas (Dashboard, Eventos, Configurações, Gincana)</span>
+        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.85rem 1.5rem; font-size: 0.82rem;">
+          <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #2563EB; margin-top: 0.25rem; flex-shrink: 0;"></span>
+            <span><strong>Global:</strong> Acesso total a todas as abas (Dashboard, Eventos, Gincana, Cantina e Configurações)</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #F59E0B;"></span>
-            <span><strong>Gincana:</strong> Acesso exclusivo à aba de Gincana (sem acesso aos dados de eventos, finanças e configurações)</span>
+          <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0D9488; margin-top: 0.25rem; flex-shrink: 0;"></span>
+            <span><strong>Secretaria:</strong> Acesso aos eventos (abas Dashboard, Inscrições, Diárias e Check-in)</span>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #F59E0B; margin-top: 0.25rem; flex-shrink: 0;"></span>
+            <span><strong>Gincana:</strong> Acesso exclusivo à aba de Gincana</span>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 0.5rem;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EA580C; margin-top: 0.25rem; flex-shrink: 0;"></span>
+            <span><strong>Cantina:</strong> Acesso exclusivo à aba de Cantina</span>
           </div>
         </div>
-
-        <!-- Tabela de Administradores -->
-        <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: 8px;">
-          <table style="margin-bottom: 0;">
-            <thead>
-              <tr>
-                <th>Administrador</th>
-                <th>E-mail</th>
-                <th>Telefone / CPF</th>
-                <th>Perfil de Acesso</th>
-                <th style="width: 170px; text-align: right;">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="admins-table-body">
-              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Carregando administradores...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
-        <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
-      </footer>
-
-    </main>
-
-  </div>
-
-  <!-- Modal Editar Perfil de Administrador -->
-  <div class="modal" id="modal-editar-perfil" style="display: none;">
-    <div class="modal-content" style="max-width: 440px;">
-      <button type="button" class="modal-close" onclick="fecharModalEditarPerfil()">&times;</button>
-      <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Editar Perfil de Acesso</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-        Administrador: <strong id="modal-editar-nome-admin" style="color: var(--text-main);">...</strong>
-      </p>
-
-      <input type="hidden" id="modal-editar-usuario-id">
-
-      <div class="form-group">
-        <label class="form-label" style="font-weight: 600;">Selecione o Perfil de Permissões</label>
-        <select id="modal-editar-select-perfil" class="form-control" style="height: 42px;">
-          <option value="global">🛡️ Admin Global (Acesso Completo)</option>
-          <option value="gincana">🏆 Gincana (Acesso apenas à aba Gincana)</option>
-        </select>
-        <small style="color: var(--text-muted); display: block; margin-top: 0.4rem; font-size: 0.78rem;">
-          Define quais módulos e telas este usuário poderá visualizar e gerenciar no sistema.
-        </small>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem;">
-        <button type="button" class="btn btn-outline" onclick="fecharModalEditarPerfil()">Cancelar</button>
-        <button type="button" class="btn btn-primary" onclick="salvarPerfilAdmin()">Salvar Alterações</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Modal Adicionar Novo Administrador -->
   <div class="modal" id="modal-novo-admin" style="display: none;">
@@ -303,7 +260,9 @@
         <label class="form-label" style="font-weight: 600;">Perfil de Acesso Desejado</label>
         <select id="novo-admin-select-perfil" class="form-control" style="height: 42px;">
           <option value="global">🛡️ Admin Global (Acesso Completo)</option>
+          <option value="secretaria">📋 Secretaria (Dashboard, Inscrições, Diárias e Check-in)</option>
           <option value="gincana">🏆 Gincana (Acesso apenas à aba Gincana)</option>
+          <option value="cantina">🍔 Cantina (Acesso apenas à aba Cantina)</option>
         </select>
       </div>
 

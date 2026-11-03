@@ -14,12 +14,112 @@ window.execEditorCommand = function(command, arg = null) {
   document.getElementById('ev-descricao-editor').focus();
 };
 
+window.logoutAdmin = function() {
+  API.removeToken();
+  window.location.href = 'index.html';
+};
+
+function isUsuarioAdminGlobal(user) {
+  if (!user || !user.is_admin) return false;
+  const perfil = String(user.perfil_acesso || 'global').toLowerCase().trim();
+  const permissoes = perfil.split(',').map(p => p.trim()).filter(Boolean);
+  return perfil === 'global' || permissoes.includes('global');
+}
+
+function aplicarRestricoesPerfilNoEvento(user) {
+  if (!user || !user.is_admin) return false;
+  const perfil = String(user.perfil_acesso || 'global').toLowerCase().trim();
+  const permissoes = perfil.split(',').map(p => p.trim()).filter(Boolean);
+  const isGlobal = isUsuarioAdminGlobal(user);
+
+  document.body.classList.remove(
+    'perfil-admin-global',
+    'perfil-admin-gincana',
+    'perfil-admin-cantina',
+    'perfil-admin-secretaria'
+  );
+  document.body.classList.add(`perfil-admin-${perfil}`);
+
+  const temEventos = isGlobal || permissoes.includes('eventos') || permissoes.includes('secretaria');
+  if (!temEventos) {
+    if (permissoes.includes('gincana')) {
+      window.location.replace('gincana.html');
+    } else if (permissoes.includes('cantina')) {
+      window.location.replace('cantina.html');
+    } else {
+      window.location.replace('index.html');
+    }
+    return false;
+  }
+
+  // Ocultar itens da sidebar não permitidos
+  document.querySelectorAll('.sidebar-menu li').forEach(li => {
+    const aba = li.getAttribute('data-aba');
+    if (!aba) return;
+    let permitido = isGlobal;
+    if (aba === 'eventos') permitido = temEventos;
+    else if (aba === 'gincana') permitido = isGlobal || permissoes.includes('gincana');
+    else if (aba === 'cantina') permitido = isGlobal || permissoes.includes('cantina');
+    else if (aba === 'configuracoes') permitido = isGlobal || permissoes.includes('configuracoes');
+
+    if (!permitido) {
+      li.style.setProperty('display', 'none', 'important');
+    } else {
+      li.style.removeProperty('display');
+    }
+  });
+
+  // Ocultar abas restritas no gerenciar-evento para perfil secretaria
+  ['pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
+    const btnTab = document.getElementById(`tab-btn-${abaRestrita}`);
+    const paneTab = document.getElementById(`pane-${abaRestrita}`);
+    if (!isGlobal) {
+      if (btnTab) btnTab.style.setProperty('display', 'none', 'important');
+      if (paneTab) {
+        paneTab.classList.remove('active');
+        paneTab.style.setProperty('display', 'none', 'important');
+      }
+    } else {
+      if (btnTab) btnTab.style.removeProperty('display');
+      if (paneTab) paneTab.style.removeProperty('display');
+    }
+  });
+
+  // Exibir badge do perfil na sidebar
+  const brandSub = document.querySelector('.sidebar-brand');
+  if (brandSub && !isGlobal) {
+    let badge = document.getElementById('badge-perfil-sidebar');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'badge-perfil-sidebar';
+      brandSub.appendChild(badge);
+    }
+    badge.style.cssText = 'font-size: 0.68rem; color: #F59E0B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; display: block;';
+    badge.textContent = `Acesso: ${perfil.toUpperCase()}`;
+  }
+
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const token = API.getToken();
-  const user = API.getUser();
+  let user = API.getUser();
   if (!token || !user || !user.is_admin) {
     window.location.href = 'index.html';
     return;
+  }
+
+  if (!aplicarRestricoesPerfilNoEvento(user)) return;
+
+  try {
+    const me = await API.request('/auth/me');
+    if (me && me.is_admin) {
+      API.setUser(me);
+      user = me;
+      if (!aplicarRestricoesPerfilNoEvento(user)) return;
+    }
+  } catch (err) {
+    console.warn('Não foi possível sincronizar perfil do usuário:', err);
   }
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -36,12 +136,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadInscricoes();
   await carregarIgrejasFiltro();
   await carregarDiaristas();
-  await loadPagamentos();
+  if (isUsuarioAdminGlobal(user)) {
+    await loadPagamentos();
+  }
   await loadListaPresenca();
 
   // Inicializar Dashboard
   const initialTab = urlParams.get('tab');
-  if (initialTab) {
+  const abasRestritasSecretaria = ['pagamentos', 'editar', 'excluir'];
+  if (initialTab && (isUsuarioAdminGlobal(user) || !abasRestritasSecretaria.includes(initialTab))) {
     const targetBtn = document.getElementById(`tab-btn-${initialTab}`);
     if (targetBtn) {
       switchSubTab(`pane-${initialTab}`, targetBtn);
@@ -54,6 +157,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // --- Tabs Switcher ---
 window.switchSubTab = function(tabId, btn) {
+  const user = API.getUser();
+  if (!isUsuarioAdminGlobal(user) && ['pane-pagamentos', 'pane-editar', 'pane-excluir'].includes(tabId)) {
+    return;
+  }
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   
