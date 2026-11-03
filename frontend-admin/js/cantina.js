@@ -9,6 +9,20 @@ let configCantina = {
 let dadosFinanceirosCache = null;
 let vendasHistoricoCache = [];
 
+// Ícones SVG Reutilizáveis (Zero Emojis)
+const SVG_ICONS = {
+  produtoFallback: `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+  produtoThumb: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+  imagemPreview: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`,
+  alerta: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  checkCircle: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  editar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`,
+  excluir: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+  pix: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></svg>`,
+  dinheiro: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></svg>`,
+  cartao: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`
+};
+
 function formatBRL(val) {
   const num = Number(val || 0);
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -165,6 +179,18 @@ window.filtrarCategoriaPDV = function(cat) {
   renderizarVitrinePDV();
 };
 
+window.substituirImgPorSvgFallback = function(imgEl) {
+  if (!imgEl || !imgEl.parentElement) return;
+  imgEl.style.display = 'none';
+  if (!imgEl.parentElement.querySelector('.svg-fallback-icon')) {
+    const span = document.createElement('span');
+    span.className = 'svg-fallback-icon';
+    span.style.display = 'inline-flex';
+    span.innerHTML = SVG_ICONS.produtoFallback;
+    imgEl.parentElement.appendChild(span);
+  }
+};
+
 window.renderizarVitrinePDV = function() {
   const grid = document.getElementById('pdv-products-grid');
   if (!grid) return;
@@ -181,7 +207,7 @@ window.renderizarVitrinePDV = function() {
   if (filtrados.length === 0) {
     grid.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: #FFFFFF; border-radius: 14px; border: 1px dashed var(--border-color);">
-        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🍔</div>
+        <div style="color: #64748B; margin-bottom: 0.65rem; display: flex; justify-content: center;">${SVG_ICONS.produtoFallback}</div>
         <strong style="display: block; color: var(--text-main); margin-bottom: 0.25rem;">Nenhum produto encontrado</strong>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Cadastre produtos na cantina para iniciar as vendas no PDV.</p>
         <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalProduto()">+ Cadastrar Primeiro Produto</button>
@@ -193,7 +219,6 @@ window.renderizarVitrinePDV = function() {
   grid.innerHTML = filtrados.map(p => {
     const qtdNoCarrinho = carrinhoPDV[p.id] || 0;
     const estoqueTotal = Number(p.quantidade_estoque || 0);
-    const disponivelRestante = Math.max(0, estoqueTotal - qtdNoCarrinho);
     const esgotado = estoqueTotal <= 0;
 
     let stockClass = 'pdv-stock-ok';
@@ -207,8 +232,8 @@ window.renderizarVitrinePDV = function() {
     }
 
     const imgHtml = p.imagem_url
-      ? `<img src="${escapeHtml(p.imagem_url)}" alt="${escapeHtml(p.nome)}" onerror="this.style.display='none'; this.parentElement.insertAdjacentHTML('beforeend', '<span style=\\'font-size:2.2rem;\\'>🥤</span>');">`
-      : `<span style="font-size: 2.2rem;">🍔</span>`;
+      ? `<img src="${escapeHtml(p.imagem_url)}" alt="${escapeHtml(p.nome)}" onerror="substituirImgPorSvgFallback(this)">`
+      : `<span class="svg-fallback-icon" style="display:inline-flex;">${SVG_ICONS.produtoFallback}</span>`;
 
     return `
       <div class="pdv-product-card ${esgotado ? 'esgotado' : ''} ${qtdNoCarrinho > 0 ? 'in-cart' : ''}"
@@ -461,10 +486,10 @@ window.finalizarVendaPDV = async function() {
   };
 
   const btn = document.getElementById('btn-finalizar-venda');
-  const originalText = btn ? btn.innerHTML : '✅ Finalizar Venda';
+  const originalText = btn ? btn.innerHTML : `${SVG_ICONS.checkCircle}<span>Finalizar Venda</span>`;
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '⏳ Registrando venda...';
+    btn.innerHTML = `<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></span><span>Registrando venda...</span>`;
   }
 
   try {
@@ -535,7 +560,7 @@ window.renderizarTabelaEstoque = function() {
 
     const imgThumb = p.imagem_url
       ? `<img src="${escapeHtml(p.imagem_url)}" style="width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);" onerror="this.style.display='none'">`
-      : `<div style="width: 38px; height: 38px; border-radius: 8px; background: #F1F5F9; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">🍔</div>`;
+      : `<div style="width: 38px; height: 38px; border-radius: 8px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center;">${SVG_ICONS.produtoThumb}</div>`;
 
     return `
       <tr>
@@ -566,8 +591,13 @@ window.renderizarTabelaEstoque = function() {
           ${lucroUnit >= 0 ? '+' : ''}${formatBRL(lucroUnit)}
         </td>
         <td style="text-align: right; white-space: nowrap;">
-          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;" onclick="abrirModalEditarProduto(${p.id})">✏️ Editar</button>
-          <button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.78rem;" onclick="excluirProdutoCantina(${p.id})">🗑️</button>
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 0.3rem;" onclick="abrirModalEditarProduto(${p.id})">
+            ${SVG_ICONS.editar}
+            <span>Editar</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.78rem; display: inline-flex; align-items: center;" title="Excluir produto" onclick="excluirProdutoCantina(${p.id})">
+            ${SVG_ICONS.excluir}
+          </button>
         </td>
       </tr>
     `;
@@ -625,17 +655,22 @@ window.fecharModalProduto = function() {
   document.getElementById('modal-produto-cantina').style.display = 'none';
 };
 
+window.mostrarErroPreviewImg = function(imgEl) {
+  if (!imgEl || !imgEl.parentElement) return;
+  imgEl.parentElement.innerHTML = SVG_ICONS.alerta;
+};
+
 window.atualizarPreviewImagemProduto = function() {
   const url = (document.getElementById('prod-imagem-url')?.value || '').trim();
   const box = document.getElementById('prod-img-preview-box');
   if (!box) return;
 
   if (!url) {
-    box.innerHTML = `<span style="font-size: 1.2rem;">🍔</span>`;
+    box.innerHTML = SVG_ICONS.imagemPreview;
     return;
   }
 
-  box.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='<span style=\\'font-size:1.2rem;\\'>⚠️</span>'">`;
+  box.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="mostrarErroPreviewImg(this)">`;
 };
 
 // Quando digita Custo ou Margem (%), sugere e preenche o Preço de Venda automaticamente
@@ -784,7 +819,7 @@ function renderizarDashboardFinanceiro(data) {
     tituloStatus.textContent = 'Aguardando movimentação da cantina';
     valorBreakeven.textContent = 'Sem custos/vendas registrados';
   } else if (r.saldo_sobre_investimento_total >= 0) {
-    tituloStatus.textContent = `🎉 Ponto de Equilíbrio Atingido! Lucro Líquido no Caixa: ${formatBRL(r.lucro_caixa_apos_estoque)}`;
+    tituloStatus.textContent = `Ponto de Equilíbrio Atingido — Lucro Líquido no Caixa: ${formatBRL(r.lucro_caixa_apos_estoque)}`;
     valorBreakeven.textContent = `Estoque 100% pago + ${formatBRL(r.lucro_caixa_apos_estoque)} de lucro livre`;
     valorBreakeven.style.color = '#34D399';
   } else {
@@ -864,16 +899,16 @@ window.carregarHistoricoVendasCantina = async function() {
       const vendaVal = Number(v.valor_subtotal || 0);
       const lucro = vendaVal - custo;
 
-      let badgePag = `<span class="badge badge-success">💠 PIX</span>`;
+      let badgePag = `<span class="badge badge-success">${SVG_ICONS.pix}PIX</span>`;
       let detalheCobrado = formatBRL(v.valor_total_cobrado);
 
       if (v.forma_pagamento === 'DINHEIRO') {
-        badgePag = `<span class="badge badge-warning">💵 Dinheiro</span>`;
+        badgePag = `<span class="badge badge-warning">${SVG_ICONS.dinheiro}Dinheiro</span>`;
         if (Number(v.valor_troco || 0) > 0) {
           detalheCobrado = `Rec: ${formatBRL(v.valor_recebido_dinheiro)}<br><small style="color:#059669;">Troco: ${formatBRL(v.valor_troco)}</small>`;
         }
       } else if (v.forma_pagamento === 'CARTAO') {
-        badgePag = `<span class="badge" style="background:#EFF6FF; color:#2563EB;">💳 Cartão (${Number(v.taxa_cartao_percentual || 0).toFixed(2).replace('.', ',')}%)</span>`;
+        badgePag = `<span class="badge" style="background:#EFF6FF; color:#2563EB;">${SVG_ICONS.cartao}Cartão (${Number(v.taxa_cartao_percentual || 0).toFixed(2).replace('.', ',')}%)</span>`;
         detalheCobrado = `<strong>${formatBRL(v.valor_total_cobrado)}</strong><br><small style="color:var(--text-muted);">Taxa: +${formatBRL(v.valor_taxa_cartao)}</small>`;
       }
 
@@ -1163,4 +1198,3 @@ window.imprimirRelatorioFinanceiroCantina = function() {
     win.print();
   }, 400);
 };
-

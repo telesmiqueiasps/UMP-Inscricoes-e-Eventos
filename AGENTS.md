@@ -4,6 +4,7 @@ Este repositório segue padrões de design de alta fidelidade visual para afasta
 
 ## 1. Princípios de Estética Visual (Anti-"Cara de IA")
 - **Evitar o modo padrão genérico**: Não crie cartões brancos/cinzas com cantos puramente arredondados e sombras simples, botões azuis genéricos ou tabelas sem personalidade.
+- **Zero Emojis (Apenas Ícones SVG)**: Nunca utilize emojis em títulos, botões, badges, placeholders ou estados vazios da interface. Utilize exclusivamente ícones SVG vetoriais limpos e consistentes.
 - **Identidade Temática & Textura**:
   - Incorpore detalhes visuais tangíveis: texturas sutis (malha esportiva/mesh, gradientes radiais profundos, micro-ruídos ou padrões de linhas de velocidade).
   - Cantoneiras esportivas/táticas HUD (`.card-bracket`), chanfros e detalhes de borda translúcida (`border: 1px solid rgba(255,255,255,0.12)`).
