@@ -5,6 +5,43 @@ from datetime import datetime
 from app.core.database import Base
 
 
+class CantinaCaixa(Base):
+    __tablename__ = "cantina_caixas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    data_referencia = Column(String(30), nullable=False)  # Ex: "2026-11-03" ou "03/11/2026"
+    descricao = Column(String(150), nullable=True)        # Ex: "1º Dia - Sexta-feira"
+    valor_inicial = Column(Numeric(10, 2), nullable=False, default=0.00)
+    valor_fechamento_informado = Column(Numeric(10, 2), nullable=True)
+    observacao_abertura = Column(Text, nullable=True)
+    observacao_fechamento = Column(Text, nullable=True)
+    status = Column(String(30), nullable=False, default="ABERTO")  # ABERTO, FECHADO
+    aberto_por_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    aberto_por_nome = Column(String(150), nullable=True)
+    fechado_por_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    fechado_por_nome = Column(String(150), nullable=True)
+    opened_at = Column(DateTime, default=datetime.utcnow)
+    closed_at = Column(DateTime, nullable=True)
+
+    vendas = relationship("CantinaVenda", back_populates="caixa")
+    movimentacoes = relationship("CantinaCaixaMovimentacao", back_populates="caixa", cascade="all, delete-orphan")
+
+
+class CantinaCaixaMovimentacao(Base):
+    __tablename__ = "cantina_caixa_movimentacoes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    caixa_id = Column(Integer, ForeignKey("cantina_caixas.id", ondelete="CASCADE"), nullable=False, index=True)
+    tipo = Column(String(30), nullable=False)  # SUPRIMENTO (entrada extra no caixa) ou SANGRIA (retirada/despesa)
+    valor = Column(Numeric(10, 2), nullable=False, default=0.00)
+    motivo = Column(String(200), nullable=False)
+    operador_id = Column(Integer, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
+    operador_nome = Column(String(150), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    caixa = relationship("CantinaCaixa", back_populates="movimentacoes")
+
+
 class CantinaProduto(Base):
     __tablename__ = "cantina_produtos"
 
@@ -27,6 +64,7 @@ class CantinaVenda(Base):
     __tablename__ = "cantina_vendas"
 
     id = Column(Integer, primary_key=True, index=True)
+    caixa_id = Column(Integer, ForeignKey("cantina_caixas.id", ondelete="SET NULL"), nullable=True, index=True)
     forma_pagamento = Column(String(40), nullable=False)  # PIX, DINHEIRO, CARTAO
     valor_custo_total = Column(Numeric(10, 2), nullable=False, default=0.00)
     valor_subtotal = Column(Numeric(10, 2), nullable=False, default=0.00)
@@ -42,6 +80,7 @@ class CantinaVenda(Base):
     status = Column(String(30), nullable=False, default="CONCLUIDA")  # CONCLUIDA, CANCELADA
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    caixa = relationship("CantinaCaixa", back_populates="vendas")
     itens = relationship("CantinaVendaItem", back_populates="venda", cascade="all, delete-orphan")
 
 
@@ -60,4 +99,3 @@ class CantinaVendaItem(Base):
 
     venda = relationship("CantinaVenda", back_populates="itens")
     produto = relationship("CantinaProduto", back_populates="itens_venda")
-

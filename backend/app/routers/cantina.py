@@ -1,14 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import text
 from typing import List, Optional
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.security import require_permissao
 from app.models.usuario import Usuario
 from app.models.configuracao import Configuracao
-from app.models.cantina import CantinaProduto, CantinaVenda, CantinaVendaItem
+from app.models.cantina import (
+    CantinaCaixa,
+    CantinaCaixaMovimentacao,
+    CantinaProduto,
+    CantinaVenda,
+    CantinaVendaItem
+)
 from app.schemas.cantina import (
+    CantinaCaixaAbrir,
+    CantinaCaixaFechar,
+    CantinaMovimentacaoCreate,
     CantinaProdutoCreate,
     CantinaProdutoUpdate,
     CantinaProdutoResponse,
@@ -33,8 +44,19 @@ def _garantir_tabelas_cantina():
         from app.core.database import engine, Base
         Base.metadata.create_all(
             bind=engine,
-            tables=[CantinaProduto.__table__, CantinaVenda.__table__, CantinaVendaItem.__table__]
+            tables=[
+                CantinaCaixa.__table__,
+                CantinaCaixaMovimentacao.__table__,
+                CantinaProduto.__table__,
+                CantinaVenda.__table__,
+                CantinaVendaItem.__table__
+            ]
         )
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE cantina_vendas ADD COLUMN IF NOT EXISTS caixa_id INTEGER REFERENCES cantina_caixas(id) ON DELETE SET NULL;"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_vendas_caixa ON cantina_vendas(caixa_id);"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_mov_caixa ON cantina_caixa_movimentacoes(caixa_id);"))
+            conn.commit()
         _TABELAS_VERIFICADAS = True
     except Exception:
         pass
@@ -77,6 +99,318 @@ def _calcular_valor_maquina(subtotal: Decimal, taxa_pct: Decimal, modo: str = "R
 
     valor_taxa = (total_cobrado - subtotal).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     return total_cobrado, valor_taxa
+
+
+def _calcular_resumo_caixa(caixa: CantinaCaixa, vendas: List[CantinaVenda], movimentacoes: List[CantinaCaixaMovimentacao]) -> dict:
+    vendas_concluidas = [v for v in vendas if v.status == "CONCLUIDA"]
+    vendas_canceladas = [v for v in vendas if v.status == "CANCELADA"]
+
+    valor_inicial = float(caixa.valor_inicial or 0)
+    vendas_dinheiro = sum(float(v.valor_subtotal or 0) for v in vendas_concluidas if (v.forma_pagamento or "").upper() == "DINHEIRO")
+    vendas_pix = sum(float(v.valor_subtotal or 0) for v in vendas_concluidas if (v.forma_pagamento or "").upper() == "PIX")
+    vendas_cartao_liquido = sum(float(v.valor_subtotal or 0) for v in vendas_concluidas if (v.forma_pagamento or "").upper() == "CARTAO")
+    vendas_cartao_cobrado = sum(float(v.valor_total_cobrado or 0) for v in vendas_concluidas if (v.forma_pagamento or "").upper() == "CARTAO")
+    taxas_cartao = sum(float(v.valor_taxa_cartao or 0) for v in vendas_concluidas if (v.forma_pagamento or "").upper() == "CARTAO")
+
+    custo_itens_vendidos = sum(float(v.valor_custo_total or 0) for v in vendas_concluidas)
+    receita_liquida_total = vendas_dinheiro + vendas_pix + vendas_cartao_liquido
+    receita_total_cobrada = vendas_dinheiro + vendas_pix + vendas_cartao_cobrado
+    lucro_bruto_caixa = receita_liquida_total - custo_itens_vendidos
+
+    total_suprimentos = sum(float(m.valor or 0) for m in movimentacoes if (m.tipo or "").upper() == "SUPRIMENTO")
+    total_sangrias = sum(float(m.valor or 0) for m in movimentacoes if (m.tipo or "").upper() == "SANGRIA")
+    saldo_dinheiro_gaveta = round(valor_inicial + vendas_dinheiro + total_suprimentos - total_sangrias, 2)
+
+    valor_fechamento_info = float(caixa.valor_fechamento_informado) if caixa.valor_fechamento_informado is not None else None
+    diferenca_fechamento = (
+        round(valor_fechamento_info - saldo_dinheiro_gaveta, 2)
+        if valor_fechamento_info is not None else None
+    )
+
+    movs_ordenadas = sorted(
+        movimentacoes,
+        key=lambda x: x.created_at or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True
+    )
+
+    return {
+        "id": caixa.id,
+        "data_referencia": caixa.data_referencia,
+        "descricao": caixa.descricao or f"Caixa #{caixa.id}",
+        "valor_inicial": round(valor_inicial, 2),
+        "valor_fechamento_informado": round(valor_fechamento_info, 2) if valor_fechamento_info is not None else None,
+        "diferenca_fechamento": diferenca_fechamento,
+        "observacao_abertura": caixa.observacao_abertura,
+        "observacao_fechamento": caixa.observacao_fechamento,
+        "status": caixa.status,
+        "aberto_por_id": caixa.aberto_por_id,
+        "aberto_por_nome": caixa.aberto_por_nome,
+        "fechado_por_id": caixa.fechado_por_id,
+        "fechado_por_nome": caixa.fechado_por_nome,
+        "opened_at": caixa.opened_at.isoformat() if caixa.opened_at else None,
+        "closed_at": caixa.closed_at.isoformat() if caixa.closed_at else None,
+        "total_pedidos": len(vendas_concluidas),
+        "total_cancelados": len(vendas_canceladas),
+        "vendas_dinheiro": round(vendas_dinheiro, 2),
+        "vendas_pix": round(vendas_pix, 2),
+        "vendas_cartao_liquido": round(vendas_cartao_liquido, 2),
+        "vendas_cartao_cobrado": round(vendas_cartao_cobrado, 2),
+        "taxas_cartao": round(taxas_cartao, 2),
+        "custo_itens_vendidos": round(custo_itens_vendidos, 2),
+        "receita_liquida_total": round(receita_liquida_total, 2),
+        "receita_total_cobrada": round(receita_total_cobrada, 2),
+        "lucro_bruto_caixa": round(lucro_bruto_caixa, 2),
+        "total_suprimentos": round(total_suprimentos, 2),
+        "total_sangrias": round(total_sangrias, 2),
+        "saldo_dinheiro_gaveta": saldo_dinheiro_gaveta,
+        "movimentacoes": [
+            {
+                "id": m.id,
+                "caixa_id": m.caixa_id,
+                "tipo": m.tipo,
+                "valor": round(float(m.valor or 0), 2),
+                "motivo": m.motivo,
+                "operador_id": m.operador_id,
+                "operador_nome": m.operador_nome,
+                "created_at": m.created_at.isoformat() if m.created_at else None
+            }
+            for m in movs_ordenadas
+        ]
+    }
+
+
+# --- Gestão de Caixas (Abertura, Fechamento e Movimentações de Gaveta) ---
+
+@router.get("/caixas/atual")
+def obter_caixa_atual_cantina(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    caixa = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .filter(CantinaCaixa.status == "ABERTO")
+        .order_by(CantinaCaixa.id.desc())
+        .first()
+    )
+    if not caixa:
+        return {"caixa_aberto": None}
+
+    vendas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == caixa.id).all()
+    return {"caixa_aberto": _calcular_resumo_caixa(caixa, vendas, caixa.movimentacoes or [])}
+
+
+@router.get("/caixas")
+def listar_caixas_cantina(
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    caixas = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .order_by(CantinaCaixa.id.desc())
+        .all()
+    )
+    todas_vendas = db.query(CantinaVenda).all()
+    vendas_por_caixa = {}
+    for v in todas_vendas:
+        if v.caixa_id:
+            vendas_por_caixa.setdefault(v.caixa_id, []).append(v)
+
+    resultado = [
+        _calcular_resumo_caixa(cx, vendas_por_caixa.get(cx.id, []), cx.movimentacoes or [])
+        for cx in caixas
+    ]
+    caixa_aberto = next((c for c in resultado if c["status"] == "ABERTO"), None)
+    return {
+        "caixa_aberto": caixa_aberto,
+        "caixas": resultado
+    }
+
+
+@router.post("/caixas/abrir", status_code=status.HTTP_201_CREATED)
+def abrir_caixa_cantina(
+    req: CantinaCaixaAbrir,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    existente = db.query(CantinaCaixa).filter(CantinaCaixa.status == "ABERTO").first()
+    if existente:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Já existe um caixa aberto ({existente.descricao or '#' + str(existente.id)} - {existente.data_referencia}). Feche-o antes de abrir um novo caixa."
+        )
+
+    data_ref = req.data_referencia.strip()
+    descricao = req.descricao.strip() if req.descricao and req.descricao.strip() else f"Caixa {data_ref}"
+
+    novo_caixa = CantinaCaixa(
+        data_referencia=data_ref,
+        descricao=descricao,
+        valor_inicial=Decimal(str(req.valor_inicial or 0)).quantize(Decimal("0.01")),
+        observacao_abertura=req.observacao_abertura.strip() if req.observacao_abertura else None,
+        status="ABERTO",
+        aberto_por_id=admin.id,
+        aberto_por_nome=admin.nome
+    )
+    db.add(novo_caixa)
+    db.commit()
+    db.refresh(novo_caixa)
+
+    # Vincular eventuais vendas anteriores que estavam sem caixa_id se solicitado
+    if req.vincular_vendas_sem_caixa:
+        vendas_orfas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == None).all()
+        if vendas_orfas:
+            for vo in vendas_orfas:
+                vo.caixa_id = novo_caixa.id
+            db.commit()
+
+    vendas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == novo_caixa.id).all()
+    return {
+        "sucesso": True,
+        "mensagem": f"Caixa '{novo_caixa.descricao}' aberto com sucesso!",
+        "caixa": _calcular_resumo_caixa(novo_caixa, vendas, [])
+    }
+
+
+@router.post("/caixas/{caixa_id}/fechar")
+def fechar_caixa_cantina(
+    caixa_id: int,
+    req: CantinaCaixaFechar,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    caixa = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .filter(CantinaCaixa.id == caixa_id)
+        .first()
+    )
+    if not caixa:
+        raise HTTPException(status_code=404, detail="Caixa não encontrado.")
+    if caixa.status == "FECHADO":
+        raise HTTPException(status_code=400, detail="Este caixa já se encontra fechado.")
+
+    caixa.status = "FECHADO"
+    if req.valor_fechamento_informado is not None:
+        caixa.valor_fechamento_informado = Decimal(str(req.valor_fechamento_informado)).quantize(Decimal("0.01"))
+    caixa.observacao_fechamento = req.observacao_fechamento.strip() if req.observacao_fechamento else None
+    caixa.fechado_por_id = admin.id
+    caixa.fechado_por_nome = admin.nome
+    caixa.closed_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(caixa)
+
+    vendas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == caixa.id).all()
+    return {
+        "sucesso": True,
+        "mensagem": f"Caixa #{caixa.id} fechado com sucesso!",
+        "caixa": _calcular_resumo_caixa(caixa, vendas, caixa.movimentacoes or [])
+    }
+
+
+@router.post("/caixas/{caixa_id}/reabrir")
+def reabrir_caixa_cantina(
+    caixa_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    aberto = db.query(CantinaCaixa).filter(CantinaCaixa.status == "ABERTO").first()
+    if aberto and aberto.id != caixa_id:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Não é possível reabrir este caixa pois o Caixa #{aberto.id} ({aberto.descricao}) está aberto no momento."
+        )
+
+    caixa = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .filter(CantinaCaixa.id == caixa_id)
+        .first()
+    )
+    if not caixa:
+        raise HTTPException(status_code=404, detail="Caixa não encontrado.")
+
+    caixa.status = "ABERTO"
+    caixa.closed_at = None
+    db.commit()
+    db.refresh(caixa)
+
+    vendas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == caixa.id).all()
+    return {
+        "sucesso": True,
+        "mensagem": f"Caixa #{caixa.id} reaberto com sucesso!",
+        "caixa": _calcular_resumo_caixa(caixa, vendas, caixa.movimentacoes or [])
+    }
+
+
+@router.post("/caixas/{caixa_id}/movimentacoes", status_code=status.HTTP_201_CREATED)
+def registrar_movimentacao_caixa(
+    caixa_id: int,
+    req: CantinaMovimentacaoCreate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    caixa = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .filter(CantinaCaixa.id == caixa_id)
+        .first()
+    )
+    if not caixa:
+        raise HTTPException(status_code=404, detail="Caixa não encontrado.")
+    if caixa.status != "ABERTO":
+        raise HTTPException(status_code=400, detail="Só é permitido lançar movimentações em um caixa aberto.")
+
+    tipo = (req.tipo or "").upper().strip()
+    if tipo not in ("SUPRIMENTO", "SANGRIA"):
+        raise HTTPException(status_code=400, detail="Tipo de movimentação inválido. Use SUPRIMENTO ou SANGRIA.")
+
+    mov = CantinaCaixaMovimentacao(
+        caixa_id=caixa.id,
+        tipo=tipo,
+        valor=Decimal(str(req.valor)).quantize(Decimal("0.01")),
+        motivo=req.motivo.strip() if req.motivo else ("Entrada de troco / Suprimento" if tipo == "SUPRIMENTO" else "Retirada / Sangria"),
+        operador_id=admin.id,
+        operador_nome=admin.nome
+    )
+    db.add(mov)
+    db.commit()
+    db.refresh(caixa)
+
+    vendas = db.query(CantinaVenda).filter(CantinaVenda.caixa_id == caixa.id).all()
+    return {
+        "sucesso": True,
+        "mensagem": f"{'Suprimento' if tipo == 'SUPRIMENTO' else 'Sangria'} registrado com sucesso!",
+        "caixa": _calcular_resumo_caixa(caixa, vendas, caixa.movimentacoes or [])
+    }
+
+
+@router.delete("/movimentacoes/{mov_id}")
+def excluir_movimentacao_caixa(
+    mov_id: int,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("cantina"))
+):
+    _garantir_tabelas_cantina()
+    mov = db.query(CantinaCaixaMovimentacao).filter(CantinaCaixaMovimentacao.id == mov_id).first()
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimentação não encontrada.")
+
+    caixa = db.query(CantinaCaixa).filter(CantinaCaixa.id == mov.caixa_id).first()
+    if caixa and caixa.status != "ABERTO":
+        raise HTTPException(status_code=400, detail="Não é possível remover movimentações de um caixa já fechado.")
+
+    db.delete(mov)
+    db.commit()
+    return {"sucesso": True, "mensagem": "Movimentação removida com sucesso."}
 
 
 # --- Configurações da Cantina (Taxa da Máquina) ---
@@ -140,6 +474,7 @@ def criar_produto_cantina(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("cantina"))
 ):
+    _garantir_tabelas_cantina()
     produto = CantinaProduto(
         nome=req.nome.strip(),
         categoria=(req.categoria or "Geral").strip(),
@@ -224,6 +559,19 @@ def registrar_venda_cantina(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("cantina"))
 ):
+    _garantir_tabelas_cantina()
+    caixa_aberto = (
+        db.query(CantinaCaixa)
+        .filter(CantinaCaixa.status == "ABERTO")
+        .order_by(CantinaCaixa.id.desc())
+        .first()
+    )
+    if not caixa_aberto:
+        raise HTTPException(
+            status_code=400,
+            detail="Nenhum caixa aberto no momento. Abra um caixa antes de registrar vendas no PDV."
+        )
+
     if not req.itens or len(req.itens) == 0:
         raise HTTPException(status_code=400, detail="Adicione pelo menos um item ao carrinho para finalizar a venda.")
 
@@ -303,6 +651,7 @@ def registrar_venda_cantina(
             valor_troco = Decimal("0.00")
 
     nova_venda = CantinaVenda(
+        caixa_id=caixa_aberto.id,
         forma_pagamento=forma,
         valor_custo_total=valor_custo_total,
         valor_subtotal=valor_subtotal,
@@ -327,14 +676,19 @@ def registrar_venda_cantina(
 
 @router.get("/vendas", response_model=List[CantinaVendaResponse])
 def listar_vendas_cantina(
+    caixa_id: Optional[int] = Query(None),
     forma_pagamento: Optional[str] = Query(None),
     status_filtro: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(300, ge=1, le=2000),
+    limit: int = Query(500, ge=1, le=2000),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("cantina"))
 ):
+    _garantir_tabelas_cantina()
     query = db.query(CantinaVenda).options(joinedload(CantinaVenda.itens))
+
+    if caixa_id is not None:
+        query = query.filter(CantinaVenda.caixa_id == caixa_id)
 
     if forma_pagamento and forma_pagamento.strip().upper() in ("PIX", "DINHEIRO", "CARTAO"):
         query = query.filter(CantinaVenda.forma_pagamento == forma_pagamento.strip().upper())
@@ -385,21 +739,47 @@ def estornar_venda_cantina(
     return venda
 
 
-# --- Financeiro, Balanço de Custos/Lucros & Relatórios ---
+# --- Financeiro, Balanço de Custos/Lucros & Relatórios (Por Caixa ou Consolidado) ---
 
 @router.get("/financeiro")
 def obter_financeiro_cantina(
+    caixa_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("cantina"))
 ):
+    _garantir_tabelas_cantina()
     produtos = db.query(CantinaProduto).order_by(CantinaProduto.nome.asc()).all()
-    vendas_concluidas = (
+
+    # Carregar todos os caixas para o seletor e histórico
+    todos_caixas = (
+        db.query(CantinaCaixa)
+        .options(joinedload(CantinaCaixa.movimentacoes))
+        .order_by(CantinaCaixa.id.desc())
+        .all()
+    )
+    todas_vendas_db = (
         db.query(CantinaVenda)
         .options(joinedload(CantinaVenda.itens))
-        .filter(CantinaVenda.status == "CONCLUIDA")
         .order_by(CantinaVenda.created_at.desc())
         .all()
     )
+
+    vendas_por_caixa = {}
+    for v in todas_vendas_db:
+        if v.caixa_id:
+            vendas_por_caixa.setdefault(v.caixa_id, []).append(v)
+
+    caixas_resumo = [
+        _calcular_resumo_caixa(cx, vendas_por_caixa.get(cx.id, []), cx.movimentacoes or [])
+        for cx in todos_caixas
+    ]
+    caixa_selecionado_resumo = None
+
+    if caixa_id is not None:
+        caixa_selecionado_resumo = next((c for c in caixas_resumo if c["id"] == caixa_id), None)
+        vendas_concluidas = [v for v in todas_vendas_db if v.status == "CONCLUIDA" and v.caixa_id == caixa_id]
+    else:
+        vendas_concluidas = [v for v in todas_vendas_db if v.status == "CONCLUIDA"]
 
     custo_estoque_atual = sum(
         float(p.valor_custo or 0) * int(p.quantidade_estoque or 0)
@@ -415,14 +795,17 @@ def obter_financeiro_cantina(
     receita_total_cobrada = sum(float(v.valor_total_cobrado or 0) for v in vendas_concluidas)
     total_taxas_maquina = sum(float(v.valor_taxa_cartao or 0) for v in vendas_concluidas)
 
-    custo_total_investido = custo_estoque_atual + custo_itens_vendidos
+    # No modo filtrado por caixa, o investimento de referência daquele caixa é o custo dos itens vendidos nele;
+    # no modo consolidado geral, é o custo total investido no evento (estoque atual + itens vendidos).
+    custo_total_investido_evento = custo_estoque_atual + sum(float(v.valor_custo_total or 0) for v in todas_vendas_db if v.status == "CONCLUIDA")
+    custo_total_investido = custo_itens_vendidos if caixa_id is not None else custo_total_investido_evento
+
     lucro_sobre_vendidos = receita_vendas_liquida - custo_itens_vendidos
     margem_real_vendidos = (
         round((lucro_sobre_vendidos / custo_itens_vendidos) * 100, 2)
         if custo_itens_vendidos > 0 else 0.0
     )
 
-    # Saldo sobre o investimento total (quanto falta para pagar todo o estoque ou quanto já deu de lucro líquido no caixa)
     saldo_sobre_investimento_total = receita_vendas_liquida - custo_total_investido
     falta_para_empatar = max(0.0, custo_total_investido - receita_vendas_liquida)
     lucro_caixa_apos_estoque = max(0.0, receita_vendas_liquida - custo_total_investido)
@@ -480,7 +863,7 @@ def obter_financeiro_cantina(
         custo_unit = float(p.valor_custo or 0)
         preco_unit = float(p.preco_venda or 0)
         custo_em_estoque = round(custo_unit * qtd_estoque, 2)
-        custo_total_produto = round(custo_em_estoque + custo_vendido, 2)
+        custo_total_produto = round(custo_em_estoque + custo_vendido, 2) if caixa_id is None else custo_vendido
 
         relatorio_produtos.append({
             "id": p.id,
@@ -527,7 +910,58 @@ def obter_financeiro_cantina(
 
     relatorio_produtos.sort(key=lambda x: x["receita_vendida"], reverse=True)
 
+    # Resumo de gaveta (específico do caixa selecionado ou soma consolidada dos caixas)
+    if caixa_selecionado_resumo:
+        resumo_gaveta = {
+            "modo": "CAIXA_ESPECIFICO",
+            "caixa_id": caixa_selecionado_resumo["id"],
+            "descricao": caixa_selecionado_resumo["descricao"],
+            "data_referencia": caixa_selecionado_resumo["data_referencia"],
+            "status": caixa_selecionado_resumo["status"],
+            "valor_inicial": caixa_selecionado_resumo["valor_inicial"],
+            "vendas_dinheiro": caixa_selecionado_resumo["vendas_dinheiro"],
+            "total_suprimentos": caixa_selecionado_resumo["total_suprimentos"],
+            "total_sangrias": caixa_selecionado_resumo["total_sangrias"],
+            "saldo_dinheiro_gaveta": caixa_selecionado_resumo["saldo_dinheiro_gaveta"],
+            "valor_fechamento_informado": caixa_selecionado_resumo["valor_fechamento_informado"],
+            "diferenca_fechamento": caixa_selecionado_resumo["diferenca_fechamento"],
+            "movimentacoes": caixa_selecionado_resumo["movimentacoes"]
+        }
+    else:
+        soma_inicial = round(sum(c["valor_inicial"] for c in caixas_resumo), 2)
+        soma_dinheiro = round(por_forma["DINHEIRO"]["valor_liquido"], 2)
+        soma_suprimentos = round(sum(c["total_suprimentos"] for c in caixas_resumo), 2)
+        soma_sangrias = round(sum(c["total_sangrias"] for c in caixas_resumo), 2)
+        todas_movs = []
+        for c in caixas_resumo:
+            for m in c.get("movimentacoes", []):
+                todas_movs.append({
+                    **m,
+                    "caixa_descricao": c["descricao"],
+                    "caixa_data": c["data_referencia"]
+                })
+        todas_movs.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+        resumo_gaveta = {
+            "modo": "CONSOLIDADO",
+            "caixa_id": None,
+            "descricao": "Consolidado Geral (Todos os Caixas)",
+            "data_referencia": "Todos os dias",
+            "status": "CONSOLIDADO",
+            "valor_inicial": soma_inicial,
+            "vendas_dinheiro": soma_dinheiro,
+            "total_suprimentos": soma_suprimentos,
+            "total_sangrias": soma_sangrias,
+            "saldo_dinheiro_gaveta": round(soma_inicial + soma_dinheiro + soma_suprimentos - soma_sangrias, 2),
+            "valor_fechamento_informado": None,
+            "diferenca_fechamento": None,
+            "movimentacoes": todas_movs
+        }
+
     return {
+        "filtro_caixa_id": caixa_id,
+        "caixa_selecionado": caixa_selecionado_resumo,
+        "caixas": caixas_resumo,
+        "resumo_gaveta": resumo_gaveta,
         "resumo": {
             "total_pedidos": len(vendas_concluidas),
             "total_itens_vendidos": total_itens_vendidos,
@@ -537,6 +971,7 @@ def obter_financeiro_cantina(
             "valor_venda_potencial_estoque": round(valor_venda_potencial_estoque, 2),
             "custo_itens_vendidos": round(custo_itens_vendidos, 2),
             "custo_total_investido": round(custo_total_investido, 2),
+            "custo_total_investido_evento": round(custo_total_investido_evento, 2),
             "receita_vendas_liquida": round(receita_vendas_liquida, 2),
             "receita_total_cobrada": round(receita_total_cobrada, 2),
             "total_taxas_maquina": round(total_taxas_maquina, 2),

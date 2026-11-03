@@ -6,6 +6,9 @@ let configCantina = {
   taxa_maquina_cartao: 0.0,
   modo_calculo_taxa: 'REPASSE'
 };
+let caixaAbertoAtual = null;
+let listaCaixasCache = [];
+let filtroCaixaFinanceiroId = ''; // '' = Consolidado Geral, ou ID numérico do caixa
 let dadosFinanceirosCache = null;
 let vendasHistoricoCache = [];
 
@@ -20,12 +23,34 @@ const SVG_ICONS = {
   excluir: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
   pix: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/></svg>`,
   dinheiro: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></svg>`,
-  cartao: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`
+  cartao: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 3px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>`,
+  cadeadoAberto: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>`,
+  cadeadoFechado: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  movimentar: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 5-5-3-5 3"/><path d="m17 19-5 3-5-3"/></svg>`,
+  impressora: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>`,
+  olho: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`
 };
 
 function formatBRL(val) {
   const num = Number(val || 0);
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatarDataRef(dataStr) {
+  if (!dataStr) return '-';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dataStr)) {
+    const [y, m, d] = dataStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return dataStr;
+}
+
+function obterDataHojeInput() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
 }
 
 function escapeHtml(str) {
@@ -48,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function inicializarModuloCantina() {
   await Promise.all([
     carregarConfigCantina(),
+    carregarCaixaAtualCantina(),
     carregarProdutosCantina()
   ]);
   atualizarCalculosPagamentoPDV();
@@ -64,6 +90,8 @@ window.trocarAbaCantina = async function(paneId, btnEl) {
   if (pane) pane.classList.add('active');
   if (btnEl) btnEl.classList.add('active');
 
+  await carregarCaixaAtualCantina();
+
   if (paneId === 'pane-pdv' || paneId === 'pane-estoque') {
     await carregarProdutosCantina();
   } else if (paneId === 'pane-financeiro') {
@@ -71,6 +99,395 @@ window.trocarAbaCantina = async function(paneId, btnEl) {
       carregarFinanceiroCantina(),
       carregarHistoricoVendasCantina()
     ]);
+  }
+};
+
+// ==============================================================
+// Gestão de Sessões de Caixa (Abrir, Movimentar, Fechar, Reabrir)
+// ==============================================================
+async function carregarCaixaAtualCantina() {
+  try {
+    const res = await API.request('/admin/cantina/caixas');
+    caixaAbertoAtual = res?.caixa_aberto || null;
+    listaCaixasCache = Array.isArray(res?.caixas) ? res.caixas : [];
+    renderizarBarraCaixaAtual();
+  } catch (err) {
+    console.warn('Erro ao carregar status do caixa:', err);
+  }
+}
+
+function renderizarBarraCaixaAtual() {
+  const strip = document.getElementById('caixa-status-strip');
+  const btnFinAbrir = document.getElementById('btn-fin-abrir-caixa');
+  if (!strip) return;
+
+  if (btnFinAbrir) {
+    btnFinAbrir.style.display = caixaAbertoAtual ? 'none' : 'inline-flex';
+  }
+
+  if (caixaAbertoAtual) {
+    strip.className = 'caixa-status-strip aberto';
+    const dtFmt = formatarDataRef(caixaAbertoAtual.data_referencia);
+    strip.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          ${SVG_ICONS.cadeadoAberto}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="badge badge-success" style="font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em;">CAIXA ABERTO #${caixaAbertoAtual.id}</span>
+            <strong style="font-size: 1rem; color: #064E3B;">${escapeHtml(caixaAbertoAtual.descricao)}</strong>
+            <span style="font-size: 0.82rem; color: #047857; font-weight: 700;">&bull; Data Ref: ${escapeHtml(dtFmt)}</span>
+          </div>
+          <div style="font-size: 0.78rem; color: #065F46; margin-top: 0.15rem;">
+            Aberto por <strong>${escapeHtml(caixaAbertoAtual.aberto_por_nome || 'Operador')}</strong> — Todas as vendas estão sendo gravadas neste caixa
+          </div>
+        </div>
+      </div>
+
+      <div class="caixa-kpis-inline">
+        <div class="caixa-kpi-pill">
+          <span>Fundo Inicial</span>
+          <strong class="tabular-nums">${formatBRL(caixaAbertoAtual.valor_inicial)}</strong>
+        </div>
+        <div class="caixa-kpi-pill">
+          <span>Vendas no Caixa (${caixaAbertoAtual.total_pedidos})</span>
+          <strong class="tabular-nums" style="color: #2563EB;">${formatBRL(caixaAbertoAtual.receita_liquida_total)}</strong>
+        </div>
+        <div class="caixa-kpi-pill" style="border-color: #86EFAC; background: #F0FDF4;">
+          <span>Dinheiro na Gaveta</span>
+          <strong class="tabular-nums" style="color: #059669;">${formatBRL(caixaAbertoAtual.saldo_dinheiro_gaveta)}</strong>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="abrirModalMovimentarCaixa()" style="height: 38px; background: #FFFFFF; border-color: #86EFAC; color: #065F46; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+            ${SVG_ICONS.movimentar}
+            <span>Suprimento / Sangria</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="abrirModalFecharCaixa()" style="height: 38px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Fechar Caixa</span>
+          </button>
+        </div>
+      </div>
+    `;
+  } else {
+    strip.className = 'caixa-status-strip fechado';
+    strip.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          ${SVG_ICONS.cadeadoFechado}
+        </div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="badge badge-warning" style="font-size: 0.72rem; font-weight: 800;">CAIXA FECHADO</span>
+            <strong style="font-size: 0.98rem; color: #78350F;">Nenhum caixa aberto no momento</strong>
+          </div>
+          <div style="font-size: 0.8rem; color: #92400E; margin-top: 0.15rem;">
+            Abra um caixa informando a data e o valor inicial de troco para registrar todas as vendas do dia sem erros de fuso horário.
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <button type="button" class="btn-esmeralda-acao" onclick="abrirModalAbrirCaixa()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+          <span>Abrir Caixa do Dia</span>
+        </button>
+      </div>
+    `;
+  }
+}
+
+window.abrirModalAbrirCaixa = function() {
+  if (caixaAbertoAtual) {
+    showToast('Já existe um caixa aberto no momento.', 'warning');
+    return;
+  }
+  const form = document.getElementById('form-abrir-caixa');
+  if (form) form.reset();
+  const dataInput = document.getElementById('caixa-abrir-data');
+  if (dataInput) dataInput.value = obterDataHojeInput();
+
+  const descInput = document.getElementById('caixa-abrir-descricao');
+  if (descInput) {
+    const proximoNum = (listaCaixasCache?.length || 0) + 1;
+    descInput.value = `Caixa Dia ${proximoNum}`;
+  }
+
+  const valInput = document.getElementById('caixa-abrir-valor-inicial');
+  if (valInput) valInput.value = '0.00';
+
+  document.getElementById('modal-abrir-caixa').style.display = 'flex';
+};
+
+window.fecharModalAbrirCaixa = function() {
+  document.getElementById('modal-abrir-caixa').style.display = 'none';
+};
+
+window.confirmarAberturaCaixa = async function(e) {
+  e.preventDefault();
+  const dataRef = document.getElementById('caixa-abrir-data')?.value;
+  const descricao = document.getElementById('caixa-abrir-descricao')?.value.trim();
+  const valorInicial = parseFloat(document.getElementById('caixa-abrir-valor-inicial')?.value || '0') || 0;
+  const obs = document.getElementById('caixa-abrir-obs')?.value.trim();
+
+  if (!dataRef) {
+    showToast('Informe a data de referência do caixa.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await API.request('/admin/cantina/caixas/abrir', {
+      method: 'POST',
+      body: JSON.stringify({
+        data_referencia: dataRef,
+        descricao: descricao || null,
+        valor_inicial: valorInicial,
+        observacao_abertura: obs || null,
+        vincular_vendas_sem_caixa: true
+      })
+    });
+
+    showToast(res.mensagem || 'Caixa aberto com sucesso!', 'success');
+    fecharModalAbrirCaixa();
+    await carregarCaixaAtualCantina();
+
+    const paneFin = document.getElementById('pane-financeiro');
+    if (paneFin && paneFin.classList.contains('active')) {
+      await Promise.all([carregarFinanceiroCantina(), carregarHistoricoVendasCantina()]);
+    }
+  } catch (err) {
+    showToast(err.message || 'Erro ao abrir caixa.', 'error');
+  }
+};
+
+window.abrirModalMovimentarCaixa = function() {
+  if (!caixaAbertoAtual) {
+    showToast('Abra um caixa antes de registrar movimentações.', 'warning');
+    return;
+  }
+  const form = document.getElementById('form-movimentar-caixa');
+  if (form) form.reset();
+  renderizarListaMovimentacoesModal();
+  document.getElementById('modal-movimentar-caixa').style.display = 'flex';
+};
+
+window.fecharModalMovimentarCaixa = function() {
+  document.getElementById('modal-movimentar-caixa').style.display = 'none';
+};
+
+function renderizarListaMovimentacoesModal() {
+  const container = document.getElementById('lista-movimentacoes-modal');
+  if (!container) return;
+
+  const movs = caixaAbertoAtual?.movimentacoes || [];
+  if (movs.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.82rem; margin: 0.75rem 0;">Nenhuma movimentação manual registrada neste caixa.</p>`;
+    return;
+  }
+
+  container.innerHTML = movs.map(m => {
+    const isSup = m.tipo === 'SUPRIMENTO';
+    const dt = m.created_at ? new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px dashed #E2E8F0; font-size: 0.82rem;">
+        <div>
+          <span class="badge ${isSup ? 'badge-success' : 'badge-danger'}" style="font-size: 0.68rem;">${isSup ? '+ SUPRIMENTO' : '- SANGRIA'}</span>
+          <strong style="margin-left: 0.35rem; color: var(--text-main);">${escapeHtml(m.motivo || '')}</strong>
+          <small style="color: var(--text-muted); margin-left: 0.35rem;">${dt}</small>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <strong class="tabular-nums" style="color: ${isSup ? '#059669' : '#DC2626'};">${isSup ? '+' : '-'}${formatBRL(m.valor)}</strong>
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.15rem 0.4rem; color: #DC2626; border-color: #FCA5A5;" title="Remover lançamento" onclick="excluirMovimentacaoCaixa(${m.id})">
+            ${SVG_ICONS.excluir}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.salvarMovimentacaoCaixa = async function(e) {
+  e.preventDefault();
+  if (!caixaAbertoAtual) return;
+
+  const tipo = document.getElementById('mov-caixa-tipo')?.value;
+  const valor = parseFloat(document.getElementById('mov-caixa-valor')?.value || '0');
+  const motivo = document.getElementById('mov-caixa-motivo')?.value.trim();
+
+  if (!valor || valor <= 0) {
+    showToast('Informe um valor válido maior que zero.', 'warning');
+    return;
+  }
+
+  try {
+    const res = await API.request(`/admin/cantina/caixas/${caixaAbertoAtual.id}/movimentacoes`, {
+      method: 'POST',
+      body: JSON.stringify({ tipo, valor, motivo })
+    });
+    caixaAbertoAtual = res.caixa;
+    showToast(res.mensagem || 'Movimentação registrada!', 'success');
+    document.getElementById('form-movimentar-caixa')?.reset();
+    renderizarBarraCaixaAtual();
+    renderizarListaMovimentacoesModal();
+
+    const paneFin = document.getElementById('pane-financeiro');
+    if (paneFin && paneFin.classList.contains('active')) {
+      await carregarFinanceiroCantina();
+    }
+  } catch (err) {
+    showToast(err.message || 'Erro ao registrar movimentação.', 'error');
+  }
+};
+
+window.excluirMovimentacaoCaixa = async function(movId) {
+  if (!confirm('Deseja remover este lançamento de suprimento/sangria?')) return;
+  try {
+    await API.request(`/admin/cantina/movimentacoes/${movId}`, { method: 'DELETE' });
+    showToast('Movimentação removida.', 'success');
+    await carregarCaixaAtualCantina();
+    renderizarListaMovimentacoesModal();
+
+    const paneFin = document.getElementById('pane-financeiro');
+    if (paneFin && paneFin.classList.contains('active')) {
+      await carregarFinanceiroCantina();
+    }
+  } catch (err) {
+    showToast(err.message || 'Erro ao remover movimentação.', 'error');
+  }
+};
+
+window.abrirModalFecharCaixa = async function(caixaIdOpcional) {
+  await carregarCaixaAtualCantina();
+  const alvo = caixaIdOpcional
+    ? listaCaixasCache.find(c => c.id === Number(caixaIdOpcional))
+    : caixaAbertoAtual;
+
+  if (!alvo) {
+    showToast('Nenhum caixa aberto para fechar.', 'warning');
+    return;
+  }
+
+  const box = document.getElementById('fechar-caixa-resumo-box');
+  const titulo = document.getElementById('fechar-caixa-titulo-modal');
+  if (titulo) {
+    titulo.textContent = `Fechar Caixa #${alvo.id} — ${alvo.descricao} (${formatarDataRef(alvo.data_referencia)})`;
+  }
+
+  if (box) {
+    box.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.65rem; font-size: 0.84rem; margin-bottom: 0.85rem;">
+        <div>
+          <span style="color: #94A3B8; display: block; font-size: 0.74rem;">Fundo Inicial de Troco</span>
+          <strong class="tabular-nums" style="font-size: 1rem;">${formatBRL(alvo.valor_inicial)}</strong>
+        </div>
+        <div>
+          <span style="color: #94A3B8; display: block; font-size: 0.74rem;">(+) Vendas em Dinheiro</span>
+          <strong class="tabular-nums" style="font-size: 1rem; color: #34D399;">+${formatBRL(alvo.vendas_dinheiro)}</strong>
+        </div>
+        <div>
+          <span style="color: #94A3B8; display: block; font-size: 0.74rem;">(+) Suprimentos / (-) Sangrias</span>
+          <strong class="tabular-nums" style="font-size: 0.92rem;">+${formatBRL(alvo.total_suprimentos)} / -${formatBRL(alvo.total_sangrias)}</strong>
+        </div>
+        <div>
+          <span style="color: #94A3B8; display: block; font-size: 0.74rem;">Vendas PIX & Cartão (Líq.)</span>
+          <strong class="tabular-nums" style="font-size: 0.92rem;">PIX: ${formatBRL(alvo.vendas_pix)} | Cartão: ${formatBRL(alvo.vendas_cartao_liquido)}</strong>
+        </div>
+      </div>
+      <div style="padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.16); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #FFD166; font-weight: 800;">Saldo Esperado em Dinheiro na Gaveta</div>
+          <small style="color: #CBD5E1; font-size: 0.74rem;">Total geral vendido no caixa: ${formatBRL(alvo.receita_liquida_total)} (${alvo.total_pedidos} pedidos)</small>
+        </div>
+        <strong class="tabular-nums" style="font-size: 1.5rem; color: #34D399;">${formatBRL(alvo.saldo_dinheiro_gaveta)}</strong>
+      </div>
+    `;
+  }
+
+  const inputContado = document.getElementById('caixa-fechar-valor-contado');
+  if (inputContado) {
+    inputContado.value = Number(alvo.saldo_dinheiro_gaveta || 0).toFixed(2);
+    inputContado.dataset.caixaId = alvo.id;
+    inputContado.dataset.saldoEsperado = alvo.saldo_dinheiro_gaveta || 0;
+  }
+  const inputObs = document.getElementById('caixa-fechar-obs');
+  if (inputObs) inputObs.value = '';
+
+  atualizarDiferencaFechamentoModal();
+  document.getElementById('modal-fechar-caixa').style.display = 'flex';
+};
+
+window.fecharModalFecharCaixa = function() {
+  document.getElementById('modal-fechar-caixa').style.display = 'none';
+};
+
+window.atualizarDiferencaFechamentoModal = function() {
+  const inputContado = document.getElementById('caixa-fechar-valor-contado');
+  const feedback = document.getElementById('caixa-fechar-diferenca-feedback');
+  if (!inputContado || !feedback) return;
+
+  const esperado = parseFloat(inputContado.dataset.saldoEsperado || '0') || 0;
+  const contadoRaw = inputContado.value;
+  if (contadoRaw === '' || isNaN(parseFloat(contadoRaw))) {
+    feedback.textContent = '';
+    return;
+  }
+
+  const contado = parseFloat(contadoRaw);
+  const diff = Math.round((contado - esperado) * 100) / 100;
+  if (Math.abs(diff) < 0.01) {
+    feedback.textContent = 'Gaveta conferida: valor bate exatamente com o saldo esperado!';
+    feedback.style.color = '#059669';
+  } else if (diff > 0) {
+    feedback.textContent = `Sobra em caixa: +${formatBRL(diff)} acima do esperado.`;
+    feedback.style.color = '#2563EB';
+  } else {
+    feedback.textContent = `Diferença (Falta na gaveta): ${formatBRL(diff)} em relação ao esperado.`;
+    feedback.style.color = '#DC2626';
+  }
+};
+
+window.confirmarFechamentoCaixa = async function(e) {
+  e.preventDefault();
+  const inputContado = document.getElementById('caixa-fechar-valor-contado');
+  const caixaId = inputContado?.dataset.caixaId || caixaAbertoAtual?.id;
+  if (!caixaId) return;
+
+  const valorInformado = inputContado?.value !== '' ? parseFloat(inputContado.value) : null;
+  const obs = document.getElementById('caixa-fechar-obs')?.value.trim() || null;
+
+  try {
+    const res = await API.request(`/admin/cantina/caixas/${caixaId}/fechar`, {
+      method: 'POST',
+      body: JSON.stringify({
+        valor_fechamento_informado: valorInformado,
+        observacao_fechamento: obs
+      })
+    });
+
+    showToast(res.mensagem || 'Caixa fechado com sucesso!', 'success');
+    fecharModalFecharCaixa();
+    await carregarCaixaAtualCantina();
+
+    const paneFin = document.getElementById('pane-financeiro');
+    if (paneFin && paneFin.classList.contains('active')) {
+      await Promise.all([carregarFinanceiroCantina(), carregarHistoricoVendasCantina()]);
+    }
+  } catch (err) {
+    showToast(err.message || 'Erro ao fechar o caixa.', 'error');
+  }
+};
+
+window.reabrirCaixaCantina = async function(caixaId) {
+  if (!confirm(`Deseja reabrir o Caixa #${caixaId} para continuar registrando vendas nele?`)) return;
+  try {
+    const res = await API.request(`/admin/cantina/caixas/${caixaId}/reabrir`, { method: 'POST' });
+    showToast(res.mensagem || 'Caixa reaberto com sucesso!', 'success');
+    await carregarCaixaAtualCantina();
+    await Promise.all([carregarFinanceiroCantina(), carregarHistoricoVendasCantina()]);
+  } catch (err) {
+    showToast(err.message || 'Erro ao reabrir o caixa.', 'error');
   }
 };
 
@@ -452,6 +869,12 @@ window.atualizarCalculosPagamentoPDV = function() {
 };
 
 window.finalizarVendaPDV = async function() {
+  if (!caixaAbertoAtual) {
+    showToast('Abra um caixa do dia antes de registrar vendas no PDV.', 'warning');
+    abrirModalAbrirCaixa();
+    return;
+  }
+
   const entries = Object.entries(carrinhoPDV).filter(([_, qtd]) => qtd > 0);
   if (entries.length === 0) {
     showToast('Adicione pelo menos um produto ao carrinho antes de finalizar.', 'warning');
@@ -475,6 +898,7 @@ window.finalizarVendaPDV = async function() {
   }
 
   const payload = {
+    caixa_id: caixaAbertoAtual.id,
     forma_pagamento: formaPagamentoPDV,
     itens: entries.map(([idStr, qtd]) => ({
       produto_id: Number(idStr),
@@ -498,7 +922,7 @@ window.finalizarVendaPDV = async function() {
       body: JSON.stringify(payload)
     });
 
-    let msgSucesso = `Venda #${venda.id} concluída (${formatBRL(venda.valor_subtotal)})!`;
+    let msgSucesso = `Venda #${venda.id} concluída no Caixa #${caixaAbertoAtual.id} (${formatBRL(venda.valor_subtotal)})!`;
     if (formaPagamentoPDV === 'DINHEIRO' && Number(venda.valor_troco) > 0) {
       msgSucesso += ` Troco: ${formatBRL(venda.valor_troco)}`;
     } else if (formaPagamentoPDV === 'CARTAO') {
@@ -507,7 +931,10 @@ window.finalizarVendaPDV = async function() {
 
     showToast(msgSucesso, 'success');
     limparCarrinhoPDV();
-    await carregarProdutosCantina();
+    await Promise.all([
+      carregarProdutosCantina(),
+      carregarCaixaAtualCantina()
+    ]);
   } catch (err) {
     showToast(err.message || 'Erro ao finalizar a venda.', 'error');
   } finally {
@@ -525,7 +952,6 @@ window.renderizarTabelaEstoque = function() {
   const tbody = document.getElementById('estoque-table-body');
   if (!tbody) return;
 
-  // Atualizar cards de métricas do estoque
   const totalProdutos = produtosCantina.length;
   const totalUnidades = produtosCantina.reduce((acc, p) => acc + Number(p.quantidade_estoque || 0), 0);
   const custoEstoque = produtosCantina.reduce((acc, p) => acc + (Number(p.valor_custo || 0) * Number(p.quantidade_estoque || 0)), 0);
@@ -673,7 +1099,6 @@ window.atualizarPreviewImagemProduto = function() {
   box.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="mostrarErroPreviewImg(this)">`;
 };
 
-// Quando digita Custo ou Margem (%), sugere e preenche o Preço de Venda automaticamente
 window.aoAlterarCustoOuMargem = function() {
   const custo = parseFloat(document.getElementById('prod-custo')?.value || '0') || 0;
   const margem = parseFloat(document.getElementById('prod-margem')?.value || '0') || 0;
@@ -688,7 +1113,6 @@ window.aoAlterarCustoOuMargem = function() {
   atualizarResumoLucroModal(precoSugerido, lucroUnit);
 };
 
-// Quando o usuário edita o Preço de Venda manualmente, mantém o preço escolhido e recalcula a margem equivalente
 window.aoAlterarPrecoVendaManual = function() {
   const custo = parseFloat(document.getElementById('prod-custo')?.value || '0') || 0;
   const precoManual = parseFloat(document.getElementById('prod-preco-venda')?.value || '0') || 0;
@@ -767,25 +1191,169 @@ window.excluirProdutoCantina = async function(produtoId) {
 };
 
 // ==============================================================
-// Aba 3: Financeiro, Ponto de Equilíbrio, Vendas e Relatórios
+// Aba 3: Financeiro, Caixas & Relatórios (Por Caixa ou Consolidado)
 // ==============================================================
+window.aoMudarFiltroCaixaFinanceiro = async function() {
+  const sel = document.getElementById('fin-filtro-caixa-select');
+  filtroCaixaFinanceiroId = sel ? sel.value : '';
+  await Promise.all([
+    carregarFinanceiroCantina(),
+    carregarHistoricoVendasCantina()
+  ]);
+};
+
+window.selecionarCaixaNoFinanceiro = async function(caixaId) {
+  filtroCaixaFinanceiroId = caixaId ? String(caixaId) : '';
+  const sel = document.getElementById('fin-filtro-caixa-select');
+  if (sel) sel.value = filtroCaixaFinanceiroId;
+  await Promise.all([
+    carregarFinanceiroCantina(),
+    carregarHistoricoVendasCantina()
+  ]);
+};
+
 async function carregarFinanceiroCantina() {
   try {
-    const data = await API.request('/admin/cantina/financeiro');
+    let url = '/admin/cantina/financeiro';
+    if (filtroCaixaFinanceiroId !== '') {
+      url += `?caixa_id=${encodeURIComponent(filtroCaixaFinanceiroId)}`;
+    }
+    const data = await API.request(url);
     dadosFinanceirosCache = data;
+    listaCaixasCache = Array.isArray(data?.caixas) ? data.caixas : [];
+    renderizarSeletorCaixasFinanceiro(listaCaixasCache);
     renderizarDashboardFinanceiro(data);
+    renderizarTabelaCaixasFinanceiro(listaCaixasCache);
   } catch (err) {
     console.error('Erro ao carregar financeiro da cantina:', err);
   }
 }
 
+function renderizarSeletorCaixasFinanceiro(caixas) {
+  const sel = document.getElementById('fin-filtro-caixa-select');
+  if (!sel) return;
+
+  const opcoes = [
+    `<option value="">Consolidado Geral — Todos os Caixas (${caixas.length} ${caixas.length === 1 ? 'caixa' : 'caixas'})</option>`
+  ];
+
+  caixas.forEach(c => {
+    const dt = formatarDataRef(c.data_referencia);
+    const statusTxt = c.status === 'ABERTO' ? 'ABERTO' : 'FECHADO';
+    opcoes.push(
+      `<option value="${c.id}">Caixa #${c.id} — ${escapeHtml(dt)} — ${escapeHtml(c.descricao)} [${statusTxt}] (${formatBRL(c.receita_liquida_total)})</option>`
+    );
+  });
+
+  sel.innerHTML = opcoes.join('');
+  sel.value = filtroCaixaFinanceiroId ? String(filtroCaixaFinanceiroId) : '';
+}
+
+function renderizarTabelaCaixasFinanceiro(caixas) {
+  const tbody = document.getElementById('fin-caixas-table-body');
+  if (!tbody) return;
+
+  if (!caixas || caixas.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.75rem;">
+          Nenhum caixa foi aberto ainda. Clique em <strong>Abrir Caixa do Dia</strong> para iniciar o controle por sessão.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = caixas.map(c => {
+    const isAberto = c.status === 'ABERTO';
+    const isSelecionado = String(filtroCaixaFinanceiroId) === String(c.id);
+    const dtRef = formatarDataRef(c.data_referencia);
+
+    return `
+      <tr style="${isSelecionado ? 'background: #F0FDF4;' : ''}">
+        <td>
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <strong style="color: var(--text-main);">#${c.id} &bull; ${escapeHtml(c.descricao)}</strong>
+            ${isSelecionado ? `<span class="badge badge-success" style="font-size: 0.65rem;">Selecionado</span>` : ''}
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">
+            Data Ref: <strong>${escapeHtml(dtRef)}</strong> | Op: ${escapeHtml(c.aberto_por_nome || 'Admin')}
+          </div>
+        </td>
+        <td>
+          <span class="badge ${isAberto ? 'badge-success' : ''}" style="${!isAberto ? 'background:#F1F5F9; color:#475569;' : ''}">
+            ${isAberto ? 'ABERTO' : 'FECHADO'}
+          </span>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem;">${c.total_pedidos} pedidos</div>
+        </td>
+        <td style="text-align: right;" class="tabular-nums">${formatBRL(c.valor_inicial)}</td>
+        <td style="text-align: right; font-weight: 800; color: #2563EB;" class="tabular-nums">${formatBRL(c.receita_liquida_total)}</td>
+        <td style="text-align: right; font-size: 0.76rem; color: var(--text-muted);" class="tabular-nums">
+          Din: ${formatBRL(c.vendas_dinheiro)}<br>
+          PIX: ${formatBRL(c.vendas_pix)} | Cart: ${formatBRL(c.vendas_cartao_liquido)}
+        </td>
+        <td style="text-align: right; font-weight: 800; color: #004C50;" class="tabular-nums">
+          ${formatBRL(c.saldo_dinheiro_gaveta)}
+          ${c.valor_fechamento_informado !== null ? `<div style="font-size:0.7rem; color:#64748B;">Contado: ${formatBRL(c.valor_fechamento_informado)}</div>` : ''}
+        </td>
+        <td style="text-align: right; font-weight: 700; color: ${c.lucro_bruto_caixa >= 0 ? '#059669' : '#DC2626'};" class="tabular-nums">
+          ${c.lucro_bruto_caixa >= 0 ? '+' : ''}${formatBRL(c.lucro_bruto_caixa)}
+        </td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button type="button" class="btn ${isSelecionado ? 'btn-primary' : 'btn-outline'} btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem;" onclick="selecionarCaixaNoFinanceiro(${c.id})">
+            ${SVG_ICONS.olho}
+            <span>${isSelecionado ? 'Filtrado' : 'Relatório'}</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem;" title="Imprimir fechamento deste caixa" onclick="imprimirRelatorioCaixaEspecifico(${c.id})">
+            ${SVG_ICONS.impressora}
+          </button>
+          ${isAberto
+            ? `<button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;" onclick="abrirModalFecharCaixa(${c.id})">Fechar</button>`
+            : (!caixaAbertoAtual ? `<button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.55rem; font-size: 0.75rem;" onclick="reabrirCaixaCantina(${c.id})">Reabrir</button>` : '')
+          }
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.imprimirRelatorioCaixaEspecifico = async function(caixaId) {
+  await selecionarCaixaNoFinanceiro(caixaId);
+  imprimirRelatorioFinanceiroCantina();
+};
+
 function renderizarDashboardFinanceiro(data) {
   if (!data || !data.resumo) return;
   const r = data.resumo;
+  const cxSel = data.caixa_selecionado || null;
+  const gaveta = data.resumo_gaveta || {};
+
+  // Badge de Escopo no card superior
+  const escopoBadge = document.getElementById('fin-escopo-badge');
+  const labelCustoCard = document.getElementById('fin-label-custo-card');
+  if (cxSel) {
+    if (escopoBadge) {
+      escopoBadge.textContent = `RELATÓRIO ESPECÍFICO — CAIXA #${cxSel.id}: ${cxSel.descricao.toUpperCase()} (${formatarDataRef(cxSel.data_referencia)}) [${cxSel.status}]`;
+    }
+    if (labelCustoCard) {
+      labelCustoCard.textContent = 'Custo dos Itens Vendidos Neste Caixa';
+    }
+  } else {
+    if (escopoBadge) {
+      escopoBadge.textContent = 'CONSOLIDADO GERAL DA CANTINA (TODOS OS CAIXAS DO EVENTO)';
+    }
+    if (labelCustoCard) {
+      labelCustoCard.textContent = 'Custo Total Investido (Estoque + Vendidos)';
+    }
+  }
 
   // 1. Cards principais
   document.getElementById('fin-custo-total-investido').textContent = formatBRL(r.custo_total_investido);
-  document.getElementById('fin-detalhe-custo').textContent = `Vendido: ${formatBRL(r.custo_itens_vendidos)} | Em estoque: ${formatBRL(r.custo_estoque_atual)}`;
+  if (cxSel) {
+    document.getElementById('fin-detalhe-custo').textContent = `Custo dos produtos saídos no Caixa #${cxSel.id}`;
+  } else {
+    document.getElementById('fin-detalhe-custo').textContent = `Vendido: ${formatBRL(r.custo_itens_vendidos)} | Em estoque: ${formatBRL(r.custo_estoque_atual)}`;
+  }
 
   document.getElementById('fin-receita-liquida').textContent = formatBRL(r.receita_vendas_liquida);
   document.getElementById('fin-detalhe-pedidos').textContent = `${r.total_pedidos} vendas concluídas (${r.total_itens_vendidos} itens)`;
@@ -800,26 +1368,30 @@ function renderizarDashboardFinanceiro(data) {
   if (r.saldo_sobre_investimento_total >= 0) {
     elSaldo.textContent = `+${formatBRL(r.saldo_sobre_investimento_total)}`;
     elSaldo.style.color = '#059669';
-    elSaldoLeg.textContent = 'Lucro líquido após pagar 100% do estoque';
+    elSaldoLeg.textContent = cxSel ? 'Lucro líquido apurado neste caixa' : 'Lucro líquido após pagar 100% do estoque';
   } else {
     elSaldo.textContent = formatBRL(r.saldo_sobre_investimento_total);
     elSaldo.style.color = '#D97706';
-    elSaldoLeg.textContent = `Faltam ${formatBRL(r.falta_para_empatar)} para pagar todo o estoque`;
+    elSaldoLeg.textContent = `Faltam ${formatBRL(r.falta_para_empatar)} para cobrir todo o estoque`;
   }
 
   // 2. Barra de Ponto de Equilíbrio (Break-Even)
   const pct = Math.min(100, Math.max(0, Number(r.percentual_recuperacao_investimento || 0)));
   document.getElementById('fin-progress-bar').style.width = `${pct}%`;
-  document.getElementById('fin-progress-label').textContent = `${Number(r.percentual_recuperacao_investimento || 0).toFixed(1).replace('.', ',')}% do custo total de estoque recuperado`;
+  document.getElementById('fin-progress-label').textContent = `${Number(r.percentual_recuperacao_investimento || 0).toFixed(1).replace('.', ',')}% do custo recuperado`;
 
   const tituloStatus = document.getElementById('fin-status-titulo');
   const valorBreakeven = document.getElementById('fin-breakeven-valor');
 
-  if (r.custo_total_investido === 0 && r.receita_vendas_liquida === 0) {
+  if (cxSel) {
+    tituloStatus.textContent = `${cxSel.descricao} (${formatarDataRef(cxSel.data_referencia)}) — Vendido: ${formatBRL(r.receita_vendas_liquida)} | Lucro: ${formatBRL(r.lucro_sobre_vendidos)}`;
+    valorBreakeven.textContent = `Gaveta em espécie: ${formatBRL(gaveta.saldo_dinheiro_gaveta || 0)}`;
+    valorBreakeven.style.color = '#34D399';
+  } else if (r.custo_total_investido === 0 && r.receita_vendas_liquida === 0) {
     tituloStatus.textContent = 'Aguardando movimentação da cantina';
     valorBreakeven.textContent = 'Sem custos/vendas registrados';
   } else if (r.saldo_sobre_investimento_total >= 0) {
-    tituloStatus.textContent = `Ponto de Equilíbrio Atingido — Lucro Líquido no Caixa: ${formatBRL(r.lucro_caixa_apos_estoque)}`;
+    tituloStatus.textContent = `Ponto de Equilíbrio Atingido — Lucro Líquido Consolidado: ${formatBRL(r.lucro_caixa_apos_estoque)}`;
     valorBreakeven.textContent = `Estoque 100% pago + ${formatBRL(r.lucro_caixa_apos_estoque)} de lucro livre`;
     valorBreakeven.style.color = '#34D399';
   } else {
@@ -828,7 +1400,31 @@ function renderizarDashboardFinanceiro(data) {
     valorBreakeven.style.color = '#FFD166';
   }
 
-  // 3. Formas de Pagamento
+  // 3. Conferência de Gaveta (Dinheiro Físico)
+  const gavTitulo = document.getElementById('fin-gaveta-titulo');
+  if (gavTitulo) {
+    gavTitulo.textContent = cxSel
+      ? `Conferência de Gaveta — Caixa #${cxSel.id} (${cxSel.descricao})`
+      : 'Conferência de Dinheiro em Espécie (Soma de Todos os Caixas)';
+  }
+  document.getElementById('fin-gaveta-inicial').textContent = formatBRL(gaveta.valor_inicial || 0);
+  document.getElementById('fin-gaveta-vendas-din').textContent = `+${formatBRL(gaveta.vendas_dinheiro || 0)}`;
+  document.getElementById('fin-gaveta-suprimentos').textContent = `+${formatBRL(gaveta.total_suprimentos || 0)}`;
+  document.getElementById('fin-gaveta-sangrias').textContent = `-${formatBRL(gaveta.total_sangrias || 0)}`;
+  document.getElementById('fin-gaveta-saldo').textContent = formatBRL(gaveta.saldo_dinheiro_gaveta || 0);
+
+  const confInfo = document.getElementById('fin-gaveta-conferencia-info');
+  if (confInfo) {
+    if (cxSel && cxSel.valor_fechamento_informado !== null) {
+      const diff = Number(cxSel.diferenca_fechamento || 0);
+      const diffStr = Math.abs(diff) < 0.01 ? 'Bateu exato' : (diff > 0 ? `Sobra +${formatBRL(diff)}` : `Falta ${formatBRL(diff)}`);
+      confInfo.textContent = `Contado no fechamento: ${formatBRL(cxSel.valor_fechamento_informado)} (${diffStr})`;
+    } else {
+      confInfo.textContent = 'Inicial + Vendas em Dinheiro + Suprimentos - Sangrias';
+    }
+  }
+
+  // 4. Formas de Pagamento
   const fp = data.por_forma_pagamento || {};
   const pix = fp.PIX || { quantidade_pedidos: 0, valor_liquido: 0 };
   const din = fp.DINHEIRO || { quantidade_pedidos: 0, valor_liquido: 0 };
@@ -843,7 +1439,7 @@ function renderizarDashboardFinanceiro(data) {
   document.getElementById('fin-pay-cartao').textContent = formatBRL(car.valor_liquido);
   document.getElementById('fin-pay-cartao-detalhe').textContent = `${car.quantidade_pedidos} pedidos | Cobrado na máquina: ${formatBRL(car.valor_cobrado)} (Taxas: ${formatBRL(car.taxas_maquina)})`;
 
-  // 4. Tabela de Relatório por Produto
+  // 5. Tabela de Relatório por Produto
   const tbodyProd = document.getElementById('fin-produtos-table-body');
   const relProds = data.relatorio_produtos || [];
   if (relProds.length === 0) {
@@ -879,6 +1475,9 @@ window.carregarHistoricoVendasCantina = async function() {
   const forma = (document.getElementById('fin-vendas-forma')?.value || '').trim();
 
   let url = '/admin/cantina/vendas?limit=500';
+  if (filtroCaixaFinanceiroId !== '') {
+    url += `&caixa_id=${encodeURIComponent(filtroCaixaFinanceiroId)}`;
+  }
   if (forma) url += `&forma_pagamento=${encodeURIComponent(forma)}`;
   if (busca) url += `&search=${encodeURIComponent(busca)}`;
 
@@ -891,9 +1490,19 @@ window.carregarHistoricoVendasCantina = async function() {
       return;
     }
 
+    const mapaCaixas = {};
+    (listaCaixasCache || []).forEach(c => {
+      mapaCaixas[c.id] = c;
+    });
+
     tbody.innerHTML = vendasHistoricoCache.map(v => {
       const cancelada = v.status === 'CANCELADA';
       const dt = v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : '-';
+      const cx = v.caixa_id ? mapaCaixas[v.caixa_id] : null;
+      const labelCaixa = cx
+        ? `Caixa #${cx.id} (${formatarDataRef(cx.data_referencia)})`
+        : (v.caixa_id ? `Caixa #${v.caixa_id}` : 'Sem Caixa');
+
       const itensTexto = (v.itens || []).map(it => `${it.quantidade}x ${escapeHtml(it.produto_nome)}`).join(', ');
       const custo = Number(v.valor_custo_total || 0);
       const vendaVal = Number(v.valor_subtotal || 0);
@@ -916,7 +1525,8 @@ window.carregarHistoricoVendasCantina = async function() {
         <tr style="${cancelada ? 'opacity: 0.52; text-decoration: line-through;' : ''}">
           <td class="tabular-nums">
             <strong>#${v.id}</strong>
-            <div style="font-size: 0.74rem; color: var(--text-muted);">${dt}</div>
+            <span class="badge" style="background:#F1F5F9; color:#004C50; font-size:0.68rem; margin-left:4px;">${escapeHtml(labelCaixa)}</span>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${dt}</div>
           </td>
           <td style="max-width: 260px; white-space: normal; font-size: 0.84rem;">${itensTexto || '-'}</td>
           <td style="font-size: 0.82rem;">
@@ -956,6 +1566,7 @@ window.estornarVendaCantina = async function(vendaId) {
     await API.request(`/admin/cantina/vendas/${vendaId}/estornar`, { method: 'POST' });
     showToast(`Venda #${vendaId} estornada e estoque atualizado!`, 'success');
     await Promise.all([
+      carregarCaixaAtualCantina(),
       carregarProdutosCantina(),
       carregarFinanceiroCantina(),
       carregarHistoricoVendasCantina()
@@ -966,17 +1577,25 @@ window.estornarVendaCantina = async function(vendaId) {
 };
 
 // ==============================================================
-// Exportação de Relatórios (CSV e Impressão/PDF)
+// Exportação de Relatórios (CSV e Impressão/PDF — Por Caixa ou Consolidado)
 // ==============================================================
 window.exportarRelatorioVendasCSV = function() {
   if (!vendasHistoricoCache || vendasHistoricoCache.length === 0) {
-    showToast('Nenhuma venda para exportar.', 'warning');
+    showToast('Nenhuma venda para exportar neste escopo.', 'warning');
     return;
   }
 
+  const mapaCaixas = {};
+  (listaCaixasCache || []).forEach(c => {
+    mapaCaixas[c.id] = c;
+  });
+
   const headers = [
     'ID Venda',
-    'Data/Hora',
+    'Caixa ID',
+    'Data Referencia Caixa',
+    'Descricao Caixa',
+    'Data/Hora Registro',
     'Status',
     'Forma Pagamento',
     'Itens',
@@ -991,6 +1610,7 @@ window.exportarRelatorioVendasCSV = function() {
 
   const rows = vendasHistoricoCache.map(v => {
     const dt = v.created_at ? new Date(v.created_at).toLocaleString('pt-BR') : '';
+    const cx = v.caixa_id ? mapaCaixas[v.caixa_id] : null;
     const itensStr = (v.itens || []).map(i => `${i.quantidade}x ${i.produto_nome}`).join(' | ');
     const custo = Number(v.valor_custo_total || 0);
     const venda = Number(v.valor_subtotal || 0);
@@ -998,6 +1618,9 @@ window.exportarRelatorioVendasCSV = function() {
 
     return [
       v.id,
+      v.caixa_id || '',
+      cx ? formatarDataRef(cx.data_referencia) : '',
+      cx ? cx.descricao : '',
       dt,
       v.status,
       v.forma_pagamento,
@@ -1012,11 +1635,12 @@ window.exportarRelatorioVendasCSV = function() {
     ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(';');
   });
 
+  const sufixo = filtroCaixaFinanceiroId ? `caixa_${filtroCaixaFinanceiroId}` : 'consolidado';
   const csvContent = '\ufeff' + [headers.join(';'), ...rows].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `relatorio_vendas_cantina_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `relatorio_vendas_cantina_${sufixo}_${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1030,20 +1654,27 @@ window.exportarRelatorioProdutosCSV = function() {
   }
 
   const headers = [
+    'Escopo Relatorio',
     'Produto',
     'Categoria',
     'Qtd Vendida',
-    'Qtd em Estoque',
+    'Qtd em Estoque Atual',
     'Custo Unitario (R$)',
     'Preco Venda (R$)',
-    'Custo Total Investido (R$)',
+    'Custo Apurado (R$)',
     'Custo dos Vendidos (R$)',
     'Total Vendido (R$)',
     'Lucro sobre Vendidos (R$)',
-    'Saldo c/ Estoque (R$)'
+    'Saldo Resultado (R$)'
   ];
 
+  const cxSel = dadosFinanceirosCache?.caixa_selecionado;
+  const escopoStr = cxSel
+    ? `Caixa #${cxSel.id} - ${cxSel.descricao} (${formatarDataRef(cxSel.data_referencia)})`
+    : 'Consolidado Geral (Todos os Caixas)';
+
   const rows = prods.map(p => [
+    escopoStr,
     p.nome,
     p.categoria,
     p.qtd_vendida,
@@ -1057,11 +1688,12 @@ window.exportarRelatorioProdutosCSV = function() {
     Number(p.saldo_investimento_produto).toFixed(2).replace('.', ',')
   ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(';'));
 
+  const sufixo = filtroCaixaFinanceiroId ? `caixa_${filtroCaixaFinanceiroId}` : 'consolidado';
   const csvContent = '\ufeff' + [headers.join(';'), ...rows].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `relatorio_produtos_cantina_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `relatorio_produtos_cantina_${sufixo}_${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1074,8 +1706,14 @@ window.imprimirRelatorioFinanceiroCantina = function() {
   }
 
   const r = dadosFinanceirosCache.resumo;
+  const cxSel = dadosFinanceirosCache.caixa_selecionado;
+  const gaveta = dadosFinanceirosCache.resumo_gaveta || {};
   const fp = dadosFinanceirosCache.por_forma_pagamento || {};
   const prods = dadosFinanceirosCache.relatorio_produtos || [];
+
+  const tituloEscopo = cxSel
+    ? `Fechamento de Caixa #${cxSel.id} — ${escapeHtml(cxSel.descricao)} (Data Ref: ${escapeHtml(formatarDataRef(cxSel.data_referencia))})`
+    : `Relatório Consolidado Geral — Todos os Caixas (${(dadosFinanceirosCache.caixas || []).length} caixas)`;
 
   const win = window.open('', '_blank');
   const html = `
@@ -1083,50 +1721,76 @@ window.imprimirRelatorioFinanceiroCantina = function() {
     <html lang="pt-BR">
     <head>
       <meta charset="UTF-8">
-      <title>Relatório Financeiro da Cantina - UMP Eventos</title>
+      <title>${tituloEscopo} - Cantina UMP Eventos</title>
       <style>
         body { font-family: Arial, sans-serif; color: #0f172a; padding: 24px; }
-        h1 { margin: 0 0 4px 0; font-size: 22px; color: #00363A; }
-        p.sub { margin: 0 0 20px 0; font-size: 12px; color: #64748b; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-        .box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background: #f8fafc; }
-        .box-label { font-size: 11px; text-transform: uppercase; color: #475569; font-weight: bold; }
-        .box-val { font-size: 18px; font-weight: bold; margin-top: 4px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; margin-bottom: 24px; }
-        th, td { border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; }
+        h1 { margin: 0 0 4px 0; font-size: 20px; color: #00363A; }
+        h2 { margin: 0 0 12px 0; font-size: 14px; color: #EA580C; }
+        p.sub { margin: 0 0 18px 0; font-size: 12px; color: #64748b; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+        .box { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; background: #f8fafc; }
+        .box-label { font-size: 10px; text-transform: uppercase; color: #475569; font-weight: bold; }
+        .box-val { font-size: 16px; font-weight: bold; margin-top: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; margin-bottom: 20px; }
+        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
         th { background: #f1f5f9; font-weight: bold; }
         .right { text-align: right; }
         .center { text-align: center; }
       </style>
     </head>
     <body>
-      <h1>Relatório Financeiro & Estoque da Cantina</h1>
-      <p class="sub">Gerado em: ${new Date().toLocaleString('pt-BR')} | Total de Pedidos Concluídos: ${r.total_pedidos}</p>
+      <h1>Relatório Financeiro & Fechamento da Cantina</h1>
+      <h2>${tituloEscopo}</h2>
+      <p class="sub">Emitido em: ${new Date().toLocaleString('pt-BR')} | Total de Pedidos Concluídos: ${r.total_pedidos} (${r.total_itens_vendidos} itens)</p>
 
       <div class="grid">
         <div class="box">
-          <div class="box-label">Custo Total Investido</div>
+          <div class="box-label">${cxSel ? 'Custo dos Itens Vendidos' : 'Custo Total Investido'}</div>
           <div class="box-val">${formatBRL(r.custo_total_investido)}</div>
-          <div style="font-size:11px; color:#64748b;">Vendido: ${formatBRL(r.custo_itens_vendidos)} | Estoque: ${formatBRL(r.custo_estoque_atual)}</div>
+          <div style="font-size:10px; color:#64748b;">Vendido: ${formatBRL(r.custo_itens_vendidos)} | Estoque: ${formatBRL(r.custo_estoque_atual)}</div>
         </div>
         <div class="box">
           <div class="box-label">Total Vendido (Líquido)</div>
           <div class="box-val">${formatBRL(r.receita_vendas_liquida)}</div>
-          <div style="font-size:11px; color:#64748b;">Cobrado c/ taxas: ${formatBRL(r.receita_total_cobrada)}</div>
+          <div style="font-size:10px; color:#64748b;">Cobrado c/ taxas: ${formatBRL(r.receita_total_cobrada)}</div>
         </div>
         <div class="box">
           <div class="box-label">Lucro s/ Itens Vendidos</div>
           <div class="box-val">${formatBRL(r.lucro_sobre_vendidos)}</div>
-          <div style="font-size:11px; color:#64748b;">Margem real: ${Number(r.margem_real_vendidos).toFixed(1)}%</div>
+          <div style="font-size:10px; color:#64748b;">Margem real: ${Number(r.margem_real_vendidos).toFixed(1)}%</div>
         </div>
         <div class="box">
-          <div class="box-label">Saldo Final (Vendas - Custo Total)</div>
-          <div class="box-val">${formatBRL(r.saldo_sobre_investimento_total)}</div>
-          <div style="font-size:11px; color:#64748b;">Recuperado: ${Number(r.percentual_recuperacao_investimento).toFixed(1)}%</div>
+          <div class="box-label">Saldo em Dinheiro na Gaveta</div>
+          <div class="box-val">${formatBRL(gaveta.saldo_dinheiro_gaveta || 0)}</div>
+          <div style="font-size:10px; color:#64748b;">Inicial: ${formatBRL(gaveta.valor_inicial || 0)} | Din: ${formatBRL(gaveta.vendas_dinheiro || 0)}</div>
         </div>
       </div>
 
-      <h3>1. Resumo por Forma de Pagamento</h3>
+      <h3>1. Conferência de Gaveta (Dinheiro Físico)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th class="right">Fundo Inicial</th>
+            <th class="right">(+) Vendas em Dinheiro</th>
+            <th class="right">(+) Suprimentos</th>
+            <th class="right">(-) Sangrias</th>
+            <th class="right">(=) Saldo Esperado em Gaveta</th>
+            ${cxSel && cxSel.valor_fechamento_informado !== null ? `<th class="right">Valor Contado</th><th class="right">Diferença</th>` : ''}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="right">${formatBRL(gaveta.valor_inicial || 0)}</td>
+            <td class="right">${formatBRL(gaveta.vendas_dinheiro || 0)}</td>
+            <td class="right">${formatBRL(gaveta.total_suprimentos || 0)}</td>
+            <td class="right">${formatBRL(gaveta.total_sangrias || 0)}</td>
+            <td class="right"><strong>${formatBRL(gaveta.saldo_dinheiro_gaveta || 0)}</strong></td>
+            ${cxSel && cxSel.valor_fechamento_informado !== null ? `<td class="right">${formatBRL(cxSel.valor_fechamento_informado)}</td><td class="right">${formatBRL(cxSel.diferenca_fechamento || 0)}</td>` : ''}
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2. Resumo por Forma de Pagamento</h3>
       <table>
         <thead>
           <tr>
@@ -1158,16 +1822,16 @@ window.imprimirRelatorioFinanceiroCantina = function() {
         </tbody>
       </table>
 
-      <h3>2. Desempenho por Produto</h3>
+      <h3>3. Desempenho por Produto</h3>
       <table>
         <thead>
           <tr>
             <th>Produto</th>
             <th class="center">Vendidos</th>
-            <th class="center">Estoque</th>
+            <th class="center">Estoque Atual</th>
             <th class="right">Custo Unit.</th>
             <th class="right">Preço Venda</th>
-            <th class="right">Custo Total</th>
+            <th class="right">Custo Vendido</th>
             <th class="right">Total Vendido</th>
             <th class="right">Lucro s/ Vendidos</th>
           </tr>
@@ -1180,7 +1844,7 @@ window.imprimirRelatorioFinanceiroCantina = function() {
               <td class="center">${p.quantidade_estoque}</td>
               <td class="right">${formatBRL(p.valor_custo_unitario)}</td>
               <td class="right">${formatBRL(p.preco_venda_unitario)}</td>
-              <td class="right">${formatBRL(p.custo_total_investido)}</td>
+              <td class="right">${formatBRL(p.custo_vendido)}</td>
               <td class="right">${formatBRL(p.receita_vendida)}</td>
               <td class="right">${formatBRL(p.lucro_sobre_vendidos)}</td>
             </tr>

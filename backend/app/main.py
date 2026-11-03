@@ -99,8 +99,39 @@ async def lifespan(app: FastAPI):
                     );
                 """))
                 conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS cantina_caixas (
+                        id SERIAL PRIMARY KEY,
+                        data_referencia VARCHAR(20) NOT NULL,
+                        descricao VARCHAR(160),
+                        valor_inicial NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        valor_fechamento_informado NUMERIC(10, 2),
+                        observacao_abertura TEXT,
+                        observacao_fechamento TEXT,
+                        status VARCHAR(20) DEFAULT 'ABERTO' NOT NULL,
+                        aberto_por_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                        aberto_por_nome VARCHAR(150),
+                        fechado_por_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                        fechado_por_nome VARCHAR(150),
+                        opened_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        closed_at TIMESTAMP WITH TIME ZONE
+                    );
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS cantina_caixa_movimentacoes (
+                        id SERIAL PRIMARY KEY,
+                        caixa_id INTEGER NOT NULL REFERENCES cantina_caixas(id) ON DELETE CASCADE,
+                        tipo VARCHAR(20) NOT NULL,
+                        valor NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        motivo VARCHAR(200),
+                        operador_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                        operador_nome VARCHAR(150),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS cantina_vendas (
                         id SERIAL PRIMARY KEY,
+                        caixa_id INTEGER REFERENCES cantina_caixas(id) ON DELETE SET NULL,
                         forma_pagamento VARCHAR(40) NOT NULL,
                         valor_custo_total NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
                         valor_subtotal NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
@@ -117,6 +148,7 @@ async def lifespan(app: FastAPI):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                conn.execute(text("ALTER TABLE cantina_vendas ADD COLUMN IF NOT EXISTS caixa_id INTEGER REFERENCES cantina_caixas(id) ON DELETE SET NULL;"))
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS cantina_venda_itens (
                         id SERIAL PRIMARY KEY,
@@ -131,6 +163,8 @@ async def lifespan(app: FastAPI):
                     );
                 """))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_venda_itens_venda ON cantina_venda_itens(venda_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_vendas_caixa ON cantina_vendas(caixa_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_mov_caixa ON cantina_caixa_movimentacoes(caixa_id);"))
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
             except Exception as err:

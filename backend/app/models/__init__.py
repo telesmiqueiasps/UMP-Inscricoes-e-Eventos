@@ -10,7 +10,13 @@ from app.models.presbiterio import Presbiterio
 from app.models.igreja import Igreja
 from app.models.diaria import DiariaTriagem, InscricaoDiaria
 from app.models.gincana import Gincana, GincanaPonto
-from app.models.cantina import CantinaProduto, CantinaVenda, CantinaVendaItem
+from app.models.cantina import (
+    CantinaCaixa,
+    CantinaCaixaMovimentacao,
+    CantinaProduto,
+    CantinaVenda,
+    CantinaVendaItem
+)
 
 __all__ = [
     "Base",
@@ -27,6 +33,8 @@ __all__ = [
     "InscricaoDiaria",
     "Gincana",
     "GincanaPonto",
+    "CantinaCaixa",
+    "CantinaCaixaMovimentacao",
     "CantinaProduto",
     "CantinaVenda",
     "CantinaVendaItem"
