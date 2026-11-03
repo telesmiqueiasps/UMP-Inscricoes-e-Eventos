@@ -229,6 +229,65 @@
           </div>
         </div>
 
+        <!-- Tabela de Administradores -->
+        <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: 8px;">
+          <table style="margin-bottom: 0;">
+            <thead>
+              <tr>
+                <th>Administrador</th>
+                <th>E-mail</th>
+                <th>Telefone / CPF</th>
+                <th>Perfil de Acesso</th>
+                <th style="width: 170px; text-align: right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admins-table-body">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Carregando administradores...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+        <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- Modal Editar Perfil de Administrador -->
+  <div class="modal" id="modal-editar-perfil" style="display: none;">
+    <div class="modal-content" style="max-width: 440px;">
+      <button type="button" class="modal-close" onclick="fecharModalEditarPerfil()">&times;</button>
+      <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Editar Perfil de Acesso</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Administrador: <strong id="modal-editar-nome-admin" style="color: var(--text-main);">...</strong>
+      </p>
+
+      <input type="hidden" id="modal-editar-usuario-id">
+
+      <div class="form-group">
+        <label class="form-label" style="font-weight: 600;">Selecione o Perfil de Permissões</label>
+        <select id="modal-editar-select-perfil" class="form-control" style="height: 42px;">
+          <option value="global">🛡️ Admin Global (Acesso Completo)</option>
+          <option value="secretaria">📋 Secretaria (Dashboard, Inscrições, Diárias e Check-in)</option>
+          <option value="gincana">🏆 Gincana (Acesso apenas à aba Gincana)</option>
+          <option value="cantina">🍔 Cantina (Acesso apenas à aba Cantina)</option>
+        </select>
+        <small style="color: var(--text-muted); display: block; margin-top: 0.4rem; font-size: 0.78rem;">
+          Define quais módulos e telas este usuário poderá visualizar e gerenciar no sistema.
+        </small>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalEditarPerfil()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="salvarPerfilAdmin()">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Adicionar Novo Administrador -->
   <div class="modal" id="modal-novo-admin" style="display: none;">
     <div class="modal-content" style="max-width: 520px;">

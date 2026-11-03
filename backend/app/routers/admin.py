@@ -1291,7 +1291,16 @@ def listar_administradores(
     """
     Retorna a lista de todos os usuários com status de administrador e seus respectivos perfis de acesso.
     """
-    admins = db.query(Usuario).filter(Usuario.is_admin == True).order_by(Usuario.nome.asc()).all()
+    admins = db.query(Usuario).filter(
+        or_(
+            Usuario.is_admin == True,
+            func.lower(Usuario.perfil_acesso).in_(["gincana", "secretaria", "cantina"])
+        )
+    ).order_by(Usuario.nome.asc()).all()
+    for u in admins:
+        if not u.is_admin:
+            u.is_admin = True
+            db.commit()
     return admins
 
 
