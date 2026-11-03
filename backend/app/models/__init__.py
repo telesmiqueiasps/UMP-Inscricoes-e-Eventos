@@ -10,5 +10,24 @@ from app.models.presbiterio import Presbiterio
 from app.models.igreja import Igreja
 from app.models.diaria import DiariaTriagem, InscricaoDiaria
 from app.models.gincana import Gincana, GincanaPonto
+from app.models.cantina import CantinaProduto, CantinaVenda, CantinaVendaItem
 
-__all__ = ["Base", "Usuario", "Evento", "Inscricao", "InscricaoTriagem", "Pagamento", "Parcela", "Configuracao", "Presbiterio", "Igreja", "DiariaTriagem", "InscricaoDiaria", "Gincana", "GincanaPonto"]
+__all__ = [
+    "Base",
+    "Usuario",
+    "Evento",
+    "Inscricao",
+    "InscricaoTriagem",
+    "Pagamento",
+    "Parcela",
+    "Configuracao",
+    "Presbiterio",
+    "Igreja",
+    "DiariaTriagem",
+    "InscricaoDiaria",
+    "Gincana",
+    "GincanaPonto",
+    "CantinaProduto",
+    "CantinaVenda",
+    "CantinaVendaItem"
+]

@@ -18,7 +18,8 @@ from app.routers import (
     presbiterio,
     igreja,
     diarias,
-    gincana
+    gincana,
+    cantina
 )
 
 
@@ -82,6 +83,54 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE gincana_pontos ADD COLUMN IF NOT EXISTS usuario_nome VARCHAR(150);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincanas_evento ON gincanas(evento_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincana_pontos_gincana ON gincana_pontos(gincana_id);"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS cantina_produtos (
+                        id SERIAL PRIMARY KEY,
+                        nome VARCHAR(180) NOT NULL,
+                        categoria VARCHAR(100) DEFAULT 'Geral',
+                        imagem_url TEXT,
+                        quantidade_estoque INTEGER DEFAULT 0 NOT NULL,
+                        valor_custo NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        margem_lucro NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        preco_venda NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        ativo BOOLEAN DEFAULT TRUE NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS cantina_vendas (
+                        id SERIAL PRIMARY KEY,
+                        forma_pagamento VARCHAR(40) NOT NULL,
+                        valor_custo_total NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        valor_subtotal NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        taxa_cartao_percentual NUMERIC(6, 2) DEFAULT 0.00 NOT NULL,
+                        valor_taxa_cartao NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        valor_total_cobrado NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        valor_recebido_dinheiro NUMERIC(10, 2),
+                        valor_troco NUMERIC(10, 2),
+                        cliente_nome VARCHAR(150),
+                        observacao TEXT,
+                        operador_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                        operador_nome VARCHAR(150),
+                        status VARCHAR(30) DEFAULT 'CONCLUIDA' NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS cantina_venda_itens (
+                        id SERIAL PRIMARY KEY,
+                        venda_id INTEGER NOT NULL REFERENCES cantina_vendas(id) ON DELETE CASCADE,
+                        produto_id INTEGER REFERENCES cantina_produtos(id) ON DELETE SET NULL,
+                        produto_nome VARCHAR(180) NOT NULL,
+                        quantidade INTEGER DEFAULT 1 NOT NULL,
+                        valor_custo_unitario NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        preco_venda_unitario NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        subtotal_custo NUMERIC(10, 2) DEFAULT 0.00 NOT NULL,
+                        subtotal_venda NUMERIC(10, 2) DEFAULT 0.00 NOT NULL
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_venda_itens_venda ON cantina_venda_itens(venda_id);"))
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
             except Exception as err:
@@ -183,6 +232,7 @@ app.include_router(presbiterio.router, prefix=settings.API_V1_STR)
 app.include_router(igreja.router, prefix=settings.API_V1_STR)
 app.include_router(diarias.router, prefix=settings.API_V1_STR)
 app.include_router(gincana.router, prefix=settings.API_V1_STR)
+app.include_router(cantina.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
