@@ -197,7 +197,8 @@ body {
 }
 .form-control {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.95rem;
+  line-height: 1.4;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border-color);
   font-family: inherit;
@@ -205,6 +206,20 @@ body {
   color: var(--text-main);
   background-color: #FFFFFF;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input.form-control {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+
+select.form-control {
+  height: 42px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 2rem;
+  line-height: normal;
+  cursor: pointer;
 }
 
 .form-control:focus {

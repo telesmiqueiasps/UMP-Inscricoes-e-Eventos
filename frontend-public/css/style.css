@@ -1576,12 +1576,27 @@ footer {
 
 .form-control {
   width: 100%;
-  padding: 0.85rem 1rem;
+  padding: 0.65rem 0.95rem;
+  line-height: 1.4;
   font-size: 0.95rem;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border-color);
   background: #FFFFFF;
   transition: var(--transition);
+}
+
+input.form-control {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+select.form-control {
+  height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 2rem;
+  line-height: normal;
+  cursor: pointer;
 }
 
 .form-control:focus {
