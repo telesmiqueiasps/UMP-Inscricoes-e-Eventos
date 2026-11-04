@@ -1001,7 +1001,17 @@ def obter_cardapio_publico_cantina(db: Session = Depends(get_db)):
     """
     _garantir_tabelas_cantina()
 
-    caixa_aberto = _obter_caixa_aberto_db(db)
+    caixa_aberto = None
+    try:
+        caixa_aberto = (
+            db.query(CantinaCaixa)
+            .filter(CantinaCaixa.status == "ABERTO")
+            .order_by(CantinaCaixa.id.desc())
+            .first()
+        )
+    except Exception:
+        caixa_aberto = None
+
     produtos_db = (
         db.query(CantinaProduto)
         .filter(CantinaProduto.ativo == True)
