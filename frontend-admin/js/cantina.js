@@ -1862,3 +1862,34 @@ window.imprimirRelatorioFinanceiroCantina = function() {
     win.print();
   }, 400);
 };
+
+
+// ==============================================================
+// ATALHOS DO CARDÁPIO PÚBLICO PARA PARTICIPANTES
+// ==============================================================
+function obterUrlCardapioPublico() {
+  const origin = window.location.origin;
+  const path = window.location.pathname || '';
+  if (path.includes('/frontend-admin/')) {
+    return `${origin}/frontend-public/cantina.html`;
+  }
+  return `${origin}/cantina.html`;
+}
+
+window.abrirCardapioPublico = function() {
+  window.open(obterUrlCardapioPublico(), '_blank');
+};
+
+window.copiarLinkCardapioPublico = async function() {
+  const url = obterUrlCardapioPublico();
+  try {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+      showToast('Link do cardápio público copiado!', 'success');
+    } else {
+      prompt('Copie o link do cardápio público:', url);
+    }
+  } catch (err) {
+    prompt('Copie o link do cardápio público:', url);
+  }
+};

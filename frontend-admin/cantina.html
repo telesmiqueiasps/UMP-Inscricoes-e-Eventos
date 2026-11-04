@@ -699,6 +699,14 @@
           <p class="cantina-banner-sub">Controle por sessão de caixa, estoque em tempo real e apuração de custos, margem e lucro</p>
         </div>
         <div class="cantina-banner-actions">
+          <button type="button" class="taxa-pill-btn" onclick="abrirCardapioPublico()" title="Abrir página pública do cardápio da cantina">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00B894" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>Cardápio Público</span>
+          </button>
+          <button type="button" class="taxa-pill-btn" onclick="copiarLinkCardapioPublico()" title="Copiar link do cardápio para enviar aos participantes">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copiar Link Cardápio</span>
+          </button>
           <button type="button" class="taxa-pill-btn" onclick="abrirModalTaxaMaquina()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
             <span>Taxa Máquina: <strong id="badge-taxa-topo" style="color: #FFD166;">0,00%</strong></span>

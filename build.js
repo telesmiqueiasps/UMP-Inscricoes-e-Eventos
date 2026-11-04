@@ -55,6 +55,8 @@ const redirectsContent = `# Redirecionamentos de conveniência para as pastas
 /usuario/       /usuario/login.html       301
 /admin          /admin/index.html         301
 /admin/         /admin/index.html         301
+/cantina        /cantina.html             200
+/cardapio       /cantina.html             200
 `;
 
 fs.writeFileSync(path.join(distDir, '_redirects'), redirectsContent, 'utf-8');

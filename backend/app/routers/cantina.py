@@ -986,3 +986,55 @@ def obter_financeiro_cantina(
         "relatorio_produtos": relatorio_produtos,
         "config": _obter_config_cantina_db(db)
     }
+
+
+
+# ==============================================================
+# CARDÁPIO PÚBLICO PARA PARTICIPANTES (SEM AUTENTICAÇÃO)
+# ==============================================================
+
+@router.get("/cardapio-publico")
+def obter_cardapio_publico_cantina(db: Session = Depends(get_db)):
+    """
+    Endpoint público do cardápio digital da cantina para visualização pelos participantes.
+    Não expõe preço de custo nem margem de lucro.
+    """
+    _garantir_tabelas_cantina()
+
+    caixa_aberto = _obter_caixa_aberto_db(db)
+    produtos_db = (
+        db.query(CantinaProduto)
+        .filter(CantinaProduto.ativo == True)
+        .order_by(CantinaProduto.categoria.asc(), CantinaProduto.nome.asc())
+        .all()
+    )
+
+    categorias_set = set()
+    produtos_publicos = []
+
+    for p in produtos_db:
+        qtd = max(0, int(p.quantidade_estoque or 0))
+        cat = (p.categoria or "Geral").strip() or "Geral"
+        categorias_set.add(cat)
+        produtos_publicos.append({
+            "id": p.id,
+            "nome": p.nome,
+            "categoria": cat,
+            "preco_venda": float(p.preco_venda or 0),
+            "quantidade_estoque": qtd,
+            "disponivel": qtd > 0,
+            "imagem_url": p.imagem_url
+        })
+
+    # Ordenar deixando disponíveis primeiro e esgotados por último dentro de cada categoria
+    produtos_publicos.sort(key=lambda item: (0 if item["disponivel"] else 1, item["categoria"].lower(), item["nome"].lower()))
+
+    return {
+        "cantina_aberta": caixa_aberto is not None,
+        "caixa_atual": caixa_aberto.descricao if caixa_aberto else None,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "total_itens": len(produtos_publicos),
+        "total_disponiveis": sum(1 for item in produtos_publicos if item["disponivel"]),
+        "categorias": sorted(list(categorias_set)),
+        "produtos": produtos_publicos
+    }
