@@ -972,6 +972,10 @@ function aplicarRestricoesPerfilAdmin(user) {
 
   // 2. Proteção de rota no lado do cliente: Redirecionar se acessar página não autorizada
   if (!isGlobal) {
+    if (path.includes('oficinas') && !temPermissao('oficinas')) {
+      window.location.replace(obterPaginaInicialPerfil());
+      return;
+    }
     if (path.includes('gincana') && !temPermissao('gincana')) {
       window.location.replace(obterPaginaInicialPerfil());
       return;
@@ -1005,6 +1009,7 @@ function aplicarRestricoesPerfilAdmin(user) {
     const href = (link.getAttribute('href') || link.href || '').toLowerCase();
     const text = (link.textContent || '').toLowerCase();
 
+    const isOficinas = dataAba === 'oficinas' || href.includes('oficina') || text.includes('oficina');
     const isGincana = dataAba === 'gincana' || href.includes('gincana') || text.includes('gincana');
     const isCantina = dataAba === 'cantina' || href.includes('cantina') || text.includes('cantina');
     const isEventos = dataAba === 'eventos' || href.includes('index') || text.includes('dashboard') || text.includes('evento');
@@ -1020,7 +1025,9 @@ function aplicarRestricoesPerfilAdmin(user) {
       }
     };
 
-    if (isGincana) {
+    if (isOficinas) {
+      toggleItem(temPermissao('oficinas'));
+    } else if (isGincana) {
       toggleItem(temPermissao('gincana'));
     } else if (isCantina) {
       toggleItem(temPermissao('cantina'));

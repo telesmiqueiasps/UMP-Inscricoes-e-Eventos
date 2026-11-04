@@ -17,6 +17,7 @@ from app.models.cantina import (
     CantinaVenda,
     CantinaVendaItem
 )
+from app.models.oficina import Oficina, OficinaInscricao, OficinaConfig
 
 __all__ = [
     "Base",
@@ -37,5 +38,8 @@ __all__ = [
     "CantinaCaixaMovimentacao",
     "CantinaProduto",
     "CantinaVenda",
-    "CantinaVendaItem"
+    "CantinaVendaItem",
+    "Oficina",
+    "OficinaInscricao",
+    "OficinaConfig"
 ]

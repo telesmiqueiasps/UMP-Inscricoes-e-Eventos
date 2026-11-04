@@ -19,7 +19,8 @@ from app.routers import (
     igreja,
     diarias,
     gincana,
-    cantina
+    cantina,
+    oficinas
 )
 
 
@@ -165,6 +166,35 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_venda_itens_venda ON cantina_venda_itens(venda_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_vendas_caixa ON cantina_vendas(caixa_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cantina_mov_caixa ON cantina_caixa_movimentacoes(caixa_id);"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS oficinas (
+                        id SERIAL PRIMARY KEY,
+                        evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+                        titulo VARCHAR(200) NOT NULL,
+                        descricao TEXT,
+                        ministrante VARCHAR(160),
+                        local VARCHAR(160),
+                        horario VARCHAR(120),
+                        capacidade INTEGER DEFAULT 30 NOT NULL,
+                        ativa BOOLEAN DEFAULT TRUE NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS oficina_inscricoes (
+                        id SERIAL PRIMARY KEY,
+                        oficina_id INTEGER NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
+                        evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+                        usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        CONSTRAINT uq_oficina_evento_usuario UNIQUE (evento_id, usuario_id)
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficinas_evento ON oficinas(evento_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_oficina ON oficina_inscricoes(oficina_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_evento ON oficina_inscricoes(evento_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_usuario ON oficina_inscricoes(usuario_id);"))
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
             except Exception as err:
@@ -267,6 +297,7 @@ app.include_router(igreja.router, prefix=settings.API_V1_STR)
 app.include_router(diarias.router, prefix=settings.API_V1_STR)
 app.include_router(gincana.router, prefix=settings.API_V1_STR)
 app.include_router(cantina.router, prefix=settings.API_V1_STR)
+app.include_router(oficinas.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

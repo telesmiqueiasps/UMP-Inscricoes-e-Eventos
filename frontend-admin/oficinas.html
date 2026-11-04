@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oficinas do Evento - Admin UMP Eventos</title>
+  <link class="icon-link" rel="icon" href="img/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Cabeçalho Temático de Oficinas */
+    .oficinas-top-banner {
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at 88% 20%, rgba(0, 184, 148, 0.22) 0%, transparent 45%),
+                  radial-gradient(circle at 12% 85%, rgba(255, 121, 0, 0.18) 0%, transparent 50%),
+                  linear-gradient(135deg, #001E21 0%, #00363A 60%, #004C50 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 1.5rem 1.75rem;
+      color: #FFFFFF;
+      margin-bottom: 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 14px 32px -10px rgba(0, 30, 33, 0.35);
+    }
+
+    .oficinas-top-banner::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 18px 18px;
+      pointer-events: none;
+    }
+
+    .oficinas-banner-info {
+      position: relative;
+      z-index: 1;
+    }
+
+    .oficinas-banner-title {
+      font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      font-weight: 800;
+      margin: 0 0 0.25rem 0;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .oficinas-banner-sub {
+      color: #CBD5E1;
+      font-size: 0.88rem;
+      margin: 0;
+    }
+
+    .oficinas-banner-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    /* Chave Seletora (Toggle Switch) */
+    .oficina-switch-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: rgba(0, 30, 33, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 0.5rem 0.95rem;
+      border-radius: 12px;
+      backdrop-filter: blur(12px);
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 25px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #64748B;
+      transition: 0.25s ease;
+      border-radius: 999px;
+    }
+
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 19px;
+      width: 19px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #FFFFFF;
+      transition: 0.25s ease;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #00B894;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(21px);
+    }
+
+    .toggle-switch-sm {
+      width: 38px;
+      height: 21px;
+    }
+
+    .toggle-switch-sm .toggle-slider::before {
+      height: 15px;
+      width: 15px;
+      left: 3px;
+      bottom: 3px;
+    }
+
+    .toggle-switch-sm input:checked + .toggle-slider::before {
+      transform: translateX(17px);
+    }
+
+    .btn-laranja-acao {
+      background: linear-gradient(135deg, #FF7900 0%, #EA580C 100%);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.62rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      box-shadow: 0 6px 16px rgba(255, 121, 0, 0.3);
+      transition: all 0.2s;
+    }
+
+    .btn-laranja-acao:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(255, 121, 0, 0.4);
+    }
+
+    /* Barra de Filtro de Evento */
+    .oficinas-filter-bar {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Grid de Cards de Oficinas */
+    .oficinas-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 640px) {
+      .oficinas-cards-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .oficina-admin-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 4px 16px -6px rgba(15, 23, 42, 0.06);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .oficina-admin-card:hover {
+      border-color: #004C50;
+      box-shadow: 0 12px 28px -10px rgba(0, 54, 58, 0.14);
+    }
+
+    .oficina-admin-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #004C50 0%, #00B894 50%, #FF7900 100%);
+    }
+
+    .oficina-vagas-track {
+      width: 100%;
+      height: 10px;
+      background: #E2E8F0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0.55rem 0;
+    }
+
+    .oficina-vagas-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .oficina-meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 0.65rem;
+    }
+
+    .oficina-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .oficina-meta-item svg {
+      flex-shrink: 0;
+      color: #004C50;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-layout" id="admin-oficinas">
+    
+    <!-- Sidebar / Topbar Mobile -->
+    <aside class="sidebar">
+      <div class="sidebar-header-mobile">
+        <div class="sidebar-brand">
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
+        </div>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li data-aba="eventos">
+          <a href="index.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+            <span>Dashboard & Eventos</span>
+          </a>
+        </li>
+        <li data-aba="oficinas">
+          <a href="oficinas.html" class="sidebar-link active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Oficinas</span>
+          </a>
+        </li>
+        <li data-aba="gincana">
+          <a href="gincana.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            <span>Gincana</span>
+          </a>
+        </li>
+        <li data-aba="cantina">
+          <a href="cantina.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Cantina</span>
+          </a>
+        </li>
+        <li data-aba="configuracoes">
+          <a href="configuracoes.html" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li style="margin-top: auto;">
+          <a href="javascript:void(0)" onclick="logoutAdmin()" class="sidebar-link btn-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+            <span>Sair</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Banner de Oficinas -->
+      <div class="oficinas-top-banner">
+        <div class="oficinas-banner-info">
+          <h1 class="oficinas-banner-title">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Gestão de Oficinas & Controle de Vagas</span>
+          </h1>
+          <p class="oficinas-banner-sub">Cadastre as oficinas vinculadas ao evento, defina o limite de vagas e controle quando estarão disponíveis para os participantes</p>
+        </div>
+        <div class="oficinas-banner-actions">
+          <!-- Chave Seletora Geral da Aba do Participante -->
+          <div class="oficina-switch-box" title="Controla se a aba Oficinas aparece ou fica oculta no Painel do Participante">
+            <div>
+              <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #CBD5E1; font-weight: 700;">Aba no Painel do Participante</div>
+              <div id="label-status-aba-participante" style="font-size: 0.82rem; font-weight: 800; color: #00B894;">Disponível para Inscritos</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-aba-participante" checked onchange="alternarVisibilidadeAbaParticipante(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <button type="button" class="btn-laranja-acao" onclick="abrirModalNovaOficina()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Nova Oficina</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Seleção do Evento Vinculado -->
+      <div class="oficinas-filter-bar">
+        <div style="display: flex; align-items: center; gap: 0.85rem; flex: 1; min-width: 240px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #00363A; color: #00B894; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <label for="oficinas-filtro-evento" style="display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 800; margin-bottom: 0.2rem;">
+              Filtrar Oficinas por Evento Vinculado
+            </label>
+            <select id="oficinas-filtro-evento" class="form-control" onchange="carregarOficinasAdmin()" style="margin-bottom: 0; height: 40px; font-weight: 700; color: #00363A; max-width: 460px;">
+              <option value="">Todos os Eventos</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <input type="text" id="oficinas-busca-input" class="form-control" placeholder="Buscar oficina ou ministrante..." oninput="renderizarCardsOficinasAdmin()" style="margin-bottom: 0; height: 40px; width: 250px;">
+        </div>
+      </div>
+
+      <!-- Cards de Indicadores (KPIs) -->
+      <div class="metrics-grid" style="margin-bottom: 1.5rem;">
+        <div class="metric-card">
+          <div style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Oficinas Cadastradas</div>
+          <div class="metric-val tabular-nums" id="of-kpi-total">0</div>
+        </div>
+        <div class="metric-card">
+          <div style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Total de Vagas Ofertadas</div>
+          <div class="metric-val tabular-nums" id="of-kpi-vagas" style="color: #2563EB;">0</div>
+        </div>
+        <div class="metric-card">
+          <div style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Vagas Ocupadas (Inscritos)</div>
+          <div class="metric-val tabular-nums" id="of-kpi-ocupadas" style="color: #FF7900;">0</div>
+        </div>
+        <div class="metric-card">
+          <div style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase;">Vagas Disponíveis</div>
+          <div class="metric-val tabular-nums" id="of-kpi-disponiveis" style="color: #059669;">0</div>
+        </div>
+      </div>
+
+      <!-- Listagem em Cards das Oficinas -->
+      <div id="oficinas-cards-container" class="oficinas-cards-grid">
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+          Carregando oficinas cadastradas...
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer style="margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+        <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
+      </footer>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: CRIAR / EDITAR OFICINA                             -->
+  <!-- ========================================================= -->
+  <div class="modal" id="modal-oficina" style="display: none;">
+    <div class="modal-content" style="max-width: 560px;">
+      <button type="button" class="modal-close" onclick="fecharModalOficina()">&times;</button>
+      <h3 id="modal-oficina-titulo" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.35rem; font-family: 'Plus Jakarta Sans', sans-serif;">Nova Oficina</h3>
+      <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Apenas participantes inscritos no <strong>Evento Vinculado</strong> poderão visualizar e ocupar vagas nesta oficina pelo painel do participante.
+      </p>
+
+      <form id="form-oficina" onsubmit="salvarOficinaAdmin(event)">
+        <input type="hidden" id="oficina-id">
+
+        <div class="form-group">
+          <label class="form-label">Evento Vinculado *</label>
+          <select id="oficina-evento-id" class="form-control" required style="font-weight: 700;"></select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Título / Nome da Oficina *</label>
+          <input type="text" id="oficina-titulo" class="form-control" required placeholder="Ex: Oficina de Liderança Cristã e Discipulado">
+        </div>
+
+        <div class="grid-2" style="grid-template-columns: 1.3fr 1fr; gap: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label">Ministrante / Preletor</label>
+            <input type="text" id="oficina-ministrante" class="form-control" placeholder="Ex: Rev. João Silva">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantidade Total de Vagas *</label>
+            <input type="number" id="oficina-capacidade" class="form-control tabular-nums" required min="1" max="10000" step="1" value="30" style="font-weight: 800; color: #004C50;">
+          </div>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+          <div class="form-group">
+            <label class="form-label">Horário / Dia</label>
+            <input type="text" id="oficina-horario" class="form-control" placeholder="Ex: Sábado às 14h30">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Local / Sala</label>
+            <input type="text" id="oficina-local" class="form-control" placeholder="Ex: Sala 02 / Auditório Principal">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição / Resumo da Oficina</label>
+          <textarea id="oficina-descricao" class="form-control" rows="3" placeholder="Explique brevemente o tema da oficina para orientar a escolha dos participantes..."></textarea>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: #F8FAFC; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 10px;">
+          <div>
+            <label for="oficina-ativa" style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); cursor: pointer; display: block;">
+              Disponível na Aba do Participante
+            </label>
+            <span style="font-size: 0.76rem; color: var(--text-muted);">Quando ativada, os inscritos no evento podem ver e escolher esta oficina</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="oficina-ativa" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.35rem;">
+          <button type="button" class="btn btn-outline" onclick="fecharModalOficina()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Oficina</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: LISTA DE INSCRITOS NA OFICINA                      -->
+  <!-- ========================================================= -->
+  <div class="modal" id="modal-inscritos-oficina" style="display: none;">
+    <div class="modal-content" style="max-width: 740px;">
+      <button type="button" class="modal-close" onclick="fecharModalInscritosOficina()">&times;</button>
+      
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; padding-right: 1.5rem;">
+        <div>
+          <span id="modal-insc-evento-badge" class="badge" style="background: #F1F5F9; color: #004C50; font-weight: 700; font-size: 0.72rem;">Evento</span>
+          <h3 id="modal-insc-titulo" style="font-size: 1.25rem; font-weight: 800; margin: 0.3rem 0 0.15rem 0;">Inscritos na Oficina</h3>
+          <p id="modal-insc-subtitulo" style="font-size: 0.84rem; color: var(--text-muted); margin: 0;">0 / 0 vagas ocupadas</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="exportarInscritosOficinaCSV()" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Exportar CSV</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="imprimirListaPresencaOficina()" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            <span>Imprimir Lista de Presença</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vincular participante do evento manualmente -->
+      <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #004C50; margin-bottom: 0.4rem;">
+          Inscrever Participante do Evento Manualmente Nesta Oficina
+        </label>
+        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+          <select id="select-adicionar-participante-oficina" class="form-control" style="flex: 1; min-width: 220px; margin-bottom: 0; height: 38px; font-size: 0.85rem;">
+            <option value="">Carregando participantes inscritos no evento...</option>
+          </select>
+          <button type="button" class="btn btn-primary btn-sm" onclick="vincularParticipanteOficinaManual()" style="height: 38px; padding: 0 1rem;">
+            + Adicionar à Oficina
+          </button>
+        </div>
+      </div>
+
+      <div class="table-responsive" style="max-height: 340px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Participante</th>
+              <th>CPF / Contato</th>
+              <th>Data Inscrição</th>
+              <th style="text-align: right;">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="modal-inscritos-tbody">
+            <tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Nenhum inscrito nesta oficina ainda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Admin Login -->
+  <div class="modal" id="login-modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="img/logo.png" alt="Logo UMP" style="height: 48px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
+        <h3 style="font-size: 1.35rem; font-weight: 800; margin: 0; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">Login Administrativo</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">Painel de gestão de eventos e inscrições</p>
+      </div>
+      
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label class="form-label">E-mail Admin</label>
+          <input type="email" id="admin-email" class="form-control" required placeholder="admin@ump.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" id="admin-senha" class="form-control" required placeholder="******">
+        </div>
+        <div id="admin-login-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+
+        <button type="submit" id="admin-login-submit-btn" class="btn btn-primary" style="width: 100%; height: 44px;">
+          Entrar no Painel
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/oficinas.js"></script>
+</body>
+</html>

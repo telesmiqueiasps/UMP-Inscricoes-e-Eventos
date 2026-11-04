@@ -165,12 +165,12 @@ async function loadDashboard() {
 }
 
 // Função para mudar o evento ativo no dashboard
-window.changeDashboardEvent = function(eventKey) {
+window.changeDashboardEvent = function (eventKey) {
   activeEventKey = eventKey;
   renderActiveItem(activeEventKey);
 };
 
-window.selecionarEventosDashboard = function(eventKey) {
+window.selecionarEventosDashboard = function (eventKey) {
   switchTab('tab-painel');
   changeDashboardEvent(eventKey);
 };
@@ -204,9 +204,9 @@ function renderActiveDiaria(diariaId) {
     if (dia.status === 'CONFIRMADA') statusBadge = 'badge-success';
     else if (dia.status === 'CANCELADA' || dia.status === 'CANCELADO') statusBadge = 'badge-info';
     else if (dia.status === 'VENCIDA' || dia.status === 'VENCIDO') statusBadge = 'badge-danger';
-    
+
     const valorFmt = parseFloat(dia.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const qrButtonHTML = dia.status === 'CONFIRMADA' && dia.codigo_checkin ? 
+    const qrButtonHTML = dia.status === 'CONFIRMADA' && dia.codigo_checkin ?
       `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: #7E22CE; color: #7E22CE; font-weight: 600;" onclick="openQrModal('${dia.codigo_checkin}', '${(dia.evento_titulo || '').replace(/'/g, "\\'")}')">
          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
          <span>Ver QR Code de Check-in (Diária)</span>
@@ -315,12 +315,12 @@ function renderActiveRegistration(inscricaoId) {
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') statusBadge = 'badge-info';
     else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
     const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ? 
+    const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ?
       `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
          <span>Ver QR Code de Check-in</span>
        </button>` : '';
-    
+
     registrationCard.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
         <div>
@@ -407,12 +407,12 @@ function renderTriagemPayments(pagamentoRes, tr) {
       const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const pdfUrl = `${API_BASE_URL}/pagamentos/triagem/${tr.id}/parcela/${parc.numero}/pdf?token=${API.getToken()}`;
 
-      const actionBtnHTML = parc.copia_cola_pix ? 
-        (parc.copia_cola_pix.startsWith('http') ? 
+      const actionBtnHTML = parc.copia_cola_pix ?
+        (parc.copia_cola_pix.startsWith('http') ?
           `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
             <span>Pagar Parcela</span>
-          </a>` : 
+          </a>` :
           `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
             <span>Copiar Pix</span>
@@ -444,12 +444,12 @@ function renderTriagemPayments(pagamentoRes, tr) {
       const pdfUrl = `${API_BASE_URL}/pagamentos/triagem/${tr.id}/parcela/${parc.numero}/pdf?token=${API.getToken()}`;
       const dtVenc = parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A';
 
-      const actionBtnMobile = parc.copia_cola_pix ? 
-        (parc.copia_cola_pix.startsWith('http') ? 
+      const actionBtnMobile = parc.copia_cola_pix ?
+        (parc.copia_cola_pix.startsWith('http') ?
           `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
             <span>Pagar Parcela</span>
-          </a>` : 
+          </a>` :
           `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
             <span>Copiar Pix</span>
@@ -525,12 +525,12 @@ function renderTriagemPayments(pagamentoRes, tr) {
         <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(formaPag)}</h3>
         <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: var(--primary);">${valorPagFmt}</strong> | Status: <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span></p>
         <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-          ${receiptUrl && receiptUrl.startsWith('http') ? 
-            `<a href="${receiptUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+          ${receiptUrl && receiptUrl.startsWith('http') ?
+        `<a href="${receiptUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
               <span>Efetuar Pagamento da Inscrição</span>
             </a>` : ''
-          }
+      }
           ${pixBtnHTML}
         </div>
       </div>
@@ -568,30 +568,30 @@ function renderRecentPayments(pagamentos) {
             <td><span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span></td>
             <td>
               <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
-                  (parc.copia_cola_pix.startsWith('http') ? 
-                    `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+                ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ?
+            (parc.copia_cola_pix.startsWith('http') ?
+              `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                       <span>Pagar Parcela</span>
-                    </a>` : 
-                    `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+                    </a>` :
+              `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                       <span>Copiar Pix</span>
                     </button>`
-                  ) : ''
-                }
-                ${!isCancelled && parc.status !== 'PAGO' ? 
-                  `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
+            ) : ''
+          }
+                ${!isCancelled && parc.status !== 'PAGO' ?
+            `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                     <span>Já paguei</span>
                   </button>` : ''
-                }
-                ${!isCancelled ? 
-                  `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+          }
+                ${!isCancelled ?
+            `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                     <span>Carnê PDF</span>
                   </a>` : ''
-                }
+          }
               </div>
             </td>
           </tr>
@@ -616,30 +616,30 @@ function renderRecentPayments(pagamentos) {
               <span>Valor: <strong style="color: var(--primary); font-size: 0.95rem;">${valorParcFmt}</strong></span>
             </div>
             <div class="actions-row">
-              ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ? 
-                (parc.copia_cola_pix.startsWith('http') ? 
-                  `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+              ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ?
+            (parc.copia_cola_pix.startsWith('http') ?
+              `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                     <span>Pagar Parcela</span>
-                  </a>` : 
-                  `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+                  </a>` :
+              `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                     <span>Copiar Pix</span>
                   </button>`
-                ) : ''
-              }
-              ${!isCancelled && parc.status !== 'PAGO' ? 
-                `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
+            ) : ''
+          }
+              ${!isCancelled && parc.status !== 'PAGO' ?
+            `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                   <span>Já paguei</span>
                 </button>` : ''
-              }
-              ${!isCancelled ? 
-                `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+          }
+              ${!isCancelled ?
+            `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <span>Carnê PDF</span>
                 </a>` : ''
-              }
+          }
             </div>
           </div>
         `;
@@ -674,18 +674,18 @@ function renderRecentPayments(pagamentos) {
         <div class="card">
           <h3 class="card-title" style="font-size: 1.1rem;">Pagamento - ${formatarFormaPagamento(pag.forma_pagamento, pag.capture_method)}</h3>
           <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor: <strong style="color: var(--primary);">${valorPagFmt}</strong> | Status: <span class="badge ${getStatusBadge(pag.status)}">${pag.status}</span></p>
-          ${pag.receipt_url && !isCancelled ? 
-            (pag.status === 'PAGO' ? 
-              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="margin-top: 1rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600;">
+          ${pag.receipt_url && !isCancelled ?
+          (pag.status === 'PAGO' ?
+            `<a href="${pag.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="margin-top: 1rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span>Comprovante de Pagamento</span>
               </a>` :
-              `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 1rem; text-decoration: none;">
+            `<a href="${pag.receipt_url}" target="_blank" class="btn btn-primary" style="margin-top: 1rem; text-decoration: none;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                 <span>Pagar Inscrição</span>
               </a>`
-            ) : ''
-          }
+          ) : ''
+        }
         </div>
       `;
     }
@@ -788,7 +788,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
 
       if (ins.tipo_registro === 'DIARIA') {
         const totalInscFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ? 
+        const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ?
           `<button class="btn btn-outline btn-sm" style="border-color: #7E22CE; color: #7E22CE; font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
              <span>Ver QR Code</span>
@@ -820,7 +820,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
       }
 
       const insPags = (pagamentos || []).filter(pag => pag.inscricao_id === ins.id);
-      
+
       let totalPago = 0;
       insPags.forEach(pag => {
         if (pag.forma_pagamento === 'PARCELADO') {
@@ -859,7 +859,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
   container.innerHTML = htmlTriagens + htmlInscricoes;
 }
 
-window.switchTab = function(tabId) {
+window.switchTab = function (tabId) {
   document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
   const target = document.getElementById(tabId);
   if (target) target.style.display = 'block';
@@ -877,7 +877,7 @@ window.switchTab = function(tabId) {
   }
 };
 
-window.openEditModal = function() {
+window.openEditModal = function () {
   if (!currentDashboardData || !currentDashboardData.usuario) return;
   const user = currentDashboardData.usuario;
   document.getElementById('edit-nome').value = user.nome || '';
@@ -888,12 +888,12 @@ window.openEditModal = function() {
   if (modal) modal.style.display = 'flex';
 };
 
-window.closeEditModal = function() {
+window.closeEditModal = function () {
   const modal = document.getElementById('edit-profile-modal');
   if (modal) modal.style.display = 'none';
 };
 
-window.salvarPerfil = async function(e) {
+window.salvarPerfil = async function (e) {
   e.preventDefault();
   const payload = {
     nome: document.getElementById('edit-nome').value.trim(),
@@ -944,35 +944,35 @@ function formatarFormaPagamento(forma, captureMethod) {
   return forma || 'N/A';
 }
 
-window.atualizarSenhaParticipante = async function(e) {
+window.atualizarSenhaParticipante = async function (e) {
   e.preventDefault();
-  
+
   const senhaAtual = document.getElementById('pass-atual').value;
   const novaSenha = document.getElementById('pass-nova').value;
   const novaSenhaConfirm = document.getElementById('pass-nova-confirm').value;
-  
+
   const errorDiv = document.getElementById('alterar-senha-error');
   const successDiv = document.getElementById('alterar-senha-success');
   const saveBtn = document.getElementById('btn-salvar-senha');
-  
+
   errorDiv.style.display = 'none';
   successDiv.style.display = 'none';
-  
+
   if (novaSenha.length < 6) {
     errorDiv.style.display = 'block';
     errorDiv.textContent = 'A nova senha deve conter pelo menos 6 caracteres.';
     return;
   }
-  
+
   if (novaSenha !== novaSenhaConfirm) {
     errorDiv.style.display = 'block';
     errorDiv.textContent = 'As novas senhas informadas não coincidem.';
     return;
   }
-  
+
   saveBtn.disabled = true;
   saveBtn.innerHTML = '<span class="spinner-sm"></span> Atualizando...';
-  
+
   try {
     await API.request('/usuario/alterar-senha', {
       method: 'POST',
@@ -981,7 +981,7 @@ window.atualizarSenhaParticipante = async function(e) {
         nova_senha: novaSenha
       })
     });
-    
+
     successDiv.style.display = 'block';
     successDiv.textContent = 'Senha atualizada com sucesso!';
     document.getElementById('form-alterar-senha').reset();
@@ -994,7 +994,7 @@ window.atualizarSenhaParticipante = async function(e) {
   }
 };
 
-window.openQrModal = function(codigo, eventoTitulo) {
+window.openQrModal = function (codigo, eventoTitulo) {
   const modal = document.getElementById('qr-code-modal');
   const img = document.getElementById('qr-code-img');
   const codeText = document.getElementById('qr-code-text');
@@ -1011,12 +1011,12 @@ window.openQrModal = function(codigo, eventoTitulo) {
   }
 };
 
-window.closeQrModal = function() {
+window.closeQrModal = function () {
   const modal = document.getElementById('qr-code-modal');
   if (modal) modal.style.display = 'none';
 };
 
-window.verificarStatusParcela = async function(parcelaId, orderNsu) {
+window.verificarStatusParcela = async function (parcelaId, orderNsu) {
   try {
     showToast('Sincronizando status da parcela com o servidor...', 'info');
     const res = await API.request('/pagamentos/confirmar-retorno-checkout', {
@@ -1036,3 +1036,318 @@ window.verificarStatusParcela = async function(parcelaId, orderNsu) {
   }
 };
 
+
+
+// ==========================================
+// MÓDULO DE OFICINAS DO PARTICIPANTE
+// ==========================================
+let currentOficinasData = null;
+let activeOficinaEventoId = null;
+
+window.switchTab = function (tabId) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  const target = document.getElementById(tabId);
+  if (target) target.style.display = 'block';
+
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  if (tabId === 'tab-painel') {
+    const el = document.getElementById('menu-painel');
+    if (el) el.classList.add('active');
+  } else if (tabId === 'tab-eventos') {
+    const el = document.getElementById('menu-eventos');
+    if (el) el.classList.add('active');
+  } else if (tabId === 'tab-oficinas') {
+    const el = document.getElementById('menu-oficinas');
+    if (el) el.classList.add('active');
+    carregarOficinasParticipante();
+  } else if (tabId === 'tab-senha') {
+    const el = document.getElementById('menu-senha');
+    if (el) el.classList.add('active');
+  }
+};
+
+function escapeHtmlOficina(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+window.carregarOficinasParticipante = async function () {
+  const container = document.getElementById('user-oficinas-container');
+  const menuLink = document.getElementById('menu-oficinas');
+  const menuLi = menuLink ? menuLink.closest('li') : null;
+
+  try {
+    const data = await API.request('/oficinas/participante');
+    currentOficinasData = data;
+
+    if (menuLi) {
+      menuLi.style.display = data.aba_participante_visivel === false ? 'none' : '';
+    }
+
+    if (container) {
+      renderizarOficinasParticipante();
+    }
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `
+        <div class="card" style="text-align: center; padding: 2rem; color: #DC2626;">
+          <p style="font-weight: 600;">Não foi possível carregar as oficinas no momento.</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">${escapeHtmlOficina(err.message || 'Tente novamente em instantes.')}</p>
+        </div>
+      `;
+    }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (API.getToken()) {
+    carregarOficinasParticipante();
+  }
+});
+
+window.selecionarEventoOficinaParticipante = function (eventoId) {
+  activeOficinaEventoId = Number(eventoId);
+  renderizarOficinasParticipante();
+};
+
+function renderizarOficinasParticipante() {
+  const container = document.getElementById('user-oficinas-container');
+  if (!container || !currentOficinasData) return;
+
+  if (currentOficinasData.aba_participante_visivel === false) {
+    container.innerHTML = `
+      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
+        <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.4rem;">Inscrições de Oficinas Indisponíveis</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 520px; margin: 0 auto;">
+          As oficinas ainda não foram liberadas pela organização do evento.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const eventos = currentOficinasData.eventos || [];
+
+  if (!currentOficinasData.possui_inscricao_evento || eventos.length === 0) {
+    container.innerHTML = `
+      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: #EFF6FF; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.85rem;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.4rem;">Inscrição no Evento Necessária</h3>
+        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 520px; margin: 0 auto;">
+          Apenas participantes com inscrição ativa em um evento podem ocupar vagas nas oficinas vinculadas a ele.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const exists = eventos.some(ev => Number(ev.evento_id) === Number(activeOficinaEventoId));
+  if (!activeOficinaEventoId || !exists) {
+    activeOficinaEventoId = Number(eventos[0].evento_id);
+  }
+
+  const eventoAtivo = eventos.find(ev => Number(ev.evento_id) === Number(activeOficinaEventoId)) || eventos[0];
+  const oficinas = eventoAtivo.oficinas || [];
+  const minhaOficina = eventoAtivo.minha_oficina || null;
+
+  let selectorHtml = '';
+  if (eventos.length > 1) {
+    selectorHtml = `
+      <div class="selector-card" style="margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+          <div style="background: var(--primary-light); color: var(--primary); padding: 0.6rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          </div>
+          <div style="flex: 1;">
+            <label for="oficinas-event-select" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Evento Vinculado</label>
+            <select id="oficinas-event-select" class="form-control" onchange="selecionarEventoOficinaParticipante(this.value)" style="margin-top: 0.2rem; font-weight: 700; color: var(--primary);">
+              ${eventos.map(ev => `<option value="${ev.evento_id}" ${Number(ev.evento_id) === Number(eventoAtivo.evento_id) ? 'selected' : ''}>${escapeHtmlOficina(ev.evento_titulo)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  let minhaOficinaHtml = '';
+  if (minhaOficina) {
+    minhaOficinaHtml = `
+      <div class="minha-oficina-banner">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.18); padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.45rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Sua Vaga Está Garantida</span>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.2rem;">${escapeHtmlOficina(minhaOficina.nome)}</h3>
+          <div style="font-size: 0.86rem; opacity: 0.92; display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.25rem;">
+            ${minhaOficina.ministrante ? `<span>Ministrante: <strong>${escapeHtmlOficina(minhaOficina.ministrante)}</strong></span>` : ''}
+            ${minhaOficina.horario ? `<span>Horário: <strong>${escapeHtmlOficina(minhaOficina.horario)}</strong></span>` : ''}
+            ${minhaOficina.local ? `<span>Sala/Local: <strong>${escapeHtmlOficina(minhaOficina.local)}</strong></span>` : ''}
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.16); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${minhaOficina.id}, '${escapeHtmlOficina(minhaOficina.nome)}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Liberar Minha Vaga</span>
+        </button>
+      </div>
+    `;
+  }
+
+  if (oficinas.length === 0) {
+    container.innerHTML = `
+      ${selectorHtml}
+      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
+        <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 0.35rem;">Nenhuma oficina disponível no momento</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">As oficinas do evento <strong>${escapeHtmlOficina(eventoAtivo.evento_titulo)}</strong> serão liberadas em breve pela organização.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const cardsHtml = oficinas.map(of => {
+    const cap = Number(of.capacidade || 0);
+    const ocup = Number(of.vagas_ocupadas || 0);
+    const disp = Number(of.vagas_disponiveis || 0);
+    const pct = cap > 0 ? Math.min(100, Math.round((ocup / cap) * 100)) : 0;
+    const isInscrito = Boolean(of.inscrito_nesta);
+    const isEsgotada = Boolean(of.esgotada);
+
+    let barColor = '#10B981';
+    if (isEsgotada) barColor = '#EF4444';
+    else if (pct >= 75) barColor = '#F59E0B';
+
+    let statusBadgeHtml = '';
+    if (isInscrito) {
+      statusBadgeHtml = `<span class="badge badge-success" style="display:inline-flex; align-items:center; gap:0.3rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> INSCRITO</span>`;
+    } else if (isEsgotada) {
+      statusBadgeHtml = `<span class="badge badge-danger">ESGOTADA</span>`;
+    } else {
+      statusBadgeHtml = `<span class="badge badge-info" style="font-variant-numeric: tabular-nums;">${disp} ${disp === 1 ? 'VAGA DISPONÍVEL' : 'VAGAS DISPONÍVEIS'}</span>`;
+    }
+
+    let actionBtnHtml = '';
+    if (isInscrito) {
+      actionBtnHtml = `
+        <button type="button" class="btn btn-outline" style="width: 100%; border-color: #DC2626; color: #DC2626; font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Cancelar Minha Inscrição</span>
+        </button>
+      `;
+    } else if (isEsgotada) {
+      actionBtnHtml = `
+        <button type="button" class="btn btn-outline" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed;">
+          <span>Vagas Esgotadas</span>
+        </button>
+      `;
+    } else if (minhaOficina) {
+      actionBtnHtml = `
+        <button type="button" class="btn btn-outline" style="width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 700;" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span>Trocar para esta Oficina</span>
+        </button>
+      `;
+    } else {
+      actionBtnHtml = `
+        <button type="button" class="btn btn-primary" style="width: 100%; font-weight: 700;" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', false)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          <span>Inscrever-se nesta Oficina</span>
+        </button>
+      `;
+    }
+
+    return `
+      <div class="oficina-user-card ${isInscrito ? 'inscrito' : ''} ${isEsgotada ? 'esgotada' : ''}">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.6rem;">
+            <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">${escapeHtmlOficina(of.evento_titulo)}</span>
+            ${statusBadgeHtml}
+          </div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.45rem;">
+            ${escapeHtmlOficina(of.nome)}
+          </h3>
+          ${of.descricao ? `<p style="font-size: 0.87rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.85rem;">${escapeHtmlOficina(of.descricao)}</p>` : ''}
+
+          <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.85rem;">
+            ${of.ministrante ? `
+              <span class="oficina-meta-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>${escapeHtmlOficina(of.ministrante)}</span>
+              </span>
+            ` : ''}
+            ${of.horario ? `
+              <span class="oficina-meta-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>${escapeHtmlOficina(of.horario)}</span>
+              </span>
+            ` : ''}
+            ${of.local ? `
+              <span class="oficina-meta-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>${escapeHtmlOficina(of.local)}</span>
+              </span>
+            ` : ''}
+          </div>
+        </div>
+
+        <div>
+          <div class="oficina-vagas-box" style="margin-bottom: 0.9rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums;">
+              <span style="color: var(--text-muted);">Ocupação: <strong style="color: var(--text-main);">${ocup} / ${cap} vagas</strong></span>
+              <span style="color: ${isEsgotada ? '#DC2626' : '#059669'};">${disp} livres (${100 - pct}%)</span>
+            </div>
+            <div class="oficina-vagas-bar-track">
+              <div class="oficina-vagas-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+            </div>
+          </div>
+          ${actionBtnHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    ${selectorHtml}
+    ${minhaOficinaHtml}
+    <div class="oficinas-grid-user">
+      ${cardsHtml}
+    </div>
+  `;
+}
+
+window.inscreverEmOficinaParticipante = async function (oficinaId, nomeOficina, jaTemOficina) {
+  const msg = jaTemOficina
+    ? `Deseja transferir sua inscrição atual para a oficina "${nomeOficina}"?`
+    : `Confirmar sua inscrição na oficina "${nomeOficina}"?`;
+  if (!confirm(msg)) return;
+
+  try {
+    const res = await API.request(`/oficinas/${oficinaId}/inscrever`, {
+      method: 'POST'
+    });
+    showToast(res.message || 'Inscrição na oficina confirmada com sucesso!', 'success');
+    await carregarOficinasParticipante();
+  } catch (err) {
+    showToast(err.message || 'Não foi possível concluir a inscrição na oficina.', 'error');
+    await carregarOficinasParticipante();
+  }
+};
+
+window.cancelarInscricaoOficinaParticipante = async function (oficinaId, nomeOficina) {
+  if (!confirm(`Deseja realmente cancelar sua participação na oficina "${nomeOficina}" e liberar sua vaga?`)) return;
+
+  try {
+    const res = await API.request(`/oficinas/${oficinaId}/cancelar-minha-inscricao`, {
+      method: 'DELETE'
+    });
+    showToast(res.message || 'Sua inscrição na oficina foi cancelada.', 'info');
+    await carregarOficinasParticipante();
+  } catch (err) {
+    showToast(err.message || 'Erro ao cancelar inscrição na oficina.', 'error');
+  }
+};

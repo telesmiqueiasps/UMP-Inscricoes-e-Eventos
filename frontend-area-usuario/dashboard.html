@@ -6,6 +6,94 @@
   <title>Área do Participante - UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .oficinas-grid-user {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.15rem;
+      width: 100%;
+    }
+    .oficina-user-card {
+      background: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .oficina-user-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .oficina-user-card.inscrito {
+      border: 2px solid #059669;
+      background: linear-gradient(180deg, #ECFDF5 0%, #FFFFFF 45%);
+    }
+    .oficina-user-card.esgotada:not(.inscrito) {
+      opacity: 0.78;
+      background: #F8FAFC;
+    }
+    .oficina-meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      color: #334155;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      padding: 0.28rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .oficina-vagas-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: var(--radius-md);
+      padding: 0.75rem 0.9rem;
+    }
+    .oficina-vagas-bar-track {
+      width: 100%;
+      height: 8px;
+      background: #E2E8F0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.45rem;
+    }
+    .oficina-vagas-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+    .minha-oficina-banner {
+      background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 1.35rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(4, 120, 87, 0.25);
+    }
+    @media (max-width: 640px) {
+      .oficinas-grid-user {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .minha-oficina-banner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -34,6 +122,12 @@
           </a>
         </li>
         <li>
+          <a href="javascript:void(0)" onclick="switchTab('tab-oficinas')" id="menu-oficinas" class="sidebar-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span>Oficinas</span>
+          </a>
+        </li>
+        <li>
           <a href="javascript:void(0)" onclick="switchTab('tab-senha')" id="menu-senha" class="sidebar-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <span>Alterar Senha</span>
@@ -54,7 +148,7 @@
       <div class="top-header">
         <div>
           <h1 class="welcome-title" id="welcome-user">Olá, Participante!</h1>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Acompanhe o status de suas inscrições e parcelas de pagamento.</p>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem;">Acompanhe o status de suas inscrições, oficinas e parcelas de pagamento.</p>
         </div>
       </div>
 
@@ -103,7 +197,32 @@
         </div>
       </div>
 
-      <!-- Aba 3: Alterar Senha -->
+      <!-- Aba 3: Oficinas -->
+      <div id="tab-oficinas" class="tab-content" style="display: none;">
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span>Oficinas do Evento</span>
+              </h2>
+              <p class="card-desc">Escolha a oficina da qual deseja participar durante o evento. Você pode ocupar 1 vaga por evento e alterar sua escolha enquanto houver vagas disponíveis.</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="carregarOficinasParticipante()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <span>Atualizar Vagas</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="user-oficinas-container">
+          <div class="card" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+            Carregando oficinas disponíveis...
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba 4: Alterar Senha -->
       <div id="tab-senha" class="tab-content" style="display: none;">
         <div class="card" style="max-width: 480px;">
           <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.5rem; font-family: 'Plus Jakarta Sans', sans-serif;">Alterar Senha</h2>
