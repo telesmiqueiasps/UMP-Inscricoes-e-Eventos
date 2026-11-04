@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Cardápio da Cantina — UMP Eventos & Acamp Sinodal</title>
-  <link rel="icon" href="img/logo.png" type="image/png">
+  <title>Cardápio da Cantina — Acamp Sinodal 2026</title>
+  <link rel="icon" href="img/acamp-sinodal-logo.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@700&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
       --accent-emerald: #00B894;
       --accent-gold: #FFB703;
       --accent-gold-soft: #FFD166;
-      --card-surface: rgba(0, 30, 35, 0.86);
+      --card-surface: rgba(0, 30, 35, 0.9);
       --card-border: rgba(255, 255, 255, 0.12);
       --text-white: #FFFFFF;
       --text-slate: #CBD5E1;
@@ -46,19 +46,19 @@
 
     body.cantina-menu-body {
       background-image:
-        radial-gradient(circle at 12% 18%, rgba(0, 184, 148, 0.18) 0%, transparent 48%),
-        radial-gradient(circle at 88% 82%, rgba(255, 121, 0, 0.18) 0%, transparent 50%),
-        linear-gradient(165deg, #001618 0%, #002327 50%, #001618 100%);
+        radial-gradient(circle at 10% 15%, rgba(0, 184, 148, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 90% 80%, rgba(255, 121, 0, 0.16) 0%, transparent 48%),
+        linear-gradient(165deg, #001416 0%, #001E21 50%, #001416 100%);
       background-attachment: fixed;
       position: relative;
-      padding-bottom: 6.5rem;
+      padding-bottom: 6rem;
     }
 
     .tabular-nums {
       font-variant-numeric: tabular-nums;
     }
 
-    /* Contêiner Seguro de Adornos de Fundo (Zero Overflow) */
+    /* Contêiner Seguro de Fundo (Zero Overflow) */
     .bg-decorations-wrapper {
       position: fixed;
       inset: 0;
@@ -73,28 +73,28 @@
     .bg-mesh-pattern {
       position: absolute;
       inset: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
       background-size: 22px 22px;
-      opacity: 0.7;
+      opacity: 0.65;
     }
 
     .bg-glow-tl {
       position: absolute;
-      top: -90px;
-      left: -90px;
-      width: 360px;
-      height: 360px;
-      background: radial-gradient(circle, rgba(255, 121, 0, 0.45) 0%, transparent 70%);
+      top: -80px;
+      left: -80px;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(255, 121, 0, 0.35) 0%, transparent 70%);
       filter: blur(45px);
     }
 
     .bg-glow-br {
       position: absolute;
-      bottom: -100px;
-      right: -100px;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(0, 184, 148, 0.38) 0%, transparent 70%);
+      bottom: -90px;
+      right: -90px;
+      width: 340px;
+      height: 340px;
+      background: radial-gradient(circle, rgba(0, 184, 148, 0.3) 0%, transparent 70%);
       filter: blur(50px);
     }
 
@@ -102,12 +102,13 @@
     .menu-topbar {
       position: sticky;
       top: 0;
-      z-index: 40;
+      z-index: 50;
       width: 100%;
-      background: rgba(0, 22, 24, 0.85);
+      background: rgba(0, 20, 22, 0.92);
       backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 0.85rem 1.25rem;
+      padding: 0.65rem 1rem;
     }
 
     .menu-topbar-inner {
@@ -116,75 +117,90 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.75rem;
-      flex-wrap: wrap;
+      gap: 0.6rem;
     }
 
     .brand-cluster {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       text-decoration: none;
       color: #FFFFFF;
+      min-width: 0;
     }
 
     .brand-cluster img {
-      height: 38px;
+      height: 42px;
       width: auto;
+      max-width: 110px;
       object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
 
     .brand-title-main {
       font-family: 'Outfit', sans-serif;
-      font-weight: 800;
-      font-size: 1.05rem;
+      font-weight: 900;
+      font-size: clamp(0.92rem, 3.2vw, 1.15rem);
       letter-spacing: -0.01em;
-      line-height: 1.1;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #FFFFFF;
     }
 
     .brand-title-sub {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .topbar-actions {
       display: flex;
       align-items: center;
-      gap: 0.55rem;
-      flex-wrap: wrap;
+      gap: 0.45rem;
+      flex-shrink: 0;
     }
 
     .btn-hud {
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.08);
       color: #F8FAFC;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 0.5rem 0.9rem;
+      padding: 0.45rem 0.75rem;
       border-radius: 10px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      justify-content: center;
+      gap: 0.35rem;
       text-decoration: none;
       transition: all 0.2s ease;
-      min-height: 38px;
+      min-height: 36px;
     }
 
     .btn-hud:hover {
-      background: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.15);
       border-color: rgba(255, 121, 0, 0.5);
-      transform: translateY(-1px);
     }
 
     .btn-hud-orange {
       background: linear-gradient(135deg, #FF7900 0%, #EA580C 100%);
       border-color: rgba(255, 255, 255, 0.22);
       color: #FFFFFF;
-      box-shadow: 0 6px 18px rgba(255, 121, 0, 0.28);
+      box-shadow: 0 4px 14px rgba(255, 121, 0, 0.3);
     }
 
     .btn-hud-orange:hover {
@@ -197,67 +213,47 @@
       z-index: 2;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 1.5rem 1.25rem 2rem;
+      padding: 0.9rem 0.9rem 2rem;
       width: 100%;
     }
 
-    /* Hero Cardápio */
-    .menu-hero {
-      position: relative;
-      background:
-        radial-gradient(circle at 85% 20%, rgba(255, 121, 0, 0.22) 0%, transparent 45%),
-        radial-gradient(circle at 15% 80%, rgba(0, 184, 148, 0.2) 0%, transparent 50%),
-        linear-gradient(135deg, rgba(0, 54, 58, 0.92) 0%, rgba(0, 30, 33, 0.96) 100%);
+    /* Barra de Status e Controles Compacta */
+    .controls-panel {
+      background: rgba(0, 30, 35, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 1.75rem 1.75rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.55);
-      overflow: hidden;
-    }
-
-    /* Cantoneiras Esportivas HUD */
-    .card-bracket {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      pointer-events: none;
-      z-index: 3;
-    }
-    .card-bracket.tl { top: 8px; left: 8px; border-top: 2px solid var(--accent-orange); border-left: 2px solid var(--accent-orange); }
-    .card-bracket.tr { top: 8px; right: 8px; border-top: 2px solid var(--accent-emerald); border-right: 2px solid var(--accent-emerald); }
-    .card-bracket.bl { bottom: 8px; left: 8px; border-bottom: 2px solid var(--accent-emerald); border-left: 2px solid var(--accent-emerald); }
-    .card-bracket.br { bottom: 8px; right: 8px; border-bottom: 2px solid var(--accent-orange); border-right: 2px solid var(--accent-orange); }
-
-    .hero-grid {
+      border-radius: 16px;
+      padding: 0.85rem;
+      margin-bottom: 1rem;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1.25rem;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.45);
     }
 
-    .hero-badge-row {
+    .status-and-search-row {
       display: flex;
-      align-items: center;
       gap: 0.65rem;
+      align-items: center;
       flex-wrap: wrap;
-      margin-bottom: 0.55rem;
     }
 
     .status-pill-live {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.3rem 0.75rem;
+      padding: 0.38rem 0.75rem;
       border-radius: 999px;
       font-size: 0.72rem;
       font-weight: 800;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       background: rgba(0, 184, 148, 0.16);
       border: 1px solid rgba(0, 184, 148, 0.45);
       color: #34D399;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .status-pill-live.fechada {
@@ -274,90 +270,15 @@
       box-shadow: 0 0 8px currentColor;
     }
 
-    .hero-script-tag {
-      font-family: 'Caveat', cursive;
-      font-size: 1.35rem;
-      color: var(--accent-gold-soft);
-    }
-
-    .hero-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: clamp(1.6rem, 3.5vw, 2.35rem);
-      font-weight: 900;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      color: #FFFFFF;
-      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-      margin-bottom: 0.4rem;
-    }
-
-    .hero-subtitle {
-      color: var(--text-slate);
-      font-size: 0.92rem;
-      max-width: 620px;
-    }
-
-    .hero-stats-box {
-      display: flex;
-      gap: 0.85rem;
-      flex-wrap: wrap;
-    }
-
-    .hero-stat-item {
-      background: rgba(0, 22, 24, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 14px;
-      padding: 0.75rem 1.1rem;
-      min-width: 120px;
-      text-align: center;
-    }
-
-    .hero-stat-num {
-      font-family: 'Teko', sans-serif;
-      font-size: 2rem;
-      font-weight: 700;
-      line-height: 1;
-      color: var(--accent-gold-soft);
-    }
-
-    .hero-stat-label {
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-      font-weight: 700;
-      margin-top: 0.15rem;
-    }
-
-    /* Barra de Busca e Filtros */
-    .controls-panel {
-      background: rgba(0, 30, 35, 0.82);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 1rem 1.15rem;
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    .search-and-toggle-row {
-      display: flex;
-      gap: 0.85rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
     .search-input-wrap {
       position: relative;
       flex: 1;
-      min-width: 220px;
+      min-width: 180px;
     }
 
     .search-input-wrap svg {
       position: absolute;
-      left: 14px;
+      left: 12px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-muted);
@@ -366,13 +287,13 @@
 
     .search-input {
       width: 100%;
-      height: 44px;
-      background: rgba(0, 18, 20, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 12px;
-      padding: 0 1rem 0 2.6rem;
+      height: 40px;
+      background: rgba(0, 18, 20, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 0 0.85rem 0 2.35rem;
       color: #FFFFFF;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-family: inherit;
       transition: border-color 0.2s;
     }
@@ -386,53 +307,77 @@
       border-color: var(--accent-orange);
     }
 
+    .filter-options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
     .filter-available-label {
       display: inline-flex;
       align-items: center;
-      gap: 0.55rem;
-      font-size: 0.82rem;
+      gap: 0.45rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--text-slate);
       cursor: pointer;
       user-select: none;
-      padding: 0.45rem 0.85rem;
+      padding: 0.35rem 0.65rem;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      min-height: 44px;
+      border-radius: 8px;
+      min-height: 34px;
     }
 
     .filter-available-label input {
-      width: 17px;
-      height: 17px;
+      width: 16px;
+      height: 16px;
       accent-color: var(--accent-emerald);
       cursor: pointer;
+    }
+
+    .total-produtos-counter {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .total-produtos-counter strong {
+      color: var(--accent-gold-soft);
     }
 
     /* Chips de Categorias */
     .cat-chips-row {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.45rem;
       overflow-x: auto;
-      padding-bottom: 0.25rem;
-      scrollbar-width: thin;
+      padding-bottom: 0.2rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .cat-chips-row::-webkit-scrollbar {
+      display: none;
     }
 
     .cat-chip-btn {
       background: rgba(255, 255, 255, 0.06);
       color: var(--text-slate);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 0.48rem 1rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 999px;
-      font-size: 0.8rem;
+      font-size: 0.76rem;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      min-height: 36px;
+      gap: 0.35rem;
+      min-height: 32px;
+      flex-shrink: 0;
     }
 
     .cat-chip-btn:hover {
@@ -444,52 +389,61 @@
       background: linear-gradient(135deg, var(--accent-orange) 0%, #EA580C 100%);
       color: #FFFFFF;
       border-color: rgba(255, 255, 255, 0.28);
-      box-shadow: 0 4px 14px rgba(255, 121, 0, 0.32);
+      box-shadow: 0 4px 12px rgba(255, 121, 0, 0.3);
     }
 
-    /* Grid de Produtos do Cardápio */
+    /* Grid de Produtos Otimizada para Mobile e Desktop */
     .menu-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1.25rem;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1rem;
       width: 100%;
     }
 
-    @media (max-width: 640px) {
+    /* Responsividade Mobile: 2 colunas compactas e elegantes */
+    @media (max-width: 768px) {
+      .menu-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.65rem;
+      }
+    }
+
+    @media (max-width: 360px) {
       .menu-grid {
         grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
       }
     }
 
     .menu-item-card {
       position: relative;
       background: var(--card-surface);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
-      box-shadow: 0 12px 28px -10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
     }
 
     .menu-item-card:hover {
-      transform: translateY(-4px);
       border-color: rgba(255, 121, 0, 0.45);
-      box-shadow: 0 18px 36px -12px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.65);
     }
 
     .menu-item-card.esgotado {
       opacity: 0.62;
-      filter: grayscale(0.35);
+      filter: grayscale(0.3);
     }
 
     .menu-item-media {
       position: relative;
       width: 100%;
-      height: 175px;
+      height: 145px;
       background: radial-gradient(circle at center, #00363A 0%, #001A1D 100%);
       display: flex;
       align-items: center;
@@ -498,21 +452,27 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    @media (max-width: 768px) {
+      .menu-item-media {
+        height: 115px;
+      }
+    }
+
     .menu-item-media img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.35s ease;
+      transition: transform 0.3s ease;
     }
 
     .menu-item-card:hover .menu-item-media img {
-      transform: scale(1.04);
+      transform: scale(1.05);
     }
 
     .media-placeholder-svg {
-      width: 58px;
-      height: 58px;
-      border-radius: 16px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -523,108 +483,134 @@
 
     .item-category-tag {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(0, 22, 24, 0.82);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 22, 24, 0.88);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: var(--text-slate);
-      font-size: 0.68rem;
+      font-size: 0.62rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.09em;
-      padding: 0.25rem 0.65rem;
+      letter-spacing: 0.07em;
+      padding: 0.2rem 0.5rem;
       border-radius: 999px;
+      max-width: 58%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .item-stock-badge {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      font-size: 0.7rem;
+      top: 8px;
+      right: 8px;
+      font-size: 0.62rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 0.26rem 0.65rem;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
       border-radius: 999px;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(6px);
+      white-space: nowrap;
     }
 
     .item-stock-badge.disponivel {
-      background: rgba(0, 184, 148, 0.88);
+      background: rgba(0, 184, 148, 0.92);
       color: #FFFFFF;
-      box-shadow: 0 4px 12px rgba(0, 184, 148, 0.35);
+      box-shadow: 0 2px 8px rgba(0, 184, 148, 0.35);
     }
 
     .item-stock-badge.baixo {
-      background: rgba(245, 158, 11, 0.92);
+      background: rgba(245, 158, 11, 0.95);
       color: #001618;
     }
 
     .item-stock-badge.esgotado {
-      background: rgba(220, 38, 38, 0.9);
+      background: rgba(220, 38, 38, 0.92);
       color: #FFFFFF;
     }
 
     .menu-item-body {
-      padding: 1.15rem 1.2rem 1.25rem;
+      padding: 0.75rem 0.75rem 0.85rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       flex: 1;
-      gap: 0.95rem;
+      gap: 0.65rem;
     }
 
     .menu-item-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.18rem;
+      font-size: 0.92rem;
       font-weight: 800;
       color: #FFFFFF;
       line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.3em;
       word-break: break-word;
+    }
+
+    @media (max-width: 768px) {
+      .menu-item-title {
+        font-size: 0.85rem;
+      }
     }
 
     .menu-item-footer {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      gap: 0.75rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      gap: 0.5rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .price-label {
-      font-size: 0.66rem;
+      font-size: 0.6rem;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
       font-weight: 700;
       display: block;
+      line-height: 1;
+      margin-bottom: 2px;
     }
 
     .price-value {
       font-family: 'Teko', sans-serif;
-      font-size: 2.05rem;
+      font-size: 1.65rem;
       font-weight: 700;
-      line-height: 0.95;
+      line-height: 0.92;
       color: var(--accent-gold-soft);
-      text-shadow: 0 0 18px rgba(255, 183, 3, 0.25);
+      text-shadow: 0 0 14px rgba(255, 183, 3, 0.25);
+    }
+
+    @media (max-width: 768px) {
+      .price-value {
+        font-size: 1.45rem;
+      }
     }
 
     .btn-simular-item {
       background: rgba(0, 184, 148, 0.16);
       color: #34D399;
       border: 1px solid rgba(0, 184, 148, 0.45);
-      border-radius: 10px;
-      padding: 0.5rem 0.85rem;
-      font-size: 0.78rem;
+      border-radius: 8px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.72rem;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      justify-content: center;
+      gap: 0.25rem;
       transition: all 0.2s;
-      min-height: 38px;
+      min-height: 34px;
+      white-space: nowrap;
     }
 
     .btn-simular-item:hover:not(:disabled) {
@@ -640,23 +626,31 @@
       background: rgba(255, 255, 255, 0.04);
     }
 
+    .btn-simular-item.selecionado {
+      background: var(--accent-orange);
+      border-color: var(--accent-orange);
+      color: #FFFFFF;
+    }
+
     /* Barra Flutuante de Simulação de Pedido */
     .simulador-bar {
       position: fixed;
-      bottom: 16px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 24px);
-      max-width: 680px;
+      width: calc(100% - 18px);
+      max-width: 620px;
       background: linear-gradient(135deg, #002B2F 0%, #00191C 100%);
       border: 1.5px solid var(--accent-orange);
-      border-radius: 16px;
-      padding: 0.85rem 1.15rem;
+      border-radius: 14px;
+      padding: 0.75rem 1rem;
       z-index: 60;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
       display: none;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.6rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .simulador-bar.visivel {
@@ -667,27 +661,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.65rem;
       flex-wrap: wrap;
     }
 
     .simulador-items-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.45rem;
-      max-height: 110px;
+      gap: 0.4rem;
+      max-height: 95px;
       overflow-y: auto;
+      scrollbar-width: thin;
     }
 
     .simulador-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      padding: 0.25rem 0.6rem;
+      padding: 0.22rem 0.55rem;
       border-radius: 999px;
-      font-size: 0.76rem;
+      font-size: 0.72rem;
       color: #FFFFFF;
       font-weight: 600;
     }
@@ -717,21 +712,21 @@
   <header class="menu-topbar">
     <div class="menu-topbar-inner">
       <a href="index.html" class="brand-cluster">
-        <img src="img/logo.png" alt="UMP Eventos" onerror="this.style.display='none';">
-        <div>
-          <div class="brand-title-main">CANTINA UMP</div>
-          <div class="brand-title-sub">Cardápio Digital em Tempo Real</div>
+        <img src="img/acamp-sinodal-logo.png" alt="Acamp Sinodal" onerror="this.onerror=null; this.src='img/logo.png';">
+        <div class="brand-title-wrap">
+          <div class="brand-title-main">CANTINA ACAMP SINODAL</div>
+          <div class="brand-title-sub">Cardápio em Tempo Real</div>
         </div>
       </a>
 
       <div class="topbar-actions">
-        <button type="button" class="btn-hud" onclick="carregarCardapioPublico(true)" title="Atualizar estoque agora">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        <button type="button" class="btn-hud" onclick="carregarCardapioPublico(true)" title="Atualizar cardápio agora">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
           <span>Atualizar</span>
         </button>
-        <button type="button" class="btn-hud btn-hud-orange" onclick="compartilharCardapio()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          <span>Compartilhar Cardápio</span>
+        <button type="button" class="btn-hud btn-hud-orange" onclick="compartilharCardapio()" title="Compartilhar link do cardápio">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span>Compartilhar</span>
         </button>
       </div>
     </div>
@@ -740,63 +735,42 @@
   <!-- Conteúdo Principal -->
   <main class="menu-main-container">
 
-    <!-- Banner Hero -->
-    <section class="menu-hero">
-      <span class="card-bracket tl"></span>
-      <span class="card-bracket tr"></span>
-      <span class="card-bracket bl"></span>
-      <span class="card-bracket br"></span>
-
-      <div class="hero-grid">
-        <div>
-          <div class="hero-badge-row">
-            <span id="status-cantina-pill" class="status-pill-live">
-              <span class="pulse-dot"></span>
-              <span id="status-cantina-text">Cardápio Atualizado ao Vivo</span>
-            </span>
-            <span class="hero-script-tag">Um só Corpo — Uma só Igreja</span>
-          </div>
-          <h1 class="hero-title">Cardápio Digital da Cantina</h1>
-          <p class="hero-subtitle">
-            Consulte os lanches, bebidas e doces disponíveis agora na cantina do evento, veja os preços e acompanhe a quantidade em estoque em tempo real.
-          </p>
-        </div>
-
-        <div class="hero-stats-box">
-          <div class="hero-stat-item">
-            <div class="hero-stat-num tabular-nums" id="stat-disponiveis">0</div>
-            <div class="hero-stat-label">Itens Disponíveis</div>
-          </div>
-          <div class="hero-stat-item">
-            <div class="hero-stat-num tabular-nums" id="stat-categorias">0</div>
-            <div class="hero-stat-label">Categorias</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Filtros e Busca -->
+    <!-- Filtros, Status e Busca Compactos -->
     <section class="controls-panel">
-      <div class="search-and-toggle-row">
+      <div class="status-and-search-row">
+        <!-- Status da Cantina / Caixa -->
+        <span id="status-cantina-pill" class="status-pill-live">
+          <span class="pulse-dot"></span>
+          <span id="status-cantina-text">Carregando status...</span>
+        </span>
+
+        <!-- Campo de Busca -->
         <div class="search-input-wrap">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="text" id="menu-search-input" class="search-input" placeholder="Buscar lanche, bebida ou doce..." oninput="renderizarProdutosCardapio()">
         </div>
-
-        <label class="filter-available-label">
-          <input type="checkbox" id="chk-somente-disponiveis" onchange="renderizarProdutosCardapio()">
-          <span>Mostrar apenas disponíveis</span>
-        </label>
       </div>
 
+      <!-- Linha de Opções & Contador -->
+      <div class="filter-options-row">
+        <label class="filter-available-label">
+          <input type="checkbox" id="chk-somente-disponiveis" onchange="renderizarProdutosCardapio()">
+          <span>Apenas disponíveis em estoque</span>
+        </label>
+        <div class="total-produtos-counter">
+          Mostrando <strong id="contador-filtrados">0</strong> item(ns)
+        </div>
+      </div>
+
+      <!-- Categorias em Chips deslizáveis -->
       <div class="cat-chips-row" id="menu-categorias-chips">
         <button type="button" class="cat-chip-btn active" onclick="selecionarCategoriaCardapio('TODAS')">Todos os Itens</button>
       </div>
     </section>
 
-    <!-- Grid de Produtos -->
+    <!-- Grid de Produtos Responsiva -->
     <section id="menu-produtos-grid" class="menu-grid">
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; color: var(--text-slate);">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-slate);">
         Carregando itens disponíveis na cantina...
       </div>
     </section>
@@ -806,18 +780,18 @@
   <!-- Barra Flutuante: Calculadora / Simulador de Pedido do Participante -->
   <div id="simulador-pedido-bar" class="simulador-bar">
     <div class="simulador-top-row">
-      <div style="display: flex; align-items: center; gap: 0.55rem;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
         <div>
-          <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700;">Simulador de Consumo</div>
-          <div style="font-size: 0.92rem; font-weight: 800; color: #FFFFFF;">
-            Total Estimado: <span id="simulador-total-valor" class="tabular-nums" style="color: var(--accent-gold-soft); font-size: 1.1rem;">R$ 0,00</span>
+          <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 700;">Simulador de Consumo</div>
+          <div style="font-size: 0.88rem; font-weight: 800; color: #FFFFFF;">
+            Total: <span id="simulador-total-valor" class="tabular-nums" style="color: var(--accent-gold-soft); font-size: 1.05rem;">R$ 0,00</span>
           </div>
         </div>
       </div>
 
-      <button type="button" class="btn-hud" onclick="limparSimuladorCardapio()" style="padding: 0.35rem 0.75rem; min-height: 32px; font-size: 0.75rem;">
-        Limpar Simulação
+      <button type="button" class="btn-hud" onclick="limparSimuladorCardapio()" style="padding: 0.3rem 0.65rem; min-height: 30px; font-size: 0.72rem;">
+        Limpar
       </button>
     </div>
 
@@ -850,21 +824,15 @@
         cardapioProdutos = Array.isArray(res?.produtos) ? res.produtos : [];
         cardapioCategorias = Array.isArray(res?.categorias) ? res.categorias : [];
 
-        // Atualizar estatísticas e badge de status
-        const elDisp = document.getElementById('stat-disponiveis');
-        const elCats = document.getElementById('stat-categorias');
-        if (elDisp) elDisp.textContent = res?.total_disponiveis ?? 0;
-        if (elCats) elCats.textContent = cardapioCategorias.length;
-
         const pill = document.getElementById('status-cantina-pill');
         const txt = document.getElementById('status-cantina-text');
         if (pill && txt) {
           if (res?.cantina_aberta) {
             pill.classList.remove('fechada');
-            txt.textContent = 'Cantina Aberta Agora';
+            txt.textContent = 'Cantina Aberta';
           } else {
             pill.classList.add('fechada');
-            txt.textContent = 'Consulte os Itens do Cardápio';
+            txt.textContent = 'Cantina Fechada';
           }
         }
 
@@ -878,9 +846,9 @@
         const grid = document.getElementById('menu-produtos-grid');
         if (grid) {
           grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.25rem; background: rgba(0,30,35,0.75); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px;">
-              <p style="font-weight: 700; color: #F8FAFC; margin-bottom: 0.35rem;">Não foi possível carregar o cardápio agora.</p>
-              <p style="font-size: 0.85rem; color: var(--text-muted);">Verifique sua conexão e toque em Atualizar.</p>
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; background: rgba(0,30,35,0.75); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;">
+              <p style="font-weight: 700; color: #F8FAFC; margin-bottom: 0.25rem;">Não foi possível carregar o cardápio.</p>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">Toque em Atualizar para tentar novamente.</p>
             </div>
           `;
         }
@@ -894,7 +862,7 @@
       const todasAtiva = categoriaSelecionada === 'TODAS' ? 'active' : '';
       let html = `
         <button type="button" class="cat-chip-btn ${todasAtiva}" onclick="selecionarCategoriaCardapio('TODAS')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
           <span>Todos (${cardapioProdutos.length})</span>
         </button>
       `;
@@ -920,6 +888,7 @@
 
     window.renderizarProdutosCardapio = function() {
       const grid = document.getElementById('menu-produtos-grid');
+      const counterEl = document.getElementById('contador-filtrados');
       if (!grid) return;
 
       const busca = (document.getElementById('menu-search-input')?.value || '').toLowerCase().trim();
@@ -936,14 +905,18 @@
         return true;
       });
 
+      if (counterEl) {
+        counterEl.textContent = filtrados.length;
+      }
+
       if (filtrados.length === 0) {
         grid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 3.25rem 1.5rem; background: rgba(0,30,35,0.75); border: 1px dashed rgba(255,255,255,0.18); border-radius: 18px;">
-            <div style="display: inline-flex; width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.06); align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 0.75rem;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; background: rgba(0,30,35,0.75); border: 1px dashed rgba(255,255,255,0.18); border-radius: 14px;">
+            <div style="display: inline-flex; width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.06); align-items: center; justify-content: center; color: var(--text-muted); margin-bottom: 0.5rem;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             </div>
-            <h3 style="font-size: 1.1rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.3rem;">Nenhum item encontrado</h3>
-            <p style="font-size: 0.86rem; color: var(--text-muted);">Experimente alterar a categoria ou limpar o filtro de busca.</p>
+            <h3 style="font-size: 1rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.2rem;">Nenhum produto encontrado</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Experimente limpar a busca ou selecionar outra categoria.</p>
           </div>
         `;
         return;
@@ -954,22 +927,22 @@
         const disp = Boolean(p.disponivel && qtd > 0);
 
         let stockBadgeClass = 'disponivel';
-        let stockText = `${qtd} disponíveis`;
+        let stockText = `${qtd} un.`;
         if (!disp) {
           stockBadgeClass = 'esgotado';
           stockText = 'Esgotado';
         } else if (qtd <= 5) {
           stockBadgeClass = 'baixo';
-          stockText = `Últimas ${qtd} un.`;
+          stockText = `Últimas ${qtd}`;
         }
 
         const imgHtml = p.imagem_url
           ? `<img src="${escapeHtml(p.imagem_url)}" alt="${escapeHtml(p.nome)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
              <div class="media-placeholder-svg" style="display:none;">
-               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
              </div>`
           : `<div class="media-placeholder-svg">
-               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
              </div>`;
 
         const qtdNaSacola = sacolaSimulada[p.id] || 0;
@@ -984,17 +957,17 @@
               </div>
 
               <div class="menu-item-body">
-                <h2 class="menu-item-title">${escapeHtml(p.nome)}</h2>
+                <h2 class="menu-item-title" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</h2>
 
                 <div class="menu-item-footer">
                   <div>
-                    <span class="price-label">Valor Unitário</span>
+                    <span class="price-label">Valor</span>
                     <div class="price-value tabular-nums">${formatarMoeda(p.preco_venda)}</div>
                   </div>
 
-                  <button type="button" class="btn-simular-item" ${!disp ? 'disabled' : ''} onclick="adicionarItemSimulador(${p.id})">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span>${qtdNaSacola > 0 ? `Simulado (${qtdNaSacola})` : 'Simular'}</span>
+                  <button type="button" class="btn-simular-item ${qtdNaSacola > 0 ? 'selecionado' : ''}" ${!disp ? 'disabled' : ''} onclick="adicionarItemSimulador(${p.id})">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>${qtdNaSacola > 0 ? `${qtdNaSacola}x` : 'Simular'}</span>
                   </button>
                 </div>
               </div>
@@ -1053,7 +1026,7 @@
           <span class="simulador-pill tabular-nums">
             <span>${q}x ${escapeHtml(prod.nome)}</span>
             <button type="button" onclick="removerItemSimulador(${id})" title="Remover item">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </span>
         `;
@@ -1069,8 +1042,8 @@
       if (navigator.share) {
         try {
           await navigator.share({
-            title: 'Cardápio da Cantina — UMP Eventos',
-            text: 'Confira o cardápio digital da cantina e veja os itens disponíveis em tempo real:',
+            title: 'Cardápio da Cantina — Acamp Sinodal',
+            text: 'Confira os produtos e preços disponíveis na cantina do Acamp Sinodal:',
             url: url
           });
           return;
@@ -1084,11 +1057,10 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       carregarCardapioPublico(false);
-      // Atualização automática a cada 30 segundos
+      // Atualização automática periódica a cada 30 segundos
       setInterval(() => carregarCardapioPublico(false), 30000);
     });
   </script>
 </body>
 
 </html>
-
