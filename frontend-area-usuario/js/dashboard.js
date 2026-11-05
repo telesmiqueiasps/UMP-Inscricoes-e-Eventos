@@ -1366,3 +1366,148 @@ window.cancelarInscricaoOficinaParticipante = async function (oficinaId, nomeOfi
     showToast(err.message || 'Erro ao cancelar inscrição na oficina.', 'error');
   }
 };
+
+
+// ==========================================
+// MODAL DE DETALHES COMPLETOS DA OFICINA
+// ==========================================
+window.abrirModalOficina = function (oficinaId) {
+  if (!currentOficinasData || !currentOficinasData.eventos) return;
+
+  let oficinaEncontrada = null;
+  let eventoDela = null;
+
+  for (const ev of currentOficinasData.eventos) {
+    if (ev.minha_oficina && Number(ev.minha_oficina.id) === Number(oficinaId)) {
+      oficinaEncontrada = ev.minha_oficina;
+      eventoDela = ev;
+      break;
+    }
+    const achou = (ev.oficinas || []).find(o => Number(o.id) === Number(oficinaId));
+    if (achou) {
+      oficinaEncontrada = achou;
+      eventoDela = ev;
+      break;
+    }
+  }
+
+  if (!oficinaEncontrada) return;
+
+  const badgeEvento = document.getElementById('modal-oficina-badge-evento');
+  const titulo = document.getElementById('modal-oficina-titulo');
+  const pills = document.getElementById('modal-oficina-pills');
+  const desc = document.getElementById('modal-oficina-descricao');
+  const vagasBox = document.getElementById('modal-oficina-vagas-box');
+  const actions = document.getElementById('modal-oficina-actions');
+
+  if (badgeEvento) {
+    badgeEvento.textContent = eventoDela ? eventoDela.evento_titulo : 'Oficina do Evento';
+  }
+  if (titulo) {
+    titulo.textContent = oficinaEncontrada.nome;
+  }
+
+  if (pills) {
+    let pillsHtml = '';
+    if (oficinaEncontrada.ministrante) {
+      pillsHtml += `
+        <span class="oficina-meta-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Ministrante: <strong>${escapeHtmlOficina(oficinaEncontrada.ministrante)}</strong></span>
+        </span>
+      `;
+    }
+    if (oficinaEncontrada.horario) {
+      pillsHtml += `
+        <span class="oficina-meta-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Horário: <strong>${escapeHtmlOficina(oficinaEncontrada.horario)}</strong></span>
+        </span>
+      `;
+    }
+    if (oficinaEncontrada.local) {
+      pillsHtml += `
+        <span class="oficina-meta-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Sala/Local: <strong>${escapeHtmlOficina(oficinaEncontrada.local)}</strong></span>
+        </span>
+      `;
+    }
+    pills.innerHTML = pillsHtml || '<span style="font-size: 0.8rem; color: var(--text-muted);">Informações adicionais em breve</span>';
+  }
+
+  if (desc) {
+    desc.textContent = oficinaEncontrada.descricao || 'Nenhuma descrição detalhada informada para esta oficina.';
+  }
+
+  const cap = Number(oficinaEncontrada.capacidade || 0);
+  const ocup = Number(oficinaEncontrada.vagas_ocupadas || 0);
+  const disp = Number(oficinaEncontrada.vagas_disponiveis || 0);
+  const pct = cap > 0 ? Math.min(100, Math.round((ocup / cap) * 100)) : 0;
+  const isInscrito = Boolean(oficinaEncontrada.inscrito_nesta || (eventoDela && eventoDela.minha_oficina && Number(eventoDela.minha_oficina.id) === Number(oficinaEncontrada.id)));
+  const isEsgotada = Boolean(oficinaEncontrada.esgotada);
+  const jaTemOutra = Boolean(eventoDela && eventoDela.minha_oficina && !isInscrito);
+
+  let barColor = '#10B981';
+  if (isEsgotada) barColor = '#EF4444';
+  else if (pct >= 75) barColor = '#F59E0B';
+
+  if (vagasBox) {
+    vagasBox.innerHTML = `
+      <div class="oficina-vagas-box" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums;">
+          <span style="color: var(--text-muted);">Ocupação: <strong style="color: var(--text-main);">${ocup} / ${cap} vagas</strong></span>
+          <span style="color: ${isEsgotada ? '#DC2626' : '#059669'};">${disp} livres (${100 - pct}%)</span>
+        </div>
+        <div class="oficina-vagas-bar-track" style="height: 7px; margin-top: 0.4rem;">
+          <div class="oficina-vagas-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (actions) {
+    if (isInscrito) {
+      actions.innerHTML = `
+        <button type="button" class="btn btn-outline" style="width: 100%; border-color: #DC2626; color: #DC2626; font-weight: 700;" onclick="fecharModalOficina(); cancelarInscricaoOficinaParticipante(${oficinaEncontrada.id}, '${escapeHtmlOficina(oficinaEncontrada.nome)}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Cancelar Minha Inscrição</span>
+        </button>
+      `;
+    } else if (isEsgotada) {
+      actions.innerHTML = `
+        <button type="button" class="btn btn-outline" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed;">
+          <span>Vagas Esgotadas</span>
+        </button>
+      `;
+    } else if (jaTemOutra) {
+      actions.innerHTML = `
+        <button type="button" class="btn btn-outline" style="width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 700;" onclick="fecharModalOficina(); inscreverEmOficinaParticipante(${oficinaEncontrada.id}, '${escapeHtmlOficina(oficinaEncontrada.nome)}', true)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span>Trocar para esta Oficina</span>
+        </button>
+      `;
+    } else {
+      actions.innerHTML = `
+        <button type="button" class="btn btn-primary" style="width: 100%; font-weight: 700;" onclick="fecharModalOficina(); inscreverEmOficinaParticipante(${oficinaEncontrada.id}, '${escapeHtmlOficina(oficinaEncontrada.nome)}', false)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          <span>Inscrever-se nesta Oficina</span>
+        </button>
+      `;
+    }
+  }
+
+  const modal = document.getElementById('oficina-detalhes-modal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.fecharModalOficina = function () {
+  const modal = document.getElementById('oficina-detalhes-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.fecharModalOficinaBackdrop = function (e) {
+  if (e.target && e.target.id === 'oficina-detalhes-modal') {
+    window.fecharModalOficina();
+  }
+};
