@@ -4195,7 +4195,7 @@ function renderizarGraficosDashboard(stats) {
   const ctxCam = document.getElementById('chart-camisetas')?.getContext('2d');
   if (ctxCam) {
     const camObj = stats.camisetas || {};
-    const tamanhosPadrao = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XXG'];
+    const tamanhosPadrao = ['PP', 'P', 'M', 'G', 'GG', 'XG', 'XGG'];
     const outrosTamanhos = Object.keys(camObj).filter(k => !tamanhosPadrao.includes(k));
     const labelsCam = [...tamanhosPadrao, ...outrosTamanhos].filter(t => (camObj[t] || 0) > 0 || tamanhosPadrao.includes(t));
     const dataCam = labelsCam.map(t => camObj[t] || 0);
