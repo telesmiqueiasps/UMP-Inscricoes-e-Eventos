@@ -121,10 +121,10 @@ body {
 .btn-menu-mobile {
   display: none;
   background: #F8FAFC;
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  width: 38px;
-  height: 38px;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   align-items: center;
@@ -364,7 +364,293 @@ tr:last-child td {
   gap: 0.85rem;
 }
 
+
+/* ===================================================
+   REFINAMENTO ESTÉTICO — ABA MEU PAINEL
+   =================================================== */
+
+/* Card de Evento Aprimorado */
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.event-card-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.event-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 0.25rem;
+  line-height: 1.35;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.event-card-divider {
+  height: 1px;
+  background: var(--border-color);
+  opacity: 0.6;
+  margin: 0.5rem 0;
+}
+
+.event-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.event-info-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.event-info-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.event-info-label svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.event-info-val {
+  color: var(--text-main);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.event-checkin-btn {
+  margin-top: 0.65rem;
+  width: 100%;
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #FFFFFF;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.event-checkin-btn:hover {
+  background: var(--primary-light);
+}
+
+/* Dados Pessoais em Linhas Alinhadas */
+.user-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-info-title-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.user-data-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 0.84rem;
+  gap: 0.5rem;
+}
+
+.user-data-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.user-data-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 60px;
+}
+
+.user-data-val {
+  color: var(--text-main);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Seção de Pagamentos Compacta */
+.payments-section-box {
+  margin-top: 0.85rem;
+}
+
+.section-header-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.section-header-compact h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.section-header-compact svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Cards Individuais de Parcelas */
+.parcelas-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
 .parcela-card-item {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
+}
+
+.parcela-card-item:hover {
+  border-color: #CBD5E1;
+}
+
+.parcela-card-item.parcela-paga {
+  border-left: 3.5px solid #10B981;
+}
+
+.parcela-card-item.parcela-pendente {
+  border-left: 3.5px solid #F59E0B;
+}
+
+.parcela-card-item.parcela-vencida {
+  border-left: 3.5px solid #EF4444;
+}
+
+.parcela-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.parcela-card-num {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.parcela-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.parcela-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.parcela-meta-col.text-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.parcela-meta-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.parcela-meta-val {
+  font-size: 0.84rem;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.parcela-valor-highlight {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.parcela-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  padding-top: 0.45rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.parcela-card-actions .btn {
+  height: 34px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border-radius: var(--radius-sm);
+  flex: 1;
+  min-width: 95px;
+}
+
+.parcela-card-item-antigo {
   background: #FFFFFF;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius-md);

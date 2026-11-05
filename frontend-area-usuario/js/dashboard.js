@@ -115,7 +115,10 @@ async function loadDashboard() {
     }
 
     // 1. Nome de boas-vindas
-    if (welcomeUser && data.usuario) welcomeUser.textContent = `Olá, ${data.usuario.nome}!`;
+    if (welcomeUser && data.usuario) {
+      const primeiroNome = (data.usuario.nome || 'Participante').trim().split(' ')[0];
+      welcomeUser.textContent = `Olá, ${primeiroNome}!`;
+    }
 
     // 2. Dados Pessoais com botão Editar
     if (userInfoCard && data.usuario) {
@@ -161,10 +164,10 @@ async function loadDashboard() {
           eventSelect.innerHTML = items.map(item => {
             if (item.type === 'diaria') {
               const dia = item.data;
-              return `<option value="${item.key}">🎟️ ${dia.evento_titulo || 'Evento'} (Diária - ${dia.status})</option>`;
+              return `<option value="${item.key}">[Diária] ${dia.evento_titulo || 'Evento'} (Diária - ${dia.status})</option>`;
             } else if (item.type === 'triagem_diaria') {
               const tr = item.data;
-              return `<option value="${item.key}">⏳ ${tr.evento_titulo || 'Evento'} (Diária - Aguardando Pagamento)</option>`;
+              return `<option value="${item.key}">[Pendente] ${tr.evento_titulo || 'Evento'} (Diária - Aguardando Pagamento)</option>`;
             } else if (item.type === 'inscricao') {
               const ins = item.data;
               return `<option value="${item.key}">${ins.evento_titulo || 'Evento'} (Inscrito - ${ins.status})</option>`;
@@ -257,29 +260,46 @@ function renderActiveDiaria(diariaId) {
 
     const valorFmt = parseFloat(dia.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const qrButtonHTML = dia.status === 'CONFIRMADA' && dia.codigo_checkin ?
-      `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: #7E22CE; color: #7E22CE; font-weight: 600;" onclick="openQrModal('${dia.codigo_checkin}', '${(dia.evento_titulo || '').replace(/'/g, "\\'")}')">
-         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
-         <span>Ver QR Code de Check-in (Diária)</span>
+      `<button type="button" class="btn btn-outline btn-sm event-checkin-btn" style="border-color: #7E22CE; color: #7E22CE;" onclick="openQrModal(this.dataset.code, this.dataset.title)" data-code="${dia.codigo_checkin}" data-title="${escapeHtmlOficina(dia.evento_titulo || 'Evento')}">
+         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="6" height="6" x="7" y="7"/></svg>
+         <span>Visualizar QR Code (Diária)</span>
        </button>` : '';
 
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-        <div>
-          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+      <div class="event-card-header">
+        <div style="display: flex; gap: 0.35rem; align-items: center;">
+          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700;">DIÁRIA</span>
           <span class="badge ${statusBadge}">${dia.status}</span>
-          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${dia.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="event-card-price" style="color: #7E22CE;">
           ${valorFmt}
         </div>
       </div>
-      <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: #FAF5FF; border: 1px solid #DDD6FE; border-radius: var(--radius-sm); font-size: 0.88rem; color: #581C87;">
-        <strong>🗓️ Dias Contratados:</strong> ${dia.dias_formatados}
+      <h3 class="event-card-title">${escapeHtmlOficina(dia.evento_titulo || 'Evento')}</h3>
+      <div class="event-card-divider"></div>
+      <div class="event-info-list">
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <span>Dias:</span>
+          </div>
+          <div class="event-info-val" style="color: #7E22CE;">${dia.dias_formatados}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Local:</span>
+          </div>
+          <div class="event-info-val">${escapeHtmlOficina(dia.evento_local || 'A definir')}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagamento:</span>
+          </div>
+          <div class="event-info-val">${dia.forma_pagamento || 'InfinitePay (Pix ou Cartão)'}</div>
+        </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
-        📍 Local: ${dia.evento_local || 'A definir'}<br>
-        💳 Pagamento: <strong>${dia.forma_pagamento || 'InfinitePay (Pix ou Cartão)'}</strong>
-      </p>
       ${qrButtonHTML}
     `;
   }
@@ -287,15 +307,33 @@ function renderActiveDiaria(diariaId) {
   if (paymentsContainer) {
     const valorFmt = parseFloat(dia.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     paymentsContainer.innerHTML = `
-      <div class="card">
-        <h3 class="card-title" style="font-size: 1.1rem;">Pagamento da Diária — Confirmado</h3>
-        <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: #7E22CE;">${valorFmt}</strong> | Status: <span class="badge badge-success">PAGO</span></p>
-        ${dia.receipt_url ? `
-          <a href="${dia.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="margin-top: 1rem; border-color: #10B981; color: #10B981; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span>Comprovante de Pagamento</span>
-          </a>
-        ` : ''}
+      <div class="card" style="margin-bottom: 0;">
+        <div class="parcela-card-item parcela-paga">
+          <div class="parcela-card-top">
+            <div class="parcela-card-num">
+              <span>Pagamento da Diária</span>
+            </div>
+            <span class="badge badge-success">PAGO</span>
+          </div>
+          <div class="parcela-card-body">
+            <div class="parcela-meta-col">
+              <span class="parcela-meta-label">Modalidade</span>
+              <span class="parcela-meta-val">Diária Confirmada</span>
+            </div>
+            <div class="parcela-meta-col text-right">
+              <span class="parcela-meta-label">Valor Total</span>
+              <span class="parcela-valor-highlight" style="color: #7E22CE;">${valorFmt}</span>
+            </div>
+          </div>
+          ${dia.receipt_url ? `
+            <div class="parcela-card-actions">
+              <a href="${dia.receipt_url}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #10B981; color: #10B981; text-decoration: none; width: 100%;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Comprovante de Pagamento</span>
+              </a>
+            </div>
+          ` : ''}
+        </div>
       </div>
     `;
   }
@@ -311,42 +349,74 @@ function renderActiveTriagemDiaria(trdiaId) {
 
   if (registrationCard) {
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-        <div>
-          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700; margin-right: 0.35rem;">DIÁRIA</span>
+      <div class="event-card-header">
+        <div style="display: flex; gap: 0.35rem; align-items: center;">
+          <span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-weight: 700;">DIÁRIA</span>
           <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
-          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${tr.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: #7E22CE; font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="event-card-price" style="color: #7E22CE;">
           ${valorFmt}
         </div>
       </div>
-      <div style="margin-top: 0.75rem; padding: 0.65rem 0.85rem; background: #FAF5FF; border: 1px solid #DDD6FE; border-radius: var(--radius-sm); font-size: 0.88rem; color: #581C87;">
-        <strong>🗓️ Dias Contratados:</strong> ${tr.dias_formatados}
+      <h3 class="event-card-title">${escapeHtmlOficina(tr.evento_titulo || 'Evento')}</h3>
+      <div class="event-card-divider"></div>
+      <div class="event-info-list">
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <span>Dias:</span>
+          </div>
+          <div class="event-info-val" style="color: #7E22CE;">${tr.dias_formatados}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Local:</span>
+          </div>
+          <div class="event-info-val">${escapeHtmlOficina(tr.evento_local || 'A definir')}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagamento:</span>
+          </div>
+          <div class="event-info-val">InfinitePay (Pix ou Cartão)</div>
+        </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
-        📍 Local: ${tr.evento_local || 'A definir'}<br>
-        💳 Pagamento: <strong>InfinitePay (Pix ou Cartão)</strong>
-      </p>
-      <div style="margin-top: 1rem; padding: 0.85rem; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; text-align: left; line-height: 1.4;">
-        <strong>⚠️ Compra de Diária Iniciada!</strong><br>
-        Atenção: <strong>sua vaga NÃO está garantida até que você conclua o pagamento</strong> pelo checkout da InfinitePay.
+      <div style="margin-top: 0.55rem; padding: 0.5rem 0.75rem; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-sm); font-size: 0.78rem; color: #92400E; line-height: 1.35;">
+        <strong>Diária Iniciada:</strong> Conclua o pagamento pelo checkout da InfinitePay.
       </div>
     `;
   }
 
   if (paymentsContainer) {
     paymentsContainer.innerHTML = `
-      <div class="card">
-        <h3 class="card-title" style="font-size: 1.1rem;">Pagamento da Diária — InfinitePay</h3>
-        <p style="margin-top: 0.4rem; font-size: 0.95rem;">Valor Total: <strong style="color: #7E22CE;">${valorFmt}</strong> | Status: <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span></p>
-        <div style="margin-top: 1.25rem;">
-          ${tr.checkout_url ? `
-            <a href="${tr.checkout_url}" target="_blank" class="btn btn-primary" style="background: #7E22CE; border-color: #7E22CE; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-              <span>Efetuar Pagamento da Diária (Pix ou Cartão)</span>
-            </a>
-          ` : '<p style="color: var(--text-muted);">Link de checkout indisponível.</p>'}
+      <div class="card" style="margin-bottom: 0;">
+        <div class="parcela-card-item parcela-pendente">
+          <div class="parcela-card-top">
+            <div class="parcela-card-num">
+              <span>Pagamento da Diária</span>
+            </div>
+            <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
+          </div>
+          <div class="parcela-card-body">
+            <div class="parcela-meta-col">
+              <span class="parcela-meta-label">Modalidade</span>
+              <span class="parcela-meta-val">InfinitePay (Pix ou Cartão)</span>
+            </div>
+            <div class="parcela-meta-col text-right">
+              <span class="parcela-meta-label">Valor</span>
+              <span class="parcela-valor-highlight" style="color: #7E22CE;">${valorFmt}</span>
+            </div>
+          </div>
+          <div class="parcela-card-actions">
+            ${tr.checkout_url ? `
+              <a href="${tr.checkout_url}" target="_blank" class="btn btn-primary btn-sm" style="background: #7E22CE; border-color: #7E22CE; text-decoration: none; width: 100%;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                <span>Efetuar Pagamento da Diária</span>
+              </a>
+            ` : '<p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">Link de checkout indisponível.</p>'}
+          </div>
         </div>
       </div>
     `;
@@ -366,25 +436,38 @@ function renderActiveRegistration(inscricaoId) {
     else if (ins.status === 'VENCIDA' || ins.status === 'VENCIDO') statusBadge = 'badge-danger';
     const valorFmt = parseFloat(ins.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const qrButtonHTML = ins.status === 'CONFIRMADA' && ins.codigo_checkin ?
-      `<button class="btn btn-outline" style="margin-top: 1.25rem; width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 600;" onclick="openQrModal('${ins.codigo_checkin}', '${(ins.evento_titulo || '').replace(/'/g, "\\'")}')">
-         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
-         <span>Ver QR Code de Check-in</span>
+      `<button type="button" class="btn btn-outline btn-sm event-checkin-btn" onclick="openQrModal(this.dataset.code, this.dataset.title)" data-code="${ins.codigo_checkin}" data-title="${escapeHtmlOficina(ins.evento_titulo || 'Evento')}">
+         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="6" height="6" x="7" y="7"/></svg>
+         <span>Visualizar QR Code de Check-in</span>
        </button>` : '';
 
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+      <div class="event-card-header">
         <div>
           <span class="badge ${statusBadge}">${ins.status}</span>
-          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${ins.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="event-card-price">
           ${valorFmt}
         </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
-        📍 Local: ${ins.evento_local || 'A definir'}<br>
-        💳 Forma de Pagamento: <strong>${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</strong>
-      </p>
+      <h3 class="event-card-title">${escapeHtmlOficina(ins.evento_titulo || 'Evento')}</h3>
+      <div class="event-card-divider"></div>
+      <div class="event-info-list">
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Local:</span>
+          </div>
+          <div class="event-info-val">${escapeHtmlOficina(ins.evento_local || 'A definir')}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagamento:</span>
+          </div>
+          <div class="event-info-val">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</div>
+        </div>
+      </div>
       ${qrButtonHTML}
     `;
   }
@@ -404,22 +487,34 @@ async function renderActiveTriagem(triagemId) {
 
   if (registrationCard) {
     registrationCard.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+      <div class="event-card-header">
         <div>
           <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
-          <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.2rem;">${tr.evento_titulo || 'Evento'}</h3>
         </div>
-        <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary); font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="event-card-price">
           ${valorFmt}
         </div>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.65rem; line-height: 1.5;">
-        📍 Local: ${tr.evento_local || 'A definir'}<br>
-        💳 Forma de Pagamento Escolhida: <strong>${formatarFormaPagamento(tr.forma_pagamento)}</strong>
-      </p>
-      <div style="margin-top: 1rem; padding: 0.85rem; background: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; text-align: left; line-height: 1.4;">
-        <strong>⚠️ Inscrição Iniciada!</strong><br>
-        Atenção: <strong>sua vaga NÃO está reservada até que você conclua o pagamento</strong> da 1ª parcela (ou valor total).
+      <h3 class="event-card-title">${escapeHtmlOficina(tr.evento_titulo || 'Evento')}</h3>
+      <div class="event-card-divider"></div>
+      <div class="event-info-list">
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Local:</span>
+          </div>
+          <div class="event-info-val">${escapeHtmlOficina(tr.evento_local || 'A definir')}</div>
+        </div>
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagamento:</span>
+          </div>
+          <div class="event-info-val">${formatarFormaPagamento(tr.forma_pagamento)}</div>
+        </div>
+      </div>
+      <div style="margin-top: 0.55rem; padding: 0.5rem 0.75rem; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-sm); font-size: 0.78rem; color: #92400E; line-height: 1.35;">
+        <strong>Inscrição Iniciada:</strong> Conclua o pagamento para garantir a sua vaga.
       </div>
     `;
   }
@@ -497,29 +592,37 @@ function renderTriagemPayments(pagamentoRes, tr) {
       const actionBtnMobile = parc.copia_cola_pix ?
         (parc.copia_cola_pix.startsWith('http') ?
           `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-            <span>Pagar Parcela</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+            <span>Pagar</span>
           </a>` :
           `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
             <span>Copiar Pix</span>
           </button>`
         ) : '';
 
       return `
-        <div class="parcela-card-item">
-          <div class="top-row">
-            <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Parcela ${parc.numero}</span>
+        <div class="parcela-card-item parcela-pendente">
+          <div class="parcela-card-top">
+            <div class="parcela-card-num">
+              <span>Parcela ${parc.numero}</span>
+            </div>
             <span class="badge badge-warning">PENDENTE</span>
           </div>
-          <div class="info-row">
-            <span>📅 Vencimento: <strong>${dtVenc}</strong></span>
-            <span>Valor: <strong style="color: var(--primary); font-size: 0.95rem;">${valorParcFmt}</strong></span>
+          <div class="parcela-card-body">
+            <div class="parcela-meta-col">
+              <span class="parcela-meta-label">Vencimento</span>
+              <span class="parcela-meta-val">${dtVenc}</span>
+            </div>
+            <div class="parcela-meta-col text-right">
+              <span class="parcela-meta-label">Valor</span>
+              <span class="parcela-valor-highlight">${valorParcFmt}</span>
+            </div>
           </div>
-          <div class="actions-row">
+          <div class="parcela-card-actions">
             ${actionBtnMobile}
             <a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>Carnê PDF</span>
             </a>
           </div>
@@ -653,44 +756,61 @@ function renderRecentPayments(pagamentos) {
         const valorParcFmt = parseFloat(parc.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const pdfUrl = `${API_BASE_URL}/pagamentos/parcelas/${parc.id}/pdf?token=${API.getToken()}`;
         const isCancelled = parc.status === 'CANCELADO' || parc.status === 'CANCELADA' || pag.status === 'CANCELADO';
+        const isPaid = parc.status === 'PAGO';
+        const isPending = !isPaid && !isCancelled;
+        const statusClass = isPaid ? 'parcela-paga' : (isPending ? 'parcela-pendente' : 'parcela-vencida');
         const dtVenc = parc.vencimento ? new Date(parc.vencimento + (parc.vencimento.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('pt-BR') : 'N/A';
 
+        let actionBtns = '';
+        if (!isCancelled && !isPaid && parc.copia_cola_pix) {
+          if (parc.copia_cola_pix.startsWith('http')) {
+            actionBtns += `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+              <span>Pagar</span>
+            </a>`;
+          } else {
+            actionBtns += `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Pix</span>
+            </button>`;
+          }
+        }
+        if (!isCancelled && !isPaid) {
+          actionBtns += `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span>Já paguei</span>
+          </button>`;
+        }
+        if (!isCancelled) {
+          actionBtns += `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Carnê PDF</span>
+          </a>`;
+        }
+
         return `
-          <div class="parcela-card-item">
-            <div class="top-row">
-              <span style="font-weight: 700; font-size: 0.95rem;">Parcela ${parc.numero}</span>
+          <div class="parcela-card-item ${statusClass}">
+            <div class="parcela-card-top">
+              <div class="parcela-card-num">
+                <span>Parcela ${parc.numero}</span>
+              </div>
               <span class="badge ${getStatusBadge(parc.status)}">${parc.status}</span>
             </div>
-            <div class="info-row">
-              <span>📅 Vencimento: <strong>${dtVenc}</strong></span>
-              <span>Valor: <strong style="color: var(--primary); font-size: 0.95rem;">${valorParcFmt}</strong></span>
+            <div class="parcela-card-body">
+              <div class="parcela-meta-col">
+                <span class="parcela-meta-label">Vencimento</span>
+                <span class="parcela-meta-val">${dtVenc}</span>
+              </div>
+              <div class="parcela-meta-col text-right">
+                <span class="parcela-meta-label">Valor</span>
+                <span class="parcela-valor-highlight">${valorParcFmt}</span>
+              </div>
             </div>
-            <div class="actions-row">
-              ${!isCancelled && parc.status !== 'PAGO' && parc.copia_cola_pix ?
-            (parc.copia_cola_pix.startsWith('http') ?
-              `<a href="${parc.copia_cola_pix}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration: none;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                    <span>Pagar Parcela</span>
-                  </a>` :
-              `<button class="btn btn-outline btn-sm" onclick="copiarPixString('${parc.copia_cola_pix}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                    <span>Copiar Pix</span>
-                  </button>`
-            ) : ''
-          }
-              ${!isCancelled && parc.status !== 'PAGO' ?
-            `<button class="btn btn-outline btn-sm" onclick="verificarStatusParcela(${parc.id}, 'ORD-${pag.inscricao_id}-PARC-${parc.numero}')" style="font-size: 0.775rem;" title="Clique aqui caso já tenha efetuado o pagamento para atualizar o status">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                  <span>Já paguei</span>
-                </button>` : ''
-          }
-              ${!isCancelled ?
-            `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <span>Carnê PDF</span>
-                </a>` : ''
-          }
-            </div>
+            ${actionBtns ? `
+              <div class="parcela-card-actions">
+                ${actionBtns}
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
@@ -776,10 +896,10 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
                 <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
                 <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${tr.evento_titulo || 'Evento'}</h3>
                 <p style="font-size: 0.85rem; color: #581C87; margin-top: 0.25rem; line-height: 1.5;">
-                  🗓️ <strong>Dias Contratados:</strong> ${tr.dias_formatados || 'N/A'}<br>
-                  📅 Início da solicitação: ${dataReg}<br>
-                  📍 Local: ${tr.evento_local || 'A definir'}<br>
-                  💳 Pagamento: <strong>InfinitePay (Pix ou Cartão)</strong>
+                  <strong>Dias Contratados:</strong> ${tr.dias_formatados || 'N/A'}<br>
+                  Início da solicitação: ${dataReg}<br>
+                  Local: ${tr.evento_local || 'A definir'}<br>
+                  Pagamento: <strong>InfinitePay (Pix ou Cartão)</strong>
                 </p>
               </div>
               <div style="text-align: right;">
@@ -788,7 +908,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
               </div>
             </div>
             <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #F3E8FF; border-radius: var(--radius-md); font-size: 0.85rem; color: #6B21A8; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-              <span>⚠️ <strong>Atenção:</strong> sua vaga NÃO está reservada até que conclua o pagamento.</span>
+              <span><strong>Atenção:</strong> sua vaga NÃO está reservada até que conclua o pagamento.</span>
               <button class="btn btn-primary btn-sm" style="background: #7E22CE; border-color: #7E22CE;" onclick="selecionarEventosDashboard('trdia_${tr.id}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                 <span>Pagar Diária</span>
@@ -805,9 +925,9 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
               <span class="badge badge-warning">AGUARDANDO PAGAMENTO</span>
               <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${tr.evento_titulo || 'Evento'}</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                📅 Início da solicitação: ${dataReg}<br>
-                📍 Local: ${tr.evento_local || 'A definir'}<br>
-                💳 Forma de Pagamento: <strong>${formatarFormaPagamento(tr.forma_pagamento)}</strong>
+                Início da solicitação: ${dataReg}<br>
+                Local: ${tr.evento_local || 'A definir'}<br>
+                Forma de Pagamento: <strong>${formatarFormaPagamento(tr.forma_pagamento)}</strong>
               </p>
             </div>
             <div style="text-align: right;">
@@ -816,7 +936,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
             </div>
           </div>
           <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #FEF3C7; border-radius: var(--radius-md); font-size: 0.85rem; color: #92400E; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-            <span>⚠️ <strong>Atenção:</strong> sua vaga NÃO está reservada até que você conclua o pagamento.</span>
+            <span><strong>Atenção:</strong> sua vaga NÃO está reservada até que você conclua o pagamento.</span>
             <button class="btn btn-primary btn-sm" onclick="selecionarEventosDashboard('tr_${tr.id}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
               <span>Ver Boletos / Pagar</span>
@@ -852,9 +972,9 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
                 <span class="badge ${badgeClass}">${ins.status}</span>
                 <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${ins.evento_titulo}</h3>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.5;">
-                  🗓️ <strong>Dias Contratados:</strong> <span style="color: #6B21A8; font-weight: 600;">${ins.dias_formatados || 'N/A'}</span><br>
-                  📅 Data da Compra: ${dataReg}<br>
-                  📍 Local do Evento: ${ins.evento_local || 'A definir'}
+                  <strong>Dias Contratados:</strong> <span style="color: #6B21A8; font-weight: 600;">${ins.dias_formatados || 'N/A'}</span><br>
+                  Data da Compra: ${dataReg}<br>
+                  Local do Evento: ${ins.evento_local || 'A definir'}
                 </p>
               </div>
               <div style="text-align: right;">
@@ -892,8 +1012,8 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
               <span class="badge ${badgeClass}">${ins.status}</span>
               <h3 class="card-title" style="margin-top: 0.5rem; font-size: 1.15rem;">${ins.evento_titulo}</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
-                📅 Data da Inscrição: ${dataReg}<br>
-                📍 Local do Evento: ${ins.evento_local || 'A definir'}
+                Data da Inscrição: ${dataReg}<br>
+                Local do Evento: ${ins.evento_local || 'A definir'}
               </p>
             </div>
             <div style="text-align: right;">
