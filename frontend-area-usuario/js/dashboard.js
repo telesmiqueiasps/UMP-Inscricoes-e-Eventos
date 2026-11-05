@@ -1,3 +1,23 @@
+
+// Controle do Menu Mobile (Drawer 3 tracinhos)
+window.toggleMenuMobile = function () {
+  const sidebar = document.getElementById('main-sidebar');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.toggle('menu-open');
+  if (backdrop) {
+    if (isOpen) backdrop.classList.add('active');
+    else backdrop.classList.remove('active');
+  }
+};
+
+window.fecharMenuMobile = function () {
+  const sidebar = document.getElementById('main-sidebar');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  if (sidebar) sidebar.classList.remove('menu-open');
+  if (backdrop) backdrop.classList.remove('active');
+};
+
 let currentDashboardData = null;
 let activeEventKey = null; // Ex: "ins_12" ou "tr_5"
 
@@ -40,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
       });
       if (confirmRes && confirmRes.success) {
-        showToast('🎉 ' + (confirmRes.message || 'Pagamento confirmado com sucesso!'), 'success');
+        showToast(confirmRes.message || 'Pagamento confirmado com sucesso!', 'success');
       }
     } catch (err) {
       console.warn('Erro ao confirmar retorno do checkout:', err);
@@ -859,23 +879,7 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
   container.innerHTML = htmlTriagens + htmlInscricoes;
 }
 
-window.switchTab = function (tabId) {
-  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-  const target = document.getElementById(tabId);
-  if (target) target.style.display = 'block';
-
-  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-  if (tabId === 'tab-painel') {
-    const el = document.getElementById('menu-painel');
-    if (el) el.classList.add('active');
-  } else if (tabId === 'tab-eventos') {
-    const el = document.getElementById('menu-eventos');
-    if (el) el.classList.add('active');
-  } else if (tabId === 'tab-senha') {
-    const el = document.getElementById('menu-senha');
-    if (el) el.classList.add('active');
-  }
-};
+// [switchTab unificada abaixo]
 
 window.openEditModal = function () {
   if (!currentDashboardData || !currentDashboardData.usuario) return;
@@ -919,6 +923,9 @@ window.salvarPerfil = async function (e) {
 };
 
 function logout() {
+  if (typeof window.fecharMenuMobile === "function") {
+    window.fecharMenuMobile();
+  }
   API.removeToken();
   window.location.href = 'login.html';
 }
@@ -1026,7 +1033,7 @@ window.verificarStatusParcela = async function (parcelaId, orderNsu) {
       })
     });
     if (res && res.success) {
-      showToast('🎉 ' + (res.message || 'Parcela confirmada com sucesso!'), 'success');
+      showToast(res.message || 'Parcela confirmada com sucesso!', 'success');
       await loadDashboard();
     } else {
       showToast(res.message || 'O pagamento ainda não foi identificado ou está em processamento na InfinitePay.', 'warning');
@@ -1044,27 +1051,7 @@ window.verificarStatusParcela = async function (parcelaId, orderNsu) {
 let currentOficinasData = null;
 let activeOficinaEventoId = null;
 
-window.switchTab = function (tabId) {
-  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-  const target = document.getElementById(tabId);
-  if (target) target.style.display = 'block';
-
-  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-  if (tabId === 'tab-painel') {
-    const el = document.getElementById('menu-painel');
-    if (el) el.classList.add('active');
-  } else if (tabId === 'tab-eventos') {
-    const el = document.getElementById('menu-eventos');
-    if (el) el.classList.add('active');
-  } else if (tabId === 'tab-oficinas') {
-    const el = document.getElementById('menu-oficinas');
-    if (el) el.classList.add('active');
-    carregarOficinasParticipante();
-  } else if (tabId === 'tab-senha') {
-    const el = document.getElementById('menu-senha');
-    if (el) el.classList.add('active');
-  }
-};
+// [switchTab unificada abaixo]
 
 function escapeHtmlOficina(str) {
   return String(str || '')
@@ -1271,7 +1258,7 @@ function renderizarOficinasParticipante() {
           <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.45rem;">
             ${escapeHtmlOficina(of.nome)}
           </h3>
-          ${of.descricao ? `<p style="font-size: 0.87rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.85rem;">${escapeHtmlOficina(of.descricao)}</p>` : ''}
+          ${of.descricao ? `<p class="oficina-desc-clamp">${escapeHtmlOficina(of.descricao)}</p>` : ''}
 
           <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.85rem;">
             ${of.ministrante ? `
