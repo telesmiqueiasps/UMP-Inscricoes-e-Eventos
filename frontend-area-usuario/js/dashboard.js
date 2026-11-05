@@ -1206,10 +1206,16 @@ function renderizarOficinasParticipante() {
             ${minhaOficina.local ? `<span>Sala/Local: <strong>${escapeHtmlOficina(minhaOficina.local)}</strong></span>` : ''}
           </div>
         </div>
-        <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.16); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${minhaOficina.id}, '${escapeHtmlOficina(minhaOficina.nome)}')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span>Liberar Minha Vaga</span>
-        </button>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="abrirModalOficina(${minhaOficina.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Ver Detalhes</span>
+          </button>
+          <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.14); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${minhaOficina.id}, '${escapeHtmlOficina(minhaOficina.nome)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Liberar Vaga</span>
+          </button>
+        </div>
       </div>
     `;
   }
@@ -1283,10 +1289,19 @@ function renderizarOficinasParticipante() {
             <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">${escapeHtmlOficina(of.evento_titulo)}</span>
             ${statusBadgeHtml}
           </div>
-          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.45rem;">
-            ${escapeHtmlOficina(of.nome)}
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.35rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;" onclick="abrirModalOficina(${of.id})">
+            <span>${escapeHtmlOficina(of.nome)}</span>
+            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-decoration: underline; white-space: nowrap;">Ver detalhes</span>
           </h3>
-          ${of.descricao ? `<p class="oficina-desc-clamp">${escapeHtmlOficina(of.descricao)}</p>` : ''}
+          ${of.descricao ? `
+            <div style="margin-bottom: 0.65rem;">
+              <p class="oficina-desc-clamp">${escapeHtmlOficina(of.descricao)}</p>
+              <button type="button" class="btn-ler-mais-oficina" onclick="abrirModalOficina(${of.id})" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <span>Ler mais</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          ` : ''}
 
           <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.85rem;">
             ${of.ministrante ? `
