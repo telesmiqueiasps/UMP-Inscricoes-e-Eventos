@@ -1,3 +1,40 @@
+
+// Função para extrair componentes de data e hora sem alteração de fuso horário
+function parseDataHoraEvento(isoStr) {
+  if (!isoStr) return null;
+  const match = String(isoStr).trim().match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (match) {
+    return {
+      ano: match[1],
+      mes: match[2],
+      dia: match[3],
+      hora: match[4],
+      minuto: match[5]
+    };
+  }
+  return null;
+}
+
+function formatarIntervaloEvento(dataInicioStr, dataFimStr) {
+  const ini = parseDataHoraEvento(dataInicioStr);
+  const fim = parseDataHoraEvento(dataFimStr);
+
+  if (ini && fim) {
+    const dataIniFmt = `${ini.dia}/${ini.mes}/${ini.ano} às ${ini.hora}:${ini.minuto}`;
+    if (ini.dia === fim.dia && ini.mes === fim.mes && ini.ano === fim.ano) {
+      return `${ini.dia}/${ini.mes}/${ini.ano} das ${ini.hora}:${ini.minuto} às ${fim.hora}:${fim.minuto}`;
+    }
+    const dataFimFmt = `${fim.dia}/${fim.mes}/${fim.ano} às ${fim.hora}:${fim.minuto}`;
+    return `${dataIniFmt} até ${dataFimFmt}`;
+  }
+
+  if (ini) {
+    return `${ini.dia}/${ini.mes}/${ini.ano} às ${ini.hora}:${ini.minuto}`;
+  }
+
+  return 'Data a definir';
+}
+
 function isVideoUrl(url) {
   if (!url) return false;
   const cleanUrl = url.split('?')[0].toLowerCase();
@@ -69,9 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('event-price').textContent = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // 3. Metadados
-    const dataInicio = new Date(ev.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const dataFim = new Date(ev.data_fim).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    document.getElementById('event-date').textContent = `${dataInicio} até ${dataFim}`;
+    document.getElementById('event-date').textContent = formatarIntervaloEvento(ev.data_inicio, ev.data_fim);
     document.getElementById('event-location').textContent = ev.local || 'A definir';
 
     const isSoldOut = ev.max_participantes && ev.vagas_restantes === 0;
@@ -161,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               return `
                 <div class="thumbnail video-thumb ${index === 0 ? 'active' : ''}" onclick="selectThumbnail(this, '${url}')" style="position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; height: 60px; border-radius: 4px; cursor: pointer;">
                   <video src="${url}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.7;"></video>
-                  <span style="position: absolute; color: white; font-size: 1.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">▶️</span>
+                  <span style="position: absolute; color: white; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.55); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>
                 </div>
               `;
             } else {

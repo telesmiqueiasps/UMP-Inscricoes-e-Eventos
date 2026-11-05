@@ -61,11 +61,14 @@ function renderSkeletonLoading(container) {
 // Cria o HTML de um Event Card individual
 function createEventCard(ev, index = 0) {
   // Datas formatadas
-  const dataIniObj = new Date(ev.data_inicio);
-  const dataFimObj = new Date(ev.data_fim);
-  const dataInicio = dataIniObj.toLocaleDateString('pt-BR');
-  const dataFim = dataFimObj.toLocaleDateString('pt-BR');
-  const dataFormatada = (dataInicio === dataFim) ? dataInicio : `${dataInicio} à ${dataFim}`;
+  const parseDiaMes = (str) => {
+    if (!str) return '';
+    const m = String(str).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+  };
+  const dataInicio = parseDiaMes(ev.data_inicio) || new Date(ev.data_inicio).toLocaleDateString('pt-BR');
+  const dataFim = parseDiaMes(ev.data_fim) || (ev.data_fim ? new Date(ev.data_fim).toLocaleDateString('pt-BR') : '');
+  const dataFormatada = (dataInicio === dataFim || !dataFim) ? dataInicio : `${dataInicio} a ${dataFim}`;
 
   // Preço formatado
   const numValor = parseFloat(ev.valor || 0);
