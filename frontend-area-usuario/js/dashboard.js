@@ -1255,9 +1255,9 @@ function renderizarOficinasParticipante() {
 
   if (currentOficinasData.aba_participante_visivel === false) {
     container.innerHTML = `
-      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
-        <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.4rem;">Inscrições de Oficinas Indisponíveis</h3>
-        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 520px; margin: 0 auto;">
+      <div class="card" style="text-align: center; padding: 2.25rem 1.25rem; border-radius: 12px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0B1F3B; margin-bottom: 0.35rem; font-family: 'Plus Jakarta Sans', sans-serif;">Inscrições de Oficinas Indisponíveis</h3>
+        <p style="color: #64748B; font-size: 0.85rem; max-width: 480px; margin: 0 auto; line-height: 1.45;">
           As oficinas ainda não foram liberadas pela organização do evento.
         </p>
       </div>
@@ -1269,12 +1269,12 @@ function renderizarOficinasParticipante() {
 
   if (!currentOficinasData.possui_inscricao_evento || eventos.length === 0) {
     container.innerHTML = `
-      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
-        <div style="width: 52px; height: 52px; border-radius: 50%; background: #EFF6FF; color: var(--primary); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.85rem;">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="card" style="text-align: center; padding: 2.25rem 1.25rem; border-radius: 12px;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #EAF2FF; color: #0756C9; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-        <h3 class="card-title" style="font-size: 1.15rem; margin-bottom: 0.4rem;">Inscrição no Evento Necessária</h3>
-        <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 520px; margin: 0 auto;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0B1F3B; margin-bottom: 0.35rem; font-family: 'Plus Jakarta Sans', sans-serif;">Inscrição no Evento Necessária</h3>
+        <p style="color: #64748B; font-size: 0.85rem; max-width: 480px; margin: 0 auto; line-height: 1.45;">
           Apenas participantes com inscrição ativa em um evento podem ocupar vagas nas oficinas vinculadas a ele.
         </p>
       </div>
@@ -1294,14 +1294,14 @@ function renderizarOficinasParticipante() {
   let selectorHtml = '';
   if (eventos.length > 1) {
     selectorHtml = `
-      <div class="selector-card" style="margin-bottom: 1.25rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
-          <div style="background: var(--primary-light); color: var(--primary); padding: 0.6rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      <div class="selector-card" style="margin-bottom: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; width: 100%;">
+          <div style="background: #EAF2FF; color: #0756C9; padding: 0.5rem; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
           </div>
           <div style="flex: 1;">
-            <label for="oficinas-event-select" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Evento Vinculado</label>
-            <select id="oficinas-event-select" class="form-control" onchange="selecionarEventoOficinaParticipante(this.value)" style="margin-top: 0.2rem; font-weight: 700; color: var(--primary);">
+            <label for="oficinas-event-select" style="display: block; font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Evento Vinculado</label>
+            <select id="oficinas-event-select" class="form-control" onchange="selecionarEventoOficinaParticipante(this.value)" style="margin-top: 0.15rem; font-weight: 700; color: #0756C9;">
               ${eventos.map(ev => `<option value="${ev.evento_id}" ${Number(ev.evento_id) === Number(eventoAtivo.evento_id) ? 'selected' : ''}>${escapeHtmlOficina(ev.evento_titulo)}</option>`).join('')}
             </select>
           </div>
@@ -1313,27 +1313,42 @@ function renderizarOficinasParticipante() {
   let minhaOficinaHtml = '';
   if (minhaOficina) {
     minhaOficinaHtml = `
-      <div class="minha-oficina-banner">
-        <div>
-          <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.18); padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.45rem;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Sua Vaga Está Garantida</span>
-          </div>
-          <h3 style="font-size: 1.25rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.2rem;">${escapeHtmlOficina(minhaOficina.nome)}</h3>
-          <div style="font-size: 0.86rem; opacity: 0.92; display: flex; flex-wrap: wrap; gap: 0.85rem; margin-top: 0.25rem;">
-            ${minhaOficina.ministrante ? `<span>Ministrante: <strong>${escapeHtmlOficina(minhaOficina.ministrante)}</strong></span>` : ''}
-            ${minhaOficina.horario ? `<span>Horário: <strong>${escapeHtmlOficina(minhaOficina.horario)}</strong></span>` : ''}
-            ${minhaOficina.local ? `<span>Sala/Local: <strong>${escapeHtmlOficina(minhaOficina.local)}</strong></span>` : ''}
-          </div>
+      <div class="minha-oficina-card">
+        <span class="badge-vaga-garantida">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Sua vaga está garantida</span>
+        </span>
+        <h3 class="minha-oficina-title" onclick="abrirModalOficina(${minhaOficina.id})">
+          ${escapeHtmlOficina(minhaOficina.nome)}
+        </h3>
+        <div class="minha-oficina-metas">
+          ${minhaOficina.ministrante ? `
+            <div class="minha-meta-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>${escapeHtmlOficina(minhaOficina.ministrante)}</span>
+            </div>
+          ` : ''}
+          ${minhaOficina.horario ? `
+            <div class="minha-meta-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>${escapeHtmlOficina(minhaOficina.horario)}</span>
+            </div>
+          ` : ''}
+          ${minhaOficina.local ? `
+            <div class="minha-meta-tag">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>${escapeHtmlOficina(minhaOficina.local)}</span>
+            </div>
+          ` : ''}
         </div>
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.18); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="abrirModalOficina(${minhaOficina.id})">
+        <div class="minha-oficina-actions">
+          <button type="button" class="btn-minha-detalhes" onclick="abrirModalOficina(${minhaOficina.id})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Ver Detalhes</span>
+            <span>Ver detalhes</span>
           </button>
-          <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.14); color: #FFFFFF; border: 1px solid rgba(255,255,255,0.35); font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${minhaOficina.id}, '${escapeHtmlOficina(minhaOficina.nome)}')">
+          <button type="button" class="btn-minha-liberar" onclick="cancelarInscricaoOficinaParticipante(${minhaOficina.id}, '${escapeHtmlOficina(minhaOficina.nome)}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            <span>Liberar Vaga</span>
+            <span>Liberar vaga</span>
           </button>
         </div>
       </div>
@@ -1343,9 +1358,9 @@ function renderizarOficinasParticipante() {
   if (oficinas.length === 0) {
     container.innerHTML = `
       ${selectorHtml}
-      <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
-        <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 0.35rem;">Nenhuma oficina disponível no momento</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">As oficinas do evento <strong>${escapeHtmlOficina(eventoAtivo.evento_titulo)}</strong> serão liberadas em breve pela organização.</p>
+      <div class="card" style="text-align: center; padding: 2.25rem 1.25rem; border-radius: 12px;">
+        <h3 style="font-size: 1.05rem; font-weight: 700; color: #0B1F3B; margin-bottom: 0.35rem; font-family: 'Plus Jakarta Sans', sans-serif;">Nenhuma oficina disponível no momento</h3>
+        <p style="color: #64748B; font-size: 0.85rem; line-height: 1.45;">As oficinas do evento <strong>${escapeHtmlOficina(eventoAtivo.evento_titulo)}</strong> serão liberadas em breve pela organização.</p>
       </div>
     `;
     return;
@@ -1359,86 +1374,97 @@ function renderizarOficinasParticipante() {
     const isInscrito = Boolean(of.inscrito_nesta);
     const isEsgotada = Boolean(of.esgotada);
 
-    let barColor = '#10B981';
+    let barColor = '#0756C9';
     if (isEsgotada) barColor = '#EF4444';
     else if (pct >= 75) barColor = '#F59E0B';
 
+    let cardStateClass = 'card-estado-disponivel';
     let statusBadgeHtml = '';
+
     if (isInscrito) {
-      statusBadgeHtml = `<span class="badge badge-success" style="display:inline-flex; align-items:center; gap:0.3rem;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> INSCRITO</span>`;
+      cardStateClass = 'card-estado-selecionada';
+      statusBadgeHtml = `<span class="badge badge-success" style="display:inline-flex; align-items:center; gap:0.25rem; font-size:0.72rem;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Selecionada</span>`;
     } else if (isEsgotada) {
-      statusBadgeHtml = `<span class="badge badge-danger">ESGOTADA</span>`;
+      cardStateClass = 'card-estado-esgotada';
+      statusBadgeHtml = `<span class="badge badge-danger" style="font-size:0.72rem;">Esgotada</span>`;
     } else {
-      statusBadgeHtml = `<span class="badge badge-info" style="font-variant-numeric: tabular-nums;">${disp} ${disp === 1 ? 'VAGA DISPONÍVEL' : 'VAGAS DISPONÍVEIS'}</span>`;
+      statusBadgeHtml = `<span class="badge badge-vagas-disponivel">${disp} ${disp === 1 ? 'vaga disponível' : 'vagas disponíveis'}</span>`;
     }
 
     let actionBtnHtml = '';
     if (isInscrito) {
       actionBtnHtml = `
-        <button type="button" class="btn btn-outline" style="width: 100%; border-color: #DC2626; color: #DC2626; font-weight: 700;" onclick="cancelarInscricaoOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span>Cancelar Minha Inscrição</span>
+        <button type="button" class="btn btn-outline btn-app-action btn-danger-outline" onclick="cancelarInscricaoOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Liberar vaga</span>
         </button>
       `;
     } else if (isEsgotada) {
       actionBtnHtml = `
-        <button type="button" class="btn btn-outline" disabled style="width: 100%; opacity: 0.6; cursor: not-allowed;">
-          <span>Vagas Esgotadas</span>
+        <button type="button" class="btn btn-app-action btn-esgotada-disabled" disabled>
+          <span>Vagas esgotadas</span>
         </button>
       `;
     } else if (minhaOficina) {
       actionBtnHtml = `
-        <button type="button" class="btn btn-outline" style="width: 100%; border-color: var(--primary); color: var(--primary); font-weight: 700;" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', true)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-          <span>Trocar para esta Oficina</span>
+        <button type="button" class="btn btn-outline btn-app-action" style="border-color: #0756C9; color: #0756C9;" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', true)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span>Trocar para esta oficina</span>
         </button>
       `;
     } else {
       actionBtnHtml = `
-        <button type="button" class="btn btn-primary" style="width: 100%; font-weight: 700;" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', false)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          <span>Inscrever-se nesta Oficina</span>
+        <button type="button" class="btn btn-primary btn-app-action" onclick="inscreverEmOficinaParticipante(${of.id}, '${escapeHtmlOficina(of.nome)}', false)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          <span>Selecionar oficina</span>
         </button>
       `;
     }
 
     return `
-      <div class="oficina-user-card ${isInscrito ? 'inscrito' : ''} ${isEsgotada ? 'esgotada' : ''}">
+      <div class="oficina-app-card ${cardStateClass}">
         <div>
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.6rem;">
-            <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted);">${escapeHtmlOficina(of.evento_titulo)}</span>
+          <div class="oficina-app-header">
+            <span class="oficina-event-tag">${escapeHtmlOficina(of.evento_titulo)}</span>
             ${statusBadgeHtml}
           </div>
-          <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 0.35rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;" onclick="abrirModalOficina(${of.id})">
-            <span>${escapeHtmlOficina(of.nome)}</span>
-            <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600; text-decoration: underline; white-space: nowrap;">Ver detalhes</span>
-          </h3>
+
+          <div class="oficina-app-title-row" style="margin-top: 0.45rem;">
+            <div class="oficina-app-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h3 class="oficina-app-name" onclick="abrirModalOficina(${of.id})">
+              ${escapeHtmlOficina(of.nome)}
+            </h3>
+          </div>
+
+          ${of.ministrante ? `
+            <div class="oficina-app-instructor" style="margin-top: 0.35rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Ministrante: <strong>${escapeHtmlOficina(of.ministrante)}</strong></span>
+            </div>
+          ` : ''}
+
           ${of.descricao ? `
-            <div style="margin-bottom: 0.65rem;">
-              <p class="oficina-desc-clamp">${escapeHtmlOficina(of.descricao)}</p>
-              <button type="button" class="btn-ler-mais-oficina" onclick="abrirModalOficina(${of.id})" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 0.8rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;">
-                <span>Ler mais</span>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <div class="oficina-app-desc-box">
+              <p class="oficina-app-desc">${escapeHtmlOficina(of.descricao)}</p>
+              <button type="button" class="btn-ver-detalhes-link" onclick="abrirModalOficina(${of.id})">
+                <span>Ver detalhes</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             </div>
           ` : ''}
 
-          <div style="display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.85rem;">
-            ${of.ministrante ? `
-              <span class="oficina-meta-pill">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>${escapeHtmlOficina(of.ministrante)}</span>
-              </span>
-            ` : ''}
+          <div class="oficina-app-pills" style="margin-top: 0.55rem;">
             ${of.horario ? `
-              <span class="oficina-meta-pill">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="oficina-compact-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span>${escapeHtmlOficina(of.horario)}</span>
               </span>
             ` : ''}
             ${of.local ? `
-              <span class="oficina-meta-pill">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="oficina-compact-pill">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>${escapeHtmlOficina(of.local)}</span>
               </span>
             ` : ''}
@@ -1446,16 +1472,18 @@ function renderizarOficinasParticipante() {
         </div>
 
         <div>
-          <div class="oficina-vagas-box" style="margin-bottom: 0.9rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums;">
-              <span style="color: var(--text-muted);">Ocupação: <strong style="color: var(--text-main);">${ocup} / ${cap} vagas</strong></span>
-              <span style="color: ${isEsgotada ? '#DC2626' : '#059669'};">${disp} livres (${100 - pct}%)</span>
+          <div class="oficina-app-vagas-box" style="margin-bottom: 0.65rem;">
+            <div class="oficina-app-vagas-info">
+              <span>Ocupação: <strong>${ocup} / ${cap} vagas</strong></span>
+              <span class="${isEsgotada ? 'vagas-esgotada' : (pct >= 75 ? 'vagas-atencao' : 'vagas-ok')}">${disp} livres (${100 - pct}%)</span>
             </div>
-            <div class="oficina-vagas-bar-track">
-              <div class="oficina-vagas-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
+            <div class="oficina-app-bar-track">
+              <div class="oficina-app-bar-fill" style="width: ${pct}%; background: ${barColor};"></div>
             </div>
           </div>
-          ${actionBtnHtml}
+          <div class="oficina-app-actions">
+            ${actionBtnHtml}
+          </div>
         </div>
       </div>
     `;

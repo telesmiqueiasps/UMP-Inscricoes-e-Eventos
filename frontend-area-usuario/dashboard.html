@@ -5,132 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Área do Participante - UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <link rel="stylesheet" href="css/style.css?v=2.4">
   <style>
-    .oficinas-grid-user {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.15rem;
-      width: 100%;
+    :root {
+      --primary: #0756C9;
+      --primary-hover: #0645A0;
+      --primary-light: #EAF2FF;
+      --navy: #0B1F3B;
+      --light-bg: #F5F7FA;
+      --card-bg: #FFFFFF;
+      --text-main: #0B1F3B;
+      --text-muted: #64748B;
+      --border-color: #E2E8F0;
     }
-    .oficina-user-card {
-      background: #FFFFFF;
-      border: 1.5px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 0.85rem;
-      box-shadow: var(--shadow-sm);
-      transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .oficina-user-card:hover {
-      border-color: #CBD5E1;
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
-    .oficina-user-card.inscrito {
-      border: 2px solid #059669;
-      background: linear-gradient(180deg, #ECFDF5 0%, #FFFFFF 45%);
-    }
-    .oficina-user-card.esgotada:not(.inscrito) {
-      opacity: 0.78;
-      background: #F8FAFC;
-    }
-    .oficina-desc-clamp {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.45;
-      margin-bottom: 0.25rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .btn-ler-mais-oficina {
-      background: none;
-      border: none;
-      padding: 0;
-      color: var(--primary);
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      margin-bottom: 0.55rem;
-      transition: all 0.15s ease;
-    }
-    .btn-ler-mais-oficina:hover {
-      color: var(--primary-hover);
-      text-decoration: underline;
-    }
-    .oficina-meta-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 0.74rem;
-      color: #334155;
-      background: #F1F5F9;
-      border: 1px solid #E2E8F0;
-      padding: 0.22rem 0.55rem;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-    .oficina-vagas-box {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: var(--radius-md);
-      padding: 0.6rem 0.8rem;
-    }
-    .oficina-vagas-bar-track {
-      width: 100%;
-      height: 6px;
-      background: #E2E8F0;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-top: 0.4rem;
-    }
-    .oficina-vagas-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.35s ease;
-    }
-    .minha-oficina-banner {
-      background: linear-gradient(135deg, #064E3B 0%, #047857 100%);
-      color: #FFFFFF;
-      border-radius: var(--radius-lg);
-      padding: 1.15rem 1.35rem;
-      margin-bottom: 1.25rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.85rem;
-      box-shadow: 0 8px 20px -4px rgba(4, 120, 87, 0.25);
-    }
-    @media (max-width: 640px) {
-      .oficinas-grid-user {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.75rem;
-      }
-      .oficina-user-card {
-        padding: 0.85rem 0.95rem;
-        gap: 0.65rem;
-        border-radius: var(--radius-md);
-      }
-      .minha-oficina-banner {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 0.85rem 0.95rem;
-        margin-bottom: 0.85rem;
-        gap: 0.75rem;
-        border-radius: var(--radius-md);
-      }
+    body {
+      background-color: #F5F7FA;
     }
   </style>
 </head>
@@ -254,16 +143,16 @@
 
       <!-- Aba 3: Oficinas -->
       <div id="tab-oficinas" class="tab-content" style="display: none;">
-        <div class="card card-oficinas-header" style="margin-bottom: 1rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
-            <div>
-              <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 0.45rem;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <div class="card card-oficinas-header">
+          <div class="oficinas-header-content">
+            <div class="oficinas-header-titles">
+              <h2 class="oficinas-page-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                 <span>Oficinas do Evento</span>
               </h2>
-              <p class="card-desc" style="margin-bottom: 0; font-size: 0.82rem;">Escolha a oficina desejada. É permitido 1 oficina por participante.</p>
+              <p class="oficinas-page-desc">Cada participante pode selecionar apenas uma oficina.</p>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="carregarOficinasParticipante()" style="white-space: nowrap; height: 34px; padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            <button type="button" class="btn-refresh-oficinas" onclick="carregarOficinasParticipante()" title="Atualizar vagas disponíveis" aria-label="Atualizar vagas">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
               <span>Atualizar</span>
             </button>
@@ -404,6 +293,6 @@
   </div>
 
   <script src="js/api.js?v=2.2"></script>
-  <script src="js/dashboard.js?v=2.3"></script>
+  <script src="js/dashboard.js?v=2.4"></script>
 </body>
 </html>
