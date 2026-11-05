@@ -7,6 +7,7 @@ class OficinaCreate(BaseModel):
     titulo: str = Field(..., min_length=1, max_length=200)
     descricao: Optional[str] = None
     ministrante: Optional[str] = Field(None, max_length=160)
+    foto_ministrante: Optional[str] = None
     local: Optional[str] = Field(None, max_length=160)
     horario: Optional[str] = Field(None, max_length=120)
     capacidade: int = Field(30, ge=1, le=10000)
@@ -18,6 +19,7 @@ class OficinaUpdate(BaseModel):
     titulo: Optional[str] = Field(None, min_length=1, max_length=200)
     descricao: Optional[str] = None
     ministrante: Optional[str] = Field(None, max_length=160)
+    foto_ministrante: Optional[str] = None
     local: Optional[str] = Field(None, max_length=160)
     horario: Optional[str] = Field(None, max_length=120)
     capacidade: Optional[int] = Field(None, ge=1, le=10000)

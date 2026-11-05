@@ -1321,13 +1321,23 @@ function renderizarOficinasParticipante() {
         <h3 class="minha-oficina-title" onclick="abrirModalOficina(${minhaOficina.id})">
           ${escapeHtmlOficina(minhaOficina.nome)}
         </h3>
-        <div class="minha-oficina-metas">
-          ${minhaOficina.ministrante ? `
-            <div class="minha-meta-tag">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <span>${escapeHtmlOficina(minhaOficina.ministrante)}</span>
+
+        ${(minhaOficina.ministrante || minhaOficina.foto_ministrante) ? `
+          <div class="minha-oficina-ministrante-card">
+            <div class="minha-ministrante-avatar">
+              ${minhaOficina.foto_ministrante 
+                ? `<img src="${escapeHtmlOficina(minhaOficina.foto_ministrante)}" alt="${escapeHtmlOficina(minhaOficina.ministrante || 'Ministrante')}" loading="lazy">` 
+                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+              }
             </div>
-          ` : ''}
+            <div class="minha-ministrante-text">
+              <span class="minha-ministrante-label">Ministrante</span>
+              <strong class="minha-ministrante-name">${escapeHtmlOficina(minhaOficina.ministrante || 'A definir')}</strong>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="minha-oficina-metas" style="margin-top: 0.45rem;">
           ${minhaOficina.horario ? `
             <div class="minha-meta-tag">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1438,10 +1448,18 @@ function renderizarOficinasParticipante() {
             </h3>
           </div>
 
-          ${of.ministrante ? `
-            <div class="oficina-app-instructor" style="margin-top: 0.35rem;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              <span>Ministrante: <strong>${escapeHtmlOficina(of.ministrante)}</strong></span>
+          ${(of.ministrante || of.foto_ministrante) ? `
+            <div class="oficina-ministrante-card-user">
+              <div class="oficina-ministrante-avatar-user">
+                ${of.foto_ministrante 
+                  ? `<img src="${escapeHtmlOficina(of.foto_ministrante)}" alt="${escapeHtmlOficina(of.ministrante || 'Ministrante')}" loading="lazy">` 
+                  : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+                }
+              </div>
+              <div class="oficina-ministrante-text-user">
+                <span class="ministrante-tag-user">Ministrante</span>
+                <strong class="ministrante-nome-user">${escapeHtmlOficina(of.ministrante || 'A definir')}</strong>
+              </div>
             </div>
           ` : ''}
 
@@ -1570,16 +1588,30 @@ window.abrirModalOficina = function (oficinaId) {
     titulo.textContent = oficinaEncontrada.nome;
   }
 
+  const ministranteBox = document.getElementById('modal-oficina-ministrante-container');
+  if (ministranteBox) {
+    if (oficinaEncontrada.ministrante || oficinaEncontrada.foto_ministrante) {
+      ministranteBox.innerHTML = `
+        <div class="modal-ministrante-card">
+          <div class="modal-ministrante-avatar">
+            ${oficinaEncontrada.foto_ministrante 
+              ? `<img src="${escapeHtmlOficina(oficinaEncontrada.foto_ministrante)}" alt="${escapeHtmlOficina(oficinaEncontrada.ministrante || 'Ministrante')}" loading="lazy">` 
+              : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+            }
+          </div>
+          <div style="min-width: 0;">
+            <span class="modal-ministrante-tag">Ministrante / Preletor</span>
+            <strong class="modal-ministrante-name">${escapeHtmlOficina(oficinaEncontrada.ministrante || 'Não informado')}</strong>
+          </div>
+        </div>
+      `;
+    } else {
+      ministranteBox.innerHTML = '';
+    }
+  }
+
   if (pills) {
     let pillsHtml = '';
-    if (oficinaEncontrada.ministrante) {
-      pillsHtml += `
-        <span class="oficina-meta-pill">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>Ministrante: <strong>${escapeHtmlOficina(oficinaEncontrada.ministrante)}</strong></span>
-        </span>
-      `;
-    }
     if (oficinaEncontrada.horario) {
       pillsHtml += `
         <span class="oficina-meta-pill">

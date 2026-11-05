@@ -226,3 +226,41 @@ CREATE OR REPLACE TRIGGER update_inscricoes_diarias_updated_at BEFORE UPDATE ON 
 CREATE OR REPLACE TRIGGER update_igrejas_updated_at BEFORE UPDATE ON igrejas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_gincanas_updated_at BEFORE UPDATE ON gincanas FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- ====================================================================
+-- TABELAS DE OFICINAS
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS oficina_config (
+    id SERIAL PRIMARY KEY,
+    aba_participante_visivel BOOLEAN DEFAULT TRUE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS oficinas (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    titulo VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    ministrante VARCHAR(160),
+    foto_ministrante TEXT,
+    local VARCHAR(160),
+    horario VARCHAR(120),
+    capacidade INTEGER DEFAULT 30 NOT NULL,
+    ativa BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS oficina_inscricoes (
+    id SERIAL PRIMARY KEY,
+    oficina_id INTEGER NOT NULL REFERENCES oficinas(id) ON DELETE CASCADE,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_oficina_evento_usuario UNIQUE (evento_id, usuario_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_oficinas_evento ON oficinas(evento_id);
+CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_oficina ON oficina_inscricoes(oficina_id);
+CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_evento ON oficina_inscricoes(evento_id);
+CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_usuario ON oficina_inscricoes(usuario_id);
+

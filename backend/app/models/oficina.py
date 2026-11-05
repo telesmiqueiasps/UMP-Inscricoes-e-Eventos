@@ -20,6 +20,7 @@ class Oficina(Base):
     titulo = Column(String(200), nullable=False)
     descricao = Column(Text, nullable=True)
     ministrante = Column(String(160), nullable=True)
+    foto_ministrante = Column(Text, nullable=True)
     local = Column(String(160), nullable=True)
     horario = Column(String(120), nullable=True)
     capacidade = Column(Integer, default=30, nullable=False)

@@ -173,6 +173,7 @@ async def lifespan(app: FastAPI):
                         titulo VARCHAR(200) NOT NULL,
                         descricao TEXT,
                         ministrante VARCHAR(160),
+                        foto_ministrante TEXT,
                         local VARCHAR(160),
                         horario VARCHAR(120),
                         capacidade INTEGER DEFAULT 30 NOT NULL,
@@ -181,6 +182,7 @@ async def lifespan(app: FastAPI):
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                conn.execute(text("ALTER TABLE oficinas ADD COLUMN IF NOT EXISTS foto_ministrante TEXT;"))
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS oficina_inscricoes (
                         id SERIAL PRIMARY KEY,

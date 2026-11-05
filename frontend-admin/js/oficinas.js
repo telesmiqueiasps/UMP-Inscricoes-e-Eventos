@@ -214,8 +214,22 @@ window.renderizarCardsOficinasAdmin = function() {
 
           ${of.descricao ? `<p style="font-size: 0.84rem; color: var(--text-muted); margin: 0 0 0.5rem 0; line-height: 1.45;">${escapeHtml(of.descricao)}</p>` : ''}
 
-          <div class="oficina-meta-list">
-            ${of.ministrante ? `<div class="oficina-meta-item">${SVG_OFICINAS.usuario}<span><strong>Ministrante:</strong> ${escapeHtml(of.ministrante)}</span></div>` : ''}
+          ${(of.ministrante || of.foto_ministrante) ? `
+            <div class="oficina-admin-ministrante-card">
+              <div class="oficina-admin-ministrante-avatar">
+                ${of.foto_ministrante 
+                  ? `<img src="${escapeHtml(of.foto_ministrante)}" alt="${escapeHtml(of.ministrante || 'Ministrante')}" loading="lazy">` 
+                  : SVG_OFICINAS.usuario
+                }
+              </div>
+              <div class="oficina-admin-ministrante-info">
+                <span class="oficina-admin-ministrante-label">Ministrante</span>
+                <strong class="oficina-admin-ministrante-name">${escapeHtml(of.ministrante || 'Não informado')}</strong>
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="oficina-meta-list" style="margin-top: 0.55rem;">
             ${of.horario ? `<div class="oficina-meta-item">${SVG_OFICINAS.relogio}<span><strong>Horário:</strong> ${escapeHtml(of.horario)}</span></div>` : ''}
             ${of.local ? `<div class="oficina-meta-item">${SVG_OFICINAS.pin}<span><strong>Local:</strong> ${escapeHtml(of.local)}</span></div>` : ''}
           </div>
@@ -257,6 +271,86 @@ window.renderizarCardsOficinasAdmin = function() {
   }).join('');
 };
 
+window.uploadFotoMinistrante = async function(event) {
+  const file = event.target?.files?.[0];
+  if (!file) return;
+
+  const btnUpload = document.getElementById('btn-upload-foto-ministrante');
+  const originalBtnText = btnUpload ? btnUpload.innerHTML : '';
+  const hintEl = document.getElementById('oficina-foto-hint');
+
+  if (btnUpload) {
+    btnUpload.innerHTML = `<span>Enviando para o Supabase...</span>`;
+    btnUpload.style.pointerEvents = 'none';
+  }
+  if (hintEl) hintEl.textContent = 'Enviando imagem para o Supabase Storage...';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    let res;
+    try {
+      res = await API.request('/admin/oficinas/upload', {
+        method: 'POST',
+        body: formData
+      });
+    } catch (e) {
+      // Fallback para endpoint de upload geral caso necessário
+      res = await API.request('/admin/eventos/upload', {
+        method: 'POST',
+        body: formData
+      });
+    }
+
+    if (res?.url) {
+      document.getElementById('oficina-foto-ministrante').value = res.url;
+      const imgEl = document.getElementById('oficina-foto-img');
+      const svgEl = document.getElementById('oficina-foto-placeholder-svg');
+      const btnRemover = document.getElementById('btn-remover-foto-ministrante');
+
+      if (imgEl) {
+        imgEl.src = res.url;
+        imgEl.style.display = 'block';
+      }
+      if (svgEl) svgEl.style.display = 'none';
+      if (btnRemover) btnRemover.style.display = 'inline-block';
+      if (hintEl) hintEl.textContent = 'Foto enviada com sucesso para o Supabase Storage!';
+
+      showToast('Foto do ministrante enviada com sucesso!', 'success');
+    }
+  } catch (err) {
+    console.error('Erro no upload de foto:', err);
+    showToast(err.message || 'Erro ao enviar foto para o Supabase Storage.', 'error');
+    if (hintEl) hintEl.textContent = 'Erro no envio da foto. Tente novamente.';
+  } finally {
+    if (btnUpload) {
+      btnUpload.innerHTML = originalBtnText;
+      btnUpload.style.pointerEvents = 'auto';
+    }
+    event.target.value = '';
+  }
+};
+
+window.removerFotoMinistrante = function() {
+  const inputHidden = document.getElementById('oficina-foto-ministrante');
+  const imgEl = document.getElementById('oficina-foto-img');
+  const svgEl = document.getElementById('oficina-foto-placeholder-svg');
+  const btnRemover = document.getElementById('btn-remover-foto-ministrante');
+  const hintEl = document.getElementById('oficina-foto-hint');
+  const inputFile = document.getElementById('oficina-foto-input');
+
+  if (inputHidden) inputHidden.value = '';
+  if (inputFile) inputFile.value = '';
+  if (imgEl) {
+    imgEl.src = '';
+    imgEl.style.display = 'none';
+  }
+  if (svgEl) svgEl.style.display = 'block';
+  if (btnRemover) btnRemover.style.display = 'none';
+  if (hintEl) hintEl.textContent = 'Formatos: JPG, PNG, WEBP. Enviada para o Supabase Storage.';
+};
+
 window.abrirModalNovaOficina = function() {
   if (listaEventosAdmin.length === 0) {
     showToast('Cadastre um evento primeiro antes de criar oficinas.', 'warning');
@@ -268,6 +362,7 @@ window.abrirModalNovaOficina = function() {
   document.getElementById('modal-oficina-titulo').textContent = 'Nova Oficina do Evento';
   document.getElementById('oficina-capacidade').value = '30';
   document.getElementById('oficina-ativa').checked = true;
+  removerFotoMinistrante();
 
   const filtroEv = document.getElementById('oficinas-filtro-evento')?.value;
   const selEv = document.getElementById('oficina-evento-id');
@@ -297,6 +392,26 @@ window.abrirModalEditarOficina = function(oficinaId) {
   document.getElementById('oficina-descricao').value = of.descricao || '';
   document.getElementById('oficina-ativa').checked = Boolean(of.ativa);
 
+  // Configura visual da foto
+  const inputHidden = document.getElementById('oficina-foto-ministrante');
+  const imgEl = document.getElementById('oficina-foto-img');
+  const svgEl = document.getElementById('oficina-foto-placeholder-svg');
+  const btnRemover = document.getElementById('btn-remover-foto-ministrante');
+  const hintEl = document.getElementById('oficina-foto-hint');
+
+  if (of.foto_ministrante) {
+    if (inputHidden) inputHidden.value = of.foto_ministrante;
+    if (imgEl) {
+      imgEl.src = of.foto_ministrante;
+      imgEl.style.display = 'block';
+    }
+    if (svgEl) svgEl.style.display = 'none';
+    if (btnRemover) btnRemover.style.display = 'inline-block';
+    if (hintEl) hintEl.textContent = 'Foto cadastrada no Supabase Storage.';
+  } else {
+    removerFotoMinistrante();
+  }
+
   document.getElementById('modal-oficina-titulo').textContent = 'Editar Oficina';
   document.getElementById('modal-oficina').style.display = 'flex';
 };
@@ -319,6 +434,7 @@ window.salvarOficinaAdmin = async function(e) {
     evento_id: eventoId,
     titulo: document.getElementById('oficina-titulo').value.trim(),
     ministrante: document.getElementById('oficina-ministrante').value.trim() || null,
+    foto_ministrante: document.getElementById('oficina-foto-ministrante')?.value.trim() || null,
     capacidade: parseInt(document.getElementById('oficina-capacidade').value || '30', 10),
     horario: document.getElementById('oficina-horario').value.trim() || null,
     local: document.getElementById('oficina-local').value.trim() || null,

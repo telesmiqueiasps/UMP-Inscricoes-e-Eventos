@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import os
+import uuid
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import text
 from typing import Optional
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user, require_permissao
 from app.models.usuario import Usuario
@@ -32,6 +37,12 @@ def _garantir_tabelas_oficinas():
             bind=engine,
             tables=[OficinaConfig.__table__, Oficina.__table__, OficinaInscricao.__table__]
         )
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE oficinas ADD COLUMN IF NOT EXISTS foto_ministrante TEXT;"))
+                conn.commit()
+            except Exception:
+                pass
         _TABELAS_OFICINAS_VERIFICADAS = True
     except Exception:
         pass
@@ -117,6 +128,7 @@ def _serializar_oficina_admin(oficina: Oficina) -> dict:
         "nome": oficina.titulo,
         "descricao": oficina.descricao,
         "ministrante": oficina.ministrante,
+        "foto_ministrante": oficina.foto_ministrante,
         "local": oficina.local,
         "horario": oficina.horario,
         "capacidade": capacidade,
@@ -146,6 +158,7 @@ def _serializar_oficina_participante(oficina: Oficina, usuario_id: int) -> dict:
         "nome": oficina.titulo,
         "descricao": oficina.descricao,
         "ministrante": oficina.ministrante,
+        "foto_ministrante": oficina.foto_ministrante,
         "local": oficina.local,
         "horario": oficina.horario,
         "capacidade": capacidade,
@@ -248,6 +261,7 @@ def criar_oficina_admin(
         titulo=req.titulo.strip(),
         descricao=req.descricao.strip() if req.descricao else None,
         ministrante=req.ministrante.strip() if req.ministrante else None,
+        foto_ministrante=req.foto_ministrante.strip() if req.foto_ministrante else None,
         local=req.local.strip() if req.local else None,
         horario=req.horario.strip() if req.horario else None,
         capacidade=max(1, int(req.capacidade)),
@@ -346,6 +360,8 @@ def atualizar_oficina_admin(
         oficina.descricao = req.descricao.strip() if req.descricao else None
     if req.ministrante is not None:
         oficina.ministrante = req.ministrante.strip() if req.ministrante else None
+    if req.foto_ministrante is not None:
+        oficina.foto_ministrante = req.foto_ministrante.strip() if req.foto_ministrante else None
     if req.local is not None:
         oficina.local = req.local.strip() if req.local else None
     if req.horario is not None:
@@ -362,6 +378,58 @@ def atualizar_oficina_admin(
         "mensagem": "Oficina atualizada com sucesso!",
         "oficina": _serializar_oficina_admin(oficina)
     }
+
+
+@router.post("/admin/oficinas/upload")
+async def upload_foto_ministrante_oficina(
+    file: UploadFile = File(...),
+    admin: Usuario = Depends(require_permissao("oficinas"))
+):
+    """
+    Faz upload de foto para o ministrante da oficina diretamente no bucket Supabase configurado.
+    """
+    if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="Configuração do Supabase Storage ausente no arquivo .env (SUPABASE_URL e SUPABASE_KEY)."
+        )
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    allowed_exts = [".jpg", ".jpeg", ".png", ".webp", ".gif"]
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de arquivo inválido. Apenas imagens (.jpg, .jpeg, .png, .webp, .gif) são permitidas para a foto do ministrante."
+        )
+
+    file_content = await file.read()
+    if len(file_content) > 15 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="Arquivo muito grande. O limite máximo permitido para a foto do ministrante é de 15MB."
+        )
+
+    filename = f"ministrantes_{uuid.uuid4()}{ext}"
+    clean_url = settings.SUPABASE_URL.rstrip('/')
+    bucket = settings.SUPABASE_BUCKET or "eventos"
+    upload_url = f"{clean_url}/storage/v1/object/{bucket}/{filename}"
+
+    headers = {
+        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+        "Content-Type": file.content_type or "image/jpeg"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(upload_url, headers=headers, content=file_content)
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Erro ao enviar arquivo para o Supabase Storage: {response.text}"
+        )
+
+    public_url = f"{clean_url}/storage/v1/object/public/{bucket}/{filename}"
+    return {"url": public_url}
 
 
 @router.delete("/admin/oficinas/{oficina_id}")
