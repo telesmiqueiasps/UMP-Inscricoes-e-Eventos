@@ -1327,7 +1327,7 @@ function renderizarOficinasParticipante() {
             <div class="minha-ministrante-avatar">
               ${minhaOficina.foto_ministrante 
                 ? `<img src="${escapeHtmlOficina(minhaOficina.foto_ministrante)}" alt="${escapeHtmlOficina(minhaOficina.ministrante || 'Ministrante')}" loading="lazy">` 
-                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+                : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
               }
             </div>
             <div class="minha-ministrante-text">
@@ -1453,7 +1453,7 @@ function renderizarOficinasParticipante() {
               <div class="oficina-ministrante-avatar-user">
                 ${of.foto_ministrante 
                   ? `<img src="${escapeHtmlOficina(of.foto_ministrante)}" alt="${escapeHtmlOficina(of.ministrante || 'Ministrante')}" loading="lazy">` 
-                  : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+                  : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
                 }
               </div>
               <div class="oficina-ministrante-text-user">
@@ -1596,7 +1596,7 @@ window.abrirModalOficina = function (oficinaId) {
           <div class="modal-ministrante-avatar">
             ${oficinaEncontrada.foto_ministrante 
               ? `<img src="${escapeHtmlOficina(oficinaEncontrada.foto_ministrante)}" alt="${escapeHtmlOficina(oficinaEncontrada.ministrante || 'Ministrante')}" loading="lazy">` 
-              : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+              : `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
             }
           </div>
           <div style="min-width: 0;">

@@ -20,10 +20,15 @@ class OficinaUpdate(BaseModel):
     descricao: Optional[str] = None
     ministrante: Optional[str] = Field(None, max_length=160)
     foto_ministrante: Optional[str] = None
+    remover_foto: Optional[bool] = False
     local: Optional[str] = Field(None, max_length=160)
     horario: Optional[str] = Field(None, max_length=120)
     capacidade: Optional[int] = Field(None, ge=1, le=10000)
     ativa: Optional[bool] = None
+
+
+class DeleteFotoInput(BaseModel):
+    url: str
 
 
 class OficinaDisponibilidadeInput(BaseModel):

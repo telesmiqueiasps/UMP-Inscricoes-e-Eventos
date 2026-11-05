@@ -1412,133 +1412,21 @@ tr:last-child td {
 .oficina-ministrante-card-user {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-  border-radius: 10px;
-  padding: 0.45rem 0.65rem;
-  margin-top: 0.45rem;
-  margin-bottom: 0.25rem;
+  gap: 0.85rem;
+  background: #F1F6FD;
+  border: 1px solid #DCE7F6;
+  border-radius: 14px;
+  padding: 0.6rem 0.75rem;
+  margin-top: 0.55rem;
+  margin-bottom: 0.35rem;
+  box-shadow: 0 1px 3px rgba(7, 86, 201, 0.05);
 }
 
 .oficina-ministrante-avatar-user {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #EAF2FF;
-  color: #0756C9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1.5px solid #BFDBFE;
-}
-
-.oficina-ministrante-avatar-user img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.oficina-ministrante-text-user {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.ministrante-tag-user {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748B;
-  line-height: 1.2;
-}
-
-.ministrante-nome-user {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: #0B1F3B;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Ministrante dentro do card Minha Oficina (Navy) */
-.minha-oficina-ministrante-card {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  padding: 0.45rem 0.65rem;
-  margin-top: 0.25rem;
-}
-
-.minha-ministrante-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  color: #93C5FD;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-}
-
-.minha-ministrante-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.minha-ministrante-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.minha-ministrante-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #93C5FD;
-}
-
-.minha-ministrante-name {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: #FFFFFF;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Ministrante no Modal de Detalhes */
-.modal-ministrante-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
   border-radius: 12px;
-  padding: 0.65rem 0.85rem;
-  margin-bottom: 0.85rem;
-}
-
-.modal-ministrante-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
   background: #EAF2FF;
   color: #0756C9;
   display: flex;
@@ -1547,28 +1435,159 @@ tr:last-child td {
   overflow: hidden;
   flex-shrink: 0;
   border: 2px solid #BFDBFE;
+  box-shadow: 0 3px 8px rgba(7, 86, 201, 0.12);
+}
+
+.oficina-ministrante-avatar-user img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.oficina-ministrante-text-user {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.ministrante-tag-user {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0756C9;
+  line-height: 1.2;
+}
+
+.ministrante-nome-user {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0B1F3B;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Ministrante dentro do card Minha Oficina (Navy) */
+.minha-oficina-ministrante-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 0.6rem 0.8rem;
+  margin-top: 0.45rem;
+  backdrop-filter: blur(8px);
+}
+
+.minha-ministrante-avatar {
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #93C5FD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.minha-ministrante-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.minha-ministrante-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.minha-ministrante-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #93C5FD;
+}
+
+.minha-ministrante-name {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Ministrante no Modal de Detalhes */
+.modal-ministrante-card {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  background: #F1F6FD;
+  border: 1.5px solid #BFDBFE;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 3px 10px rgba(7, 86, 201, 0.07);
+}
+
+.modal-ministrante-avatar {
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #0756C9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #93C5FD;
+  box-shadow: 0 4px 14px rgba(7, 86, 201, 0.15);
 }
 
 .modal-ministrante-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .modal-ministrante-tag {
   display: block;
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #64748B;
-  margin-bottom: 0.1rem;
+  letter-spacing: 0.06em;
+  color: #0756C9;
+  margin-bottom: 0.15rem;
 }
 
 .modal-ministrante-name {
-  font-size: 0.95rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: #0B1F3B;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  line-height: 1.3;
+  line-height: 1.35;
 }

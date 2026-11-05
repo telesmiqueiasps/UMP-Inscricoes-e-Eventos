@@ -1,7 +1,7 @@
 import os
 import uuid
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import text
 from typing import Optional
@@ -19,7 +19,8 @@ from app.schemas.oficina import (
     OficinaUpdate,
     OficinaDisponibilidadeInput,
     OficinaConfigUpdate,
-    OficinaInscreverAdminInput
+    OficinaInscreverAdminInput,
+    DeleteFotoInput
 )
 
 router = APIRouter(tags=["Oficinas"])
@@ -46,6 +47,64 @@ def _garantir_tabelas_oficinas():
         _TABELAS_OFICINAS_VERIFICADAS = True
     except Exception:
         pass
+
+
+def deletar_foto_supabase(url: Optional[str]):
+    """
+    Remove arquivo do Supabase Storage bucket com base na URL pública fornecida.
+    Executa tentativa nos endpoints oficiais do Supabase Storage.
+    """
+    if not url or not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+        return
+    clean_url = settings.SUPABASE_URL.rstrip('/')
+    bucket = settings.SUPABASE_BUCKET or "eventos"
+    bucket_prefix = f"{clean_url}/storage/v1/object/public/{bucket}/"
+
+    if url.startswith(bucket_prefix):
+        filename = url[len(bucket_prefix):]
+    else:
+        alt_prefix = f"/storage/v1/object/public/{bucket}/"
+        if alt_prefix in url:
+            filename = url.split(alt_prefix)[-1]
+        else:
+            filename = url.split('/')[-1]
+
+    filename = filename.strip()
+    if not filename:
+        return
+
+    headers = {
+        "Authorization": f"Bearer {settings.SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    with httpx.Client(timeout=10.0) as client:
+        # 1. Supabase Storage batch prefixes (padrão oficial)
+        try:
+            res = client.request(
+                "DELETE",
+                f"{clean_url}/storage/v1/object/{bucket}",
+                headers=headers,
+                json={"prefixes": [filename]}
+            )
+            if res.status_code in (200, 204):
+                print(f"[Supabase Storage] Foto '{filename}' excluída com sucesso (batch).")
+                return
+        except Exception as e:
+            print(f"[Supabase Storage] Falha ao tentar deletar '{filename}' via batch: {e}")
+
+        # 2. Supabase Storage endpoint direto do objeto
+        try:
+            res = client.delete(
+                f"{clean_url}/storage/v1/object/{bucket}/{filename}",
+                headers={"Authorization": f"Bearer {settings.SUPABASE_KEY}"}
+            )
+            if res.status_code in (200, 204):
+                print(f"[Supabase Storage] Foto '{filename}' excluída com sucesso (direct).")
+            else:
+                print(f"[Supabase Storage] Resposta ao deletar '{filename}': {res.status_code} - {res.text}")
+        except Exception as e:
+            print(f"[Supabase Storage] Falha ao tentar deletar '{filename}' via endpoint direto: {e}")
 
 
 def _obter_config_oficina(db: Session) -> OficinaConfig:
@@ -324,6 +383,7 @@ def alternar_disponibilidade_oficina_admin(
 def atualizar_oficina_admin(
     oficina_id: int,
     req: OficinaUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("oficinas"))
 ):
@@ -354,17 +414,30 @@ def atualizar_oficina_admin(
             raise HTTPException(status_code=404, detail="Evento selecionado não encontrado.")
         oficina.evento_id = req.evento_id
 
+    fields_set = getattr(req, "model_fields_set", getattr(req, "__fields_set__", set()))
+
     if req.titulo is not None:
         oficina.titulo = req.titulo.strip()
-    if req.descricao is not None:
+    if "descricao" in fields_set:
         oficina.descricao = req.descricao.strip() if req.descricao else None
-    if req.ministrante is not None:
+    if "ministrante" in fields_set:
         oficina.ministrante = req.ministrante.strip() if req.ministrante else None
-    if req.foto_ministrante is not None:
-        oficina.foto_ministrante = req.foto_ministrante.strip() if req.foto_ministrante else None
-    if req.local is not None:
+
+    # Tratamento da foto do ministrante (atualização ou exclusão com remoção no Supabase)
+    deve_remover_foto = bool(req.remover_foto) or ("foto_ministrante" in fields_set and not req.foto_ministrante)
+    if deve_remover_foto:
+        if oficina.foto_ministrante:
+            background_tasks.add_task(deletar_foto_supabase, oficina.foto_ministrante)
+        oficina.foto_ministrante = None
+    elif "foto_ministrante" in fields_set and req.foto_ministrante is not None:
+        nova_foto = req.foto_ministrante.strip() if req.foto_ministrante else None
+        if oficina.foto_ministrante and oficina.foto_ministrante != nova_foto:
+            background_tasks.add_task(deletar_foto_supabase, oficina.foto_ministrante)
+        oficina.foto_ministrante = nova_foto
+
+    if "local" in fields_set:
         oficina.local = req.local.strip() if req.local else None
-    if req.horario is not None:
+    if "horario" in fields_set:
         oficina.horario = req.horario.strip() if req.horario else None
     if req.capacidade is not None:
         oficina.capacidade = max(1, int(req.capacidade))
@@ -378,6 +451,39 @@ def atualizar_oficina_admin(
         "mensagem": "Oficina atualizada com sucesso!",
         "oficina": _serializar_oficina_admin(oficina)
     }
+
+
+@router.delete("/admin/oficinas/{oficina_id}/foto")
+def remover_foto_ministrante_oficina(
+    oficina_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("oficinas"))
+):
+    _garantir_tabelas_oficinas()
+    oficina = db.query(Oficina).filter(Oficina.id == oficina_id).first()
+    if not oficina:
+        raise HTTPException(status_code=404, detail="Oficina não encontrada.")
+
+    if oficina.foto_ministrante:
+        foto_url = oficina.foto_ministrante
+        oficina.foto_ministrante = None
+        db.commit()
+        background_tasks.add_task(deletar_foto_supabase, foto_url)
+        return {"sucesso": True, "mensagem": "Foto do ministrante excluída do Supabase Storage com sucesso."}
+
+    return {"sucesso": True, "mensagem": "Esta oficina não possuía foto cadastrada."}
+
+
+@router.post("/admin/oficinas/delete-foto")
+def deletar_foto_storage_endpoint(
+    req: DeleteFotoInput,
+    background_tasks: BackgroundTasks,
+    admin: Usuario = Depends(require_permissao("oficinas"))
+):
+    if req.url:
+        background_tasks.add_task(deletar_foto_supabase, req.url)
+    return {"sucesso": True, "mensagem": "Exclusão da foto no Supabase Storage agendada."}
 
 
 @router.post("/admin/oficinas/upload")
@@ -435,6 +541,7 @@ async def upload_foto_ministrante_oficina(
 @router.delete("/admin/oficinas/{oficina_id}")
 def excluir_oficina_admin(
     oficina_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_permissao("oficinas"))
 ):
@@ -443,6 +550,9 @@ def excluir_oficina_admin(
     oficina = db.query(Oficina).filter(Oficina.id == oficina_id).first()
     if not oficina:
         raise HTTPException(status_code=404, detail="Oficina não encontrada.")
+
+    if oficina.foto_ministrante:
+        background_tasks.add_task(deletar_foto_supabase, oficina.foto_ministrante)
 
     db.delete(oficina)
     db.commit()

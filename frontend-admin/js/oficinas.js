@@ -219,7 +219,7 @@ window.renderizarCardsOficinasAdmin = function() {
               <div class="oficina-admin-ministrante-avatar">
                 ${of.foto_ministrante 
                   ? `<img src="${escapeHtml(of.foto_ministrante)}" alt="${escapeHtml(of.ministrante || 'Ministrante')}" loading="lazy">` 
-                  : SVG_OFICINAS.usuario
+                  : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
                 }
               </div>
               <div class="oficina-admin-ministrante-info">
@@ -332,22 +332,53 @@ window.uploadFotoMinistrante = async function(event) {
   }
 };
 
-window.removerFotoMinistrante = function() {
+window.removerFotoMinistrante = async function(isExplicitUserClick = false) {
   const inputHidden = document.getElementById('oficina-foto-ministrante');
-  const imgEl = document.getElementById('oficina-foto-img');
-  const svgEl = document.getElementById('oficina-foto-placeholder-svg');
-  const btnRemover = document.getElementById('btn-remover-foto-ministrante');
-  const hintEl = document.getElementById('oficina-foto-hint');
-  const inputFile = document.getElementById('oficina-foto-input');
+  const fotoAtual = inputHidden?.value?.trim() || '';
+  const oficinaId = document.getElementById('oficina-id')?.value;
+
+  if (isExplicitUserClick && fotoAtual) {
+    if (!confirm('Deseja realmente remover e excluir esta foto do ministrante? Ela será apagada do Supabase Storage.')) {
+      return;
+    }
+
+    // Se a oficina já estiver salva no banco, chama a exclusão direta no backend
+    if (oficinaId) {
+      try {
+        await API.request(`/admin/oficinas/${oficinaId}/foto`, { method: 'DELETE' });
+        showToast('Foto do ministrante excluída do Supabase Storage com sucesso!', 'success');
+        await carregarOficinasAdmin();
+      } catch (err) {
+        console.error('Erro ao excluir foto da oficina:', err);
+        showToast(err.message || 'Erro ao excluir foto da oficina.', 'error');
+      }
+    } else {
+      // Foto recém-enviada mas oficina ainda não salva
+      try {
+        await API.request('/admin/oficinas/delete-foto', {
+          method: 'POST',
+          body: JSON.stringify({ url: fotoAtual })
+        });
+        showToast('Foto removida do Supabase Storage.', 'success');
+      } catch (err) {
+        console.error('Erro ao deletar arquivo no Supabase Storage:', err);
+      }
+    }
+  }
 
   if (inputHidden) inputHidden.value = '';
+  const inputFile = document.getElementById('oficina-foto-input');
   if (inputFile) inputFile.value = '';
+  const imgEl = document.getElementById('oficina-foto-img');
   if (imgEl) {
     imgEl.src = '';
     imgEl.style.display = 'none';
   }
+  const svgEl = document.getElementById('oficina-foto-placeholder-svg');
   if (svgEl) svgEl.style.display = 'block';
+  const btnRemover = document.getElementById('btn-remover-foto-ministrante');
   if (btnRemover) btnRemover.style.display = 'none';
+  const hintEl = document.getElementById('oficina-foto-hint');
   if (hintEl) hintEl.textContent = 'Formatos: JPG, PNG, WEBP. Enviada para o Supabase Storage.';
 };
 
@@ -430,11 +461,13 @@ window.salvarOficinaAdmin = async function(e) {
     return;
   }
 
+  const fotoVal = document.getElementById('oficina-foto-ministrante')?.value?.trim() || null;
   const payload = {
     evento_id: eventoId,
     titulo: document.getElementById('oficina-titulo').value.trim(),
     ministrante: document.getElementById('oficina-ministrante').value.trim() || null,
-    foto_ministrante: document.getElementById('oficina-foto-ministrante')?.value.trim() || null,
+    foto_ministrante: fotoVal,
+    remover_foto: !fotoVal,
     capacidade: parseInt(document.getElementById('oficina-capacidade').value || '30', 10),
     horario: document.getElementById('oficina-horario').value.trim() || null,
     local: document.getElementById('oficina-local').value.trim() || null,
