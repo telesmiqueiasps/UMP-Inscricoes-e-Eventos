@@ -18,6 +18,36 @@ window.fecharMenuMobile = function () {
   if (backdrop) backdrop.classList.remove('active');
 };
 
+// Troca de Abas do Participante
+window.switchTab = function (tabId) {
+  if (typeof window.fecharMenuMobile === 'function') {
+    window.fecharMenuMobile();
+  }
+
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  const target = document.getElementById(tabId);
+  if (target) target.style.display = 'block';
+
+  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  if (tabId === 'tab-painel') {
+    const el = document.getElementById('menu-painel');
+    if (el) el.classList.add('active');
+  } else if (tabId === 'tab-eventos') {
+    const el = document.getElementById('menu-eventos');
+    if (el) el.classList.add('active');
+  } else if (tabId === 'tab-oficinas') {
+    const el = document.getElementById('menu-oficinas');
+    if (el) el.classList.add('active');
+    if (typeof window.carregarOficinasParticipante === 'function') {
+      window.carregarOficinasParticipante();
+    }
+  } else if (tabId === 'tab-senha') {
+    const el = document.getElementById('menu-senha');
+    if (el) el.classList.add('active');
+  }
+};
+
+
 let currentDashboardData = null;
 let activeEventKey = null; // Ex: "ins_12" ou "tr_5"
 
@@ -879,7 +909,6 @@ function renderAllInscricoes(inscricoes, triagens, pagamentos) {
   container.innerHTML = htmlTriagens + htmlInscricoes;
 }
 
-// [switchTab unificada abaixo]
 
 window.openEditModal = function () {
   if (!currentDashboardData || !currentDashboardData.usuario) return;
@@ -1051,7 +1080,6 @@ window.verificarStatusParcela = async function (parcelaId, orderNsu) {
 let currentOficinasData = null;
 let activeOficinaEventoId = null;
 
-// [switchTab unificada abaixo]
 
 function escapeHtmlOficina(str) {
   return String(str || '')
