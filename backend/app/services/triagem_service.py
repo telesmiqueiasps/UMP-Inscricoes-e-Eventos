@@ -10,7 +10,7 @@ from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.evento import Evento
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
-from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil
+from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil, obter_parcelas_triagem
 from app.services.email import enviar_email_confirmacao
 
 logger = logging.getLogger(__name__)
@@ -145,18 +145,8 @@ def converter_triagem_em_inscricao(
     from app.services.pix import gerar_qr_code_base64
 
     if is_parcelado:
-        dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
-        dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
-        
-        max_parc = calcular_max_parcelas(dt_primeira, dt_limite)
-        n_parc = min(max(triagem.num_parcelas or 1, 1), max(max_parc, 1))
-
-        parcelas_calc = gerar_parcelas(
-            valor_total=triagem.valor_total,
-            num_parcelas=n_parc,
-            data_primeira_parcela=dt_primeira,
-            data_limite_evento=dt_limite
-        )
+        parcelas_calc = obter_parcelas_triagem(triagem, evento)
+        n_parc = len(parcelas_calc)
 
         for p_item in parcelas_calc:
             num = p_item["numero"]

@@ -13,7 +13,7 @@ from app.models.inscricao_triagem import InscricaoTriagem
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.schemas.pagamento import PagamentoResponse, ParcelaResponse
-from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil
+from app.services.parcelamento import gerar_parcelas, calcular_max_parcelas, get_hoje_brasil, obter_parcelas_triagem
 from app.services.pix import gerar_qr_code_base64
 from app.services.infinitepay import infinitepay_service
 from app.services.pdf_generator import gerar_pdf_parcela
@@ -95,21 +95,8 @@ def processar_pagamento_triagem(
             receipt_url = result.get("checkout_url")
 
     elif forma_pag == "PARCELADO":
-        dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
-        if dt_primeira < get_hoje_brasil():
-            dt_primeira = get_hoje_brasil()
-
-        dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
-
-        max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
-        n_parcelas = min(max(triagem.num_parcelas or 1, 1), max(max_permitido, 1))
-
-        parcelas_calc = gerar_parcelas(
-            valor_total=triagem.valor_total,
-            num_parcelas=n_parcelas,
-            data_primeira_parcela=dt_primeira,
-            data_limite_evento=dt_limite
-        )
+        parcelas_calc = obter_parcelas_triagem(triagem, evento)
+        n_parcelas = len(parcelas_calc)
 
         for item in parcelas_calc:
             order_nsu_parc = f"TRIAGEM-{triagem.id}-PARC-{item['numero']}"
@@ -463,20 +450,8 @@ def baixar_pdf_parcela_triagem(
         db.commit()
         db.refresh(triagem)
 
-    dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
-    if dt_primeira < get_hoje_brasil():
-        dt_primeira = get_hoje_brasil()
-
-    dt_limite = evento.data_inicio.date() if evento.data_inicio else dt_primeira
-    max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
-    n_parcelas = min(max(triagem.num_parcelas or 1, 1), max(max_permitido, 1))
-
-    parcelas_calc = gerar_parcelas(
-        valor_total=triagem.valor_total,
-        num_parcelas=n_parcelas,
-        data_primeira_parcela=dt_primeira,
-        data_limite_evento=dt_limite
-    )
+    parcelas_calc = obter_parcelas_triagem(triagem, evento)
+    n_parcelas = len(parcelas_calc)
 
     num_p = min(max(numero_parcela, 1), n_parcelas)
     item_p = parcelas_calc[num_p - 1]

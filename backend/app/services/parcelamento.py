@@ -104,3 +104,42 @@ def gerar_parcelas(
         })
 
     return parcelas
+
+
+def obter_parcelas_triagem(triagem: Any, evento: Any = None) -> List[Dict[str, Any]]:
+    """
+    Retorna a lista de parcelas para uma triagem.
+    Se a triagem possuir 'parcelas_personalizadas' configuradas em dados_extras,
+    respeita exatamente os vencimentos e valores personalizados definidos.
+    Caso contrário, calcula dinamicamente com base no vencimento inicial e data do evento.
+    """
+    if triagem.dados_extras and isinstance(triagem.dados_extras, dict):
+        custom_parcs = triagem.dados_extras.get("parcelas_personalizadas")
+        if custom_parcs and isinstance(custom_parcs, list) and len(custom_parcs) > 0:
+            res = []
+            for item in custom_parcs:
+                venc = item.get("vencimento")
+                if isinstance(venc, str):
+                    venc = date.fromisoformat(venc)
+                res.append({
+                    "numero": int(item.get("numero", 1)),
+                    "vencimento": venc,
+                    "valor": Decimal(str(item.get("valor", "0.00"))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+                    "status": item.get("status", "PENDENTE")
+                })
+            return res
+
+    dt_primeira = triagem.data_primeira_parcela or get_hoje_brasil()
+    if dt_primeira < get_hoje_brasil():
+        dt_primeira = get_hoje_brasil()
+
+    dt_limite = evento.data_inicio.date() if (evento and evento.data_inicio) else dt_primeira
+    max_permitido = calcular_max_parcelas(dt_primeira, dt_limite)
+    n_parcelas = min(max(triagem.num_parcelas or 1, 1), max(max_permitido, 1))
+
+    return gerar_parcelas(
+        valor_total=triagem.valor_total,
+        num_parcelas=n_parcelas,
+        data_primeira_parcela=dt_primeira,
+        data_limite_evento=dt_limite
+    )
