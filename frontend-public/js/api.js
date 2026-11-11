@@ -106,3 +106,51 @@ function showToast(message, type = 'info') {
     toast.remove();
   }, 4000);
 }
+
+/**
+ * Extrai os valores mínimo e máximo configurados para diárias de um evento.
+ * Retorna { min, max, minFmt, maxFmt } ou null se não houver valores configurados.
+ */
+function obterResumoValoresDiarias(ev) {
+  if (!ev || !ev.diarias_habilitadas) return null;
+  try {
+    const cfg = typeof ev.config_diarias === 'string' ? JSON.parse(ev.config_diarias) : ev.config_diarias;
+    if (!cfg) return null;
+
+    const valores = [];
+    const padrao = parseFloat(cfg.valor_padrao);
+    const temPadrao = !isNaN(padrao) && padrao > 0;
+
+    if (Array.isArray(cfg.dias)) {
+      cfg.dias.forEach((d) => {
+        if (d && d.ativo !== false && d.disponivel !== false) {
+          const v = parseFloat(d.valor);
+          if (!isNaN(v) && v >= 0) {
+            valores.push(v);
+          } else if (temPadrao) {
+            valores.push(padrao);
+          }
+        }
+      });
+    }
+
+    if (valores.length === 0 && temPadrao) {
+      valores.push(padrao);
+    }
+
+    if (valores.length === 0) return null;
+
+    const min = Math.min(...valores);
+    const max = Math.max(...valores);
+    const fmt = (val) => val === 0 ? 'GRATUITO' : val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    return {
+      min,
+      max,
+      minFmt: fmt(min),
+      maxFmt: fmt(max)
+    };
+  } catch (e) {
+    return null;
+  }
+}

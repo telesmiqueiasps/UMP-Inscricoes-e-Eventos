@@ -70,14 +70,29 @@ function createEventCard(ev, index = 0) {
   const dataFim = parseDiaMes(ev.data_fim) || (ev.data_fim ? new Date(ev.data_fim).toLocaleDateString('pt-BR') : '');
   const dataFormatada = (dataInicio === dataFim || !dataFim) ? dataInicio : `${dataInicio} a ${dataFim}`;
 
-  // Preço formatado
-  const numValor = parseFloat(ev.valor || 0);
-  const valorFmt = numValor === 0 ? 'GRATUITO' : numValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
   // Status dinâmico
   const isSoldOut = ev.max_participantes && ev.vagas_restantes !== null && ev.vagas_restantes <= 0;
   const isAtivo = ev.ativo !== false;
   const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
+
+  // Preço formatado (exibe valores das diárias se inscrições encerradas e diárias habilitadas)
+  const numValor = parseFloat(ev.valor || 0);
+  const valorFmt = numValor === 0 ? 'GRATUITO' : numValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  let priceHTML = `<div class="event-card-price">${valorFmt}</div>`;
+  if (isInscricoesEncerradas && ev.diarias_habilitadas) {
+    const resumoDiaria = typeof obterResumoValoresDiarias === 'function' ? obterResumoValoresDiarias(ev) : null;
+    if (resumoDiaria) {
+      const prefixo = resumoDiaria.min < resumoDiaria.max ? 'Diárias a partir de' : 'Diária';
+      priceHTML = `
+        <div class="event-card-price" style="color: #7E22CE; line-height: 1.15;">
+          <span style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6B21A8; margin-bottom: 2px;">${prefixo}</span>
+          ${resumoDiaria.minFmt}
+        </div>
+      `;
+    } else {
+      priceHTML = `<div class="event-card-price" style="color: #7E22CE; font-size: 1.05rem;">Diárias disponíveis</div>`;
+    }
+  }
 
   let badgeHTML = '';
   if (!isAtivo) {
@@ -168,7 +183,7 @@ function createEventCard(ev, index = 0) {
         </div>
 
         <div class="event-card-footer">
-          <div class="event-card-price">${valorFmt}</div>
+          ${priceHTML}
           <a href="evento.html?id=${ev.id}" class="btn-card-action" aria-label="Ver detalhes de ${ev.titulo}">
             <span>Ver Evento</span>
             ${Icons.arrowRight}

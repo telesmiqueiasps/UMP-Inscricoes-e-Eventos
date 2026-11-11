@@ -101,16 +101,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('event-title').textContent = ev.titulo;
     document.getElementById('event-description').innerHTML = ev.descricao || 'Sem descrição detalhada disponível.';
 
-    // 2. Preço
-    const valor = parseFloat(ev.valor);
-    document.getElementById('event-price').textContent = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const isSoldOut = ev.max_participantes && ev.vagas_restantes === 0;
+    const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
+    const resumoDiaria = typeof obterResumoValoresDiarias === 'function' ? obterResumoValoresDiarias(ev) : null;
+
+    // 2. Preço (exibe valores das diárias quando inscrições integrais estiverem encerradas e diárias ativas)
+    const priceBox = document.querySelector('.price-box');
+    const priceLabelEl = priceBox ? priceBox.querySelector('.price-label') : null;
+    const priceValueEl = document.getElementById('event-price');
+
+    if (isInscricoesEncerradas && ev.diarias_habilitadas) {
+      if (priceBox) {
+        priceBox.style.background = '#FAF5FF';
+        priceBox.style.borderColor = '#E9D5FF';
+      }
+      if (priceValueEl) {
+        priceValueEl.style.color = '#7E22CE';
+      }
+      if (resumoDiaria) {
+        if (resumoDiaria.min < resumoDiaria.max) {
+          if (priceLabelEl) priceLabelEl.textContent = 'Valores das Diárias';
+          if (priceValueEl) {
+            priceValueEl.innerHTML = `<span style="display: block; font-size: 0.85rem; font-weight: 600; color: #6B21A8; margin-bottom: 2px;">A partir de</span>${resumoDiaria.minFmt} <span style="font-size: 0.95rem; font-weight: 600; color: #6B21A8;">a ${resumoDiaria.maxFmt} / dia</span>`;
+          }
+        } else {
+          if (priceLabelEl) priceLabelEl.textContent = 'Valor da Diária';
+          if (priceValueEl) {
+            priceValueEl.innerHTML = `${resumoDiaria.minFmt} <span style="font-size: 0.95rem; font-weight: 600; color: #6B21A8;">/ dia</span>`;
+          }
+        }
+      } else {
+        if (priceLabelEl) priceLabelEl.textContent = 'Participação por Diária';
+        if (priceValueEl) {
+          priceValueEl.innerHTML = `<span style="font-size: 1.25rem;">Consulte as diárias disponíveis</span>`;
+        }
+      }
+    } else {
+      const valor = parseFloat(ev.valor);
+      if (priceValueEl) {
+        priceValueEl.textContent = valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+    }
 
     // 3. Metadados
     document.getElementById('event-date').textContent = formatarIntervaloEvento(ev.data_inicio, ev.data_fim);
     document.getElementById('event-location').textContent = ev.local || 'A definir';
-
-    const isSoldOut = ev.max_participantes && ev.vagas_restantes === 0;
-    const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
     document.getElementById('event-vacancies').textContent = ev.max_participantes 
       ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} vagas restantes (limite: ${ev.max_participantes})`
       : 'Vagas ilimitadas';
@@ -157,21 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Diárias CTA
     if (ev.diarias_habilitadas && diariaCtaContainer) {
-      let valorDiariaMin = null;
-      try {
-        const cfg = typeof ev.config_diarias === 'string' ? JSON.parse(ev.config_diarias) : ev.config_diarias;
-        if (cfg) {
-          if (cfg.valor_padrao) valorDiariaMin = parseFloat(cfg.valor_padrao);
-          if (cfg.dias && Array.isArray(cfg.dias)) {
-            cfg.dias.forEach(d => {
-              if (d.disponivel !== false && d.valor) {
-                const v = parseFloat(d.valor);
-                if (valorDiariaMin === null || v < valorDiariaMin) valorDiariaMin = v;
-              }
-            });
-          }
-        }
-      } catch (e) {}
+      const valorDiariaMin = resumoDiaria ? resumoDiaria.min : null;
 
       diariaCtaContainer.style.display = 'block';
       diariaCtaContainer.innerHTML = `
