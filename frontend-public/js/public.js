@@ -77,10 +77,13 @@ function createEventCard(ev, index = 0) {
   // Status dinâmico
   const isSoldOut = ev.max_participantes && ev.vagas_restantes !== null && ev.vagas_restantes <= 0;
   const isAtivo = ev.ativo !== false;
+  const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
 
   let badgeHTML = '';
   if (!isAtivo) {
     badgeHTML = `<span class="badge-status badge-status-ended">ENCERRADO</span>`;
+  } else if (isInscricoesEncerradas) {
+    badgeHTML = `<span class="badge-status badge-status-closed">INSCRIÇÕES ENCERRADAS</span>`;
   } else if (isSoldOut) {
     badgeHTML = `<span class="badge-status badge-status-closed">VAGAS ESGOTADAS</span>`;
   } else {

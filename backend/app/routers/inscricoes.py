@@ -36,6 +36,12 @@ def criar_inscricao(
             detail="Evento não encontrado ou indisponível para inscrições."
         )
 
+    if evento.inscricoes_encerradas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="As inscrições regulares para este evento foram encerradas."
+        )
+
     # 2. Verificar duplicação de inscrição
     inscricao_existente = db.query(Inscricao).filter(
         Inscricao.usuario_id == current_user.id,
@@ -127,6 +133,12 @@ def criar_ou_atualizar_triagem(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Evento não encontrado ou indisponível."
+        )
+
+    if evento.inscricoes_encerradas:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="As inscrições regulares para este evento foram encerradas."
         )
 
     # 2. Verificar se já tem inscrição oficial confirmada/ativa

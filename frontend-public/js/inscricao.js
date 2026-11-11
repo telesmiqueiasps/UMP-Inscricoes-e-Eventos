@@ -51,6 +51,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     eventoAtual = await API.request(`/eventos/publico/${eventoId}`);
 
+    if (eventoAtual.inscricoes_encerradas) {
+      const diariaLink = eventoAtual.diarias_habilitadas
+        ? `<a href="diaria.html?evento_id=${eventoAtual.id}" class="btn btn-primary" style="display: inline-block; background: #7E22CE; border-color: #7E22CE;">Comprar Diária Avulsa &rarr;</a>`
+        : '';
+      eventSummary.innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #EF4444;">Inscrições Encerradas!</h2>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">As inscrições regulares para o evento <strong>${eventoAtual.titulo}</strong> já foram encerradas.</p>
+          ${eventoAtual.diarias_habilitadas ? '<p style="color: #6B21A8; margin-top: 0.5rem; font-weight: 600;">As inscrições por diária ainda estão disponíveis!</p>' : ''}
+          <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem;">
+            ${diariaLink}
+            <a href="index.html" class="btn btn-outline" style="display: inline-block;">Voltar para Página Inicial</a>
+          </div>
+        </div>
+      `;
+      if (step1) step1.style.display = 'none';
+      if (step2) step2.style.display = 'none';
+      if (step3) step3.style.display = 'none';
+      if (step4) step4.style.display = 'none';
+      return;
+    }
+
     const isSoldOut = eventoAtual.max_participantes && eventoAtual.vagas_restantes === 0;
     if (isSoldOut) {
       eventSummary.innerHTML = `
@@ -60,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <a href="index.html" class="btn btn-outline" style="margin-top: 1.5rem; display: inline-block;">Voltar para Página Inicial</a>
         </div>
       `;
+      if (step1) step1.style.display = 'none';
       return;
     }
 

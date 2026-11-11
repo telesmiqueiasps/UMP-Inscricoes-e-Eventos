@@ -14,6 +14,7 @@ class EventoBase(BaseModel):
     max_participantes: Optional[int] = None
     max_parcelas: int = 1
     ativo: bool = True
+    inscricoes_encerradas: bool = False
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
@@ -34,6 +35,7 @@ class EventoCreate(BaseModel):
     max_participantes: Optional[int] = None
     max_parcelas: int = 1
     ativo: bool = True
+    inscricoes_encerradas: bool = False
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None
@@ -54,6 +56,7 @@ class EventoUpdate(BaseModel):
     max_participantes: Optional[int] = None
     max_parcelas: Optional[int] = None
     ativo: Optional[bool] = None
+    inscricoes_encerradas: Optional[bool] = None
     link_pagamento_cartao: Optional[str] = None
     link_pagamento_pix: Optional[str] = None
     campos_formulario: Optional[str] = None

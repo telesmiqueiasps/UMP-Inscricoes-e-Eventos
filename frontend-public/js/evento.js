@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('event-location').textContent = ev.local || 'A definir';
 
     const isSoldOut = ev.max_participantes && ev.vagas_restantes === 0;
+    const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
     document.getElementById('event-vacancies').textContent = ev.max_participantes 
       ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} vagas restantes (limite: ${ev.max_participantes})`
       : 'Vagas ilimitadas';
@@ -119,7 +120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ctaContainer = document.getElementById('event-cta-container');
     const diariaCtaContainer = document.getElementById('event-diaria-cta-container');
 
-    if (isSoldOut) {
+    if (isInscricoesEncerradas) {
+      if (badgeContainer) {
+        badgeContainer.innerHTML = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Inscrições Encerradas</span>`;
+      }
+      if (ctaContainer) {
+        ctaContainer.innerHTML = `
+          <button class="btn btn-outline" style="width: 100%; border-color: #EF4444; color: #EF4444; cursor: not-allowed; font-size: 1.05rem; padding: 0.9rem;" disabled>
+            Inscrições Integrais Encerradas
+          </button>
+        `;
+      }
+    } else if (isSoldOut) {
       if (badgeContainer) {
         badgeContainer.innerHTML = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Vagas Esgotadas</span>`;
       }

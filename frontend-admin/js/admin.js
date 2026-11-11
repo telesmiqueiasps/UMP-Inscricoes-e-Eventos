@@ -146,9 +146,13 @@ async function loadEventosTable() {
           <!-- Imagem de Banner do Evento -->
           <div style="height: 160px; background: #EFF6FF; position: relative; overflow:hidden;">
             <img src="${bannerUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';">
-            <span class="badge ${ev.ativo ? 'badge-success' : 'badge-danger'}" style="position: absolute; top: 10px; right: 10px; font-size: 0.75rem;">
-              ${ev.ativo ? 'Ativo' : 'Inativo'}
-            </span>
+            <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <span class="badge ${ev.ativo ? 'badge-success' : 'badge-danger'}" style="font-size: 0.75rem;">
+                ${ev.ativo ? 'Ativo' : 'Inativo'}
+              </span>
+              ${ev.ativo && ev.inscricoes_encerradas ? `<span class="badge badge-danger" style="font-size: 0.7rem; background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5;">Inscrições Encerradas</span>` : ''}
+              ${ev.ativo && ev.diarias_habilitadas ? `<span class="badge" style="font-size: 0.7rem; background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF;">Diárias Abertas</span>` : ''}
+            </div>
           </div>
           
           <!-- Detalhes do Evento -->

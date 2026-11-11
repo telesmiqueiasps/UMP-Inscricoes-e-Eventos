@@ -38,6 +38,7 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS campos_formulario TEXT;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fotos TEXT;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS diarias_habilitadas BOOLEAN DEFAULT FALSE;"))
+                conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS inscricoes_encerradas BOOLEAN DEFAULT FALSE NOT NULL;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS config_diarias JSONB;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS campos_formulario_diaria TEXT;"))
                 conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(10,2);"))

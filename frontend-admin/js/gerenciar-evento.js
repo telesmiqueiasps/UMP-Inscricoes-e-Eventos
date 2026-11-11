@@ -196,7 +196,11 @@ window.switchSubTab = function(tabId, btn) {
 // --- Carregar Detalhes do Evento ---
 async function loadEventoInfo() {
   try {
-    eventoAtual = await API.request(`/eventos/publico/${selectedEventoId}`);
+    try {
+      eventoAtual = await API.request(`/admin/eventos/${selectedEventoId}`);
+    } catch (_) {
+      eventoAtual = await API.request(`/eventos/publico/${selectedEventoId}`);
+    }
     allEventsList = [eventoAtual];
 
     // Preencher cabeçalho
@@ -219,6 +223,11 @@ async function loadEventoInfo() {
     document.getElementById('ev-valor').value = eventoAtual.valor;
     document.getElementById('ev-max-part').value = eventoAtual.max_participantes || '';
     document.getElementById('ev-ativo').checked = eventoAtual.ativo;
+    const cbEncerradas = document.getElementById('ev-inscricoes-encerradas');
+    if (cbEncerradas) {
+      cbEncerradas.checked = Boolean(eventoAtual.inscricoes_encerradas);
+    }
+    atualizarBadgeStatusEdicao();
     document.getElementById('ev-whatsapp-link').value = eventoAtual.whatsapp_grupo_link || '';
 
     document.querySelectorAll('.ev-form-field').forEach(cb => {
@@ -2058,6 +2067,40 @@ window.imprimirPagamentos = function() {
   printWindow.document.close();
 };
 
+// --- Atualizar Badges de Status do Evento na Aba Editar e Cabeçalho ---
+window.atualizarBadgeStatusEdicao = function() {
+  const ativo = document.getElementById('ev-ativo')?.checked !== false;
+  const encerradas = Boolean(document.getElementById('ev-inscricoes-encerradas')?.checked);
+  const diariasHabilitadas = Boolean(eventoAtual?.diarias_habilitadas);
+
+  const badgeIconLock = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+  const badgeIconCheck = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const badgeIconCalendar = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; vertical-align: -2px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+
+  let statusBadgeHTML = '';
+  if (!ativo) {
+    statusBadgeHTML = `<span class="badge badge-danger" style="display: inline-flex; align-items: center; font-size: 0.8rem; padding: 0.4rem 0.85rem;">${badgeIconLock}Evento Inativo</span>`;
+  } else if (encerradas) {
+    statusBadgeHTML = `<span class="badge" style="display: inline-flex; align-items: center; background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.85rem;">${badgeIconLock}Inscrições Encerradas</span>`;
+  } else {
+    statusBadgeHTML = `<span class="badge" style="display: inline-flex; align-items: center; background: #DEF7EC; color: #03543F; border: 1px solid #A7F3D0; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.85rem;">${badgeIconCheck}Inscrições Abertas</span>`;
+  }
+
+  const editStatusContainer = document.getElementById('edit-inscricoes-status-badge');
+  if (editStatusContainer) editStatusContainer.innerHTML = statusBadgeHTML;
+
+  const editPreview = document.getElementById('edit-inscricoes-badge-preview');
+  if (editPreview) editPreview.innerHTML = statusBadgeHTML;
+
+  const headerBadges = document.getElementById('event-detail-badges');
+  if (headerBadges) {
+    const diariaBadge = diariasHabilitadas
+      ? `<span class="badge" style="display: inline-flex; align-items: center; background: #FAF5FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.8rem; font-weight: 700; padding: 0.4rem 0.85rem;">${badgeIconCalendar}Diárias Abertas</span>`
+      : '';
+    headerBadges.innerHTML = `${statusBadgeHTML}${diariaBadge}`;
+  }
+};
+
 // --- Salvar Alterações do Evento (Tab 3) ---
 window.salvarEvento = async function(e) {
   e.preventDefault();
@@ -2079,6 +2122,7 @@ window.salvarEvento = async function(e) {
     valor: parseFloat(document.getElementById('ev-valor').value),
     max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
     ativo: document.getElementById('ev-ativo').checked,
+    inscricoes_encerradas: Boolean(document.getElementById('ev-inscricoes-encerradas')?.checked),
     campos_formulario: fieldsSelected || null,
     fotos: fotosUrls || null,
     whatsapp_grupo_link: document.getElementById('ev-whatsapp-link').value.trim() || null
