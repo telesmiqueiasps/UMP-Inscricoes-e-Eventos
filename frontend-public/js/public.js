@@ -94,24 +94,28 @@ function createEventCard(ev, index = 0) {
     }
   }
 
+  const calendarSvg12 = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+
   let badgeHTML = '';
+  let diariaBadgeHTML = '';
+
   if (!isAtivo) {
     badgeHTML = `<span class="badge-status badge-status-ended">ENCERRADO</span>`;
+  } else if (isInscricoesEncerradas && ev.diarias_habilitadas) {
+    badgeHTML = `<span class="badge-status" style="background-color: #FAF5FF; color: #7E22CE; border: 1px solid #D8B4FE;">${calendarSvg12}DIÁRIAS ABERTAS</span>`;
   } else if (isInscricoesEncerradas) {
     badgeHTML = `<span class="badge-status badge-status-closed">INSCRIÇÕES ENCERRADAS</span>`;
   } else if (isSoldOut) {
     badgeHTML = `<span class="badge-status badge-status-closed">VAGAS ESGOTADAS</span>`;
+    if (ev.diarias_habilitadas) {
+      diariaBadgeHTML = `<span class="badge-diaria-tag" title="Inscrições por diária disponíveis neste evento">${calendarSvg12}Diárias disponíveis</span>`;
+    }
   } else {
     badgeHTML = `<span class="badge-status badge-status-open">INSCRIÇÕES ABERTAS</span>`;
+    if (ev.diarias_habilitadas) {
+      diariaBadgeHTML = `<span class="badge-diaria-tag" title="Inscrições por diária disponíveis neste evento">${calendarSvg12}Diárias disponíveis</span>`;
+    }
   }
-
-  // Tag discreta de diárias disponíveis
-  const diariaBadgeHTML = ev.diarias_habilitadas ? `
-    <span class="badge-diaria-tag" title="Inscrições por diária disponíveis neste evento">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Diárias disponíveis
-    </span>
-  ` : '';
 
   // Vagas
   let vagasTexto = 'Ilimitadas';

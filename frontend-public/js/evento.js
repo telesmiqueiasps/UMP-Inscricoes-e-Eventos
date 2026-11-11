@@ -155,7 +155,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ctaContainer = document.getElementById('event-cta-container');
     const diariaCtaContainer = document.getElementById('event-diaria-cta-container');
 
-    if (isInscricoesEncerradas) {
+    if (isInscricoesEncerradas && ev.diarias_habilitadas) {
+      if (badgeContainer) {
+        badgeContainer.innerHTML = `<span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-size: 0.9rem; padding: 0.5rem 1rem; font-weight: 700;">Diárias Abertas</span>`;
+      }
+      if (ctaContainer) {
+        ctaContainer.style.display = 'none';
+      }
+    } else if (isInscricoesEncerradas) {
       if (badgeContainer) {
         badgeContainer.innerHTML = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Inscrições Encerradas</span>`;
       }
