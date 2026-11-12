@@ -4929,12 +4929,12 @@ window.abrirModalAcomodacao = function(acomodacaoId = null) {
     document.getElementById('ac-capacidade').value = 10;
   }
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 };
 
 window.fecharModalAcomodacao = function() {
   const modal = document.getElementById('modal-acomodacao');
-  if (modal) modal.classList.remove('active');
+  if (modal) modal.style.display = 'none';
 };
 
 window.salvarAcomodacao = async function(e) {
@@ -5001,12 +5001,13 @@ window.abrirModalAlocarAcomodacao = function(acomodacaoId) {
   if (filtroSt) filtroSt.value = '';
 
   renderListaAlocacaoModal();
-  document.getElementById('modal-alocar-acomodacao').classList.add('active');
+  const modalAlocar = document.getElementById('modal-alocar-acomodacao');
+  if (modalAlocar) modalAlocar.style.display = 'flex';
 };
 
 window.fecharModalAlocarAcomodacao = function() {
   const modal = document.getElementById('modal-alocar-acomodacao');
-  if (modal) modal.classList.remove('active');
+  if (modal) modal.style.display = 'none';
   alocarAcomodacaoAtual = null;
   alocarSelecionados.clear();
 };
