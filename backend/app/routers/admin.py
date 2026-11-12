@@ -1152,7 +1152,9 @@ def listar_participantes_checkin(
     admin: Usuario = Depends(require_permissao("secretaria")),
     db: Session = Depends(get_db)
 ):
-    search_pattern = f"%{search}%" if search else None
+    search_str = search if isinstance(search, str) else None
+    search_pattern = f"%{search_str}%" if search_str else None
+    filtro = tipo_filtro if isinstance(tipo_filtro, str) else None
 
     # Inscrições Regulares
     query_ins = db.query(Inscricao).join(Usuario).filter(Inscricao.evento_id == evento_id)
@@ -1179,7 +1181,7 @@ def listar_participantes_checkin(
     diarias = query_dia.all()
 
     resultado = []
-    if not tipo_filtro or tipo_filtro.upper() in ["TODOS", "REGULAR"]:
+    if not filtro or filtro.upper() in ["TODOS", "REGULAR"]:
         for ins in inscricoes:
             resultado.append({
                 "inscricao_id": ins.id,
@@ -1193,11 +1195,12 @@ def listar_participantes_checkin(
                 "checkin_realizado": ins.checkin_realizado,
                 "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None,
                 "dias_selecionados": [],
+                "acomodacao": ins.acomodacao.to_summary_dict() if ins.acomodacao else None,
                 "acomodacao_nome": ins.acomodacao.nome if ins.acomodacao else None,
                 "acomodacao_tipo": ins.acomodacao.tipo if ins.acomodacao else None
             })
 
-    if not tipo_filtro or tipo_filtro.upper() in ["TODOS", "DIARIA"]:
+    if not filtro or filtro.upper() in ["TODOS", "DIARIA"]:
         for d in diarias:
             dias = d.dias_selecionados or []
             resultado.append({
@@ -1213,6 +1216,7 @@ def listar_participantes_checkin(
                 "checkin_data": d.checkin_data.isoformat() if d.checkin_data else None,
                 "dias_selecionados": dias,
                 "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
+                "acomodacao": d.acomodacao.to_summary_dict() if d.acomodacao else None,
                 "acomodacao_nome": d.acomodacao.nome if d.acomodacao else None,
                 "acomodacao_tipo": d.acomodacao.tipo if d.acomodacao else None
             })

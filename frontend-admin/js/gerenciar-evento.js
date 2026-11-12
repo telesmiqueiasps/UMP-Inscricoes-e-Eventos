@@ -2828,23 +2828,33 @@ window.buscarParticipantesCheckin = async function() {
         `<span class="badge badge-success">Checked-in</span>` : 
         `<span class="badge badge-warning">Ausente</span>`;
 
+      const acNome = (ins.acomodacao && ins.acomodacao.nome) ? ins.acomodacao.nome : ins.acomodacao_nome;
+      const acTipo = (ins.acomodacao && ins.acomodacao.tipo) ? ins.acomodacao.tipo : ins.acomodacao_tipo;
+      const acomodacaoBadge = acNome
+        ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+             <span>${escAc(acNome)}${acTipo ? ' (' + escAc(acTipo) + ')' : ''}</span>
+           </span>`
+        : `<span class="badge" style="background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; font-size: 0.72rem;">Sem acomodação</span>`;
+
       const checkinBtnText = ins.checkin_realizado ? "Desfazer Check-in" : "Check-in Manual";
       const checkinBtnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
 
       return `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; gap: 0.5rem;">
-          <div>
-            <div style="display: flex; align-items: center; gap: 0.4rem;">
-              <span style="font-weight: 700; font-size: 0.9rem;">${ins.nome}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+          <div style="min-width: 0; flex: 1;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+              <span style="font-weight: 700; font-size: 0.9rem;">${escAc(ins.nome)}</span>
               ${tipoBadge}
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">CPF: ${ins.cpf || 'N/A'} | Email: ${ins.email}</div>
-            <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem;">
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">CPF: ${escAc(ins.cpf) || 'N/A'} | Email: ${escAc(ins.email)}</div>
+            <div style="display: flex; gap: 0.35rem; margin-top: 0.35rem; align-items: center; flex-wrap: wrap;">
               <span class="badge ${badgeClass}">${ins.status}</span>
               ${checkinBadge}
+              ${acomodacaoBadge}
             </div>
           </div>
-          <div>
+          <div style="flex-shrink: 0;">
             <button class="${checkinBtnClass}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')">
               ${checkinBtnText}
             </button>
