@@ -261,6 +261,7 @@ def obter_dashboard_usuario(
             "codigo_checkin": ins.codigo_checkin,
             "checkin_realizado": ins.checkin_realizado,
             "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None,
+            "acomodacao": ins.acomodacao.to_summary_dict() if ins.acomodacao else None,
             "created_at": ins.created_at.isoformat()
         }
         inscricoes_data.append(ins_dict)
@@ -290,6 +291,7 @@ def obter_dashboard_usuario(
             "codigo_checkin": dia.codigo_checkin,
             "checkin_realizado": dia.checkin_realizado,
             "checkin_data": dia.checkin_data.isoformat() if dia.checkin_data else None,
+            "acomodacao": dia.acomodacao.to_summary_dict() if dia.acomodacao else None,
             "receipt_url": dia.receipt_url,
             "created_at": dia.created_at.isoformat()
         }

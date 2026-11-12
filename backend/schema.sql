@@ -265,3 +265,25 @@ CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_oficina ON oficina_inscricoes(
 CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_evento ON oficina_inscricoes(evento_id);
 CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_usuario ON oficina_inscricoes(usuario_id);
 
+
+-- ==========================================
+-- 10. ACOMODAÇÕES E HOSPEDAGEM POR EVENTO
+-- ==========================================
+CREATE TABLE IF NOT EXISTS acomodacoes (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    nome VARCHAR(150) NOT NULL,
+    tipo VARCHAR(60) DEFAULT 'Quarto' NOT NULL,
+    capacidade INTEGER DEFAULT 0 NOT NULL,
+    genero_restrito VARCHAR(30),
+    descricao TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS ix_acomodacoes_evento_id ON acomodacoes(evento_id);
+
+ALTER TABLE inscricoes ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;
+ALTER TABLE inscricoes_diarias ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS ix_inscricoes_acomodacao_id ON inscricoes(acomodacao_id);
+CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_acomodacao_id ON inscricoes_diarias(acomodacao_id);

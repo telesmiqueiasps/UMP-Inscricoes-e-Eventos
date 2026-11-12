@@ -18,9 +18,11 @@ class Inscricao(Base):
     codigo_checkin = Column(String(100), unique=True, nullable=True)
     checkin_realizado = Column(Boolean, default=False, nullable=False)
     checkin_data = Column(DateTime, nullable=True)
+    acomodacao_id = Column(Integer, ForeignKey("acomodacoes.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     usuario = relationship("Usuario", back_populates="inscricoes")
     evento = relationship("Evento", back_populates="inscricoes")
+    acomodacao = relationship("Acomodacao", back_populates="inscricoes")
     pagamentos = relationship("Pagamento", back_populates="inscricao", cascade="all, delete-orphan")

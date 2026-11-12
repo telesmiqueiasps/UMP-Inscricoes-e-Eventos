@@ -20,7 +20,8 @@ from app.routers import (
     diarias,
     gincana,
     cantina,
-    oficinas
+    oficinas,
+    acomodacoes
 )
 
 
@@ -39,6 +40,22 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS fotos TEXT;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS diarias_habilitadas BOOLEAN DEFAULT FALSE;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS inscricoes_encerradas BOOLEAN DEFAULT FALSE NOT NULL;"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS acomodacoes (
+                        id SERIAL PRIMARY KEY,
+                        evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+                        nome VARCHAR(150) NOT NULL,
+                        tipo VARCHAR(60) DEFAULT 'Quarto' NOT NULL,
+                        capacidade INTEGER DEFAULT 10 NOT NULL,
+                        genero_restrito VARCHAR(30),
+                        descricao TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_acomodacoes_evento_id ON acomodacoes(evento_id);"))
+                conn.execute(text("ALTER TABLE inscricoes ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;"))
+                conn.execute(text("ALTER TABLE inscricoes_diarias ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS config_diarias JSONB;"))
                 conn.execute(text("ALTER TABLE eventos ADD COLUMN IF NOT EXISTS campos_formulario_diaria TEXT;"))
                 conn.execute(text("ALTER TABLE pagamentos ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(10,2);"))
@@ -301,6 +318,7 @@ app.include_router(diarias.router, prefix=settings.API_V1_STR)
 app.include_router(gincana.router, prefix=settings.API_V1_STR)
 app.include_router(cantina.router, prefix=settings.API_V1_STR)
 app.include_router(oficinas.router, prefix=settings.API_V1_STR)
+app.include_router(acomodacoes.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

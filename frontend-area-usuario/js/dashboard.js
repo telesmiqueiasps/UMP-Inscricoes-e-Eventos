@@ -247,6 +247,30 @@ function renderActiveItem(eventKey) {
 }
 
 // Renderizar dados de uma Diária Confirmada
+function renderAcomodacaoInfoLine(acomodacao) {
+  const acText = acomodacao && acomodacao.nome
+    ? `${escapeHtmlOficina(acomodacao.nome)}${acomodacao.tipo ? ' (' + escapeHtmlOficina(acomodacao.tipo) + ')' : ''}`
+    : 'A definir pela organização';
+  const acStyle = acomodacao && acomodacao.nome
+    ? 'color: #0F766E; font-weight: 700;'
+    : 'color: #64748B;';
+  const acDesc = acomodacao && acomodacao.descricao
+    ? `<div style="font-size: 0.75rem; color: #64748B; margin-top: 2px;">${escapeHtmlOficina(acomodacao.descricao)}</div>`
+    : '';
+
+  return `
+        <div class="event-info-line">
+          <div class="event-info-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+            <span>Acomodação:</span>
+          </div>
+          <div class="event-info-val" style="${acStyle}">
+            ${acText}
+            ${acDesc}
+          </div>
+        </div>`;
+}
+
 function renderActiveDiaria(diariaId) {
   const data = currentDashboardData;
   const dia = data.inscricoes ? data.inscricoes.find(item => item.id === diariaId && item.tipo_registro === 'DIARIA') : null;
@@ -299,6 +323,7 @@ function renderActiveDiaria(diariaId) {
           </div>
           <div class="event-info-val">${dia.forma_pagamento || 'InfinitePay (Pix ou Cartão)'}</div>
         </div>
+        ${renderAcomodacaoInfoLine(dia.acomodacao)}
       </div>
       ${qrButtonHTML}
     `;
@@ -467,6 +492,7 @@ function renderActiveRegistration(inscricaoId) {
           </div>
           <div class="event-info-val">${formatarFormaPagamento(ins.forma_pagamento, ins.capture_method)}</div>
         </div>
+        ${renderAcomodacaoInfoLine(ins.acomodacao)}
       </div>
       ${qrButtonHTML}
     `;

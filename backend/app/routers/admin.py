@@ -992,7 +992,8 @@ def obter_detalhes_checkin(
             "checkin_data": inscricao.checkin_data.isoformat() if inscricao.checkin_data else None,
             "codigo_checkin": inscricao.codigo_checkin,
             "valido_hoje": True,
-            "dias_selecionados": []
+            "dias_selecionados": [],
+            "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None
         }
 
     # 2. Tentar buscar em Inscricao Diaria
@@ -1027,7 +1028,8 @@ def obter_detalhes_checkin(
             "codigo_checkin": diaria.codigo_checkin,
             "valido_hoje": valido_hoje,
             "dias_selecionados": dias,
-            "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias)
+            "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
+            "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None
         }
 
     raise HTTPException(
@@ -1082,6 +1084,7 @@ def realizar_checkin(
             "tipo": "REGULAR",
             "status_inscricao": inscricao.status,
             "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+            "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
             "mensagem": "Check-in realizado com sucesso! (Inscrição Integral)"
         }
 
@@ -1123,6 +1126,7 @@ def realizar_checkin(
             "dias_selecionados": diaria.dias_selecionados,
             "status_inscricao": diaria.status,
             "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
+            "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
             "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
         }
 
@@ -1180,7 +1184,9 @@ def listar_participantes_checkin(
                 "codigo_checkin": ins.codigo_checkin,
                 "checkin_realizado": ins.checkin_realizado,
                 "checkin_data": ins.checkin_data.isoformat() if ins.checkin_data else None,
-                "dias_selecionados": []
+                "dias_selecionados": [],
+                "acomodacao_nome": ins.acomodacao.nome if ins.acomodacao else None,
+                "acomodacao_tipo": ins.acomodacao.tipo if ins.acomodacao else None
             })
 
     if not tipo_filtro or tipo_filtro.upper() in ["TODOS", "DIARIA"]:
@@ -1198,7 +1204,9 @@ def listar_participantes_checkin(
                 "checkin_realizado": d.checkin_realizado,
                 "checkin_data": d.checkin_data.isoformat() if d.checkin_data else None,
                 "dias_selecionados": dias,
-                "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias)
+                "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
+                "acomodacao_nome": d.acomodacao.nome if d.acomodacao else None,
+                "acomodacao_tipo": d.acomodacao.tipo if d.acomodacao else None
             })
 
     resultado.sort(key=lambda x: (x.get("nome") or "").lower())

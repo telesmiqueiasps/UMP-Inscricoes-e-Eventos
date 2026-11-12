@@ -39,6 +39,7 @@ class InscricaoDiaria(Base):
     codigo_checkin = Column(String(100), unique=True, nullable=True)
     checkin_realizado = Column(Boolean, default=False, nullable=False)
     checkin_data = Column(DateTime, nullable=True)
+    acomodacao_id = Column(Integer, ForeignKey("acomodacoes.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Dados da transação InfinitePay
     transaction_nsu = Column(String(100), nullable=True)
@@ -53,3 +54,4 @@ class InscricaoDiaria(Base):
 
     usuario = relationship("Usuario", back_populates="diarias")
     evento = relationship("Evento", back_populates="diarias")
+    acomodacao = relationship("Acomodacao", back_populates="diarias")

@@ -70,7 +70,7 @@ function aplicarRestricoesPerfilNoEvento(user) {
   });
 
   // Ocultar abas restritas no gerenciar-evento para perfil secretaria (deixar apenas check-in)
-  ['dashboard', 'inscricoes', 'diarias', 'pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
+  ['dashboard', 'inscricoes', 'diarias', 'acomodacao', 'pagamentos', 'editar', 'excluir'].forEach(abaRestrita => {
     const btnTab = document.getElementById(`tab-btn-${abaRestrita}`);
     const paneTab = document.getElementById(`pane-${abaRestrita}`);
     if (!isGlobal) {
@@ -190,6 +190,9 @@ window.switchSubTab = function(tabId, btn) {
   // Se ativou a aba do Dashboard, carregar e redimensionar gráficos
   if (tabId === 'pane-dashboard') {
     carregarDashboardEvento();
+  }
+  if (tabId === 'pane-acomodacao') {
+    carregarAcomodacoesEvento();
   }
 };
 
@@ -2517,7 +2520,7 @@ function renderTabelaPresenca() {
   const paginatedList = list.slice(start, end);
 
   if (paginatedList.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum participante correspondente encontrado.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum participante correspondente encontrado.</td></tr>`;
     renderPaginationControls('presenca-pagination-container', currentPagePresenca, totalItems, 'changePagePresenca');
     return;
   }
@@ -2544,6 +2547,10 @@ function renderTabelaPresenca() {
     const btnText = ins.checkin_realizado ? "Desfazer Check-in" : "Confirmar Check-in";
     const btnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
 
+    const acomodacaoCell = ins.acomodacao_nome
+      ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600;">${escAc(ins.acomodacao_nome)}</span>`
+      : `<span style="color: var(--text-muted); font-size: 0.78rem;">Não definida</span>`;
+
     return `
       <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
         <td style="padding: 0.75rem;">
@@ -2554,6 +2561,7 @@ function renderTabelaPresenca() {
           <span style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</span>
         </td>
         <td style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
+        <td style="padding: 0.75rem;">${acomodacaoCell}</td>
         <td style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
         <td style="padding: 0.75rem;">${checkinStatusHTML}</td>
         <td style="padding: 0.75rem; text-align: center;">
@@ -2652,6 +2660,25 @@ async function processarQrCodeEscaneado(codigo) {
       }
     }
     
+    const acTriagemContainer = document.getElementById('triagem-acomodacao-container');
+    if (acTriagemContainer) {
+      acTriagemContainer.style.display = 'flex';
+      acTriagemContainer.style.alignItems = 'center';
+      acTriagemContainer.style.gap = '0.5rem';
+      if (res.acomodacao_nome) {
+        acTriagemContainer.style.background = '#ECFDF5';
+        acTriagemContainer.style.border = '1px solid #A7F3D0';
+        acTriagemContainer.style.color = '#065F46';
+        const tipoInfo = res.acomodacao_tipo ? ` (${escAc(res.acomodacao_tipo)})` : '';
+        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: <strong>${escAc(res.acomodacao_nome)}</strong>${tipoInfo}</span>`;
+      } else {
+        acTriagemContainer.style.background = '#F8FAFC';
+        acTriagemContainer.style.border = '1px solid #E2E8F0';
+        acTriagemContainer.style.color = '#64748B';
+        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: Não definida pela organização</span>`;
+      }
+    }
+
     const badge = document.getElementById('triagem-status-badge');
     if (badge) {
       badge.textContent = res.status;
@@ -4657,3 +4684,488 @@ function renderizarTabelaAuditoriaIdade() {
   }).join('');
 }
 
+
+
+// ==========================================
+// MÓDULO DE ACOMODAÇÕES & HOSPEDAGEM
+// ==========================================
+let cacheAcomodacoesData = null;
+let alocarAcomodacaoAtual = null;
+let alocarSelecionados = new Set();
+
+function escAc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+window.carregarAcomodacoesEvento = async function() {
+  if (!selectedEventoId) return;
+  try {
+    const data = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes`);
+    cacheAcomodacoesData = data;
+
+    const resumo = data.resumo || {};
+    const setKpi = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val ?? 0;
+    };
+    setKpi('ac-kpi-total', resumo.total_acomodacoes);
+    setKpi('ac-kpi-capacidade', resumo.capacidade_total);
+    setKpi('ac-kpi-alocados', resumo.total_alocados);
+    setKpi('ac-kpi-sem', resumo.total_sem_acomodacao);
+
+    renderAcomodacoesUI();
+    renderSemAcomodacaoLista();
+  } catch (err) {
+    console.error('Erro ao carregar acomodações:', err);
+    const grid = document.getElementById('acomodacoes-cards-grid');
+    if (grid) {
+      grid.innerHTML = `<div class="card" style="padding: 2rem; text-align: center; color: #DC2626; grid-column: 1 / -1;">Erro ao carregar acomodações: ${escAc(err.message)}</div>`;
+    }
+  }
+};
+
+function renderAcomodacoesUI() {
+  const grid = document.getElementById('acomodacoes-cards-grid');
+  if (!grid || !cacheAcomodacoesData) return;
+
+  const acomodacoes = cacheAcomodacoesData.acomodacoes || [];
+  if (acomodacoes.length === 0) {
+    grid.innerHTML = `
+      <div class="card" style="padding: 2.5rem; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 0.75rem auto; display: block; opacity: 0.6;"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+        <p style="font-weight: 600; margin-bottom: 0.35rem;">Nenhuma acomodação cadastrada neste evento.</p>
+        <p style="font-size: 0.85rem; margin-bottom: 1rem;">Crie quartos, alojamentos ou chalés para organizar a hospedagem dos participantes.</p>
+        <button type="button" class="btn btn-primary" onclick="abrirModalAcomodacao()">Criar Primeira Acomodação</button>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = acomodacoes.map(ac => {
+    const cap = Number(ac.capacidade || 0);
+    const ocup = Number(ac.ocupados_count || 0);
+    const pct = cap > 0 ? Math.min(100, Math.round((ocup / cap) * 100)) : 0;
+    const lotado = cap > 0 && ocup >= cap;
+    const barColor = lotado ? '#EF4444' : (pct >= 80 ? '#F59E0B' : '#10B981');
+
+    let generoBadge = '';
+    if (ac.genero_restrito === 'MASCULINO') {
+      generoBadge = `<span class="badge" style="background: #EFF6FF; color: #1D4ED8;">Masculino</span>`;
+    } else if (ac.genero_restrito === 'FEMININO') {
+      generoBadge = `<span class="badge" style="background: #FDF2F8; color: #BE185D;">Feminino</span>`;
+    } else if (ac.genero_restrito === 'MISTO') {
+      generoBadge = `<span class="badge" style="background: #F0FDF4; color: #15803D;">Família / Misto</span>`;
+    }
+
+    const ocupantes = ac.ocupantes || [];
+    const ocupantesHtml = ocupantes.length === 0
+      ? `<div style="padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); background: #F8FAFC; border-radius: var(--radius-md);">Nenhum participante alocado.</div>`
+      : `<div style="max-height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+          ${ocupantes.map(oc => {
+            const tipoTag = oc.tipo === 'DIARIA'
+              ? `<span style="font-size: 0.68rem; background: #EDE9FE; color: #6D28D9; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Diária</span>`
+              : '';
+            const checkinTag = oc.checkin_realizado
+              ? `<span style="font-size: 0.68rem; background: #DCFCE7; color: #15803D; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Check-in</span>`
+              : '';
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-size: 0.82rem;">
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escAc(oc.nome)} ${tipoTag} ${checkinTag}</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escAc(oc.igreja || 'Sem igreja')} ${oc.genero ? '• ' + escAc(oc.genero) : ''}</div>
+                </div>
+                <button type="button" class="btn btn-outline" title="Remover da acomodação" onclick="desalocarParticipanteAcomodacao('${oc.tipo}', ${oc.registro_id}, '${escAc(oc.nome)}')" style="padding: 0.2rem 0.45rem; font-size: 0.75rem; color: #DC2626; border-color: #FECACA; flex-shrink: 0;">Remover</button>
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+
+    return `
+      <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+              <h3 style="font-size: 1.05rem; font-weight: 800; margin: 0;">${escAc(ac.nome)}</h3>
+              <span class="badge" style="background: #F1F5F9; color: #334155;">${escAc(ac.tipo || 'Quarto')}</span>
+              ${generoBadge}
+            </div>
+            ${ac.descricao ? `<p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">${escAc(ac.descricao)}</p>` : ''}
+          </div>
+          <div style="display: flex; gap: 0.35rem; flex-shrink: 0;">
+            <button type="button" class="btn btn-outline" onclick="abrirModalAcomodacao(${ac.id})" style="padding: 0.3rem 0.55rem; font-size: 0.78rem;">Editar</button>
+            <button type="button" class="btn btn-outline" onclick="excluirAcomodacao(${ac.id}, '${escAc(ac.nome)}')" style="padding: 0.3rem 0.55rem; font-size: 0.78rem; color: #DC2626; border-color: #FECACA;">Excluir</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">
+            <span>Ocupação: ${ocup} / ${cap > 0 ? cap : 'Ilimitado'}</span>
+            <span style="color: ${lotado ? '#DC2626' : '#059669'};">${cap > 0 ? (lotado ? 'Lotado' : `${ac.vagas_restantes} vaga(s)`) : 'Aberta'}</span>
+          </div>
+          ${cap > 0 ? `
+            <div style="width: 100%; height: 7px; background: #E2E8F0; border-radius: 999px; overflow: hidden;">
+              <div style="width: ${pct}%; height: 100%; background: ${barColor}; transition: width 0.25s;"></div>
+            </div>
+          ` : ''}
+        </div>
+
+        ${ocupantesHtml}
+
+        <button type="button" class="btn btn-primary" onclick="abrirModalAlocarAcomodacao(${ac.id})" style="width: 100%; margin-top: auto; font-size: 0.85rem;">
+          Alocar Participantes
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+window.renderSemAcomodacaoLista = function() {
+  const container = document.getElementById('acomodacoes-sem-lista');
+  if (!container || !cacheAcomodacoesData) return;
+
+  const query = (document.getElementById('ac-sem-search')?.value || '').toLowerCase().trim();
+  let lista = cacheAcomodacoesData.sem_acomodacao || [];
+  if (query) {
+    lista = lista.filter(p =>
+      (p.nome || '').toLowerCase().includes(query) ||
+      (p.igreja || '').toLowerCase().includes(query) ||
+      (p.genero || '').toLowerCase().includes(query)
+    );
+  }
+
+  if (lista.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 1.5rem; margin: 0;">Todos os participantes ativos já possuem acomodação ou nenhum corresponde à busca.</p>`;
+    return;
+  }
+
+  const acomodacoes = cacheAcomodacoesData.acomodacoes || [];
+  const optionsHtml = acomodacoes.map(ac => `<option value="${ac.id}">${escAc(ac.nome)} (${ac.ocupados_count}/${ac.capacidade || '∞'})</option>`).join('');
+
+  container.innerHTML = `
+    <table style="width: 100%; font-size: 0.84rem; border-collapse: collapse;">
+      <thead>
+        <tr style="background: #F1F5F9; border-bottom: 1px solid var(--border-color);">
+          <th style="padding: 0.65rem; text-align: left;">Participante</th>
+          <th style="padding: 0.65rem; text-align: left;">Gênero</th>
+          <th style="padding: 0.65rem; text-align: left;">Igreja</th>
+          <th style="padding: 0.65rem; text-align: left;">Tipo / Status</th>
+          <th style="padding: 0.65rem; text-align: right;">Alocação Rápida</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map(p => `
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 0.65rem;">
+              <div style="font-weight: 600;">${escAc(p.nome)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escAc(p.email)}</div>
+            </td>
+            <td style="padding: 0.65rem;">${escAc(p.genero || '-')}</td>
+            <td style="padding: 0.65rem;">${escAc(p.igreja || '-')}</td>
+            <td style="padding: 0.65rem;">
+              <span class="badge" style="background: ${p.tipo === 'DIARIA' ? '#EDE9FE' : '#EFF6FF'}; color: ${p.tipo === 'DIARIA' ? '#6D28D9' : '#1D4ED8'};">${escAc(p.tipo_label)}</span>
+              <span class="badge ${p.status === 'CONFIRMADA' ? 'badge-success' : 'badge-warning'}" style="margin-left: 0.25rem;">${escAc(p.status)}</span>
+            </td>
+            <td style="padding: 0.65rem; text-align: right;">
+              ${acomodacoes.length > 0 ? `
+                <select class="form-control" style="display: inline-block; width: auto; max-width: 210px; padding: 0.3rem 0.5rem; font-size: 0.8rem;" onchange="alocarRapidoParticipante(this.value, '${p.tipo}', ${p.registro_id})">
+                  <option value="">Selecionar quarto...</option>
+                  ${optionsHtml}
+                </select>
+              ` : `<span style="color: var(--text-muted); font-size: 0.78rem;">Crie uma acomodação</span>`}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+};
+
+window.alocarRapidoParticipante = async function(acomodacaoId, tipo, registroId) {
+  if (!acomodacaoId) return;
+  try {
+    const payload = {
+      inscricao_ids: tipo === 'REGULAR' ? [registroId] : [],
+      diaria_ids: tipo === 'DIARIA' ? [registroId] : []
+    };
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/alocar`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao alocar participante.');
+    await carregarAcomodacoesEvento();
+  }
+};
+
+window.abrirModalAcomodacao = function(acomodacaoId = null) {
+  const modal = document.getElementById('modal-acomodacao');
+  const title = document.getElementById('modal-ac-title');
+  const form = document.getElementById('form-acomodacao');
+  if (!modal || !form) return;
+
+  form.reset();
+  document.getElementById('ac-edit-id').value = '';
+
+  if (acomodacaoId && cacheAcomodacoesData) {
+    const ac = (cacheAcomodacoesData.acomodacoes || []).find(a => a.id === acomodacaoId);
+    if (ac) {
+      title.textContent = 'Editar Acomodação';
+      document.getElementById('ac-edit-id').value = ac.id;
+      document.getElementById('ac-nome').value = ac.nome || '';
+      document.getElementById('ac-tipo').value = ac.tipo || 'Quarto';
+      document.getElementById('ac-capacidade').value = ac.capacidade ?? 10;
+      document.getElementById('ac-genero').value = ac.genero_restrito || '';
+      document.getElementById('ac-descricao').value = ac.descricao || '';
+    }
+  } else {
+    title.textContent = 'Nova Acomodação';
+    document.getElementById('ac-capacidade').value = 10;
+  }
+
+  modal.classList.add('active');
+};
+
+window.fecharModalAcomodacao = function() {
+  const modal = document.getElementById('modal-acomodacao');
+  if (modal) modal.classList.remove('active');
+};
+
+window.salvarAcomodacao = async function(e) {
+  e.preventDefault();
+  const editId = document.getElementById('ac-edit-id').value;
+  const payload = {
+    nome: document.getElementById('ac-nome').value.trim(),
+    tipo: document.getElementById('ac-tipo').value,
+    capacidade: parseInt(document.getElementById('ac-capacidade').value || '0', 10),
+    genero_restrito: document.getElementById('ac-genero').value || null,
+    descricao: document.getElementById('ac-descricao').value.trim() || null
+  };
+
+  try {
+    if (editId) {
+      await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${editId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+    } else {
+      await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    }
+    fecharModalAcomodacao();
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao salvar acomodação.');
+  }
+};
+
+window.excluirAcomodacao = async function(acomodacaoId, nome) {
+  if (!confirm(`Deseja excluir a acomodação "${nome}"? Os participantes alocados voltarão para a lista de espera.`)) return;
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}`, {
+      method: 'DELETE'
+    });
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao excluir acomodação.');
+  }
+};
+
+window.abrirModalAlocarAcomodacao = function(acomodacaoId) {
+  if (!cacheAcomodacoesData) return;
+  const ac = (cacheAcomodacoesData.acomodacoes || []).find(a => a.id === acomodacaoId);
+  if (!ac) return;
+
+  alocarAcomodacaoAtual = ac;
+  alocarSelecionados = new Set();
+
+  document.getElementById('modal-alocar-title').textContent = `Alocar em: ${ac.nome}`;
+  const vagasText = ac.capacidade > 0 ? `${ac.vagas_restantes} vaga(s) restante(s) de ${ac.capacidade}` : 'Capacidade ilimitada';
+  document.getElementById('modal-alocar-subtitle').textContent = `${ac.tipo || 'Quarto'} • ${vagasText}`;
+
+  const search = document.getElementById('alocar-search');
+  if (search) search.value = '';
+  const filtroGen = document.getElementById('alocar-filtro-genero');
+  if (filtroGen) {
+    filtroGen.value = ac.genero_restrito === 'MASCULINO' ? 'Masculino' : (ac.genero_restrito === 'FEMININO' ? 'Feminino' : '');
+  }
+  const filtroSt = document.getElementById('alocar-filtro-status');
+  if (filtroSt) filtroSt.value = '';
+
+  renderListaAlocacaoModal();
+  document.getElementById('modal-alocar-acomodacao').classList.add('active');
+};
+
+window.fecharModalAlocarAcomodacao = function() {
+  const modal = document.getElementById('modal-alocar-acomodacao');
+  if (modal) modal.classList.remove('active');
+  alocarAcomodacaoAtual = null;
+  alocarSelecionados.clear();
+};
+
+window.renderListaAlocacaoModal = function() {
+  const container = document.getElementById('alocar-lista-container');
+  const countEl = document.getElementById('alocar-selecionados-count');
+  if (!container || !cacheAcomodacoesData) return;
+
+  const q = (document.getElementById('alocar-search')?.value || '').toLowerCase().trim();
+  const gen = (document.getElementById('alocar-filtro-genero')?.value || '').toLowerCase();
+  const st = document.getElementById('alocar-filtro-status')?.value || '';
+
+  let lista = cacheAcomodacoesData.sem_acomodacao || [];
+  if (q) {
+    lista = lista.filter(p =>
+      (p.nome || '').toLowerCase().includes(q) ||
+      (p.igreja || '').toLowerCase().includes(q)
+    );
+  }
+  if (gen) {
+    lista = lista.filter(p => (p.genero || '').toLowerCase().includes(gen));
+  }
+  if (st) {
+    lista = lista.filter(p => p.status === st);
+  }
+
+  if (countEl) countEl.textContent = `${alocarSelecionados.size} selecionado(s)`;
+
+  if (lista.length === 0) {
+    container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 1.5rem; margin: 0;">Nenhum participante disponível com os filtros atuais.</p>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(p => {
+    const key = `${p.tipo}:${p.registro_id}`;
+    const checked = alocarSelecionados.has(key) ? 'checked' : '';
+    return `
+      <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-bottom: 1px solid #F1F5F9; cursor: pointer;">
+        <input type="checkbox" ${checked} onchange="toggleSelecaoAlocacao('${key}')" style="width: 17px; height: 17px; accent-color: var(--primary);">
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 600; font-size: 0.88rem;">${escAc(p.nome)}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${escAc(p.igreja || 'Sem igreja')} • ${escAc(p.genero || 'N/I')} • ${escAc(p.tipo_label)}</div>
+        </div>
+        <span class="badge ${p.status === 'CONFIRMADA' ? 'badge-success' : 'badge-warning'}">${escAc(p.status)}</span>
+      </label>
+    `;
+  }).join('');
+};
+
+window.toggleSelecaoAlocacao = function(key) {
+  if (alocarSelecionados.has(key)) alocarSelecionados.delete(key);
+  else alocarSelecionados.add(key);
+  const countEl = document.getElementById('alocar-selecionados-count');
+  if (countEl) countEl.textContent = `${alocarSelecionados.size} selecionado(s)`;
+};
+
+window.confirmarAlocacaoAcomodacao = async function() {
+  if (!alocarAcomodacaoAtual) return;
+  if (alocarSelecionados.size === 0) {
+    alert('Selecione pelo menos um participante para alocar.');
+    return;
+  }
+
+  const inscricao_ids = [];
+  const diaria_ids = [];
+  alocarSelecionados.forEach(key => {
+    const [tipo, idStr] = key.split(':');
+    const id = parseInt(idStr, 10);
+    if (tipo === 'DIARIA') diaria_ids.push(id);
+    else inscricao_ids.push(id);
+  });
+
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${alocarAcomodacaoAtual.id}/alocar`, {
+      method: 'POST',
+      body: JSON.stringify({ inscricao_ids, diaria_ids })
+    });
+    fecharModalAlocarAcomodacao();
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao alocar participantes.');
+  }
+};
+
+window.desalocarParticipanteAcomodacao = async function(tipo, registroId, nome) {
+  if (!confirm(`Remover "${nome}" desta acomodação?`)) return;
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/desalocar`, {
+      method: 'POST',
+      body: JSON.stringify({ tipo, registro_id: registroId })
+    });
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao remover participante.');
+  }
+};
+
+window.imprimirAcomodacoes = function() {
+  if (!cacheAcomodacoesData) return;
+  const acomodacoes = cacheAcomodacoesData.acomodacoes || [];
+  const tituloEvento = eventoAtual ? eventoAtual.titulo : 'Evento';
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) {
+    alert('Permita pop-ups para imprimir a lista de acomodações.');
+    return;
+  }
+
+  const roomsHtml = acomodacoes.map(ac => {
+    const ocupantes = ac.ocupantes || [];
+    const rows = ocupantes.length > 0
+      ? ocupantes.map((oc, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${escAc(oc.nome)}</td>
+            <td>${escAc(oc.igreja || '-')}</td>
+            <td>${escAc(oc.genero || '-')}</td>
+            <td>${oc.tipo === 'DIARIA' ? 'Diária' : 'Integral'}</td>
+          </tr>`).join('')
+      : `<tr><td colspan="5" style="color: #64748b; text-align: center;">Sem participantes alocados</td></tr>`;
+
+    return `
+      <div class="room-box">
+        <h3>${escAc(ac.nome)} <small>(${escAc(ac.tipo || 'Quarto')} — ${ocupantes.length}/${ac.capacidade || '∞'})</small></h3>
+        ${ac.descricao ? `<p class="desc">${escAc(ac.descricao)}</p>` : ''}
+        <table>
+          <thead><tr><th style="width:36px;">#</th><th>Nome</th><th>Igreja</th><th>Gênero</th><th>Modalidade</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  win.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Acomodações - ${escAc(tituloEvento)}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        .sub { color: #475569; font-size: 13px; margin-bottom: 20px; }
+        .room-box { margin-bottom: 22px; page-break-inside: avoid; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; }
+        .room-box h3 { margin: 0 0 6px 0; font-size: 15px; }
+        .room-box h3 small { font-weight: normal; color: #475569; }
+        .desc { font-size: 12px; color: #475569; margin: 0 0 8px 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+        th { background: #f1f5f9; }
+      </style>
+    </head>
+    <body>
+      <h1>Lista de Acomodações — ${escAc(tituloEvento)}</h1>
+      <div class="sub">Gerado em ${new Date().toLocaleString('pt-BR')}</div>
+      ${roomsHtml || '<p>Nenhuma acomodação cadastrada.</p>'}
+      <script>window.onload = function() { window.print(); };</script>
+    </body>
+    </html>
+  `);
+  win.document.close();
+};

@@ -36,3 +36,4 @@ class Evento(Base):
     inscricoes = relationship("Inscricao", back_populates="evento", cascade="all, delete-orphan")
     diarias = relationship("InscricaoDiaria", back_populates="evento", cascade="all, delete-orphan")
     diarias_triagem = relationship("DiariaTriagem", back_populates="evento", cascade="all, delete-orphan")
+    acomodacoes = relationship("Acomodacao", back_populates="evento", cascade="all, delete-orphan")

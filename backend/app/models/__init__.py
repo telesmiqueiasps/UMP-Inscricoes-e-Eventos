@@ -18,6 +18,7 @@ from app.models.cantina import (
     CantinaVendaItem
 )
 from app.models.oficina import Oficina, OficinaInscricao, OficinaConfig
+from app.models.acomodacao import Acomodacao
 
 __all__ = [
     "Base",
