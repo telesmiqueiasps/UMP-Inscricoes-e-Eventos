@@ -993,7 +993,9 @@ def obter_detalhes_checkin(
             "codigo_checkin": inscricao.codigo_checkin,
             "valido_hoje": True,
             "dias_selecionados": [],
-            "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None
+            "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
+            "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
+            "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None
         }
 
     # 2. Tentar buscar em Inscricao Diaria
@@ -1029,7 +1031,9 @@ def obter_detalhes_checkin(
             "valido_hoje": valido_hoje,
             "dias_selecionados": dias,
             "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
-            "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None
+            "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
+            "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
+            "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None
         }
 
     raise HTTPException(
@@ -1085,6 +1089,8 @@ def realizar_checkin(
             "status_inscricao": inscricao.status,
             "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
             "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
+            "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
+            "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
             "mensagem": "Check-in realizado com sucesso! (Inscrição Integral)"
         }
 
@@ -1127,6 +1133,8 @@ def realizar_checkin(
             "status_inscricao": diaria.status,
             "participante": {"nome": usuario.nome, "cpf": usuario.cpf, "email": usuario.email},
             "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
+            "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
+            "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
             "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
         }
 

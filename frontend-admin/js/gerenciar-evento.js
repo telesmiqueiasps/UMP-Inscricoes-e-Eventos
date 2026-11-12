@@ -2547,8 +2547,9 @@ function renderTabelaPresenca() {
     const btnText = ins.checkin_realizado ? "Desfazer Check-in" : "Confirmar Check-in";
     const btnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
 
-    const acomodacaoCell = ins.acomodacao_nome
-      ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600;">${escAc(ins.acomodacao_nome)}</span>`
+    const acNomeTabela = (ins.acomodacao && ins.acomodacao.nome) ? ins.acomodacao.nome : ins.acomodacao_nome;
+    const acomodacaoCell = acNomeTabela
+      ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600;">${escAc(acNomeTabela)}</span>`
       : `<span style="color: var(--text-muted); font-size: 0.78rem;">Não definida</span>`;
 
     return `
@@ -2665,12 +2666,16 @@ async function processarQrCodeEscaneado(codigo) {
       acTriagemContainer.style.display = 'flex';
       acTriagemContainer.style.alignItems = 'center';
       acTriagemContainer.style.gap = '0.5rem';
-      if (res.acomodacao_nome) {
+
+      const acNome = (res.acomodacao && res.acomodacao.nome) ? res.acomodacao.nome : res.acomodacao_nome;
+      const acTipo = (res.acomodacao && res.acomodacao.tipo) ? res.acomodacao.tipo : res.acomodacao_tipo;
+
+      if (acNome) {
         acTriagemContainer.style.background = '#ECFDF5';
         acTriagemContainer.style.border = '1px solid #A7F3D0';
         acTriagemContainer.style.color = '#065F46';
-        const tipoInfo = res.acomodacao_tipo ? ` (${escAc(res.acomodacao_tipo)})` : '';
-        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: <strong>${escAc(res.acomodacao_nome)}</strong>${tipoInfo}</span>`;
+        const tipoInfo = acTipo ? ` (${escAc(acTipo)})` : '';
+        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: <strong>${escAc(acNome)}</strong>${tipoInfo}</span>`;
       } else {
         acTriagemContainer.style.background = '#F8FAFC';
         acTriagemContainer.style.border = '1px solid #E2E8F0';
