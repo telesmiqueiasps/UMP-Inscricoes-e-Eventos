@@ -3161,6 +3161,19 @@ function renderTabelaDiaristas() {
   }).join('');
 }
 
+window.fecharModalFichaDiaria = function() {
+  const modal = document.getElementById('modal-detalhes-diaria');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+};
+
+window.fecharModalDiariaBackdrop = function(e) {
+  if (e.target && e.target.id === 'modal-detalhes-diaria') {
+    window.fecharModalFichaDiaria();
+  }
+};
+
 window.abrirModalFichaDiaria = function(diariaId) {
   const dia = cachedDiaristasList.find(d => d.id === diariaId);
   if (!dia) return;
@@ -3176,7 +3189,12 @@ window.abrirModalFichaDiaria = function(diariaId) {
   const waLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento!` : null;
 
   const diasArr = Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados : [dia.dias_selecionados];
-  const diasHTML = diasArr.map(d => `<span style="background: #EDE9FE; color: #6D28D9; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-block; margin-right: 5px;">📅 ${d}</span>`).join('');
+  const diasHTML = diasArr.map(d => `
+    <span style="background: #EDE9FE; color: #6D28D9; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; margin-right: 5px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+      <span>${escAc(d)}</span>
+    </span>
+  `).join('');
 
   const rotulosAmigaveis = {
     cpf: "CPF",
@@ -3204,19 +3222,25 @@ window.abrirModalFichaDiaria = function(diariaId) {
     return `
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
         <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">${rotulosAmigaveis[campo]}</span>
-        <strong style="font-size: 0.9rem; color: var(--text-dark);">${val}</strong>
+        <strong style="font-size: 0.9rem; color: var(--text-dark);">${escAc(val)}</strong>
       </div>
     `;
   }).filter(Boolean).join('');
 
+  const acNome = (dia.acomodacao && dia.acomodacao.nome) ? dia.acomodacao.nome : dia.acomodacao_nome;
+  const acTipo = (dia.acomodacao && dia.acomodacao.tipo) ? dia.acomodacao.tipo : dia.acomodacao_tipo;
+
   conteudo.innerHTML = `
     <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 700; margin-bottom: 0.25rem;">🎫 Inscrição por Diária</span>
-        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin: 0;">${user.nome || 'Participante'}</h3>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">${user.email}</span>
+        <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 700; margin-bottom: 0.25rem; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <span>Inscrição por Diária</span>
+        </span>
+        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin: 0;">${escAc(user.nome || 'Participante')}</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">${escAc(user.email)}</span>
       </div>
-      <button onclick="document.getElementById('modal-detalhes-diaria').classList.remove('active')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      <button type="button" onclick="fecharModalFichaDiaria()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1;" title="Fechar">&times;</button>
     </div>
 
     <!-- Dias Contratados -->
@@ -3227,7 +3251,7 @@ window.abrirModalFichaDiaria = function(diariaId) {
       </div>
     </div>
 
-    <!-- Detalhes do Pagamento & Check-in -->
+    <!-- Detalhes do Pagamento, Check-in & Acomodação -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
         <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Valor Total Pago</span>
@@ -3240,6 +3264,10 @@ window.abrirModalFichaDiaria = function(diariaId) {
       <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
         <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Status do Check-in</span>
         <strong style="font-size: 0.9rem; color: ${dia.checkin_realizado ? '#10B981' : '#F59E0B'};">${dia.checkin_realizado ? 'Presente' : 'Ausente'}</strong>
+      </div>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Acomodação</span>
+        <strong style="font-size: 0.9rem; color: ${acNome ? '#1D4ED8' : 'var(--text-muted)'};">${acNome ? escAc(acNome) + (acTipo ? ' (' + escAc(acTipo) + ')' : '') : 'A definir pela organização'}</strong>
       </div>
     </div>
 
@@ -3261,22 +3289,22 @@ window.abrirModalFichaDiaria = function(diariaId) {
       ` : '<div></div>'}
       
       <div style="display: flex; gap: 0.5rem;">
-        <button class="btn btn-primary" onclick="toggleCheckinDiaria(${dia.id}); document.getElementById('modal-detalhes-diaria').classList.remove('active');" style="font-size: 0.85rem;">
+        <button type="button" class="btn btn-primary" onclick="toggleCheckinDiaria(${dia.id}); fecharModalFichaDiaria();" style="font-size: 0.85rem;">
           ${dia.checkin_realizado ? 'Desfazer Check-in' : 'Confirmar Check-in'}
         </button>
-        <button class="btn btn-outline" onclick="document.getElementById('modal-detalhes-diaria').classList.remove('active')" style="font-size: 0.85rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalFichaDiaria()" style="font-size: 0.85rem;">
           Fechar
         </button>
       </div>
     </div>
   `;
 
-  modal.classList.add('active');
+  modal.style.display = 'flex';
 };
 
 window.fecharModalDiariaBackdrop = function(e) {
-  if (e.target.id === 'modal-detalhes-diaria') {
-    e.target.classList.remove('active');
+  if (e.target && e.target.id === 'modal-detalhes-diaria') {
+    window.fecharModalFichaDiaria();
   }
 };
 

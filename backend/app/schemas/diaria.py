@@ -30,6 +30,18 @@ class DiariaTriagemResponse(BaseModel):
         from_attributes = True
 
 
+class AcomodacaoDiariaResponse(BaseModel):
+    id: int
+    nome: str
+    tipo: str = "Quarto"
+    capacidade: int = 0
+    genero_restrito: Optional[str] = None
+    descricao: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class InscricaoDiariaResponse(BaseModel):
     id: int
     usuario_id: int
@@ -46,6 +58,8 @@ class InscricaoDiariaResponse(BaseModel):
     receipt_url: Optional[str] = None
     order_nsu: Optional[str] = None
     transaction_nsu: Optional[str] = None
+    acomodacao_id: Optional[int] = None
+    acomodacao: Optional[AcomodacaoDiariaResponse] = None
     created_at: datetime
 
     usuario: Optional[UsuarioResponse] = None
