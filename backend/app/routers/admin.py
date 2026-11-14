@@ -962,6 +962,79 @@ def atualizar_config_diarias_admin(
     }
 
 
+def _extrair_extras_dict(dados_extras):
+    if isinstance(dados_extras, str):
+        try:
+            import json
+            return json.loads(dados_extras)
+        except Exception:
+            return {}
+    return dados_extras if isinstance(dados_extras, dict) else {}
+
+
+def _calcular_idade_participante(data_str):
+    if not data_str:
+        return None
+    data_clean = str(data_str).strip()
+    if not data_clean:
+        return None
+    try:
+        from datetime import date
+        hoje = date.today()
+        if "T" in data_clean:
+            data_clean = data_clean.split("T")[0]
+        if "-" in data_clean:
+            p = data_clean.split("-")
+            if len(p[0]) == 4:
+                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+            elif len(p[2]) == 4:
+                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+            else:
+                return None
+        elif "/" in data_clean:
+            p = data_clean.split("/")
+            if len(p[2]) == 4:
+                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+            elif len(p[0]) == 4:
+                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+            else:
+                return None
+        else:
+            return None
+        d_nasc = date(ano, mes, dia)
+        idade = hoje.year - d_nasc.year - ((hoje.month, hoje.day) < (d_nasc.month, d_nasc.day))
+        if 0 <= idade <= 125:
+            return idade
+    except Exception:
+        return None
+    return None
+
+
+def _obter_info_participante_checkin(dados_extras):
+    ext = _extrair_extras_dict(dados_extras)
+    tamanho_camiseta = None
+    for k in ["tamanho_camiseta", "tamanho_camisa", "camiseta", "camisa", "dyn_tamanho_camiseta"]:
+        val = ext.get(k)
+        if val is not None and str(val).strip():
+            tamanho_camiseta = str(val).strip()
+            break
+
+    data_nascimento = None
+    for k in ["data_nascimento", "nascimento", "dyn_data_nascimento"]:
+        val = ext.get(k)
+        if val is not None and str(val).strip():
+            data_nascimento = str(val).strip()
+            break
+
+    idade = _calcular_idade_participante(data_nascimento)
+
+    return {
+        "tamanho_camiseta": tamanho_camiseta,
+        "data_nascimento": data_nascimento,
+        "idade": idade
+    }
+
+
 # --- Endpoints de Check-in Unificado (Aba Controle do Evento) ---
 @router.get("/admin/eventos/{evento_id}/checkin/detalhes")
 def obter_detalhes_checkin(
@@ -980,6 +1053,7 @@ def obter_detalhes_checkin(
 
     if inscricao:
         usuario = inscricao.usuario
+        info_part = _obter_info_participante_checkin(inscricao.dados_extras)
         return {
             "id": inscricao.id,
             "tipo": "REGULAR",
@@ -995,7 +1069,10 @@ def obter_detalhes_checkin(
             "dias_selecionados": [],
             "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
             "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
-            "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None
+            "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
+            "tamanho_camiseta": info_part["tamanho_camiseta"],
+            "data_nascimento": info_part["data_nascimento"],
+            "idade": info_part["idade"]
         }
 
     # 2. Tentar buscar em Inscricao Diaria
@@ -1006,6 +1083,7 @@ def obter_detalhes_checkin(
 
     if diaria:
         usuario = diaria.usuario
+        info_part = _obter_info_participante_checkin(diaria.dados_extras)
         hoje = get_hoje_brasil()
         hoje_iso = hoje.strftime("%Y-%m-%d")
         dias = diaria.dias_selecionados or []
@@ -1033,7 +1111,10 @@ def obter_detalhes_checkin(
             "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
             "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
             "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
-            "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None
+            "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
+            "tamanho_camiseta": info_part["tamanho_camiseta"],
+            "data_nascimento": info_part["data_nascimento"],
+            "idade": info_part["idade"]
         }
 
     raise HTTPException(
@@ -1083,6 +1164,7 @@ def realizar_checkin(
         inscricao.checkin_data = datetime.utcnow()
         db.commit()
 
+        info_part = _obter_info_participante_checkin(inscricao.dados_extras)
         return {
             "sucesso": True,
             "tipo": "REGULAR",
@@ -1091,6 +1173,8 @@ def realizar_checkin(
             "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
             "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
             "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
+            "tamanho_camiseta": info_part["tamanho_camiseta"],
+            "idade": info_part["idade"],
             "mensagem": "Check-in realizado com sucesso! (Inscrição Integral)"
         }
 
@@ -1125,6 +1209,7 @@ def realizar_checkin(
         diaria.checkin_data = datetime.utcnow()
         db.commit()
 
+        info_part = _obter_info_participante_checkin(diaria.dados_extras)
         dias_str = ", ".join(diaria.dias_selecionados) if isinstance(diaria.dias_selecionados, list) else str(diaria.dias_selecionados)
         return {
             "sucesso": True,
@@ -1135,6 +1220,8 @@ def realizar_checkin(
             "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
             "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
             "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
+            "tamanho_camiseta": info_part["tamanho_camiseta"],
+            "idade": info_part["idade"],
             "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
         }
 
@@ -1183,6 +1270,7 @@ def listar_participantes_checkin(
     resultado = []
     if not filtro or filtro.upper() in ["TODOS", "REGULAR"]:
         for ins in inscricoes:
+            info_part = _obter_info_participante_checkin(ins.dados_extras)
             resultado.append({
                 "inscricao_id": ins.id,
                 "tipo": "REGULAR",
@@ -1197,11 +1285,15 @@ def listar_participantes_checkin(
                 "dias_selecionados": [],
                 "acomodacao": ins.acomodacao.to_summary_dict() if ins.acomodacao else None,
                 "acomodacao_nome": ins.acomodacao.nome if ins.acomodacao else None,
-                "acomodacao_tipo": ins.acomodacao.tipo if ins.acomodacao else None
+                "acomodacao_tipo": ins.acomodacao.tipo if ins.acomodacao else None,
+                "tamanho_camiseta": info_part["tamanho_camiseta"],
+                "data_nascimento": info_part["data_nascimento"],
+                "idade": info_part["idade"]
             })
 
     if not filtro or filtro.upper() in ["TODOS", "DIARIA"]:
         for d in diarias:
+            info_part = _obter_info_participante_checkin(d.dados_extras)
             dias = d.dias_selecionados or []
             resultado.append({
                 "inscricao_id": d.id,
@@ -1218,7 +1310,10 @@ def listar_participantes_checkin(
                 "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
                 "acomodacao": d.acomodacao.to_summary_dict() if d.acomodacao else None,
                 "acomodacao_nome": d.acomodacao.nome if d.acomodacao else None,
-                "acomodacao_tipo": d.acomodacao.tipo if d.acomodacao else None
+                "acomodacao_tipo": d.acomodacao.tipo if d.acomodacao else None,
+                "tamanho_camiseta": info_part["tamanho_camiseta"],
+                "data_nascimento": info_part["data_nascimento"],
+                "idade": info_part["idade"]
             })
 
     resultado.sort(key=lambda x: (x.get("nome") or "").lower())

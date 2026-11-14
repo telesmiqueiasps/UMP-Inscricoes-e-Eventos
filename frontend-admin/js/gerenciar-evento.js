@@ -2559,7 +2559,11 @@ function renderTabelaPresenca() {
             <strong style="color: var(--text-dark);">${ins.nome}</strong>
             ${tipoBadge}
           </div>
-          <span style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</span>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</div>
+          <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem; align-items: center; flex-wrap: wrap;">
+            ${ins.tamanho_camiseta ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.68rem; padding: 1px 5px;">Camisa: ${escAc(ins.tamanho_camiseta)}</span>` : ''}
+            ${(ins.idade !== null && ins.idade !== undefined) ? `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos</span>` : ''}
+          </div>
         </td>
         <td style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
         <td style="padding: 0.75rem;">${acomodacaoCell}</td>
@@ -2630,6 +2634,11 @@ async function processarQrCodeEscaneado(codigo) {
     document.getElementById('triagem-nome').textContent = res.nome;
     document.getElementById('triagem-cpf').textContent = res.cpf || 'Não informado';
     document.getElementById('triagem-email').textContent = res.email;
+
+    const elCamiseta = document.getElementById('triagem-camiseta');
+    if (elCamiseta) elCamiseta.textContent = res.tamanho_camiseta || 'Não informado';
+    const elIdade = document.getElementById('triagem-idade');
+    if (elIdade) elIdade.textContent = (res.idade !== null && res.idade !== undefined) ? `${res.idade} anos` : 'Não informada';
 
     // Atualizar badge de tipo (Integral vs Diária)
     const tipoBadge = document.getElementById('triagem-tipo-badge');
@@ -2837,6 +2846,20 @@ window.buscarParticipantesCheckin = async function() {
            </span>`
         : `<span class="badge" style="background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; font-size: 0.72rem;">Sem acomodação</span>`;
 
+      const camisaBadge = ins.tamanho_camiseta
+        ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+             <span>Camisa: ${escAc(ins.tamanho_camiseta)}</span>
+           </span>`
+        : '';
+
+      const idadeBadge = (ins.idade !== null && ins.idade !== undefined)
+        ? `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+             <span>${ins.idade} anos</span>
+           </span>`
+        : '';
+
       const checkinBtnText = ins.checkin_realizado ? "Desfazer Check-in" : "Check-in Manual";
       const checkinBtnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
 
@@ -2852,6 +2875,8 @@ window.buscarParticipantesCheckin = async function() {
               <span class="badge ${badgeClass}">${ins.status}</span>
               ${checkinBadge}
               ${acomodacaoBadge}
+              ${camisaBadge}
+              ${idadeBadge}
             </div>
           </div>
           <div style="flex-shrink: 0;">
