@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  initMobileSidebarAdmin();
   const token = API.getToken();
   let user = API.getUser();
 
@@ -49,6 +50,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     initCantina();
   }
 });
+
+function initMobileSidebarAdmin() {
+  const headerMobile = document.querySelector('.sidebar-header-mobile');
+  if (headerMobile && !document.getElementById('btn-mobile-sidebar-toggle')) {
+    const btn = document.createElement('button');
+    btn.id = 'btn-mobile-sidebar-toggle';
+    btn.className = 'btn-hamburger-mobile';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Abrir menu de navegação');
+    btn.innerHTML = `
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    `;
+    btn.addEventListener('click', () => {
+      const menu = document.querySelector('.sidebar-menu');
+      if (menu) {
+        const isOpen = menu.classList.toggle('mobile-open');
+        btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        btn.classList.toggle('active', isOpen);
+      }
+    });
+    headerMobile.appendChild(btn);
+  }
+
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) {
+      const menu = document.querySelector('.sidebar-menu');
+      const btn = document.getElementById('btn-mobile-sidebar-toggle');
+      if (!menu || !menu.classList.contains('mobile-open')) return;
+      if (e.target.closest('.sidebar-link') || (!e.target.closest('.sidebar-menu') && !e.target.closest('#btn-mobile-sidebar-toggle'))) {
+        menu.classList.remove('mobile-open');
+        if (btn) {
+          btn.setAttribute('aria-expanded', 'false');
+          btn.classList.remove('active');
+        }
+      }
+    }
+  });
+}
 
 function promptAdminLogin() {
   const modal = document.getElementById('login-modal');

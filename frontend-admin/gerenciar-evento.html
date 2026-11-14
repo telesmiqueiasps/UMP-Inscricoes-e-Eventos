@@ -72,9 +72,17 @@
           <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
           <span>UMP Eventos</span>
         </div>
+        <!-- Botão Minimalista Hambúrguer (Mobile) -->
+        <button type="button" class="btn-hamburger-mobile" id="btn-mobile-sidebar-toggle" onclick="toggleSidebarMenuMobile()" aria-label="Menu Principal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
       </div>
       
-      <ul class="sidebar-menu">
+      <ul class="sidebar-menu" id="sidebar-menu-list">
         <li data-aba="eventos">
           <a href="index.html" class="sidebar-link active">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
@@ -1249,8 +1257,8 @@
           </div>
 
           <!-- Tabela de Presenças -->
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+          <div class="presenca-table-responsive" style="overflow-x: auto; width: 100%;">
+            <table class="presenca-table" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
               <thead>
                 <tr style="background: #f1f5f9; border-bottom: 1px solid var(--border-color);">
                   <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Participante</th>

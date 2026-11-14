@@ -180,7 +180,12 @@ window.switchSubTab = function(tabId, btn) {
   
   const targetPane = document.getElementById(tabId);
   if (targetPane) targetPane.classList.add('active');
-  if (btn) btn.classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+    try {
+      btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    } catch (_) {}
+  }
 
   // Parar scanner de QR Code caso saia da aba de check-in
   if (tabId !== 'pane-checkin') {
@@ -2554,7 +2559,9 @@ window.iniciarLeitorCheckin = function() {
   if (btnToggleLabel) btnToggleLabel.textContent = 'Parar Câmera';
 
   html5QrcodeScanner = new Html5Qrcode("reader");
-  const config = { fps: 12, qrbox: { width: 230, height: 230 } };
+  const isMobile = window.innerWidth <= 768;
+  const qrBoxDim = isMobile ? Math.min(180, Math.max(140, Math.floor(window.innerWidth * 0.45))) : 230;
+  const config = { fps: 12, qrbox: { width: qrBoxDim, height: qrBoxDim } };
 
   html5QrcodeScanner.start(
     { facingMode: currentCameraFacingMode },
@@ -2727,7 +2734,7 @@ function renderTabelaPresenca() {
 
     return `
       <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
-        <td style="padding: 0.75rem;">
+        <td data-label="Participante" style="padding: 0.75rem;">
           <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
             <strong style="color: var(--text-dark);">${ins.nome}</strong>
             ${tipoBadge}
@@ -2738,11 +2745,11 @@ function renderTabelaPresenca() {
             ${(ins.idade !== null && ins.idade !== undefined) ? `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos</span>` : ''}
           </div>
         </td>
-        <td style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
-        <td style="padding: 0.75rem;">${acomodacaoCell}</td>
-        <td style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
-        <td style="padding: 0.75rem;">${checkinStatusHTML}</td>
-        <td style="padding: 0.75rem; text-align: center;">
+        <td data-label="CPF" style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
+        <td data-label="Acomodação" style="padding: 0.75rem;">${acomodacaoCell}</td>
+        <td data-label="Status" style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
+        <td data-label="Presença" style="padding: 0.75rem;">${checkinStatusHTML}</td>
+        <td data-label="Ação" style="padding: 0.75rem; text-align: center;">
           <button class="${btnClass}" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')">
             ${btnText}
           </button>
@@ -5166,6 +5173,34 @@ window.imprimirResumoDashboard = function() {
   win.document.close();
 };
 
+// --- Mobile Sidebar Hamburger Toggle ---
+window.toggleSidebarMenuMobile = function() {
+  const menu = document.getElementById('sidebar-menu-list') || document.querySelector('.sidebar-menu');
+  const btn = document.getElementById('btn-mobile-sidebar-toggle');
+  if (!menu) return;
+  const isOpen = menu.classList.toggle('mobile-open');
+  if (btn) {
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    btn.classList.toggle('active', isOpen);
+  }
+};
+
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768) {
+    const menu = document.getElementById('sidebar-menu-list') || document.querySelector('.sidebar-menu');
+    const btn = document.getElementById('btn-mobile-sidebar-toggle');
+    if (!menu || !menu.classList.contains('mobile-open')) return;
+    if (e.target.closest('.sidebar-link') || (!e.target.closest('.sidebar-menu') && !e.target.closest('#btn-mobile-sidebar-toggle'))) {
+      menu.classList.remove('mobile-open');
+      if (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.classList.remove('active');
+      }
+    }
+  }
+});
+
+
 // =============================================================
 // MODAL DE AUDITORIA: PARTICIPANTES ABAIXO DE 19 ANOS
 // =============================================================
@@ -5836,3 +5871,31 @@ window.imprimirAcomodacoes = function() {
   `);
   win.document.close();
 };
+
+// --- Mobile Sidebar Hamburger Toggle ---
+window.toggleSidebarMenuMobile = function() {
+  const menu = document.getElementById('sidebar-menu-list') || document.querySelector('.sidebar-menu');
+  const btn = document.getElementById('btn-mobile-sidebar-toggle');
+  if (!menu) return;
+  const isOpen = menu.classList.toggle('mobile-open');
+  if (btn) {
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    btn.classList.toggle('active', isOpen);
+  }
+};
+
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768) {
+    const menu = document.getElementById('sidebar-menu-list') || document.querySelector('.sidebar-menu');
+    const btn = document.getElementById('btn-mobile-sidebar-toggle');
+    if (!menu || !menu.classList.contains('mobile-open')) return;
+    if (e.target.closest('.sidebar-link') || (!e.target.closest('.sidebar-menu') && !e.target.closest('#btn-mobile-sidebar-toggle'))) {
+      menu.classList.remove('mobile-open');
+      if (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.classList.remove('active');
+      }
+    }
+  }
+});
+
