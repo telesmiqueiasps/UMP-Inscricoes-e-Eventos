@@ -562,6 +562,503 @@ tr:last-child td {
   box-shadow: 0 1px 2px rgba(109, 40, 217, 0.05);
 }
 
+/* ==============================================================
+   Módulo de Check-in & Scanner Mobile / Desktop
+   ============================================================== */
+
+/* Segmented Switcher no Mobile */
+.checkin-mobile-switcher {
+  display: none;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border-color);
+  gap: 4px;
+}
+
+.checkin-switch-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 42px;
+}
+
+.checkin-switch-btn.active {
+  background: #FFFFFF;
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 991px) {
+  .checkin-mobile-switcher {
+    display: flex;
+  }
+  .checkin-hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Indicador de Status do Scanner */
+.scanner-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.scanner-status-indicator.inactive {
+  background: #F1F5F9;
+  color: #64748B;
+  border-color: #E2E8F0;
+}
+
+.scanner-status-indicator.active {
+  background: #ECFDF5;
+  color: #059669;
+  border-color: #A7F3D0;
+}
+
+.scanner-status-indicator .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94A3B8;
+}
+
+.scanner-status-indicator.active .status-dot {
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* Scanner Viewport e Container */
+.checkin-scanner-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1 / 1;
+  margin: 0.75rem auto 1rem auto;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #090D16;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkin-scanner-viewport {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.checkin-scanner-viewport video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: inherit;
+}
+
+.scanner-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94A3B8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+/* HUD Brackets e Linha Laser */
+.scanner-hud-overlay {
+  position: absolute;
+  inset: 14%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.hud-bracket {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #00B894;
+  border-style: solid;
+}
+
+.hud-tl { top: 0; left: 0; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 6px; }
+.hud-tr { top: 0; right: 0; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 6px; }
+.hud-bl { bottom: 0; left: 0; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 6px; }
+.hud-br { bottom: 0; right: 0; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 6px; }
+
+.hud-laser-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, transparent 5%, #00B894 30%, #55EFC4 50%, #00B894 70%, transparent 95%);
+  box-shadow: 0 0 10px #00B894;
+  animation: scanLaser 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes scanLaser {
+  0% { top: 2%; opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { top: 98%; opacity: 0.3; }
+}
+
+/* Controles do Scanner */
+.checkin-scanner-controls {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.btn-scanner-toggle {
+  flex: 2;
+  min-height: 44px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-scanner-tool {
+  flex: 1;
+  min-height: 44px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+/* Overlay / Bottom Sheet da Ficha de Triagem */
+.triagem-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  animation: triagemFadeIn 0.2s ease;
+}
+
+.triagem-modal-sheet {
+  background: #FFFFFF;
+  width: 100%;
+  max-width: 480px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  animation: triagemScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.triagem-sheet-handle {
+  display: none;
+}
+
+.triagem-sheet-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  background: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.triagem-avatar-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.triagem-sheet-body {
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+}
+
+.triagem-nome-container {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.triagem-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+.triagem-nome-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0.2rem 0 0.4rem 0;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.triagem-doc-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.triagem-meta-chip {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triagem-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.triagem-kpi-card {
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.triagem-kpi-card.kpi-camiseta {
+  background: #FAF5FF;
+  border: 1.5px solid #DDD6FE;
+  color: #6D28D9;
+}
+
+.triagem-kpi-card.kpi-idade {
+  background: #FFFBEB;
+  border: 1.5px solid #FDE68A;
+  color: #B45309;
+}
+
+.triagem-kpi-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.triagem-kpi-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-top: 0.25rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.triagem-acomodacao-box {
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.triagem-diaria-box {
+  background: #FAF5FF;
+  border: 1.5px solid #DDD6FE;
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+}
+
+.triagem-aviso-box {
+  background: #FEF2F2;
+  border: 1.5px solid #FECACA;
+  color: #B91C1C;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.triagem-sheet-footer {
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: #FFFFFF;
+  display: flex;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.triagem-btn-confirmar {
+  flex: 2;
+  min-height: 52px !important;
+  font-size: 0.95rem !important;
+  font-weight: 800 !important;
+  border-radius: var(--radius-md) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.45rem !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.triagem-btn-cancelar {
+  flex: 1;
+  min-height: 52px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-md) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+@media (max-width: 768px) {
+  .triagem-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .triagem-modal-sheet {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 88vh;
+    animation: triagemSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .triagem-sheet-handle {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: #CBD5E1;
+    border-radius: 3px;
+    margin: 10px auto 4px auto;
+    flex-shrink: 0;
+  }
+
+  .triagem-sheet-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .triagem-sheet-body {
+    padding: 0.85rem 1rem;
+  }
+
+  .triagem-sheet-footer {
+    padding: 0.75rem 1rem 1.25rem 1rem;
+  }
+
+  .triagem-btn-confirmar,
+  .triagem-btn-cancelar {
+    min-height: 52px !important;
+  }
+
+  /* Otimização de Métricas no Mobile */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .metric-card {
+    padding: 0.75rem !important;
+  }
+
+  .metric-val {
+    font-size: 1.35rem !important;
+  }
+}
+
+@keyframes triagemFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes triagemScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes triagemSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 .modal-detalhes-header {
   padding: 1rem 1.5rem;
   background: #FFFFFF;

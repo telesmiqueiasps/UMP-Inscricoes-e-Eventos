@@ -515,6 +515,12 @@ document.addEventListener('keydown', (e) => {
     if (typeof window.fecharModalFichaDiaria === 'function') {
       window.fecharModalFichaDiaria();
     }
+    if (typeof window.cancelarTriagem === 'function') {
+      const scannedCard = document.getElementById('checkin-scanned-card');
+      if (scannedCard && scannedCard.style.display === 'flex') {
+        window.cancelarTriagem();
+      }
+    }
   }
 });
 
@@ -2398,52 +2404,214 @@ window.onMediaUrlChange = function(index) {
 
 // --- Controle de Check-in (Leitor de Câmera & Busca Manual) ---
 let html5QrcodeScanner = null;
+let currentCameraFacingMode = "environment";
+let isTorchOn = false;
+
+// Feedback Sonoro e Vibratório para Recepção / Mobile
+function playCheckinSound(tipo = 'scan') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (tipo === 'scan') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.1);
+    } else if (tipo === 'success') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.22);
+    } else if (tipo === 'warning') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    }
+  } catch (e) {}
+
+  if (navigator.vibrate) {
+    try {
+      if (tipo === 'scan') navigator.vibrate([40, 50, 40]);
+      else if (tipo === 'success') navigator.vibrate([100]);
+      else if (tipo === 'warning') navigator.vibrate([80, 50, 80]);
+    } catch (e) {}
+  }
+}
+
+// Alternância entre Scanner e Busca Manual no Mobile
+window.switchCheckinMobileView = function(view) {
+  const btnScanner = document.getElementById('btn-switch-scanner');
+  const btnBusca = document.getElementById('btn-switch-busca');
+  const cardScanner = document.getElementById('checkin-card-scanner');
+  const cardBusca = document.getElementById('checkin-card-busca');
+
+  if (view === 'scanner') {
+    if (btnScanner) btnScanner.classList.add('active');
+    if (btnBusca) btnBusca.classList.remove('active');
+    if (cardScanner) cardScanner.classList.remove('checkin-hide-mobile');
+    if (cardBusca) cardBusca.classList.add('checkin-hide-mobile');
+  } else {
+    if (btnBusca) btnBusca.classList.add('active');
+    if (btnScanner) btnScanner.classList.remove('active');
+    if (cardBusca) cardBusca.classList.remove('checkin-hide-mobile');
+    if (cardScanner) cardScanner.classList.add('checkin-hide-mobile');
+    const inputBusca = document.getElementById('checkin-search-input');
+    if (inputBusca) setTimeout(() => inputBusca.focus(), 150);
+  }
+};
+
+window.alternarLeitorCheckin = function() {
+  if (html5QrcodeScanner) {
+    pararLeitorCheckin();
+  } else {
+    iniciarLeitorCheckin();
+  }
+};
+
+window.toggleCheckinTorch = async function() {
+  if (!html5QrcodeScanner) {
+    showToast("Inicie o scanner para usar a lanterna.", "info");
+    return;
+  }
+  try {
+    isTorchOn = !isTorchOn;
+    await html5QrcodeScanner.applyVideoConstraints({
+      advanced: [{ torch: isTorchOn }]
+    });
+    const torchBtn = document.getElementById('btn-checkin-torch');
+    if (torchBtn) {
+      torchBtn.style.background = isTorchOn ? '#FEF08A' : '';
+      torchBtn.style.color = isTorchOn ? '#854D0E' : '';
+      torchBtn.style.borderColor = isTorchOn ? '#FACC15' : '';
+    }
+    showToast(isTorchOn ? "Lanterna ligada" : "Lanterna desligada", "info");
+  } catch (e) {
+    showToast("Lanterna não suportada nesta câmera/aparelho.", "warning");
+    isTorchOn = false;
+  }
+};
+
+window.trocarCameraCheckin = function() {
+  currentCameraFacingMode = (currentCameraFacingMode === "environment") ? "user" : "environment";
+  showToast(`Câmera: ${currentCameraFacingMode === "environment" ? "Traseira" : "Frontal"}`, "info");
+  if (html5QrcodeScanner) {
+    pararLeitorCheckin();
+    setTimeout(() => {
+      iniciarLeitorCheckin();
+    }, 250);
+  }
+};
+
+window.fecharTriagemBackdrop = function(e) {
+  if (e.target && e.target.id === 'checkin-scanned-card') {
+    cancelarTriagem();
+  }
+};
 
 window.iniciarLeitorCheckin = function() {
   const readerDiv = document.getElementById('reader');
   if (!readerDiv) return;
 
+  const btnToggle = document.getElementById('btn-toggle-scanner');
+  const btnToggleLabel = document.getElementById('btn-toggle-scanner-label');
+  const statusPill = document.getElementById('checkin-scanner-status-pill');
+  const statusText = document.getElementById('scanner-status-text');
+  const hudOverlay = document.getElementById('scanner-hud-overlay');
+
   readerDiv.innerHTML = "";
   readerDiv.style.border = "none";
 
-  const btnStop = document.getElementById('btn-stop-checkin');
-  if (btnStop) btnStop.disabled = false;
+  if (hudOverlay) hudOverlay.style.display = 'block';
+  if (statusPill) {
+    statusPill.classList.remove('inactive');
+    statusPill.classList.add('active');
+  }
+  if (statusText) statusText.textContent = 'Scanner Ativo';
+  if (btnToggle) {
+    btnToggle.className = 'btn btn-outline btn-scanner-toggle';
+    btnToggle.style.borderColor = '#EF4444';
+    btnToggle.style.color = '#EF4444';
+  }
+  if (btnToggleLabel) btnToggleLabel.textContent = 'Parar Câmera';
 
   html5QrcodeScanner = new Html5Qrcode("reader");
-  const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+  const config = { fps: 12, qrbox: { width: 230, height: 230 } };
 
   html5QrcodeScanner.start(
-    { facingMode: "environment" },
+    { facingMode: currentCameraFacingMode },
     config,
     (decodedText) => {
-      // Quando ler com sucesso
       processarQrCodeEscaneado(decodedText);
     },
     (errorMessage) => {
-      // Ignora logs de erro contínuos de foco para não sobrecarregar
+      // frames contínuos
     }
   ).catch(err => {
-    showToast("Erro ao acessar a câmera. Verifique as permissões.", "error");
-    readerDiv.innerHTML = "Erro ao carregar câmera";
-    readerDiv.style.border = "2px dashed #cbd5e1";
-    if (btnStop) btnStop.disabled = true;
+    showToast("Erro ao acessar a câmera. Verifique as permissões do navegador.", "error");
+    readerDiv.innerHTML = `<div class="scanner-empty-state"><span style="color:#EF4444;">Erro ao carregar câmera</span></div>`;
+    if (hudOverlay) hudOverlay.style.display = 'none';
+    if (statusPill) {
+      statusPill.classList.remove('active');
+      statusPill.classList.add('inactive');
+    }
+    if (statusText) statusText.textContent = 'Sem permissão';
+    if (btnToggle) {
+      btnToggle.className = 'btn btn-primary btn-scanner-toggle';
+      btnToggle.style.borderColor = '';
+      btnToggle.style.color = '';
+    }
+    if (btnToggleLabel) btnToggleLabel.textContent = 'Iniciar Câmera';
+    html5QrcodeScanner = null;
   });
 };
 
 window.pararLeitorCheckin = function() {
-  const btnStop = document.getElementById('btn-stop-checkin');
-  if (btnStop) btnStop.disabled = true;
+  const btnToggle = document.getElementById('btn-toggle-scanner');
+  const btnToggleLabel = document.getElementById('btn-toggle-scanner-label');
+  const statusPill = document.getElementById('checkin-scanner-status-pill');
+  const statusText = document.getElementById('scanner-status-text');
+  const hudOverlay = document.getElementById('scanner-hud-overlay');
+
+  if (hudOverlay) hudOverlay.style.display = 'none';
+  if (statusPill) {
+    statusPill.classList.remove('active');
+    statusPill.classList.add('inactive');
+  }
+  if (statusText) statusText.textContent = 'Câmera desligada';
+  if (btnToggle) {
+    btnToggle.className = 'btn btn-primary btn-scanner-toggle';
+    btnToggle.style.borderColor = '';
+    btnToggle.style.color = '';
+  }
+  if (btnToggleLabel) btnToggleLabel.textContent = 'Iniciar Câmera';
 
   if (html5QrcodeScanner) {
     html5QrcodeScanner.stop().then(() => {
       html5QrcodeScanner = null;
       const readerDiv = document.getElementById('reader');
       if (readerDiv) {
-        readerDiv.innerHTML = "Leitor inativo";
-        readerDiv.style.border = "2px dashed #cbd5e1";
+        readerDiv.innerHTML = `<div class="scanner-empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6; margin-bottom: 0.5rem;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Toque em "Iniciar Câmera" abaixo</span></div>`;
       }
     }).catch(err => {
-      // Se der erro ao parar (já parado)
       html5QrcodeScanner = null;
     });
   }
@@ -2634,11 +2802,21 @@ async function processarQrCodeEscaneado(codigo) {
   try {
     const res = await API.request(`/admin/eventos/${selectedEventoId}/checkin/detalhes?codigo_checkin=${encodeURIComponent(codigo)}`);
     
+    // Som / vibração de bipe reconhecido
+    playCheckinSound('scan');
+
     // Preencher Ficha de Triagem
     currentTriagemCode = codigo;
+
+    const avatarEl = document.getElementById('triagem-avatar');
+    if (avatarEl) {
+      const iniciais = obterIniciaisNome(res.nome || 'P');
+      avatarEl.innerHTML = `<span style="font-weight: 800; font-size: 0.95rem;">${iniciais}</span>`;
+    }
+
     document.getElementById('triagem-nome').textContent = res.nome;
-    document.getElementById('triagem-cpf').textContent = res.cpf || 'Não informado';
-    document.getElementById('triagem-email').textContent = res.email;
+    document.getElementById('triagem-cpf').textContent = res.cpf ? formatarCPF(res.cpf) : 'Não informado';
+    document.getElementById('triagem-email').textContent = res.email || 'Não informado';
 
     const elCamiseta = document.getElementById('triagem-camiseta');
     if (elCamiseta) elCamiseta.textContent = res.tamanho_camiseta || 'Não informado';
@@ -2665,9 +2843,15 @@ async function processarQrCodeEscaneado(codigo) {
         diariaDiasContainer.style.display = 'block';
         const diasStr = res.dias_formatados || (Array.isArray(res.dias_selecionados) ? res.dias_selecionados.join(', ') : res.dias_selecionados);
         diariaDiasContainer.innerHTML = `
-          <div>📅 <strong>Dias Contratados:</strong> ${diasStr}</div>
-          <div style="margin-top: 4px; font-size: 0.75rem;">
-            ${res.valido_hoje ? '<span style="color: #059669; font-weight: bold;">✅ Autorizado para a data de hoje!</span>' : '<span style="color: #DC2626; font-weight: bold;">⚠️ ATENÇÃO: Diária para outra data!</span>'}
+          <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.25rem;">
+            ${ICONS.calendar}
+            <span><strong>Dias Contratados:</strong> ${escAc(diasStr)}</span>
+          </div>
+          <div style="font-size: 0.78rem;">
+            ${res.valido_hoje ? 
+              `<span style="color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;">${ICONS.checkCircle} <span>Autorizado para a data de hoje!</span></span>` : 
+              `<span style="color: #DC2626; font-weight: 700; display: inline-flex; align-items: center; gap: 0.3rem;">${ICONS.alertTriangle} <span>ATENÇÃO: Diária para outra data!</span></span>`
+            }
           </div>
         `;
       } else {
@@ -2677,24 +2861,34 @@ async function processarQrCodeEscaneado(codigo) {
     
     const acTriagemContainer = document.getElementById('triagem-acomodacao-container');
     if (acTriagemContainer) {
-      acTriagemContainer.style.display = 'flex';
-      acTriagemContainer.style.alignItems = 'center';
-      acTriagemContainer.style.gap = '0.5rem';
-
+      acTriagemContainer.style.display = 'block';
       const acNome = (res.acomodacao && res.acomodacao.nome) ? res.acomodacao.nome : res.acomodacao_nome;
       const acTipo = (res.acomodacao && res.acomodacao.tipo) ? res.acomodacao.tipo : res.acomodacao_tipo;
 
       if (acNome) {
-        acTriagemContainer.style.background = '#ECFDF5';
-        acTriagemContainer.style.border = '1px solid #A7F3D0';
-        acTriagemContainer.style.color = '#065F46';
-        const tipoInfo = acTipo ? ` (${escAc(acTipo)})` : '';
-        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: <strong>${escAc(acNome)}</strong>${tipoInfo}</span>`;
+        acTriagemContainer.innerHTML = `
+          <div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #065F46; width: 100%;">
+            <div style="background: #D1FAE5; padding: 0.35rem; border-radius: var(--radius-sm); color: #059669; display: flex; align-items: center;">
+              ${ICONS.bed}
+            </div>
+            <div>
+              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #047857; display: block; letter-spacing: 0.04em;">Acomodação Atribuída</span>
+              <strong style="font-size: 0.95rem; color: #064E3B;">${escAc(acNome)}${acTipo ? ` (${escAc(acTipo)})` : ''}</strong>
+            </div>
+          </div>
+        `;
       } else {
-        acTriagemContainer.style.background = '#F8FAFC';
-        acTriagemContainer.style.border = '1px solid #E2E8F0';
-        acTriagemContainer.style.color = '#64748B';
-        acTriagemContainer.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg><span>Acomodação: Não definida pela organização</span>`;
+        acTriagemContainer.innerHTML = `
+          <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #64748B; width: 100%;">
+            <div style="background: #E2E8F0; padding: 0.35rem; border-radius: var(--radius-sm); color: #64748B; display: flex; align-items: center;">
+              ${ICONS.bed}
+            </div>
+            <div>
+              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94A3B8; display: block; letter-spacing: 0.04em;">Acomodação</span>
+              <span style="font-size: 0.85rem; font-weight: 600; color: #64748B;">Não definida pela organização</span>
+            </div>
+          </div>
+        `;
       }
     }
 
@@ -2721,13 +2915,9 @@ async function processarQrCodeEscaneado(codigo) {
       }
       if (confirmBtn) {
         confirmBtn.innerHTML = `${ICONS.alertTriangle} <span>Confirmar Mesmo Assim</span>`;
-        confirmBtn.className = 'btn btn-danger';
+        confirmBtn.className = 'btn btn-danger triagem-btn-confirmar';
         confirmBtn.style.background = '#EF4444';
         confirmBtn.style.borderColor = '#EF4444';
-        confirmBtn.style.display = 'inline-flex';
-        confirmBtn.style.alignItems = 'center';
-        confirmBtn.style.justifyContent = 'center';
-        confirmBtn.style.gap = '0.4rem';
       }
     } else if (res.checkin_realizado) {
       if (avisoContainer && avisoTexto) {
@@ -2740,31 +2930,24 @@ async function processarQrCodeEscaneado(codigo) {
       }
       if (confirmBtn) {
         confirmBtn.innerHTML = `${ICONS.undo} <span>Confirmar Novamente</span>`;
-        confirmBtn.className = 'btn btn-primary';
+        confirmBtn.className = 'btn btn-primary triagem-btn-confirmar';
         confirmBtn.style.background = 'var(--primary)';
         confirmBtn.style.borderColor = 'var(--primary)';
-        confirmBtn.style.display = 'inline-flex';
-        confirmBtn.style.alignItems = 'center';
-        confirmBtn.style.justifyContent = 'center';
-        confirmBtn.style.gap = '0.4rem';
       }
     } else {
       if (avisoContainer) avisoContainer.style.display = 'none';
       if (confirmBtn) {
         confirmBtn.innerHTML = `${ICONS.check} <span>Confirmar Entrada</span>`;
-        confirmBtn.className = 'btn btn-success';
+        confirmBtn.className = 'btn btn-success triagem-btn-confirmar';
         confirmBtn.style.background = '#10B981';
         confirmBtn.style.borderColor = '#10B981';
-        confirmBtn.style.display = 'inline-flex';
-        confirmBtn.style.alignItems = 'center';
-        confirmBtn.style.justifyContent = 'center';
-        confirmBtn.style.gap = '0.4rem';
       }
     }
 
-    // Exibir Ficha de Triagem
+    // Exibir Ficha de Triagem Overlay
     document.getElementById('checkin-scanned-card').style.display = 'flex';
   } catch (err) {
+    playCheckinSound('warning');
     showToast(err.message || 'Código de QR Code inválido ou não cadastrado.', 'error');
     if (html5QrcodeScanner) {
       html5QrcodeScanner.resume();
@@ -2776,7 +2959,7 @@ window.confirmarCheckinTriagem = async function() {
   if (!currentTriagemCode) return;
 
   const confirmBtn = document.getElementById('btn-triagem-confirmar');
-  const origText = confirmBtn ? confirmBtn.textContent : '';
+  const origHTML = confirmBtn ? confirmBtn.innerHTML : '';
   if (confirmBtn) {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="spinner"></span> Confirmando...';
@@ -2788,17 +2971,19 @@ window.confirmarCheckinTriagem = async function() {
       body: JSON.stringify({ codigo_checkin: currentTriagemCode })
     });
 
+    playCheckinSound(res.sucesso ? 'success' : 'warning');
     showToast(res.mensagem, res.sucesso ? "success" : "warning");
     
     cancelarTriagem();
     await loadListaPresenca();
     await carregarDiaristas();
   } catch (err) {
+    playCheckinSound('warning');
     showToast(err.message || "Erro ao realizar check-in.", "error");
   } finally {
     if (confirmBtn) {
       confirmBtn.disabled = false;
-      confirmBtn.textContent = origText;
+      confirmBtn.innerHTML = origHTML;
     }
   }
 };
