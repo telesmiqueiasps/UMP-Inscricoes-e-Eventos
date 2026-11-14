@@ -422,7 +422,9 @@ const ICONS = {
   fileText: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
   alertTriangle: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
   droplet: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
-  undo: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>`
+  undo: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>`,
+  calendar: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`,
+  bed: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>`
 };
 
 // --- Helpers de Formatação e Utilitários ---
@@ -510,6 +512,9 @@ window.copiarTextoParaClipboard = function(texto, label = 'Dado') {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     window.fecharModalInscricaoDetalhes();
+    if (typeof window.fecharModalFichaDiaria === 'function') {
+      window.fecharModalFichaDiaria();
+    }
   }
 });
 
@@ -3199,6 +3204,65 @@ window.fecharModalDiariaBackdrop = function(e) {
   }
 };
 
+window.copiarFichaDiarista = function(diariaId) {
+  const dia = cachedDiaristasList.find(d => d.id === diariaId);
+  if (!dia) return;
+
+  const user = dia.usuario || {};
+  const extras = dia.dados_extras || {};
+  const valorTotalFmt = parseFloat(dia.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const diasArr = Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados : [dia.dias_selecionados];
+  const acNome = (dia.acomodacao && dia.acomodacao.nome) ? dia.acomodacao.nome : dia.acomodacao_nome;
+  const acTipo = (dia.acomodacao && dia.acomodacao.tipo) ? dia.acomodacao.tipo : dia.acomodacao_tipo;
+
+  const linhas = [
+    `=== FICHA DE DIÁRIA #${dia.id} - ${eventoAtual?.titulo || 'EVENTO UMP'} ===`,
+    `Nome: ${user.nome || 'N/A'}`,
+    `E-mail: ${user.email || 'N/A'}`
+  ];
+
+  if (user.cpf || extras.cpf) linhas.push(`CPF: ${formatarCPF(user.cpf || extras.cpf || '') || 'Não informado'}`);
+  if (user.telefone || extras.telefone) linhas.push(`Telefone: ${formatarTelefone(user.telefone || extras.telefone || '') || 'Não informado'}`);
+  if (extras.data_nascimento) linhas.push(`Data Nasc.: ${extras.data_nascimento}`);
+  if (extras.genero) linhas.push(`Gênero: ${extras.genero}`);
+  if (extras.estado_civil) linhas.push(`Estado Civil: ${extras.estado_civil}`);
+
+  linhas.push(`----------------------------------------`);
+  linhas.push(`Dias Contratados (${dia.quantidade_dias} dia(s)): ${diasArr.join(', ')}`);
+  linhas.push(`Acomodação: ${acNome ? (acNome + (acTipo ? ' (' + acTipo + ')' : '')) : 'Não definida'}`);
+
+  const temEcl = ['igreja', 'presbiterio', 'cidade', 'nome_pastor', 'contato_pastor', 'cargo_federacao'].some(k => extras && extras[k]);
+  if (temEcl) {
+    linhas.push(`----------------------------------------`);
+    if (extras.igreja) linhas.push(`Igreja: ${extras.igreja}`);
+    if (extras.presbiterio) linhas.push(`Presbitério: ${extras.presbiterio}`);
+    if (extras.cidade) linhas.push(`Cidade: ${extras.cidade}`);
+    if (extras.nome_pastor) linhas.push(`Pastor: ${extras.nome_pastor}`);
+    if (extras.contato_pastor) linhas.push(`Contato Pastor: ${extras.contato_pastor}`);
+    if (extras.cargo_federacao) linhas.push(`Cargo na Federação: ${extras.cargo_federacao}`);
+  }
+
+  const temSaude = ['tipo_sanguineo', 'contato_emergencia', 'alergias', 'medicamento_continuo', 'restricao_alimentar'].some(k => extras && extras[k]);
+  if (temSaude) {
+    linhas.push(`----------------------------------------`);
+    if (extras.tipo_sanguineo) linhas.push(`Tipo Sanguíneo: ${extras.tipo_sanguineo}`);
+    if (extras.contato_emergencia) linhas.push(`Emergência: ${extras.contato_emergencia}`);
+    if (extras.alergias) linhas.push(`Alergias: ${extras.alergias}`);
+    if (extras.medicamento_continuo) linhas.push(`Medicamento Contínuo: ${extras.medicamento_continuo}`);
+    if (extras.restricao_alimentar) linhas.push(`Restrição Alimentar: ${extras.restricao_alimentar}`);
+  }
+
+  if (extras.tamanho_camiseta) linhas.push(`Camiseta: ${extras.tamanho_camiseta}`);
+
+  linhas.push(`----------------------------------------`);
+  linhas.push(`Código Check-in: ${dia.codigo_checkin || 'N/A'}`);
+  linhas.push(`Status Check-in: ${dia.checkin_realizado ? 'Checked-in' : 'Ausente'}`);
+  linhas.push(`Valor Total: ${valorTotalFmt}`);
+  linhas.push(`Status da Diária: ${dia.status}`);
+
+  window.copiarTextoParaClipboard(linhas.join('\n'), 'Ficha da diária');
+};
+
 window.abrirModalFichaDiaria = function(diariaId) {
   const dia = cachedDiaristasList.find(d => d.id === diariaId);
   if (!dia) return;
@@ -3209,115 +3273,464 @@ window.abrirModalFichaDiaria = function(diariaId) {
   const conteudo = document.getElementById('modal-detalhes-diaria-conteudo');
   if (!modal || !conteudo) return;
 
+  const iniciais = obterIniciaisNome(user.nome || 'Participante');
   const tel = user.telefone || extras.telefone || '';
   const telLimpo = tel.replace(/\D/g, '');
-  const waLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento!` : null;
+  const telFormatado = formatarTelefone(tel);
+  const cpfFormatado = formatarCPF(user.cpf || extras.cpf || '');
+  const valorTotalFmt = parseFloat(dia.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const dataCriacaoFmt = dia.created_at ? formatarDataHora(dia.created_at) : '';
+  const dataCheckinFmt = dia.checkin_data ? formatarDataHora(dia.checkin_data) : null;
 
+  const waLink = telLimpo ? `https://wa.me/55${telLimpo}?text=Ol%C3%A1%20${encodeURIComponent(user.nome || '')},%20tudo%20bem?%20Falamos%20da%20organiza%C3%A7%C3%A3o%20do%20evento%20${encodeURIComponent(eventoAtual?.titulo || 'UMP')}!` : null;
+
+  let badgeStatusClass = 'badge-warning';
+  if (dia.status === 'CONFIRMADA') badgeStatusClass = 'badge-success';
+  else if (dia.status === 'CANCELADA' || dia.status === 'CANCELADO') badgeStatusClass = 'badge-danger';
+
+  const checkinBadge = dia.checkin_realizado ? 
+    `<span class="badge badge-success" style="font-size:0.75rem; padding: 0.35rem 0.75rem; gap: 0.35rem; display: inline-flex; align-items: center;">${ICONS.checkCircle} Checked-in (${dataCheckinFmt || 'Confirmado'})</span>` : 
+    `<span class="badge" style="background:#F1F5F9; color:var(--text-muted); border:1px solid #E2E8F0; font-size:0.75rem; padding: 0.35rem 0.75rem; gap: 0.35rem; display: inline-flex; align-items: center;">${ICONS.clock} Ausente</span>`;
+
+  // Dias selecionados
   const diasArr = Array.isArray(dia.dias_selecionados) ? dia.dias_selecionados : [dia.dias_selecionados];
-  const diasHTML = diasArr.map(d => `
-    <span style="background: #EDE9FE; color: #6D28D9; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; margin-right: 5px;">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-      <span>${escAc(d)}</span>
-    </span>
-  `).join('');
-
-  const rotulosAmigaveis = {
-    cpf: "CPF",
-    telefone: "Telefone / WhatsApp",
-    data_nascimento: "Data de Nascimento",
-    genero: "Gênero",
-    tamanho_camiseta: "Tamanho da Camiseta",
-    tipo_sanguineo: "Tipo Sanguíneo",
-    alergias: "Alergias",
-    medicamento_continuo: "Medicamento Contínuo",
-    contato_emergencia: "Contato de Emergência",
-    restricao_alimentar: "Restrição Alimentar",
-    igreja: "Igreja / Congregação",
-    presbiterio: "Presbitério",
-    cidade: "Cidade",
-    estado_civil: "Estado Civil",
-    nome_pastor: "Nome do Pastor",
-    contato_pastor: "Contato do Pastor",
-    cargo_federacao: "Cargo na Federação"
-  };
-
-  const extrasRows = Object.keys(rotulosAmigaveis).map(campo => {
-    const val = extras[campo];
-    if (val === undefined || val === null || String(val).trim() === '') return '';
+  const diasChipsHTML = diasArr.map(d => {
+    let dFmt = d;
+    if (typeof d === 'string' && d.includes('-')) {
+      const p = d.split('T')[0].split('-');
+      if (p.length === 3) dFmt = `${p[2]}/${p[1]}/${p[0]}`;
+    }
     return `
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
-        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">${rotulosAmigaveis[campo]}</span>
-        <strong style="font-size: 0.9rem; color: var(--text-dark);">${escAc(val)}</strong>
-      </div>
+      <span class="diaria-dia-chip">
+        ${ICONS.calendar}
+        <span>${escAc(dFmt)}</span>
+      </span>
     `;
-  }).filter(Boolean).join('');
+  }).join('');
 
+  // Acomodação
   const acNome = (dia.acomodacao && dia.acomodacao.nome) ? dia.acomodacao.nome : dia.acomodacao_nome;
   const acTipo = (dia.acomodacao && dia.acomodacao.tipo) ? dia.acomodacao.tipo : dia.acomodacao_tipo;
+  const acomodacaoValorHTML = acNome ? `
+    <span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+      ${ICONS.bed}
+      <span>${escAc(acNome)}${acTipo ? ' (' + escAc(acTipo) + ')' : ''}</span>
+    </span>
+  ` : `<span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Não definida pela organização</span>`;
 
-  conteudo.innerHTML = `
-    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-weight: 700; margin-bottom: 0.25rem; display: inline-flex; align-items: center; gap: 4px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-          <span>Inscrição por Diária</span>
+  // 1. Dados Pessoais & Contato
+  let camposPessoaisHTML = `
+    <div class="ficha-item">
+      <span class="ficha-item-label">Nome Completo</span>
+      <span class="ficha-item-valor">${escAc(user.nome || '-')}</span>
+    </div>
+    <div class="ficha-item">
+      <span class="ficha-item-label">E-mail</span>
+      <span class="ficha-item-valor">
+        ${user.email ? `
+          <a href="mailto:${escAc(user.email)}" style="color:var(--primary); text-decoration:none;">${escAc(user.email)}</a>
+          <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${escAc(user.email)}', 'E-mail')" title="Copiar e-mail">${ICONS.copy}</button>
+        ` : '-'}
+      </span>
+    </div>
+  `;
+
+  if (cpfFormatado) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">CPF</span>
+        <span class="ficha-item-valor">
+          ${cpfFormatado}
+          <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${cpfFormatado}', 'CPF')" title="Copiar CPF">${ICONS.copy}</button>
         </span>
-        <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin: 0;">${escAc(user.nome || 'Participante')}</h3>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">${escAc(user.email)}</span>
       </div>
-      <button type="button" onclick="fecharModalFichaDiaria()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1;" title="Fechar">&times;</button>
-    </div>
+    `;
+  }
 
-    <!-- Dias Contratados -->
-    <div style="background: #FAF5FF; border: 1.5px dashed #C084FC; border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
-      <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #7E22CE; display: block; margin-bottom: 0.35rem;">Dias Contratados (${dia.quantidade_dias} dia(s)):</span>
-      <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
-        ${diasHTML}
+  if (telFormatado) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Telefone / WhatsApp</span>
+        <span class="ficha-item-valor">
+          ${telFormatado}
+          ${waLink ? `<a href="${waLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none; color:#10B981; vertical-align:middle;" title="Abrir WhatsApp">${ICONS.whatsapp}</a>` : ''}
+        </span>
       </div>
-    </div>
+    `;
+  }
 
-    <!-- Detalhes do Pagamento, Check-in & Acomodação -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
-        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Valor Total Pago</span>
-        <strong style="font-size: 1.1rem; color: #6D28D9;">${parseFloat(dia.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+  if (extras.data_nascimento) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Data de Nascimento / Idade</span>
+        <span class="ficha-item-valor">${calcularIdadeTexto(extras.data_nascimento)}</span>
       </div>
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
-        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Código de Check-in</span>
-        <strong style="font-size: 0.95rem; font-family: monospace; color: var(--primary);">${dia.codigo_checkin || 'N/A'}</strong>
-      </div>
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
-        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Status do Check-in</span>
-        <strong style="font-size: 0.9rem; color: ${dia.checkin_realizado ? '#10B981' : '#F59E0B'};">${dia.checkin_realizado ? 'Presente' : 'Ausente'}</strong>
-      </div>
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem;">
-        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block;">Acomodação</span>
-        <strong style="font-size: 0.9rem; color: ${acNome ? '#1D4ED8' : 'var(--text-muted)'};">${acNome ? escAc(acNome) + (acTipo ? ' (' + escAc(acTipo) + ')' : '') : 'A definir pela organização'}</strong>
-      </div>
-    </div>
+    `;
+  }
 
-    <!-- Dados Extras Preenchidos -->
-    ${extrasRows ? `
-      <div style="margin-bottom: 1.25rem;">
-        <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.5rem;">Informações da Inscrição de Diária:</h4>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem;">
-          ${extrasRows}
+  if (extras.genero) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Gênero</span>
+        <span class="ficha-item-valor">${escAc(extras.genero)}</span>
+      </div>
+    `;
+  }
+
+  if (extras.estado_civil) {
+    camposPessoaisHTML += `
+      <div class="ficha-item">
+        <span class="ficha-item-label">Estado Civil</span>
+        <span class="ficha-item-valor">${escAc(extras.estado_civil)}</span>
+      </div>
+    `;
+  }
+
+  // 2. Informações Eclesiásticas
+  const camposEclesiasticos = ['igreja', 'presbiterio', 'cidade', 'nome_pastor', 'contato_pastor', 'cargo_federacao'];
+  const exibirEclesiastico = camposEclesiasticos.some(k => extras[k]);
+  let secaoEclesiasticaHTML = '';
+
+  if (exibirEclesiastico) {
+    let itensEclHTML = '';
+    if (extras.igreja) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Igreja / Congregação</span>
+          <span class="ficha-item-valor destaque">${escAc(extras.igreja)}</span>
+        </div>
+      `;
+    }
+    if (extras.presbiterio) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Presbitério</span>
+          <span class="ficha-item-valor">${escAc(extras.presbiterio)}</span>
+        </div>
+      `;
+    }
+    if (extras.cidade) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Cidade / UF</span>
+          <span class="ficha-item-valor">${escAc(extras.cidade)}</span>
+        </div>
+      `;
+    }
+    if (extras.nome_pastor) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Pastor Responsável</span>
+          <span class="ficha-item-valor">${escAc(extras.nome_pastor)}</span>
+        </div>
+      `;
+    }
+    if (extras.contato_pastor) {
+      const pastorTelLimpo = String(extras.contato_pastor).replace(/\D/g, '');
+      const pastorWaLink = pastorTelLimpo ? `https://wa.me/55${pastorTelLimpo}` : null;
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Contato do Pastor</span>
+          <span class="ficha-item-valor">
+            ${formatarTelefone(extras.contato_pastor)}
+            ${pastorWaLink ? `<a href="${pastorWaLink}" target="_blank" style="margin-left:0.35rem; text-decoration:none; color:#10B981; vertical-align:middle;" title="Conversar no WhatsApp">${ICONS.whatsapp}</a>` : ''}
+          </span>
+        </div>
+      `;
+    }
+    if (extras.cargo_federacao) {
+      itensEclHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Cargo na Federação / Igreja</span>
+          <span class="ficha-item-valor">${escAc(extras.cargo_federacao)}</span>
+        </div>
+      `;
+    }
+
+    secaoEclesiasticaHTML = `
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.church} Informações Eclesiásticas</h4>
+        </div>
+        <div class="ficha-grid-3">
+          ${itensEclHTML}
         </div>
       </div>
-    ` : ''}
+    `;
+  }
 
-    <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-      ${waLink ? `
-        <a href="${waLink}" target="_blank" class="btn btn-outline" style="color: #10B981; border-color: #10B981; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem;">
-          ${ICONS.whatsapp} Conversar no WhatsApp
-        </a>
-      ` : '<div></div>'}
-      
-      <div style="display: flex; gap: 0.5rem;">
-        <button type="button" class="btn btn-primary" onclick="toggleCheckinDiaria(${dia.id}); fecharModalFichaDiaria();" style="font-size: 0.85rem;">
-          ${dia.checkin_realizado ? 'Desfazer Check-in' : 'Confirmar Check-in'}
+  // 3. Saúde, Emergência & Alimentação
+  const camposSaude = ['tipo_sanguineo', 'contato_emergencia', 'alergias', 'medicamento_continuo', 'restricao_alimentar'];
+  const exibirSaude = camposSaude.some(k => extras[k]);
+  let secaoSaudeHTML = '';
+
+  if (exibirSaude) {
+    let itensSaudeHTML = '';
+    if (extras.contato_emergencia) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Contato(s) de Emergência</span>
+          <span class="ficha-item-valor" style="font-weight: 700; color: #DC2626;">
+            ${escAc(extras.contato_emergencia)}
+          </span>
+        </div>
+      `;
+    }
+    if (extras.restricao_alimentar) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Restrição Alimentar</span>
+          <span class="ficha-item-valor">${escAc(extras.restricao_alimentar)}</span>
+        </div>
+      `;
+    }
+    if (extras.alergias) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Alergias</span>
+          <span class="ficha-item-valor">
+            <span style="background:#FEF2F2; border:1px solid #FECACA; color:#B91C1C; padding:0.25rem 0.5rem; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; display:inline-flex; align-items:center; gap:0.35rem;">
+              ${ICONS.alertTriangle}
+              <span>${escAc(extras.alergias)}</span>
+            </span>
+          </span>
+        </div>
+      `;
+    }
+    if (extras.medicamento_continuo) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Medicamento Contínuo</span>
+          <span class="ficha-item-valor">${escAc(extras.medicamento_continuo)}</span>
+        </div>
+      `;
+    }
+    if (extras.tipo_sanguineo) {
+      itensSaudeHTML += `
+        <div class="ficha-item">
+          <span class="ficha-item-label">Tipo Sanguíneo</span>
+          <span class="ficha-item-valor">
+            <span class="badge" style="background:#FEE2E2; color:#B91C1C; border:1px solid #FCA5A5; font-weight:800; font-size:0.78rem; gap:0.25rem;">${ICONS.droplet} ${escAc(extras.tipo_sanguineo)}</span>
+          </span>
+        </div>
+      `;
+    }
+
+    secaoSaudeHTML = `
+      <div class="ficha-secao" style="border-left: 3px solid #EF4444;">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.health} Saúde, Emergência & Alimentação</h4>
+        </div>
+        <div class="ficha-grid-2">
+          ${itensSaudeHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Outros Campos Extras
+  const camposPadroes = [
+    'cpf', 'telefone', 'data_nascimento', 'genero', 'tamanho_camiseta',
+    'tipo_sanguineo', 'alergias', 'medicamento_continuo', 'contato_emergencia',
+    'restricao_alimentar', 'igreja', 'presbiterio', 'cidade', 'estado_civil',
+    'nome_pastor', 'contato_pastor', 'cargo_federacao'
+  ];
+  const outrosCampos = Object.keys(extras).filter(k => !camposPadroes.includes(k) && extras[k] !== undefined && extras[k] !== null && String(extras[k]).trim() !== '');
+
+  let secaoOutrosHTML = '';
+  if (outrosCampos.length > 0) {
+    const itensOutrosHTML = outrosCampos.map(k => `
+      <div class="ficha-item">
+        <span class="ficha-item-label">${escAc(k.replace(/_/g, ' '))}</span>
+        <span class="ficha-item-valor">${escAc(extras[k])}</span>
+      </div>
+    `).join('');
+
+    secaoOutrosHTML = `
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.fileText} Informações Adicionais</h4>
+        </div>
+        <div class="ficha-grid-3">
+          ${itensOutrosHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  conteudo.innerHTML = `
+    <!-- Topo / Cabeçalho do Modal -->
+    <div class="modal-detalhes-header">
+      <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+        <div class="ficha-avatar avatar-diaria">
+          ${iniciais}
+        </div>
+        <div style="min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+            <span class="badge" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE; font-weight: 700; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+              ${ICONS.calendar}
+              <span>Inscrição por Diária</span>
+            </span>
+            <span class="badge ${badgeStatusClass}" style="font-size: 0.72rem;">
+              ${dia.status}
+            </span>
+          </div>
+          <h3 style="margin: 0.2rem 0 0 0; font-size: 1.2rem; font-weight: 800; color: var(--text-dark); word-break: break-word;">
+            ${escAc(user.nome || 'Participante')}
+          </h3>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+            <span>Diária <strong>#${dia.id}</strong></span>
+            ${dataCriacaoFmt ? `<span>• ${dataCriacaoFmt}</span>` : ''}
+            ${user.email ? `<span>• ${escAc(user.email)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn-action-icon" onclick="fecharModalFichaDiaria()" style="background: #F1F5F9; color: var(--text-muted);" title="Fechar (Esc)">
+        ${ICONS.x}
+      </button>
+    </div>
+
+    <!-- Barra de Ações Rápidas -->
+    <div class="modal-detalhes-bar">
+      <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+        ${waLink ? `
+          <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="btn btn-success" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem; text-decoration: none;">
+            ${ICONS.whatsapp}
+            <span>WhatsApp</span>
+          </a>
+        ` : ''}
+        <button type="button" class="btn btn-outline" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="copiarFichaDiarista(${dia.id})">
+          ${ICONS.copy}
+          <span>Copiar Ficha</span>
         </button>
-        <button type="button" class="btn btn-outline" onclick="fecharModalFichaDiaria()" style="font-size: 0.85rem;">
+      </div>
+
+      <div>
+        ${dia.checkin_realizado ? `
+          <button type="button" class="btn btn-outline" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; color: #DC2626; border-color: #FCA5A5; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="toggleCheckinDiaria(${dia.id}); fecharModalFichaDiaria();">
+            ${ICONS.undo}
+            <span>Desfazer Check-in</span>
+          </button>
+        ` : `
+          <button type="button" class="btn btn-primary" style="padding: 0 0.65rem; height: 30px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem;" onclick="toggleCheckinDiaria(${dia.id}); fecharModalFichaDiaria();">
+            ${ICONS.check}
+            <span>Confirmar Check-in</span>
+          </button>
+        `}
+      </div>
+    </div>
+
+    <!-- Corpo com Rolagem Estruturada -->
+    <div class="modal-detalhes-body">
+
+      <!-- Seção 1: Dias Contratados & Acomodação -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.calendar} Dias Contratados & Acomodação</h4>
+        </div>
+
+        <div class="diaria-dias-banner" style="margin-bottom: 0.85rem;">
+          <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #7E22CE; letter-spacing: 0.04em; margin-bottom: 0.45rem;">
+            Dias Selecionados (${dia.quantidade_dias} dia${dia.quantidade_dias > 1 ? 's' : ''})
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+            ${diasChipsHTML}
+          </div>
+        </div>
+
+        <div class="ficha-grid-3">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Acomodação</span>
+            <div class="ficha-item-valor" style="margin-top: 0.15rem;">
+              ${acomodacaoValorHTML}
+            </div>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Código de Check-in</span>
+            <span class="ficha-item-valor" style="margin-top: 0.15rem;">
+              ${dia.codigo_checkin ? `
+                <code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-weight:700; color:var(--primary); font-size:0.825rem;">${dia.codigo_checkin}</code>
+                <button class="btn-copy-chip" onclick="copiarTextoParaClipboard('${dia.codigo_checkin}', 'Código Check-in')" title="Copiar código">${ICONS.copy}</button>
+              ` : '-'}
+            </span>
+          </div>
+
+          <div class="ficha-item">
+            <span class="ficha-item-label">Situação do Check-in</span>
+            <div class="ficha-item-valor" style="margin-top: 0.15rem;">
+              ${checkinBadge}
+            </div>
+          </div>
+
+          ${extras.tamanho_camiseta ? `
+            <div class="ficha-item">
+              <span class="ficha-item-label">Tamanho da Camiseta</span>
+              <span class="ficha-item-valor" style="margin-top: 0.15rem;">
+                <span class="badge" style="background:#EDE9FE; color:#6D28D9; border:1px solid #DDD6FE; font-size:0.78rem; font-weight:800;">${escAc(extras.tamanho_camiseta)}</span>
+              </span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Seção 2: Dados Pessoais & Contato -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.user} Dados Pessoais & Contato</h4>
+        </div>
+        <div class="ficha-grid-3">
+          ${camposPessoaisHTML}
+        </div>
+      </div>
+
+      <!-- Seção 3: Informações Eclesiásticas -->
+      ${secaoEclesiasticaHTML}
+
+      <!-- Seção 4: Saúde, Emergência & Alimentação -->
+      ${secaoSaudeHTML}
+
+      <!-- Seção 5: Informações Adicionais -->
+      ${secaoOutrosHTML}
+
+      <!-- Seção 6: Informações Financeiras & Pagamento -->
+      <div class="ficha-secao">
+        <div class="ficha-secao-titulo">
+          <h4>${ICONS.creditCard} Informações Financeiras & Pagamento</h4>
+        </div>
+        <div class="ficha-grid-3">
+          <div class="ficha-item">
+            <span class="ficha-item-label">Valor Total Pago</span>
+            <span class="ficha-item-valor destaque" style="font-size: 1.15rem; font-weight: 800; color: #6D28D9;">
+              ${valorTotalFmt}
+            </span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-item-label">Quantidade de Diárias</span>
+            <span class="ficha-item-valor">${dia.quantidade_dias} diária(s)</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-item-label">Forma de Pagamento</span>
+            <span class="ficha-item-valor">${escAc(dia.forma_pagamento || 'InfinitePay')}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-item-label">Status do Pagamento</span>
+            <span class="ficha-item-valor">
+              <span class="badge ${badgeStatusClass}">${dia.status}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Rodapé Fixo do Modal -->
+    <div class="modal-detalhes-footer">
+      <span style="font-size: 0.78rem; color: var(--text-muted);">
+        Inscrição por Diária • Gestão do Evento
+      </span>
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalFichaDiaria()" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
           Fechar
         </button>
       </div>
