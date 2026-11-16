@@ -54,4 +54,4 @@ class InscricaoDiaria(Base):
 
     usuario = relationship("Usuario", back_populates="diarias")
     evento = relationship("Evento", back_populates="diarias")
-    acomodacao = relationship("Acomodacao", back_populates="diarias")
+    acomodacao = relationship("Acomodacao", back_populates="diarias", foreign_keys=[acomodacao_id])

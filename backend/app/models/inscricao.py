@@ -24,5 +24,5 @@ class Inscricao(Base):
 
     usuario = relationship("Usuario", back_populates="inscricoes")
     evento = relationship("Evento", back_populates="inscricoes")
-    acomodacao = relationship("Acomodacao", back_populates="inscricoes")
+    acomodacao = relationship("Acomodacao", back_populates="inscricoes", foreign_keys=[acomodacao_id])
     pagamentos = relationship("Pagamento", back_populates="inscricao", cascade="all, delete-orphan")

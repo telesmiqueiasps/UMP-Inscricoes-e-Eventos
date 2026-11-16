@@ -2871,8 +2871,13 @@ async function processarQrCodeEscaneado(codigo) {
       acTriagemContainer.style.display = 'block';
       const acNome = (res.acomodacao && res.acomodacao.nome) ? res.acomodacao.nome : res.acomodacao_nome;
       const acTipo = (res.acomodacao && res.acomodacao.tipo) ? res.acomodacao.tipo : res.acomodacao_tipo;
+      const acLider = (res.acomodacao && res.acomodacao.lider) ? res.acomodacao.lider : null;
 
       if (acNome) {
+        const liderInfoCheckin = (acLider && acLider.nome)
+          ? `<div style="font-size: 0.75rem; color: #047857; margin-top: 3px;"><strong>Líder do Quarto:</strong> ${escAc(acLider.nome)}${acLider.telefone ? ` (${escAc(acLider.telefone)})` : ''}</div>`
+          : '';
+
         acTriagemContainer.innerHTML = `
           <div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #065F46; width: 100%;">
             <div style="background: #D1FAE5; padding: 0.35rem; border-radius: var(--radius-sm); color: #059669; display: flex; align-items: center;">
@@ -2881,6 +2886,7 @@ async function processarQrCodeEscaneado(codigo) {
             <div>
               <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #047857; display: block; letter-spacing: 0.04em;">Acomodação Atribuída</span>
               <strong style="font-size: 0.95rem; color: #064E3B;">${escAc(acNome)}${acTipo ? ` (${escAc(acTipo)})` : ''}</strong>
+              ${liderInfoCheckin}
             </div>
           </div>
         `;
@@ -5464,10 +5470,29 @@ function renderAcomodacoesUI() {
       generoBadge = `<span class="badge" style="background: #F0FDF4; color: #15803D;">Família / Misto</span>`;
     }
 
+    let liderBannerHtml = '';
+    if (ac.lider && ac.lider.nome) {
+      liderBannerHtml = `
+        <div style="background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px; padding: 0.45rem 0.65rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
+          <div style="display: flex; align-items: center; gap: 0.4rem; min-width: 0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+            <div style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              <span style="font-weight: 700; color: #92400E;">Líder:</span>
+              <strong style="color: #78350F; margin-left: 2px;">${escAc(ac.lider.nome)}</strong>
+              ${ac.lider.telefone ? `<span style="font-size: 0.73rem; color: #B45309; margin-left: 4px;">(${escAc(ac.lider.telefone)})</span>` : ''}
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline" onclick="removerLiderAcomodacao(${ac.id})" title="Remover liderança deste quarto" style="padding: 0.15rem 0.45rem; font-size: 0.72rem; color: #B45309; border-color: #FDE68A; background: #FFFBEB; flex-shrink: 0;">
+            Remover Líder
+          </button>
+        </div>
+      `;
+    }
+
     const ocupantes = ac.ocupantes || [];
     const ocupantesHtml = ocupantes.length === 0
       ? `<div style="padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); background: #F8FAFC; border-radius: var(--radius-md);">Nenhum participante alocado.</div>`
-      : `<div style="max-height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+      : `<div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
           ${ocupantes.map(oc => {
             const tipoTag = oc.tipo === 'DIARIA'
               ? `<span style="font-size: 0.68rem; background: #EDE9FE; color: #6D28D9; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Diária</span>`
@@ -5475,13 +5500,27 @@ function renderAcomodacoesUI() {
             const checkinTag = oc.checkin_realizado
               ? `<span style="font-size: 0.68rem; background: #DCFCE7; color: #15803D; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Check-in</span>`
               : '';
+            const liderTag = oc.is_lider
+              ? `<span style="font-size: 0.68rem; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; padding: 1px 5px; border-radius: 4px; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg> Líder</span>`
+              : '';
+            const liderBtn = oc.is_lider
+              ? `<button type="button" class="btn btn-outline" title="Remover cargo de líder" onclick="removerLiderAcomodacao(${ac.id})" style="padding: 0.2rem 0.45rem; font-size: 0.73rem; color: #B45309; border-color: #FDE68A; background: #FFFBEB; flex-shrink: 0;">Tirar Líder</button>`
+              : `<button type="button" class="btn btn-outline" title="Definir como Líder do Quarto" onclick="definirLiderAcomodacao(${ac.id}, ${oc.registro_id}, '${oc.tipo}', '${escAc(oc.nome)}')" style="padding: 0.2rem 0.45rem; font-size: 0.73rem; color: #1D4ED8; border-color: #BFDBFE; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg> Tornar Líder</button>`;
+
             return `
-              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-size: 0.82rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem; background: ${oc.is_lider ? '#FFFDF5' : '#F8FAFC'}; border: 1px solid ${oc.is_lider ? '#FDE68A' : '#E2E8F0'}; border-radius: var(--radius-md); font-size: 0.82rem;">
                 <div style="min-width: 0; flex: 1;">
-                  <div style="font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escAc(oc.nome)} ${tipoTag} ${checkinTag}</div>
-                  <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escAc(oc.igreja || 'Sem igreja')} ${oc.genero ? '• ' + escAc(oc.genero) : ''}</div>
+                  <div style="font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                    <span>${escAc(oc.nome)}</span> ${liderTag} ${tipoTag} ${checkinTag}
+                  </div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${escAc(oc.igreja || 'Sem igreja')} ${oc.genero ? '• ' + escAc(oc.genero) : ''} ${oc.telefone ? '• ' + escAc(oc.telefone) : ''}
+                  </div>
                 </div>
-                <button type="button" class="btn btn-outline" title="Remover da acomodação" onclick="desalocarParticipanteAcomodacao('${oc.tipo}', ${oc.registro_id}, '${escAc(oc.nome)}')" style="padding: 0.2rem 0.45rem; font-size: 0.75rem; color: #DC2626; border-color: #FECACA; flex-shrink: 0;">Remover</button>
+                <div style="display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;">
+                  ${liderBtn}
+                  <button type="button" class="btn btn-outline" title="Remover da acomodação" onclick="desalocarParticipanteAcomodacao('${oc.tipo}', ${oc.registro_id}, '${escAc(oc.nome)}')" style="padding: 0.2rem 0.45rem; font-size: 0.73rem; color: #DC2626; border-color: #FECACA; flex-shrink: 0;">Remover</button>
+                </div>
               </div>
             `;
           }).join('')}
@@ -5503,6 +5542,8 @@ function renderAcomodacoesUI() {
             <button type="button" class="btn btn-outline" onclick="excluirAcomodacao(${ac.id}, '${escAc(ac.nome)}')" style="padding: 0.3rem 0.55rem; font-size: 0.78rem; color: #DC2626; border-color: #FECACA;">Excluir</button>
           </div>
         </div>
+
+        ${liderBannerHtml}
 
         <div>
           <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">
@@ -5807,6 +5848,38 @@ window.desalocarParticipanteAcomodacao = async function(tipo, registroId, nome) 
   }
 };
 
+window.definirLiderAcomodacao = async function(acomodacaoId, registroId, tipo, nome) {
+  if (!confirm(`Definir "${nome}" como Líder/Responsável por esta acomodação?`)) return;
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/lider`, {
+      method: 'PUT',
+      body: JSON.stringify({ registro_id: registroId, tipo: tipo || 'REGULAR' })
+    });
+    if (typeof showToast === 'function') {
+      showToast(`"${nome}" definido como líder da acomodação!`, 'success');
+    }
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao definir líder da acomodação.');
+  }
+};
+
+window.removerLiderAcomodacao = async function(acomodacaoId) {
+  if (!confirm('Remover o líder/responsável atual desta acomodação?')) return;
+  try {
+    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/lider`, {
+      method: 'PUT',
+      body: JSON.stringify({ registro_id: null, tipo: null })
+    });
+    if (typeof showToast === 'function') {
+      showToast('Líder da acomodação removido.', 'success');
+    }
+    await carregarAcomodacoesEvento();
+  } catch (err) {
+    alert(err.message || 'Erro ao remover líder da acomodação.');
+  }
+};
+
 window.imprimirAcomodacoes = function() {
   if (!cacheAcomodacoesData) return;
   const acomodacoes = cacheAcomodacoesData.acomodacoes || [];
@@ -5819,11 +5892,14 @@ window.imprimirAcomodacoes = function() {
 
   const roomsHtml = acomodacoes.map(ac => {
     const ocupantes = ac.ocupantes || [];
+    const liderTexto = ac.lider && ac.lider.nome
+      ? `<div style="font-size: 13px; color: #92400E; font-weight: bold; margin-bottom: 6px;">Líder do Quarto: ${escAc(ac.lider.nome)}${ac.lider.telefone ? ' — Contato: ' + escAc(ac.lider.telefone) : ''}</div>`
+      : '';
     const rows = ocupantes.length > 0
       ? ocupantes.map((oc, idx) => `
-          <tr>
+          <tr ${oc.is_lider ? 'style="background: #FFFBEB; font-weight: bold;"' : ''}>
             <td>${idx + 1}</td>
-            <td>${escAc(oc.nome)}</td>
+            <td>${escAc(oc.nome)}${oc.is_lider ? ' [Líder]' : ''}</td>
             <td>${escAc(oc.igreja || '-')}</td>
             <td>${escAc(oc.genero || '-')}</td>
             <td>${oc.tipo === 'DIARIA' ? 'Diária' : 'Integral'}</td>
@@ -5833,6 +5909,7 @@ window.imprimirAcomodacoes = function() {
     return `
       <div class="room-box">
         <h3>${escAc(ac.nome)} <small>(${escAc(ac.tipo || 'Quarto')} — ${ocupantes.length}/${ac.capacidade || '∞'})</small></h3>
+        ${liderTexto}
         ${ac.descricao ? `<p class="desc">${escAc(ac.descricao)}</p>` : ''}
         <table>
           <thead><tr><th style="width:36px;">#</th><th>Nome</th><th>Igreja</th><th>Gênero</th><th>Modalidade</th></tr></thead>

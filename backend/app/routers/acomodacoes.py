@@ -13,13 +13,14 @@ from app.schemas.acomodacao import (
     AcomodacaoCreate,
     AcomodacaoUpdate,
     AcomodacaoAlocarRequest,
-    AcomodacaoDesalocarRequest
+    AcomodacaoDesalocarRequest,
+    AcomodacaoDefinirLiderRequest
 )
 
 router = APIRouter(prefix="/admin/eventos/{evento_id}/acomodacoes", tags=["Acomodações"])
 
 
-def _serializar_participante(reg: Any, tipo: str) -> Dict[str, Any]:
+def _serializar_participante(reg: Any, tipo: str, is_lider: bool = False) -> Dict[str, Any]:
     """Serializa uma inscrição regular ou diária para exibição na gestão de acomodações."""
     usuario = reg.usuario
     extras = reg.dados_extras if isinstance(reg.dados_extras, dict) else {}
@@ -30,12 +31,13 @@ def _serializar_participante(reg: Any, tipo: str) -> Dict[str, Any]:
         "usuario_id": reg.usuario_id,
         "nome": usuario.nome if usuario else "Participante",
         "email": usuario.email if usuario else "",
-        "telefone": (usuario.telefone if usuario and usuario.telefone else extras.get("telefone")) or "",
+        "telefone": (usuario.telefone if usuario and usuario.telefone else extras.get("telefone") or extras.get("whatsapp")) or "",
         "genero": extras.get("genero") or "",
         "igreja": extras.get("igreja") or "",
         "status": reg.status,
         "checkin_realizado": bool(reg.checkin_realizado),
-        "acomodacao_id": reg.acomodacao_id
+        "acomodacao_id": reg.acomodacao_id,
+        "is_lider": is_lider
     }
 
 
@@ -75,14 +77,23 @@ def listar_acomodacoes_evento(
         .all()
     )
 
+    acomodacoes_map = {ac.id: ac for ac in acomodacoes}
     ocupantes_por_acomodacao: Dict[int, List[Dict[str, Any]]] = {ac.id: [] for ac in acomodacoes}
     sem_acomodacao: List[Dict[str, Any]] = []
 
     for reg, tipo in [(i, "REGULAR") for i in inscricoes] + [(d, "DIARIA") for d in diarias]:
-        item = _serializar_participante(reg, tipo)
         if reg.acomodacao_id and reg.acomodacao_id in ocupantes_por_acomodacao:
+            ac_alvo = acomodacoes_map.get(reg.acomodacao_id)
+            is_lider = bool(
+                ac_alvo and (
+                    (tipo == "REGULAR" and ac_alvo.lider_inscricao_id == reg.id) or
+                    (tipo == "DIARIA" and ac_alvo.lider_diaria_id == reg.id)
+                )
+            )
+            item = _serializar_participante(reg, tipo, is_lider=is_lider)
             ocupantes_por_acomodacao[reg.acomodacao_id].append(item)
         else:
+            item = _serializar_participante(reg, tipo, is_lider=False)
             sem_acomodacao.append(item)
 
     sem_acomodacao.sort(key=lambda x: (x["nome"] or "").lower())
@@ -92,7 +103,7 @@ def listar_acomodacoes_evento(
     total_alocados = 0
 
     for ac in acomodacoes:
-        ocupantes = sorted(ocupantes_por_acomodacao.get(ac.id, []), key=lambda x: (x["nome"] or "").lower())
+        ocupantes = sorted(ocupantes_por_acomodacao.get(ac.id, []), key=lambda x: (not x.get("is_lider"), (x["nome"] or "").lower()))
         ocupados_count = len(ocupantes)
         cap = int(ac.capacidade or 0)
         capacidade_total += cap
@@ -107,7 +118,8 @@ def listar_acomodacoes_evento(
             "descricao": ac.descricao,
             "ocupados_count": ocupados_count,
             "vagas_restantes": max(0, cap - ocupados_count) if cap > 0 else None,
-            "ocupantes": ocupantes
+            "ocupantes": ocupantes,
+            "lider": ac.get_lider_info()
         })
 
     return {
@@ -266,8 +278,12 @@ def alocar_inscritos_acomodacao(
         )
 
     for r in inscricoes_alvo:
+        if r.acomodacao_id and r.acomodacao_id != ac.id:
+            db.query(Acomodacao).filter(Acomodacao.id == r.acomodacao_id, Acomodacao.lider_inscricao_id == r.id).update({"lider_inscricao_id": None}, synchronize_session=False)
         r.acomodacao_id = ac.id
     for d in diarias_alvo:
+        if d.acomodacao_id and d.acomodacao_id != ac.id:
+            db.query(Acomodacao).filter(Acomodacao.id == d.acomodacao_id, Acomodacao.lider_diaria_id == d.id).update({"lider_diaria_id": None}, synchronize_session=False)
         d.acomodacao_id = ac.id
 
     db.commit()
@@ -296,7 +312,75 @@ def desalocar_inscrito_acomodacao(
     if not reg:
         raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
 
+    # Se esse participante era líder de alguma acomodação, remover liderança
+    if reg.acomodacao_id:
+        if tipo == "DIARIA":
+            db.query(Acomodacao).filter(Acomodacao.id == reg.acomodacao_id, Acomodacao.lider_diaria_id == reg.id).update({"lider_diaria_id": None}, synchronize_session=False)
+        else:
+            db.query(Acomodacao).filter(Acomodacao.id == reg.acomodacao_id, Acomodacao.lider_inscricao_id == reg.id).update({"lider_inscricao_id": None}, synchronize_session=False)
+
     reg.acomodacao_id = None
     db.commit()
     return {"sucesso": True, "mensagem": "Participante removido da acomodação."}
+
+
+@router.put("/{acomodacao_id}/lider")
+def definir_lider_acomodacao(
+    evento_id: int,
+    acomodacao_id: int,
+    req: AcomodacaoDefinirLiderRequest,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin_global)
+):
+    """Define ou remove o líder/responsável de uma acomodação."""
+    ac = db.query(Acomodacao).filter(
+        Acomodacao.id == acomodacao_id,
+        Acomodacao.evento_id == evento_id
+    ).first()
+    if not ac:
+        raise HTTPException(status_code=404, detail="Acomodação não encontrada.")
+
+    # Se registro_id for nulo ou 0, remover líder
+    if not req.registro_id:
+        ac.lider_inscricao_id = None
+        ac.lider_diaria_id = None
+        db.commit()
+        db.refresh(ac)
+        return {
+            "sucesso": True,
+            "mensagem": "Líder da acomodação removido com sucesso.",
+            "lider": None
+        }
+
+    tipo = (req.tipo or "REGULAR").upper().strip()
+    if tipo == "DIARIA":
+        dia = db.query(InscricaoDiaria).filter(
+            InscricaoDiaria.id == req.registro_id,
+            InscricaoDiaria.evento_id == evento_id
+        ).first()
+        if not dia:
+            raise HTTPException(status_code=404, detail="Inscrição de diária não encontrada.")
+        if dia.acomodacao_id != ac.id:
+            raise HTTPException(status_code=400, detail="O participante selecionado deve estar alocado nesta acomodação para ser líder.")
+        ac.lider_diaria_id = dia.id
+        ac.lider_inscricao_id = None
+    else:
+        ins = db.query(Inscricao).filter(
+            Inscricao.id == req.registro_id,
+            Inscricao.evento_id == evento_id
+        ).first()
+        if not ins:
+            raise HTTPException(status_code=404, detail="Inscrição não encontrada.")
+        if ins.acomodacao_id != ac.id:
+            raise HTTPException(status_code=400, detail="O participante selecionado deve estar alocado nesta acomodação para ser líder.")
+        ac.lider_inscricao_id = ins.id
+        ac.lider_diaria_id = None
+
+    db.commit()
+    db.refresh(ac)
+    return {
+        "sucesso": True,
+        "mensagem": "Líder da acomodação definido com sucesso!",
+        "lider": ac.get_lider_info()
+    }
 

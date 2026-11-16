@@ -246,7 +246,28 @@ function renderActiveItem(eventKey) {
   }
 }
 
-// Renderizar dados de uma Diária Confirmada
+function formatarTelefoneLider(tel) {
+  if (!tel) return '';
+  const digits = String(tel).replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return tel;
+}
+
+function getWhatsAppLinkLider(tel) {
+  if (!tel) return '';
+  let digits = String(tel).replace(/\D/g, '');
+  if (digits.length === 10 || digits.length === 11) {
+    digits = '55' + digits;
+  }
+  return `https://wa.me/${digits}`;
+}
+
+// Renderizar dados de Acomodação (com Líder e Contato)
 function renderAcomodacaoInfoLine(acomodacao) {
   const acText = acomodacao && acomodacao.nome
     ? `${escapeHtmlOficina(acomodacao.nome)}${acomodacao.tipo ? ' (' + escapeHtmlOficina(acomodacao.tipo) + ')' : ''}`
@@ -258,16 +279,47 @@ function renderAcomodacaoInfoLine(acomodacao) {
     ? `<div style="font-size: 0.75rem; color: #64748B; margin-top: 2px;">${escapeHtmlOficina(acomodacao.descricao)}</div>`
     : '';
 
+  let acLiderHtml = '';
+  if (acomodacao && acomodacao.lider && acomodacao.lider.nome) {
+    const liderNome = escapeHtmlOficina(acomodacao.lider.nome);
+    const rawTel = acomodacao.lider.telefone;
+    const telFormatado = formatarTelefoneLider(rawTel);
+    const waLink = getWhatsAppLinkLider(rawTel);
+
+    acLiderHtml = `
+      <div style="margin-top: 0.5rem; padding: 0.5rem 0.65rem; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; display: flex; flex-direction: column; gap: 0.35rem; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem;">
+          <div style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; font-weight: 700; color: #15803D;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #D97706; flex-shrink: 0;"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+            <span>Líder do Quarto:</span>
+            <span style="color: #065F46; font-weight: 600;">${liderNome}</span>
+          </div>
+          ${rawTel ? `
+            <a href="${waLink}" target="_blank" rel="noopener noreferrer" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; background: #10B981; color: #FFFFFF; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; width: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.06);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <span>Contato: ${telFormatado}</span>
+            </a>
+          ` : `
+            <span style="font-size: 0.72rem; color: #64748B;">Contato não informado</span>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
   return `
-        <div class="event-info-line">
-          <div class="event-info-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
-            <span>Acomodação:</span>
+        <div class="event-info-line" style="flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div class="event-info-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+              <span>Acomodação:</span>
+            </div>
+            <div class="event-info-val" style="${acStyle}">
+              ${acText}
+            </div>
           </div>
-          <div class="event-info-val" style="${acStyle}">
-            ${acText}
-            ${acDesc}
-          </div>
+          ${acDesc}
+          ${acLiderHtml}
         </div>`;
 }
 

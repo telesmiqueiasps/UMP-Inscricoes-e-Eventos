@@ -27,3 +27,9 @@ class AcomodacaoDesalocarRequest(BaseModel):
     tipo: str = "REGULAR"  # REGULAR ou DIARIA
     registro_id: int
 
+
+class AcomodacaoDefinirLiderRequest(BaseModel):
+    registro_id: Optional[int] = None  # None ou 0 para remover o líder
+    tipo: Optional[str] = "REGULAR"    # REGULAR ou DIARIA
+
+
