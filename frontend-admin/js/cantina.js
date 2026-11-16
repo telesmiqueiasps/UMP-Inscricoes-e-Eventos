@@ -14,7 +14,7 @@ let vendasHistoricoCache = [];
 
 // Ícones SVG Reutilizáveis (Zero Emojis)
 const SVG_ICONS = {
-  produtoFallback: `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+  produtoFallback: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
   produtoThumb: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
   imagemPreview: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`,
   alerta: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
@@ -663,11 +663,11 @@ window.renderizarVitrinePDV = function() {
         <div class="pdv-product-body">
           <div>
             <div class="pdv-product-cat">${escapeHtml(p.categoria || 'Geral')}</div>
-            <div class="pdv-product-title">${escapeHtml(p.nome)}</div>
+            <div class="pdv-product-title" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.2rem;">
             <div class="pdv-product-price">${formatBRL(p.preco_venda)}</div>
-            ${!esgotado ? `<span style="font-size: 0.72rem; font-weight: 700; color: #FF7900;">+ Adicionar</span>` : ''}
+            ${!esgotado ? `<span style="font-size: 0.65rem; font-weight: 700; color: #FF7900; background: rgba(255,121,0,0.08); padding: 0.15rem 0.35rem; border-radius: 4px;">+ Pedir</span>` : ''}
           </div>
         </div>
       </div>

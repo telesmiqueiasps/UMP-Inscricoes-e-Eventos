@@ -392,26 +392,26 @@
       box-shadow: 0 4px 12px rgba(255, 121, 0, 0.3);
     }
 
-    /* Grid de Produtos Otimizada para Mobile e Desktop */
+    /* Grid de Produtos Otimizada para Mobile e Desktop (Compacta & Densa) */
     .menu-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+      gap: 0.65rem;
       width: 100%;
     }
 
     /* Responsividade Mobile: 2 colunas compactas e elegantes */
     @media (max-width: 768px) {
       .menu-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.65rem;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.5rem;
       }
     }
 
-    @media (max-width: 360px) {
+    @media (max-width: 440px) {
       .menu-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
       }
     }
 
@@ -421,18 +421,18 @@
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.5);
     }
 
     .menu-item-card:hover {
       border-color: rgba(255, 121, 0, 0.45);
-      box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.65);
     }
 
     .menu-item-card.esgotado {
@@ -443,7 +443,7 @@
     .menu-item-media {
       position: relative;
       width: 100%;
-      height: 145px;
+      height: 85px;
       background: radial-gradient(circle at center, #00363A 0%, #001A1D 100%);
       display: flex;
       align-items: center;
@@ -454,7 +454,7 @@
 
     @media (max-width: 768px) {
       .menu-item-media {
-        height: 115px;
+        height: 72px;
       }
     }
 
@@ -470,9 +470,9 @@
     }
 
     .media-placeholder-svg {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -483,42 +483,44 @@
 
     .item-category-tag {
       position: absolute;
-      top: 8px;
-      left: 8px;
+      top: 5px;
+      left: 5px;
       background: rgba(0, 22, 24, 0.88);
       backdrop-filter: blur(6px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: var(--text-slate);
-      font-size: 0.62rem;
+      font-size: 0.56rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.07em;
-      padding: 0.2rem 0.5rem;
+      letter-spacing: 0.06em;
+      padding: 0.12rem 0.38rem;
       border-radius: 999px;
-      max-width: 58%;
+      max-width: 55%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      line-height: 1.1;
     }
 
     .item-stock-badge {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      font-size: 0.62rem;
+      top: 5px;
+      right: 5px;
+      font-size: 0.56rem;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      padding: 0.2rem 0.5rem;
+      padding: 0.12rem 0.38rem;
       border-radius: 999px;
       backdrop-filter: blur(6px);
       white-space: nowrap;
+      line-height: 1.1;
     }
 
     .item-stock-badge.disponivel {
       background: rgba(0, 184, 148, 0.92);
       color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(0, 184, 148, 0.35);
+      box-shadow: 0 2px 6px rgba(0, 184, 148, 0.35);
     }
 
     .item-stock-badge.baixo {
@@ -532,31 +534,31 @@
     }
 
     .menu-item-body {
-      padding: 0.75rem 0.75rem 0.85rem;
+      padding: 0.45rem 0.5rem 0.55rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       flex: 1;
-      gap: 0.65rem;
+      gap: 0.35rem;
     }
 
     .menu-item-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 0.92rem;
+      font-size: 0.78rem;
       font-weight: 800;
       color: #FFFFFF;
-      line-height: 1.25;
+      line-height: 1.18;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 2.3em;
+      min-height: 2.35em;
       word-break: break-word;
     }
 
     @media (max-width: 768px) {
       .menu-item-title {
-        font-size: 0.85rem;
+        font-size: 0.74rem;
       }
     }
 
@@ -564,15 +566,15 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      gap: 0.5rem;
-      padding-top: 0.55rem;
+      gap: 0.35rem;
+      padding-top: 0.35rem;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .price-label {
-      font-size: 0.6rem;
+      font-size: 0.52rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       color: var(--text-muted);
       font-weight: 700;
       display: block;
@@ -582,16 +584,16 @@
 
     .price-value {
       font-family: 'Teko', sans-serif;
-      font-size: 1.65rem;
+      font-size: 1.25rem;
       font-weight: 700;
       line-height: 0.92;
       color: var(--accent-gold-soft);
-      text-shadow: 0 0 14px rgba(255, 183, 3, 0.25);
+      text-shadow: 0 0 10px rgba(255, 183, 3, 0.25);
     }
 
     @media (max-width: 768px) {
       .price-value {
-        font-size: 1.45rem;
+        font-size: 1.15rem;
       }
     }
 
@@ -599,18 +601,26 @@
       background: rgba(0, 184, 148, 0.16);
       color: #34D399;
       border: 1px solid rgba(0, 184, 148, 0.45);
-      border-radius: 8px;
-      padding: 0.4rem 0.65rem;
-      font-size: 0.72rem;
+      border-radius: 6px;
+      padding: 0.25rem 0.45rem;
+      font-size: 0.65rem;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.25rem;
+      gap: 0.2rem;
       transition: all 0.2s;
-      min-height: 34px;
+      min-height: 26px;
       white-space: nowrap;
+    }
+
+    @media (max-width: 440px) {
+      .btn-simular-item {
+        padding: 0.2rem 0.35rem;
+        font-size: 0.6rem;
+        min-height: 24px;
+      }
     }
 
     .btn-simular-item:hover:not(:disabled) {
@@ -939,10 +949,10 @@
         const imgHtml = p.imagem_url
           ? `<img src="${escapeHtml(p.imagem_url)}" alt="${escapeHtml(p.nome)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
              <div class="media-placeholder-svg" style="display:none;">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
              </div>`
           : `<div class="media-placeholder-svg">
-               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
              </div>`;
 
         const qtdNaSacola = sacolaSimulada[p.id] || 0;
@@ -966,7 +976,7 @@
                   </div>
 
                   <button type="button" class="btn-simular-item ${qtdNaSacola > 0 ? 'selecionado' : ''}" ${!disp ? 'disabled' : ''} onclick="adicionarItemSimulador(${p.id})">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     <span>${qtdNaSacola > 0 ? `${qtdNaSacola}x` : 'Simular'}</span>
                   </button>
                 </div>
