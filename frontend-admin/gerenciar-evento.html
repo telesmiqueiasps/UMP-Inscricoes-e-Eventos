@@ -682,6 +682,70 @@
           </div>
         </div>
 
+        <!-- Bloco 2: Lista Separada de Diaristas -->
+        <div class="card" style="padding: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+            <div>
+              <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary); margin: 0; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Diaristas Cadastrados</span>
+                <span class="badge" id="diarias-total-badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.8rem;">0</span>
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">Participantes que optaram por comparecer apenas em dias específicos.</p>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn btn-outline" onclick="exportarDiaristasExcel()" style="padding: 0.4rem 0.85rem; font-size: 0.825rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>Exportar Diaristas</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros de Diaristas -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; align-items: end;">
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Buscar Diarista</label>
+              <input type="text" id="diarias-filter-search" class="form-control" placeholder="Nome, CPF ou e-mail..." onkeyup="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Filtrar por Dia</label>
+              <select id="diarias-filter-dia" class="form-control" onchange="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+                <option value="">Todos os Dias</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.8rem; margin-bottom: 0.25rem;">Status</label>
+              <select id="diarias-filter-status" class="form-control" onchange="carregarDiaristas()" style="height: 38px; font-size: 0.825rem;">
+                <option value="">Todos os Status</option>
+                <option value="CONFIRMADA">Confirmada</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tabela de Diaristas -->
+          <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+              <thead style="background: #F8FAFC; border-bottom: 1px solid var(--border-color);">
+                <tr>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Participante</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Dias Contratados</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Valor Pago</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Status</th>
+                  <th style="padding: 0.75rem; text-align: left; font-weight: 700;">Check-in</th>
+                  <th style="padding: 0.75rem; text-align: center; font-weight: 700;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="diarias-table-body">
+                <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando diaristas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="diarias-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);"></div>
+        </div>
+
       </div>
 
       <!-- TAB 2: PAGAMENTOS -->
