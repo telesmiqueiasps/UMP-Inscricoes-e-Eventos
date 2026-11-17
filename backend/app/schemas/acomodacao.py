@@ -23,13 +23,14 @@ class AcomodacaoUpdate(BaseModel):
 class AcomodacaoAlocarRequest(BaseModel):
     inscricao_ids: List[int] = []
     diaria_ids: List[int] = []
+    gratuita_ids: List[int] = []
 
 
 class AcomodacaoDesalocarRequest(BaseModel):
-    tipo: str = "REGULAR"  # REGULAR ou DIARIA
+    tipo: str = "REGULAR"  # REGULAR, DIARIA ou GRATUIDADE
     registro_id: int
 
 
 class AcomodacaoDefinirLiderRequest(BaseModel):
     registro_id: Optional[int] = None  # None ou 0 para remover o líder
-    tipo: Optional[str] = "REGULAR"    # REGULAR ou DIARIA
+    tipo: Optional[str] = "REGULAR"    # REGULAR, DIARIA ou GRATUIDADE

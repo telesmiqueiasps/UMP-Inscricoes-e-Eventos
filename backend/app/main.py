@@ -21,7 +21,8 @@ from app.routers import (
     gincana,
     cantina,
     oficinas,
-    acomodacoes
+    acomodacoes,
+    gratuidades
 )
 
 
@@ -218,6 +219,27 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_oficina ON oficina_inscricoes(oficina_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_evento ON oficina_inscricoes(evento_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_oficina_inscricoes_usuario ON oficina_inscricoes(usuario_id);"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS inscricoes_gratuitas (
+                        id SERIAL PRIMARY KEY,
+                        evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+                        nome VARCHAR(150) NOT NULL,
+                        contato VARCHAR(50),
+                        sexo VARCHAR(30),
+                        observacao TEXT,
+                        codigo_checkin VARCHAR(100) UNIQUE,
+                        checkin_realizado BOOLEAN DEFAULT FALSE NOT NULL,
+                        checkin_data TIMESTAMP WITH TIME ZONE,
+                        acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_gratuitas_evento ON inscricoes_gratuitas(evento_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_gratuitas_checkin ON inscricoes_gratuitas(codigo_checkin);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_gratuitas_acomodacao ON inscricoes_gratuitas(acomodacao_id);"))
+                conn.execute(text("ALTER TABLE acomodacoes ADD COLUMN IF NOT EXISTS lider_gratuita_id INTEGER REFERENCES inscricoes_gratuitas(id) ON DELETE SET NULL;"))
+
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
             except Exception as err:
@@ -322,6 +344,7 @@ app.include_router(gincana.router, prefix=settings.API_V1_STR)
 app.include_router(cantina.router, prefix=settings.API_V1_STR)
 app.include_router(oficinas.router, prefix=settings.API_V1_STR)
 app.include_router(acomodacoes.router, prefix=settings.API_V1_STR)
+app.include_router(gratuidades.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

@@ -18,6 +18,7 @@ from app.models.usuario import Usuario
 from app.models.pagamento import Pagamento
 from app.models.parcela import Parcela
 from app.models.diaria import InscricaoDiaria, DiariaTriagem
+from app.models.gratuita import InscricaoGratuita
 from app.models.inscricao_triagem import InscricaoTriagem
 from app.schemas.evento import EventoCreate, EventoUpdate, EventoResponse
 from app.schemas.inscricao import InscricaoResponse
@@ -1117,9 +1118,38 @@ def obter_detalhes_checkin(
             "idade": info_part["idade"]
         }
 
+    # 3. Tentar buscar em Inscricao Gratuita
+    gratuita = db.query(InscricaoGratuita).filter(
+        InscricaoGratuita.evento_id == evento_id,
+        InscricaoGratuita.codigo_checkin == codigo_clean
+    ).first()
+
+    if gratuita:
+        return {
+            "id": gratuita.id,
+            "tipo": "GRATUIDADE",
+            "tipo_label": "Gratuidade / Cortesia",
+            "nome": gratuita.nome,
+            "cpf": "",
+            "email": "",
+            "contato": gratuita.contato or "",
+            "status": "CONFIRMADA",
+            "checkin_realizado": gratuita.checkin_realizado,
+            "checkin_data": gratuita.checkin_data.isoformat() if gratuita.checkin_data else None,
+            "codigo_checkin": gratuita.codigo_checkin,
+            "valido_hoje": True,
+            "dias_selecionados": [],
+            "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
+            "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
+            "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
+            "tamanho_camiseta": "-",
+            "data_nascimento": "-",
+            "idade": "-"
+        }
+
     raise HTTPException(
         status_code=404,
-        detail="Código de check-in não encontrado para este evento (nem como integral nem como diária)."
+        detail="Código de check-in não encontrado para este evento (nem como integral, diária ou gratuidade)."
     )
 
 
@@ -1225,6 +1255,40 @@ def realizar_checkin(
             "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
         }
 
+    # 3. Tentar Inscrição Gratuita
+    gratuita = db.query(InscricaoGratuita).filter(
+        InscricaoGratuita.evento_id == evento_id,
+        InscricaoGratuita.codigo_checkin == codigo_clean
+    ).first()
+
+    if gratuita:
+        if gratuita.checkin_realizado:
+            checkin_dt_str = gratuita.checkin_data.strftime("%d/%m/%Y %H:%M:%S") if gratuita.checkin_data else "Desconhecido"
+            return {
+                "sucesso": False,
+                "tipo": "GRATUIDADE",
+                "status_inscricao": "CONFIRMADA",
+                "participante": {"nome": gratuita.nome, "cpf": "", "email": ""},
+                "mensagem": f"Check-in de gratuidade já realizado anteriormente em {checkin_dt_str}."
+            }
+
+        gratuita.checkin_realizado = True
+        gratuita.checkin_data = datetime.utcnow()
+        db.commit()
+
+        return {
+            "sucesso": True,
+            "tipo": "GRATUIDADE",
+            "status_inscricao": "CONFIRMADA",
+            "participante": {"nome": gratuita.nome, "cpf": "", "email": ""},
+            "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
+            "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
+            "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
+            "tamanho_camiseta": "-",
+            "idade": "-",
+            "mensagem": "Check-in de gratuidade realizado com sucesso!"
+        }
+
     raise HTTPException(
         status_code=404,
         detail="Código de check-in não encontrado."
@@ -1266,6 +1330,19 @@ def listar_participantes_checkin(
             )
         )
     diarias = query_dia.all()
+
+    # Inscrições Gratuitas
+    query_grat = db.query(InscricaoGratuita).filter(InscricaoGratuita.evento_id == evento_id)
+    if search_pattern:
+        query_grat = query_grat.filter(
+            or_(
+                InscricaoGratuita.nome.ilike(search_pattern),
+                InscricaoGratuita.contato.ilike(search_pattern),
+                InscricaoGratuita.observacao.ilike(search_pattern),
+                InscricaoGratuita.codigo_checkin.ilike(search_pattern)
+            )
+        )
+    gratuidades = query_grat.all()
 
     resultado = []
     if not filtro or filtro.upper() in ["TODOS", "REGULAR"]:
@@ -1316,6 +1393,30 @@ def listar_participantes_checkin(
                 "idade": info_part["idade"]
             })
 
+    if not filtro or filtro.upper() in ["TODOS", "GRATUIDADE"]:
+        for g in gratuidades:
+            resultado.append({
+                "inscricao_id": g.id,
+                "tipo": "GRATUIDADE",
+                "tipo_label": "Gratuidade",
+                "nome": g.nome,
+                "cpf": "",
+                "email": "",
+                "contato": g.contato or "",
+                "status": "CONFIRMADA",
+                "codigo_checkin": g.codigo_checkin,
+                "checkin_realizado": g.checkin_realizado,
+                "checkin_data": g.checkin_data.isoformat() if g.checkin_data else None,
+                "dias_selecionados": [],
+                "dias_formatados": "Gratuidade",
+                "acomodacao": g.acomodacao.to_summary_dict() if g.acomodacao else None,
+                "acomodacao_nome": g.acomodacao.nome if g.acomodacao else None,
+                "acomodacao_tipo": g.acomodacao.tipo if g.acomodacao else None,
+                "tamanho_camiseta": "-",
+                "data_nascimento": "-",
+                "idade": "-"
+            })
+
     resultado.sort(key=lambda x: (x.get("nome") or "").lower())
     return resultado
 
@@ -1329,6 +1430,31 @@ def toggle_checkin_manual(
     db: Session = Depends(get_db)
 ):
     from datetime import datetime
+    if tipo.upper() == "GRATUIDADE":
+        grat = db.query(InscricaoGratuita).filter(
+            InscricaoGratuita.id == inscricao_id,
+            InscricaoGratuita.evento_id == evento_id
+        ).first()
+
+        if not grat:
+            raise HTTPException(status_code=404, detail="Inscrição gratuita não encontrada.")
+
+        if grat.checkin_realizado:
+            grat.checkin_realizado = False
+            grat.checkin_data = None
+            mensagem = f"Check-in de '{grat.nome}' desfeito com sucesso."
+        else:
+            grat.checkin_realizado = True
+            grat.checkin_data = datetime.utcnow()
+            mensagem = f"Check-in de '{grat.nome}' realizado com sucesso."
+
+        db.commit()
+        return {
+            "sucesso": True,
+            "checkin_realizado": grat.checkin_realizado,
+            "mensagem": mensagem
+        }
+
     if tipo.upper() == "DIARIA":
         diaria = db.query(InscricaoDiaria).filter(
             InscricaoDiaria.id == inscricao_id,

@@ -203,6 +203,11 @@ window.switchSubTab = function(tabId, btn) {
   if (tabId === 'pane-dashboard') {
     carregarDashboardEvento();
   }
+  if (tabId === 'pane-gratuidades') {
+    if (typeof carregarGratuidadesEvento === 'function') {
+      carregarGratuidadesEvento();
+    }
+  }
   if (tabId === 'pane-acomodacao') {
     carregarAcomodacoesEvento({ force: true });
     if (typeof iniciarAutoRefreshAcomodacoes === 'function') {
@@ -3122,6 +3127,10 @@ window.realizarCheckinManual = async function(inscricaoId, tipo = 'REGULAR') {
     }
     if (tipo === 'DIARIA') {
       await carregarDiaristas();
+    } else if (tipo === 'GRATUIDADE') {
+      if (typeof carregarGratuidadesEvento === 'function') {
+        await carregarGratuidadesEvento();
+      }
     }
   } catch (err) {
     showToast(err.message || "Erro ao atualizar check-in manual.", "error");
@@ -5812,7 +5821,9 @@ function renderAcomodacoesUI() {
           ${ocupantes.map(oc => {
             const tipoTag = oc.tipo === 'DIARIA'
               ? `<span style="font-size: 0.68rem; background: #EDE9FE; color: #6D28D9; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Diária</span>`
-              : '';
+              : (oc.tipo === 'GRATUIDADE'
+                ? `<span style="font-size: 0.68rem; background: #ECFDF5; color: #047857; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Gratuidade</span>`
+                : '');
             const checkinTag = oc.checkin_realizado
               ? `<span style="font-size: 0.68rem; background: #DCFCE7; color: #15803D; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Check-in</span>`
               : '';
@@ -5964,7 +5975,8 @@ window.alocarRapidoParticipante = async function(acomodacaoId, tipo, registroId)
   try {
     const payload = {
       inscricao_ids: tipo === 'REGULAR' ? [registroId] : [],
-      diaria_ids: tipo === 'DIARIA' ? [registroId] : []
+      diaria_ids: tipo === 'DIARIA' ? [registroId] : [],
+      gratuita_ids: tipo === 'GRATUIDADE' ? [registroId] : []
     };
     const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/alocar`, {
       method: 'POST',
@@ -6169,17 +6181,19 @@ window.confirmarAlocacaoAcomodacao = async function() {
 
   const inscricao_ids = [];
   const diaria_ids = [];
+  const gratuita_ids = [];
   alocarSelecionados.forEach(key => {
     const [tipo, idStr] = key.split(':');
     const id = parseInt(idStr, 10);
     if (tipo === 'DIARIA') diaria_ids.push(id);
+    else if (tipo === 'GRATUIDADE') gratuita_ids.push(id);
     else inscricao_ids.push(id);
   });
 
   try {
     const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${alocarAcomodacaoAtual.id}/alocar`, {
       method: 'POST',
-      body: JSON.stringify({ inscricao_ids, diaria_ids })
+      body: JSON.stringify({ inscricao_ids, diaria_ids, gratuita_ids })
     });
     fecharModalAlocarAcomodacao();
     if (typeof showToast === 'function') {
@@ -6262,7 +6276,7 @@ window.imprimirAcomodacoes = function() {
             <td>${escAc(oc.igreja || '-')}</td>
             <td>${escAc(formatarIdadeAcomodacao(oc))}</td>
             <td>${escAc(oc.genero || '-')}</td>
-            <td>${oc.tipo === 'DIARIA' ? 'Diária' : 'Integral'}</td>
+            <td>${oc.tipo === 'DIARIA' ? 'Diária' : (oc.tipo === 'GRATUIDADE' ? 'Gratuidade' : 'Integral')}</td>
           </tr>`).join('')
       : `<tr><td colspan="6" style="color: #64748b; text-align: center;">Sem participantes alocados</td></tr>`;
 
@@ -6343,3 +6357,307 @@ document.addEventListener('click', (e) => {
   }
 });
 
+
+
+// ==========================================
+// --- MÓDULO DE GESTÃO DE GRATUIDADES / INSCRIÇÕES MANUAIS ---
+// ==========================================
+
+let cacheGratuidadesData = [];
+let cacheGratuidadesResumo = null;
+
+window.carregarGratuidadesEvento = async function() {
+  if (!selectedEventoId) return;
+  const tbody = document.getElementById('grat-table-body');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando inscrições gratuitas...</td></tr>';
+  }
+
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/gratuidades`);
+    cacheGratuidadesData = res.itens || [];
+    cacheGratuidadesResumo = res.resumo || {};
+
+    // Atualizar KPIs
+    const elTotal = document.getElementById('grat-kpi-total');
+    const elPres = document.getElementById('grat-kpi-presentes');
+    const elAus = document.getElementById('grat-kpi-ausentes');
+    const elAloc = document.getElementById('grat-kpi-alocados');
+
+    if (elTotal) elTotal.textContent = cacheGratuidadesResumo.total ?? cacheGratuidadesData.length;
+    if (elPres) elPres.textContent = cacheGratuidadesResumo.presentes ?? 0;
+    if (elAus) elAus.textContent = cacheGratuidadesResumo.ausentes ?? 0;
+    if (elAloc) elAloc.textContent = cacheGratuidadesResumo.alocados ?? 0;
+
+    renderGratuidadesUI(cacheGratuidadesData);
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #DC2626;">Erro ao carregar gratuidades: ${err.message || 'Erro de conexão'}</td></tr>`;
+    }
+  }
+};
+
+window.renderGratuidadesUI = function(lista = cacheGratuidadesData) {
+  const tbody = document.getElementById('grat-table-body');
+  const countExibidos = document.getElementById('grat-count-exibidos');
+  const countTotal = document.getElementById('grat-count-total');
+
+  if (countExibidos) countExibidos.textContent = lista.length;
+  if (countTotal) countTotal.textContent = cacheGratuidadesData.length;
+
+  if (!tbody) return;
+
+  if (!lista || lista.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: #94A3B8;"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span style="font-weight: 600;">Nenhuma inscrição gratuita cadastrada.</span>
+            <span style="font-size: 0.8rem;">Clique no botão "+ Nova Gratuidade" acima para cadastrar um participante com cortesia.</span>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(g => {
+    // Contato
+    let contatoHtml = '<span style="color: var(--text-muted);">-</span>';
+    if (g.contato) {
+      const numClean = g.contato.replace(/\D/g, '');
+      const whatsLink = numClean.length >= 10 ? `https://wa.me/55${numClean}` : null;
+      contatoHtml = whatsLink
+        ? `<a href="${whatsLink}" target="_blank" rel="noopener noreferrer" style="color: #059669; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>${escAc(g.contato)}</span>
+          </a>`
+        : escAc(g.contato);
+    }
+
+    // Sexo
+    const sexoHtml = g.sexo
+      ? `<span class="badge" style="background: #F1F5F9; color: #334155; font-size: 0.75rem;">${escAc(g.sexo)}</span>`
+      : '<span style="color: var(--text-muted);">-</span>';
+
+    // Acomodação
+    const acHtml = g.acomodacao_nome
+      ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600;">${escAc(g.acomodacao_nome)}</span>`
+      : `<span class="badge" style="background: #FFFBEB; color: #B45309; border: 1px solid #FDE68A;">Sem Acomodação</span>`;
+
+    // Check-in
+    const checkinStatusHtml = g.checkin_realizado
+      ? `<div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="color: #00B894; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Presente
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-muted);">${g.checkin_data ? new Date(g.checkin_data).toLocaleString('pt-BR') : ''}</span>
+          <button type="button" class="btn btn-outline" onclick="toggleCheckinGratuidade(${g.id})" style="padding: 1px 6px; font-size: 0.7rem; color: #DC2626; border-color: #FECACA; background: #FFF; margin-top: 2px; width: fit-content;">Desfazer</button>
+        </div>`
+      : `<div style="display: flex; flex-direction: column; gap: 2px;">
+          <span style="color: #FF7900; font-weight: 700; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Ausente
+          </span>
+          <button type="button" class="btn btn-outline" onclick="toggleCheckinGratuidade(${g.id})" style="padding: 2px 7px; font-size: 0.72rem; color: #00B894; border-color: #A7F3D0; background: #F0FDF4; margin-top: 2px; width: fit-content; font-weight: 600;">Confirmar</button>
+        </div>`;
+
+    // Observação
+    const obsHtml = g.observacao
+      ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; font-style: italic; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escAc(g.observacao)}">${escAc(g.observacao)}</div>`
+      : '';
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+        <td style="padding: 0.75rem 1rem;">
+          <div style="font-weight: 700; color: var(--text-dark); font-size: 0.92rem;">${escAc(g.nome)}</div>
+          ${obsHtml}
+        </td>
+        <td style="padding: 0.75rem 1rem;">${contatoHtml}</td>
+        <td style="padding: 0.75rem 1rem;">${sexoHtml}</td>
+        <td style="padding: 0.75rem 1rem;">${acHtml}</td>
+        <td style="padding: 0.75rem 1rem;">${checkinStatusHtml}</td>
+        <td style="padding: 0.75rem 1rem;">
+          <code style="background: #F1F5F9; color: #0F172A; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem; font-family: monospace;">${escAc(g.codigo_checkin || '-')}</code>
+        </td>
+        <td style="padding: 0.75rem 1rem; text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <button type="button" class="btn btn-outline" onclick="abrirModalGratuidade(${g.id})" title="Editar cadastro" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: #1D4ED8; border-color: #BFDBFE;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              <span>Editar</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="excluirGratuidade(${g.id}, '${escAc(g.nome)}')" title="Excluir gratuidade" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: #DC2626; border-color: #FECACA;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+window.filtrarGratuidadesUI = function(termo) {
+  if (!termo || !termo.trim()) {
+    renderGratuidadesUI(cacheGratuidadesData);
+    return;
+  }
+  const q = termo.toLowerCase().trim();
+  const filtrados = cacheGratuidadesData.filter(g => {
+    return (
+      (g.nome || '').toLowerCase().includes(q) ||
+      (g.contato || '').toLowerCase().includes(q) ||
+      (g.observacao || '').toLowerCase().includes(q) ||
+      (g.codigo_checkin || '').toLowerCase().includes(q) ||
+      (g.acomodacao_nome || '').toLowerCase().includes(q)
+    );
+  });
+  renderGratuidadesUI(filtrados);
+};
+
+window.abrirModalGratuidade = function(id = null) {
+  const modal = document.getElementById('modal-gratuita');
+  const titulo = document.getElementById('modal-gratuita-titulo');
+  const inpId = document.getElementById('grat-id');
+  const inpNome = document.getElementById('grat-nome');
+  const inpContato = document.getElementById('grat-contato');
+  const selSexo = document.getElementById('grat-sexo');
+  const txtObs = document.getElementById('grat-observacao');
+
+  if (!modal) return;
+
+  if (id) {
+    const item = cacheGratuidadesData.find(g => g.id === id);
+    if (!item) return;
+    if (titulo) titulo.textContent = 'Editar Inscrição Gratuita';
+    if (inpId) inpId.value = item.id;
+    if (inpNome) inpNome.value = item.nome || '';
+    if (inpContato) inpContato.value = item.contato || '';
+    if (selSexo) selSexo.value = item.sexo || '';
+    if (txtObs) txtObs.value = item.observacao || '';
+  } else {
+    if (titulo) titulo.textContent = 'Nova Inscrição Gratuita';
+    if (inpId) inpId.value = '';
+    if (inpNome) inpNome.value = '';
+    if (inpContato) inpContato.value = '';
+    if (selSexo) selSexo.value = '';
+    if (txtObs) txtObs.value = '';
+  }
+
+  modal.style.display = 'flex';
+  if (inpNome) inpNome.focus();
+};
+
+window.fecharModalGratuidade = function() {
+  const modal = document.getElementById('modal-gratuita');
+  if (modal) modal.style.display = 'none';
+};
+
+window.salvarGratuidade = async function(event) {
+  if (event) event.preventDefault();
+  const inpId = document.getElementById('grat-id');
+  const inpNome = document.getElementById('grat-nome');
+  const inpContato = document.getElementById('grat-contato');
+  const selSexo = document.getElementById('grat-sexo');
+  const txtObs = document.getElementById('grat-observacao');
+  const btnSubmit = document.getElementById('grat-btn-submit');
+
+  const id = inpId ? inpId.value : null;
+  const nome = inpNome ? inpNome.value.trim() : '';
+  const contato = inpContato ? inpContato.value.trim() : '';
+  const sexo = selSexo ? selSexo.value : '';
+  const observacao = txtObs ? txtObs.value.trim() : '';
+
+  if (!nome) {
+    alert('Por favor, informe o nome do participante.');
+    return;
+  }
+
+  const payload = { nome, contato, sexo, observacao };
+
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvando...';
+  }
+
+  try {
+    let res;
+    if (id) {
+      res = await API.request(`/admin/eventos/${selectedEventoId}/gratuidades/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await API.request(`/admin/eventos/${selectedEventoId}/gratuidades`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    }
+
+    fecharModalGratuidade();
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Participante salvo com sucesso!', 'success');
+    }
+    await carregarGratuidadesEvento();
+
+    // Sincronizar outras abas se ativas
+    if (typeof carregarAcomodacoesEvento === 'function') {
+      carregarAcomodacoesEvento({ force: true });
+    }
+    if (typeof loadListaPresenca === 'function') {
+      loadListaPresenca();
+    }
+  } catch (err) {
+    alert(err.message || 'Erro ao salvar inscrição gratuita.');
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Salvar Participante';
+    }
+  }
+};
+
+window.excluirGratuidade = async function(id, nome) {
+  if (!confirm(`Deseja realmente remover a inscrição gratuita de "${nome}"?\n\nEsta ação removerá o participante do check-in e de qualquer acomodação vinculada.`)) {
+    return;
+  }
+
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/gratuidades/${id}`, {
+      method: 'DELETE'
+    });
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Inscrição removida com sucesso.', 'success');
+    }
+    await carregarGratuidadesEvento();
+    if (typeof carregarAcomodacoesEvento === 'function') {
+      carregarAcomodacoesEvento({ force: true });
+    }
+    if (typeof loadListaPresenca === 'function') {
+      loadListaPresenca();
+    }
+  } catch (err) {
+    alert(err.message || 'Erro ao excluir gratuidade.');
+  }
+};
+
+window.toggleCheckinGratuidade = async function(id) {
+  try {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/gratuidades/${id}/toggle-checkin`, {
+      method: 'POST'
+    });
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Status de check-in atualizado.', 'success');
+    }
+    await carregarGratuidadesEvento();
+    if (typeof loadListaPresenca === 'function') {
+      loadListaPresenca();
+    }
+    if (typeof carregarAcomodacoesEvento === 'function') {
+      carregarAcomodacoesEvento({ force: true });
+    }
+  } catch (err) {
+    alert(err.message || 'Erro ao atualizar check-in.');
+  }
+};

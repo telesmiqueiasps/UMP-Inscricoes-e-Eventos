@@ -152,6 +152,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
           <span>Diárias</span>
         </button>
+        <button class="tab-btn" id="tab-btn-gratuidades" onclick="switchSubTab('pane-gratuidades', this)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span>Gratuidades</span>
+        </button>
         <button class="tab-btn" id="tab-btn-pagamentos" onclick="switchSubTab('pane-pagamentos', this)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
           <span>Pagamentos</span>
@@ -746,6 +750,86 @@
           <div id="diarias-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0 0 0; font-size: 0.8rem; color: var(--text-muted);"></div>
         </div>
 
+      </div>
+
+      <!-- TAB: GRATUIDADES / INSCRIÇÕES MANUAIS -->
+      <div class="tab-pane" id="pane-gratuidades">
+        <!-- Top Banner / Header -->
+        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: rgba(0, 184, 148, 0.12); color: #00B894;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              </span>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-dark); margin: 0;">Inscrições Manuais & Gratuidades</h2>
+            </div>
+            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+              Participantes com cortesia ou gratuidade, isentos de pagamento. Integrados ao <strong>Check-in</strong> e às <strong>Acomodações</strong>.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="carregarGratuidadesEvento()" title="Atualizar lista" style="font-size: 0.85rem; padding: 0.55rem 0.95rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              <span>Atualizar</span>
+            </button>
+            <button type="button" class="btn btn-primary" onclick="abrirModalGratuidade()" style="background: #00B894; border-color: #00B894; font-size: 0.85rem; padding: 0.55rem 1.1rem; color: #FFFFFF; font-weight: 700;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Nova Gratuidade</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metrics KPI Grid -->
+        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="metric-card" style="background: var(--card-bg); padding: 1.1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Gratuidades</div>
+            <div class="metric-val" id="grat-kpi-total" style="font-size: 1.75rem; font-weight: 800; color: #004C50; font-variant-numeric: tabular-nums; margin-top: 0.2rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: var(--card-bg); padding: 1.1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Check-in Realizado</div>
+            <div class="metric-val" id="grat-kpi-presentes" style="font-size: 1.75rem; font-weight: 800; color: #00B894; font-variant-numeric: tabular-nums; margin-top: 0.2rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: var(--card-bg); padding: 1.1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Check-in Pendente</div>
+            <div class="metric-val" id="grat-kpi-ausentes" style="font-size: 1.75rem; font-weight: 800; color: #FF7900; font-variant-numeric: tabular-nums; margin-top: 0.2rem;">0</div>
+          </div>
+          <div class="metric-card" style="background: var(--card-bg); padding: 1.1rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Alocados em Quarto</div>
+            <div class="metric-val" id="grat-kpi-alocados" style="font-size: 1.75rem; font-weight: 800; color: #1D4ED8; font-variant-numeric: tabular-nums; margin-top: 0.2rem;">0</div>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden;">
+          <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: #F8FAFC;">
+            <div style="position: relative; flex: 1; min-width: 240px; max-width: 450px;">
+              <input type="text" id="grat-search-input" class="form-control" placeholder="Buscar por nome, contato ou observação..." oninput="filtrarGratuidadesUI(this.value)" style="padding-left: 2.4rem; font-size: 0.88rem; height: 38px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">
+              Exibindo <span id="grat-count-exibidos" style="color: var(--text-dark);">0</span> de <span id="grat-count-total">0</span> participante(s)
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+              <thead style="background: #F1F5F9; border-bottom: 1px solid var(--border-color); text-align: left;">
+                <tr>
+                  <th style="padding: 0.75rem 1rem;">Participante</th>
+                  <th style="padding: 0.75rem 1rem;">Contato</th>
+                  <th style="padding: 0.75rem 1rem;">Sexo</th>
+                  <th style="padding: 0.75rem 1rem;">Acomodação</th>
+                  <th style="padding: 0.75rem 1rem;">Check-in</th>
+                  <th style="padding: 0.75rem 1rem;">Cód. Check-in</th>
+                  <th style="padding: 0.75rem 1rem; text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="grat-table-body">
+                <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Carregando inscrições gratuitas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 2: PAGAMENTOS -->
@@ -1675,6 +1759,70 @@
               </table>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- MODAL: NOVA / EDITAR INSCRIÇÃO GRATUITA -->
+      <div id="modal-gratuita" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1050; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="background: var(--card-bg); width: 100%; max-width: 500px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); overflow: hidden; animation: fadeInScale 0.2s ease;">
+          <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #F8FAFC;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; background: rgba(0, 184, 148, 0.15); color: #00B894;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+              </span>
+              <h3 id="modal-gratuita-titulo" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text-dark);">Nova Inscrição Gratuita</h3>
+            </div>
+            <button type="button" class="btn-action-icon" onclick="fecharModalGratuidade()" style="background: #F1F5F9; color: var(--text-muted);" title="Fechar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <form id="form-gratuita" onsubmit="salvarGratuidade(event)" style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <input type="hidden" id="grat-id" value="">
+
+            <div>
+              <label for="grat-nome" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.35rem;">
+                Nome Completo *
+              </label>
+              <input type="text" id="grat-nome" class="form-control" placeholder="Ex: João da Silva" required style="font-size: 0.9rem;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div>
+                <label for="grat-contato" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.35rem;">
+                  Contato (WhatsApp)
+                </label>
+                <input type="text" id="grat-contato" class="form-control" placeholder="(00) 00000-0000" style="font-size: 0.9rem;">
+              </div>
+              <div>
+                <label for="grat-sexo" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.35rem;">
+                  Sexo
+                </label>
+                <select id="grat-sexo" class="form-control" style="font-size: 0.9rem;">
+                  <option value="">Não informado</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="grat-observacao" style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.35rem;">
+                Observação / Motivo da Gratuidade
+              </label>
+              <textarea id="grat-observacao" class="form-control" rows="3" placeholder="Ex: Preletor, equipe de apoio, cortesia da diretoria..." style="font-size: 0.88rem; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+              <button type="button" class="btn btn-outline" onclick="fecharModalGratuidade()" style="font-size: 0.88rem; padding: 0.55rem 1rem;">
+                Cancelar
+              </button>
+              <button type="submit" id="grat-btn-submit" class="btn btn-primary" style="background: #00B894; border-color: #00B894; color: #FFFFFF; font-size: 0.88rem; padding: 0.55rem 1.25rem; font-weight: 700;">
+                Salvar Participante
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

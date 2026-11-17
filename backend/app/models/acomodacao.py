@@ -18,14 +18,17 @@ class Acomodacao(Base):
     descricao = Column(Text, nullable=True)
     lider_inscricao_id = Column(Integer, ForeignKey("inscricoes.id", ondelete="SET NULL"), nullable=True)
     lider_diaria_id = Column(Integer, ForeignKey("inscricoes_diarias.id", ondelete="SET NULL"), nullable=True)
+    lider_gratuita_id = Column(Integer, ForeignKey("inscricoes_gratuitas.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     evento = relationship("Evento", back_populates="acomodacoes")
     inscricoes = relationship("Inscricao", back_populates="acomodacao", foreign_keys="Inscricao.acomodacao_id")
     diarias = relationship("InscricaoDiaria", back_populates="acomodacao", foreign_keys="InscricaoDiaria.acomodacao_id")
+    gratuidades = relationship("InscricaoGratuita", back_populates="acomodacao", foreign_keys="InscricaoGratuita.acomodacao_id")
     lider_inscricao = relationship("Inscricao", foreign_keys=[lider_inscricao_id], lazy="joined")
     lider_diaria = relationship("InscricaoDiaria", foreign_keys=[lider_diaria_id], lazy="joined")
+    lider_gratuita = relationship("InscricaoGratuita", foreign_keys=[lider_gratuita_id], lazy="joined")
 
     def get_lider_info(self):
         """Retorna os dados do líder da acomodação (se definido)."""
@@ -37,9 +40,21 @@ class Acomodacao(Base):
         elif self.lider_diaria:
             reg = self.lider_diaria
             tipo = "DIARIA"
+        elif getattr(self, "lider_gratuita", None):
+            reg = self.lider_gratuita
+            tipo = "GRATUIDADE"
 
         if not reg:
             return None
+
+        if tipo == "GRATUIDADE":
+            return {
+                "registro_id": reg.id,
+                "tipo": "GRATUIDADE",
+                "nome": reg.nome or "Líder do Quarto",
+                "telefone": reg.contato or "",
+                "email": ""
+            }
 
         usuario = getattr(reg, "usuario", None)
         extras = reg.dados_extras if isinstance(reg.dados_extras, dict) else {}

@@ -9,6 +9,7 @@ from app.models.configuracao import Configuracao
 from app.models.presbiterio import Presbiterio
 from app.models.igreja import Igreja
 from app.models.diaria import DiariaTriagem, InscricaoDiaria
+from app.models.gratuita import InscricaoGratuita
 from app.models.gincana import Gincana, GincanaPonto
 from app.models.cantina import (
     CantinaCaixa,
@@ -33,6 +34,7 @@ __all__ = [
     "Igreja",
     "DiariaTriagem",
     "InscricaoDiaria",
+    "InscricaoGratuita",
     "Gincana",
     "GincanaPonto",
     "CantinaCaixa",

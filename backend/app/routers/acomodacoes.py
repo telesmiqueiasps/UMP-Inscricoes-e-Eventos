@@ -9,6 +9,7 @@ from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.inscricao import Inscricao
 from app.models.diaria import InscricaoDiaria
+from app.models.gratuita import InscricaoGratuita
 from app.models.acomodacao import Acomodacao
 from app.schemas.acomodacao import (
     AcomodacaoCreate,
@@ -60,7 +61,26 @@ def _calcular_idade_participante(data_str: Any) -> Optional[int]:
 
 
 def _serializar_participante(reg: Any, tipo: str, is_lider: bool = False) -> Dict[str, Any]:
-    """Serializa uma inscrição regular ou diária para exibição na gestão de acomodações."""
+    """Serializa uma inscrição regular, diária ou gratuita para exibição na gestão de acomodações."""
+    if tipo == "GRATUIDADE":
+        return {
+            "registro_id": reg.id,
+            "tipo": "GRATUIDADE",
+            "tipo_label": "Gratuidade",
+            "usuario_id": None,
+            "nome": reg.nome or "Participante",
+            "email": "",
+            "telefone": reg.contato or "",
+            "genero": reg.sexo or "",
+            "igreja": "",
+            "observacao": reg.observacao or "",
+            "data_nascimento": None,
+            "idade": None,
+            "status": "CONFIRMADA",
+            "checkin_realizado": bool(reg.checkin_realizado),
+            "acomodacao_id": reg.acomodacao_id,
+            "is_lider": is_lider
+        }
     usuario = reg.usuario
     extras = reg.dados_extras if isinstance(reg.dados_extras, dict) else {}
 
@@ -127,18 +147,26 @@ def listar_acomodacoes_evento(
         .filter(InscricaoDiaria.evento_id == evento_id, InscricaoDiaria.status != "CANCELADA")
         .all()
     )
+    gratuidades = (
+        db.query(InscricaoGratuita)
+        .filter(InscricaoGratuita.evento_id == evento_id)
+        .all()
+    )
 
     acomodacoes_map = {ac.id: ac for ac in acomodacoes}
     ocupantes_por_acomodacao: Dict[int, List[Dict[str, Any]]] = {ac.id: [] for ac in acomodacoes}
     sem_acomodacao: List[Dict[str, Any]] = []
 
-    for reg, tipo in [(i, "REGULAR") for i in inscricoes] + [(d, "DIARIA") for d in diarias]:
+    todos_registros = [(i, "REGULAR") for i in inscricoes] + [(d, "DIARIA") for d in diarias] + [(g, "GRATUIDADE") for g in gratuidades]
+
+    for reg, tipo in todos_registros:
         if reg.acomodacao_id and reg.acomodacao_id in ocupantes_por_acomodacao:
             ac_alvo = acomodacoes_map.get(reg.acomodacao_id)
             is_lider = bool(
                 ac_alvo and (
                     (tipo == "REGULAR" and ac_alvo.lider_inscricao_id == reg.id) or
-                    (tipo == "DIARIA" and ac_alvo.lider_diaria_id == reg.id)
+                    (tipo == "DIARIA" and ac_alvo.lider_diaria_id == reg.id) or
+                    (tipo == "GRATUIDADE" and getattr(ac_alvo, "lider_gratuita_id", None) == reg.id)
                 )
             )
             item = _serializar_participante(reg, tipo, is_lider=is_lider)
@@ -292,7 +320,8 @@ def alocar_inscritos_acomodacao(
 
     inscricao_ids = list(set(req.inscricao_ids or []))
     diaria_ids = list(set(req.diaria_ids or []))
-    if not inscricao_ids and not diaria_ids:
+    gratuita_ids = list(set(getattr(req, "gratuita_ids", []) or []))
+    if not inscricao_ids and not diaria_ids and not gratuita_ids:
         raise HTTPException(status_code=400, detail="Selecione pelo menos um participante para alocar.")
 
     inscricoes_alvo = []
@@ -311,6 +340,13 @@ def alocar_inscritos_acomodacao(
             InscricaoDiaria.status != "CANCELADA"
         ).all()
 
+    gratuidades_alvo = []
+    if gratuita_ids:
+        gratuidades_alvo = db.query(InscricaoGratuita).filter(
+            InscricaoGratuita.evento_id == evento_id,
+            InscricaoGratuita.id.in_(gratuita_ids)
+        ).all()
+
     # Contar ocupação atual excluindo os que já estão nesta acomodação
     ocupados_reg = db.query(Inscricao).filter(
         Inscricao.evento_id == evento_id,
@@ -322,9 +358,17 @@ def alocar_inscritos_acomodacao(
         InscricaoDiaria.acomodacao_id == ac.id,
         InscricaoDiaria.status != "CANCELADA"
     ).count()
+    ocupados_grat = db.query(InscricaoGratuita).filter(
+        InscricaoGratuita.evento_id == evento_id,
+        InscricaoGratuita.acomodacao_id == ac.id
+    ).count()
 
-    novos = sum(1 for r in inscricoes_alvo if r.acomodacao_id != ac.id) + sum(1 for d in diarias_alvo if d.acomodacao_id != ac.id)
-    ocupacao_final = ocupados_reg + ocupados_dia + novos
+    novos = (
+        sum(1 for r in inscricoes_alvo if r.acomodacao_id != ac.id) +
+        sum(1 for d in diarias_alvo if d.acomodacao_id != ac.id) +
+        sum(1 for g in gratuidades_alvo if g.acomodacao_id != ac.id)
+    )
+    ocupacao_final = ocupados_reg + ocupados_dia + ocupados_grat + novos
 
     if ac.capacidade and ac.capacidade > 0 and ocupacao_final > ac.capacidade:
         raise HTTPException(
@@ -340,11 +384,15 @@ def alocar_inscritos_acomodacao(
         if d.acomodacao_id and d.acomodacao_id != ac.id:
             db.query(Acomodacao).filter(Acomodacao.id == d.acomodacao_id, Acomodacao.lider_diaria_id == d.id).update({"lider_diaria_id": None}, synchronize_session=False)
         d.acomodacao_id = ac.id
+    for g in gratuidades_alvo:
+        if g.acomodacao_id and g.acomodacao_id != ac.id:
+            db.query(Acomodacao).filter(Acomodacao.id == g.acomodacao_id, Acomodacao.lider_gratuita_id == g.id).update({"lider_gratuita_id": None}, synchronize_session=False)
+        g.acomodacao_id = ac.id
 
     db.commit()
     return {
         "sucesso": True,
-        "alocados": len(inscricoes_alvo) + len(diarias_alvo),
+        "alocados": len(inscricoes_alvo) + len(diarias_alvo) + len(gratuidades_alvo),
         "mensagem": "Participante(s) alocado(s) com sucesso!"
     }
 
@@ -358,6 +406,19 @@ def desalocar_inscrito_acomodacao(
 ):
     """Remove a acomodação vinculada a um inscrito."""
     tipo = (req.tipo or "REGULAR").upper().strip()
+    if tipo == "GRATUIDADE":
+        reg = db.query(InscricaoGratuita).filter(
+            InscricaoGratuita.id == req.registro_id,
+            InscricaoGratuita.evento_id == evento_id
+        ).first()
+        if not reg:
+            raise HTTPException(status_code=404, detail="Inscrição gratuita não encontrada.")
+        if reg.acomodacao_id:
+            db.query(Acomodacao).filter(Acomodacao.id == reg.acomodacao_id, Acomodacao.lider_gratuita_id == reg.id).update({"lider_gratuita_id": None}, synchronize_session=False)
+        reg.acomodacao_id = None
+        db.commit()
+        return {"sucesso": True, "mensagem": "Participante removido da acomodação."}
+
     modelo = InscricaoDiaria if tipo == "DIARIA" else Inscricao
 
     reg = db.query(modelo).filter(
@@ -399,6 +460,7 @@ def definir_lider_acomodacao(
     if not req.registro_id:
         ac.lider_inscricao_id = None
         ac.lider_diaria_id = None
+        ac.lider_gratuita_id = None
         db.commit()
         db.refresh(ac)
         return {
@@ -419,6 +481,19 @@ def definir_lider_acomodacao(
             raise HTTPException(status_code=400, detail="O participante selecionado deve estar alocado nesta acomodação para ser líder.")
         ac.lider_diaria_id = dia.id
         ac.lider_inscricao_id = None
+        ac.lider_gratuita_id = None
+    elif tipo == "GRATUIDADE":
+        grat = db.query(InscricaoGratuita).filter(
+            InscricaoGratuita.id == req.registro_id,
+            InscricaoGratuita.evento_id == evento_id
+        ).first()
+        if not grat:
+            raise HTTPException(status_code=404, detail="Inscrição gratuita não encontrada.")
+        if grat.acomodacao_id != ac.id:
+            raise HTTPException(status_code=400, detail="O participante selecionado deve estar alocado nesta acomodação para ser líder.")
+        ac.lider_gratuita_id = grat.id
+        ac.lider_inscricao_id = None
+        ac.lider_diaria_id = None
     else:
         ins = db.query(Inscricao).filter(
             Inscricao.id == req.registro_id,
@@ -430,6 +505,7 @@ def definir_lider_acomodacao(
             raise HTTPException(status_code=400, detail="O participante selecionado deve estar alocado nesta acomodação para ser líder.")
         ac.lider_inscricao_id = ins.id
         ac.lider_diaria_id = None
+        ac.lider_gratuita_id = None
 
     db.commit()
     db.refresh(ac)
