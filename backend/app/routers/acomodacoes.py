@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+from datetime import date
 
 from app.core.database import get_db
 from app.core.security import require_admin_global, require_permissao
@@ -20,10 +21,58 @@ from app.schemas.acomodacao import (
 router = APIRouter(prefix="/admin/eventos/{evento_id}/acomodacoes", tags=["Acomodações"])
 
 
+def _calcular_idade_participante(data_str: Any) -> Optional[int]:
+    """Calcula a idade em anos a partir de uma string de data (YYYY-MM-DD ou DD/MM/YYYY)."""
+    if not data_str:
+        return None
+    data_clean = str(data_str).strip()
+    if not data_clean:
+        return None
+    try:
+        hoje = date.today()
+        if "T" in data_clean:
+            data_clean = data_clean.split("T")[0]
+        if "-" in data_clean:
+            p = data_clean.split("-")
+            if len(p[0]) == 4:
+                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+            elif len(p[2]) == 4:
+                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+            else:
+                return None
+        elif "/" in data_clean:
+            p = data_clean.split("/")
+            if len(p[2]) == 4:
+                dia, mes, ano = int(p[0]), int(p[1]), int(p[2])
+            elif len(p[0]) == 4:
+                ano, mes, dia = int(p[0]), int(p[1]), int(p[2])
+            else:
+                return None
+        else:
+            return None
+        d_nasc = date(ano, mes, dia)
+        idade = hoje.year - d_nasc.year - ((hoje.month, hoje.day) < (d_nasc.month, d_nasc.day))
+        if 0 <= idade <= 125:
+            return idade
+    except Exception:
+        return None
+    return None
+
+
 def _serializar_participante(reg: Any, tipo: str, is_lider: bool = False) -> Dict[str, Any]:
     """Serializa uma inscrição regular ou diária para exibição na gestão de acomodações."""
     usuario = reg.usuario
     extras = reg.dados_extras if isinstance(reg.dados_extras, dict) else {}
+
+    data_nascimento = None
+    for k in ["data_nascimento", "nascimento", "dyn_data_nascimento"]:
+        val = extras.get(k)
+        if val is not None and str(val).strip():
+            data_nascimento = str(val).strip()
+            break
+
+    idade = _calcular_idade_participante(data_nascimento)
+
     return {
         "registro_id": reg.id,
         "tipo": tipo,
@@ -34,6 +83,8 @@ def _serializar_participante(reg: Any, tipo: str, is_lider: bool = False) -> Dic
         "telefone": (usuario.telefone if usuario and usuario.telefone else extras.get("telefone") or extras.get("whatsapp")) or "",
         "genero": extras.get("genero") or "",
         "igreja": extras.get("igreja") or "",
+        "data_nascimento": data_nascimento,
+        "idade": idade,
         "status": reg.status,
         "checkin_realizado": bool(reg.checkin_realizado),
         "acomodacao_id": reg.acomodacao_id,

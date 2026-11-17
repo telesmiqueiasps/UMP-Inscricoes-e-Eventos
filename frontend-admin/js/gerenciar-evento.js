@@ -5410,6 +5410,38 @@ function escAc(str) {
     .replace(/'/g, '&#39;');
 }
 
+function formatarIdadeAcomodacao(p) {
+  if (!p) return 'Idade N/I';
+  if (p.idade !== null && p.idade !== undefined && !isNaN(p.idade)) {
+    return `${p.idade} anos`;
+  }
+  const dt = p.data_nascimento;
+  if (!dt) return 'Idade N/I';
+  let ano, mes, dia;
+  if (dt.includes('-')) {
+    const parts = dt.split('T')[0].split('-');
+    ano = parseInt(parts[0], 10);
+    mes = parseInt(parts[1], 10) - 1;
+    dia = parseInt(parts[2], 10);
+  } else if (dt.includes('/')) {
+    const parts = dt.split('/');
+    dia = parseInt(parts[0], 10);
+    mes = parseInt(parts[1], 10) - 1;
+    ano = parseInt(parts[2], 10);
+  }
+  if (isNaN(ano) || isNaN(mes) || isNaN(dia)) return 'Idade N/I';
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - ano;
+  const m = hoje.getMonth() - mes;
+  if (m < 0 || (m === 0 && hoje.getDate() < dia)) {
+    idade--;
+  }
+  if (!isNaN(idade) && idade >= 0 && idade < 120) {
+    return `${idade} anos`;
+  }
+  return 'Idade N/I';
+}
+
 window.carregarAcomodacoesEvento = async function() {
   if (!selectedEventoId) return;
   try {
@@ -5514,7 +5546,7 @@ function renderAcomodacoesUI() {
                     <span>${escAc(oc.nome)}</span> ${liderTag} ${tipoTag} ${checkinTag}
                   </div>
                   <div style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${escAc(oc.igreja || 'Sem igreja')} ${oc.genero ? '• ' + escAc(oc.genero) : ''} ${oc.telefone ? '• ' + escAc(oc.telefone) : ''}
+                    ${escAc(oc.igreja || 'Sem igreja')} • ${escAc(formatarIdadeAcomodacao(oc))} ${oc.genero ? '• ' + escAc(oc.genero) : ''} ${oc.telefone ? '• ' + escAc(oc.telefone) : ''}
                   </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;">
@@ -5577,6 +5609,7 @@ window.renderSemAcomodacaoLista = function() {
     lista = lista.filter(p =>
       (p.nome || '').toLowerCase().includes(query) ||
       (p.igreja || '').toLowerCase().includes(query) ||
+      (p.idade ? String(p.idade).includes(query) : false) ||
       (p.genero || '').toLowerCase().includes(query)
     );
   }
@@ -5596,6 +5629,7 @@ window.renderSemAcomodacaoLista = function() {
           <th style="padding: 0.65rem; text-align: left;">Participante</th>
           <th style="padding: 0.65rem; text-align: left;">Gênero</th>
           <th style="padding: 0.65rem; text-align: left;">Igreja</th>
+          <th style="padding: 0.65rem; text-align: left;">Idade</th>
           <th style="padding: 0.65rem; text-align: left;">Tipo / Status</th>
           <th style="padding: 0.65rem; text-align: right;">Alocação Rápida</th>
         </tr>
@@ -5609,6 +5643,7 @@ window.renderSemAcomodacaoLista = function() {
             </td>
             <td style="padding: 0.65rem;">${escAc(p.genero || '-')}</td>
             <td style="padding: 0.65rem;">${escAc(p.igreja || '-')}</td>
+            <td style="padding: 0.65rem;"><span style="font-weight: 600; color: var(--text-dark);">${escAc(formatarIdadeAcomodacao(p))}</span></td>
             <td style="padding: 0.65rem;">
               <span class="badge" style="background: ${p.tipo === 'DIARIA' ? '#EDE9FE' : '#EFF6FF'}; color: ${p.tipo === 'DIARIA' ? '#6D28D9' : '#1D4ED8'};">${escAc(p.tipo_label)}</span>
               <span class="badge ${p.status === 'CONFIRMADA' ? 'badge-success' : 'badge-warning'}" style="margin-left: 0.25rem;">${escAc(p.status)}</span>
@@ -5767,7 +5802,9 @@ window.renderListaAlocacaoModal = function() {
   if (q) {
     lista = lista.filter(p =>
       (p.nome || '').toLowerCase().includes(q) ||
-      (p.igreja || '').toLowerCase().includes(q)
+      (p.igreja || '').toLowerCase().includes(q) ||
+      (p.idade ? String(p.idade).includes(q) : false) ||
+      (p.genero || '').toLowerCase().includes(q)
     );
   }
   if (gen) {
@@ -5787,12 +5824,13 @@ window.renderListaAlocacaoModal = function() {
   container.innerHTML = lista.map(p => {
     const key = `${p.tipo}:${p.registro_id}`;
     const checked = alocarSelecionados.has(key) ? 'checked' : '';
+    const idadeStr = formatarIdadeAcomodacao(p);
     return `
       <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.75rem; border-bottom: 1px solid #F1F5F9; cursor: pointer;">
         <input type="checkbox" ${checked} onchange="toggleSelecaoAlocacao('${key}')" style="width: 17px; height: 17px; accent-color: var(--primary);">
         <div style="flex: 1; min-width: 0;">
           <div style="font-weight: 600; font-size: 0.88rem;">${escAc(p.nome)}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${escAc(p.igreja || 'Sem igreja')} • ${escAc(p.genero || 'N/I')} • ${escAc(p.tipo_label)}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">${escAc(p.igreja || 'Sem igreja')} • <span style="font-weight: 600; color: #334155;">${escAc(idadeStr)}</span> • ${escAc(p.genero || 'N/I')} • ${escAc(p.tipo_label)}</div>
         </div>
         <span class="badge ${p.status === 'CONFIRMADA' ? 'badge-success' : 'badge-warning'}">${escAc(p.status)}</span>
       </label>
@@ -5901,10 +5939,11 @@ window.imprimirAcomodacoes = function() {
             <td>${idx + 1}</td>
             <td>${escAc(oc.nome)}${oc.is_lider ? ' [Líder]' : ''}</td>
             <td>${escAc(oc.igreja || '-')}</td>
+            <td>${escAc(formatarIdadeAcomodacao(oc))}</td>
             <td>${escAc(oc.genero || '-')}</td>
             <td>${oc.tipo === 'DIARIA' ? 'Diária' : 'Integral'}</td>
           </tr>`).join('')
-      : `<tr><td colspan="5" style="color: #64748b; text-align: center;">Sem participantes alocados</td></tr>`;
+      : `<tr><td colspan="6" style="color: #64748b; text-align: center;">Sem participantes alocados</td></tr>`;
 
     return `
       <div class="room-box">
@@ -5912,7 +5951,7 @@ window.imprimirAcomodacoes = function() {
         ${liderTexto}
         ${ac.descricao ? `<p class="desc">${escAc(ac.descricao)}</p>` : ''}
         <table>
-          <thead><tr><th style="width:36px;">#</th><th>Nome</th><th>Igreja</th><th>Gênero</th><th>Modalidade</th></tr></thead>
+          <thead><tr><th style="width:36px;">#</th><th>Nome</th><th>Igreja</th><th>Idade</th><th>Gênero</th><th>Modalidade</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
