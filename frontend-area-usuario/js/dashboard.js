@@ -269,8 +269,18 @@ function getWhatsAppLinkLider(tel) {
 
 // Renderizar dados de Acomodação (com Líder e Contato)
 function renderAcomodacaoInfoLine(acomodacao) {
+  let corTag = '';
+  if (acomodacao && acomodacao.cor) {
+    const c = String(acomodacao.cor).toUpperCase();
+    if (c === 'VERDE') {
+      corTag = ` <span style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; background: rgba(0, 184, 148, 0.12); color: #00B894; font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(0, 184, 148, 0.3); vertical-align: middle; margin-left: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #00B894;"></span>Equipe Verde</span>`;
+    } else if (c === 'LARANJA') {
+      corTag = ` <span style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; background: rgba(255, 121, 0, 0.12); color: #FF7900; font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(255, 121, 0, 0.3); vertical-align: middle; margin-left: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #FF7900;"></span>Equipe Laranja</span>`;
+    }
+  }
+
   const acText = acomodacao && acomodacao.nome
-    ? `${escapeHtmlOficina(acomodacao.nome)}${acomodacao.tipo ? ' (' + escapeHtmlOficina(acomodacao.tipo) + ')' : ''}`
+    ? `${escapeHtmlOficina(acomodacao.nome)}${acomodacao.tipo ? ' (' + escapeHtmlOficina(acomodacao.tipo) + ')' : ''}${corTag}`
     : 'A definir pela organização';
   const acStyle = acomodacao && acomodacao.nome
     ? 'color: #0F766E; font-weight: 700;'

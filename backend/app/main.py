@@ -55,6 +55,7 @@ async def lifespan(app: FastAPI):
                 """))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS ix_acomodacoes_evento_id ON acomodacoes(evento_id);"))
                 conn.execute(text("ALTER TABLE acomodacoes ADD COLUMN IF NOT EXISTS lider_inscricao_id INTEGER REFERENCES inscricoes(id) ON DELETE SET NULL;"))
+                conn.execute(text("ALTER TABLE acomodacoes ADD COLUMN IF NOT EXISTS cor VARCHAR(30);"))
                 conn.execute(text("ALTER TABLE acomodacoes ADD COLUMN IF NOT EXISTS lider_diaria_id INTEGER REFERENCES inscricoes_diarias(id) ON DELETE SET NULL;"))
                 conn.execute(text("ALTER TABLE inscricoes ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;"))
                 conn.execute(text("ALTER TABLE inscricoes_diarias ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;"))

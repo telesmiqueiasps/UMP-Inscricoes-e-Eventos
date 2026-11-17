@@ -7,6 +7,7 @@ class AcomodacaoCreate(BaseModel):
     tipo: str = "Quarto"
     capacidade: int = 10
     genero_restrito: Optional[str] = None
+    cor: Optional[str] = None
     descricao: Optional[str] = None
 
 
@@ -15,6 +16,7 @@ class AcomodacaoUpdate(BaseModel):
     tipo: Optional[str] = None
     capacidade: Optional[int] = None
     genero_restrito: Optional[str] = None
+    cor: Optional[str] = None
     descricao: Optional[str] = None
 
 
@@ -31,5 +33,3 @@ class AcomodacaoDesalocarRequest(BaseModel):
 class AcomodacaoDefinirLiderRequest(BaseModel):
     registro_id: Optional[int] = None  # None ou 0 para remover o líder
     tipo: Optional[str] = "REGULAR"    # REGULAR ou DIARIA
-
-

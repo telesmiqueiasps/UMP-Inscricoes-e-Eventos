@@ -166,6 +166,7 @@ def listar_acomodacoes_evento(
             "tipo": ac.tipo,
             "capacidade": cap,
             "genero_restrito": ac.genero_restrito,
+            "cor": ac.cor,
             "descricao": ac.descricao,
             "ocupados_count": ocupados_count,
             "vagas_restantes": max(0, cap - ocupados_count) if cap > 0 else None,
@@ -205,6 +206,7 @@ def criar_acomodacao(
         tipo=(req.tipo or "Quarto").strip(),
         capacidade=max(0, int(req.capacidade or 0)),
         genero_restrito=(req.genero_restrito or "").strip().upper() or None,
+        cor=(req.cor or "").strip().upper() or None,
         descricao=(req.descricao or "").strip() or None
     )
     db.add(nova)
@@ -240,6 +242,8 @@ def atualizar_acomodacao(
         ac.capacidade = max(0, int(req.capacidade))
     if req.genero_restrito is not None:
         ac.genero_restrito = req.genero_restrito.strip().upper() or None
+    if req.cor is not None:
+        ac.cor = req.cor.strip().upper() or None
     if req.descricao is not None:
         ac.descricao = req.descricao.strip() or None
 

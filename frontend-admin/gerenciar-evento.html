@@ -906,6 +906,25 @@
           </div>
         </div>
 
+        <!-- Barra de Filtros por Equipe/Gincana -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.2rem;">Filtrar Quartos:</span>
+            <button type="button" class="btn btn-sm btn-filter-ac-cor active" id="btn-filtro-ac-todos" onclick="filtrarAcomodacoesPorEquipe('TODOS', this)" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 999px; background: #004C50; color: #FFFFFF; border: 1px solid #004C50;">
+              Todos
+            </button>
+            <button type="button" class="btn btn-sm btn-filter-ac-cor" id="btn-filtro-ac-verde" onclick="filtrarAcomodacoesPorEquipe('VERDE', this)" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 999px; background: rgba(0, 184, 148, 0.1); color: #00B894; border: 1px solid rgba(0, 184, 148, 0.35);">
+              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #00B894; margin-right: 4px;"></span>Equipe Verde <span id="ac-count-verde" style="font-size: 0.74rem; opacity: 0.9;">(0)</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-filter-ac-cor" id="btn-filtro-ac-laranja" onclick="filtrarAcomodacoesPorEquipe('LARANJA', this)" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 999px; background: rgba(255, 121, 0, 0.1); color: #FF7900; border: 1px solid rgba(255, 121, 0, 0.35);">
+              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #FF7900; margin-right: 4px;"></span>Equipe Laranja <span id="ac-count-laranja" style="font-size: 0.74rem; opacity: 0.9;">(0)</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-filter-ac-cor" id="btn-filtro-ac-neutro" onclick="filtrarAcomodacoesPorEquipe('NEUTRO', this)" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 700; border-radius: 999px; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;">
+              Sem Equipe <span id="ac-count-neutro" style="font-size: 0.74rem; opacity: 0.9;">(0)</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Grid de Quartos / Locais -->
         <div id="acomodacoes-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
           <div class="card" style="padding: 2rem; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Carregando acomodações...</div>
@@ -953,14 +972,28 @@
                 <input type="number" id="ac-capacidade" class="form-control" min="0" value="10" required>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Público / Ala (Opcional)</label>
-              <select id="ac-genero" class="form-control">
-                <option value="">Livre / Misto</option>
-                <option value="MASCULINO">Masculino</option>
-                <option value="FEMININO">Feminino</option>
-                <option value="MISTO">Família / Misto</option>
-              </select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Público / Ala (Opcional)</label>
+                <select id="ac-genero" class="form-control">
+                  <option value="">Livre / Misto</option>
+                  <option value="MASCULINO">Masculino</option>
+                  <option value="FEMININO">Feminino</option>
+                  <option value="MISTO">Família / Misto</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Equipe da Gincana (Cor)</label>
+                <select id="ac-cor" class="form-control" onchange="atualizarPreviewCorQuartoModal(this.value)">
+                  <option value="">Sem Equipe (Neutro)</option>
+                  <option value="VERDE">Equipe Verde</option>
+                  <option value="LARANJA">Equipe Laranja</option>
+                </select>
+              </div>
+            </div>
+            <div id="ac-cor-badge-preview" style="display: none; margin-top: -0.5rem; margin-bottom: 0.85rem; padding: 0.45rem 0.75rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; align-items: center; gap: 0.45rem;">
+              <span id="ac-cor-preview-dot" style="width: 8px; height: 8px; border-radius: 50%;"></span>
+              <span id="ac-cor-preview-text"></span>
             </div>
             <div class="form-group">
               <label class="form-label">Observações / Localização (Opcional)</label>

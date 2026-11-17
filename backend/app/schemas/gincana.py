@@ -39,6 +39,10 @@ class EquipeInfo(BaseModel):
     nome: str
     cor: str
     pontos: int
+    total_quartos: Optional[int] = 0
+    total_vagas_quartos: Optional[int] = 0
+    total_ocupantes_quartos: Optional[int] = 0
+    quartos_nomes: Optional[List[str]] = []
 
 
 class GincanaDetalhesResponse(BaseModel):

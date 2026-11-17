@@ -5461,6 +5461,7 @@ function gerarAssinaturaAcomodacoes(data) {
       t: ac.tipo,
       c: ac.capacidade,
       g: ac.genero_restrito,
+      cor: ac.cor,
       d: ac.descricao,
       o: ac.ocupados_count,
       l: ac.lider ? `${ac.lider.tipo}:${ac.lider.registro_id}:${ac.lider.nome}` : '',
@@ -5662,18 +5663,101 @@ window.carregarAcomodacoesEvento = async function(opcoes = {}) {
   }
 };
 
+window.filtroEquipeAcomodacaoAtual = 'TODOS';
+
+window.filtrarAcomodacoesPorEquipe = function(filtro, btn) {
+  window.filtroEquipeAcomodacaoAtual = filtro || 'TODOS';
+  document.querySelectorAll('.btn-filter-ac-cor').forEach(b => {
+    b.classList.remove('active');
+    b.style.opacity = '0.7';
+    b.style.transform = 'scale(1)';
+  });
+  if (btn) {
+    btn.classList.add('active');
+    btn.style.opacity = '1';
+    btn.style.transform = 'scale(1.03)';
+  }
+  renderAcomodacoesUI();
+};
+
+window.atualizarPreviewCorQuartoModal = function(cor) {
+  const preview = document.getElementById('ac-cor-badge-preview');
+  const dot = document.getElementById('ac-cor-preview-dot');
+  const text = document.getElementById('ac-cor-preview-text');
+  if (!preview || !dot || !text) return;
+  const c = (cor || '').toUpperCase();
+  if (c === 'VERDE') {
+    preview.style.display = 'inline-flex';
+    preview.style.background = 'rgba(0, 184, 148, 0.12)';
+    preview.style.border = '1px solid rgba(0, 184, 148, 0.35)';
+    preview.style.color = '#00B894';
+    dot.style.background = '#00B894';
+    text.textContent = 'Vinculado a: Equipe Verde (Gincana)';
+  } else if (c === 'LARANJA') {
+    preview.style.display = 'inline-flex';
+    preview.style.background = 'rgba(255, 121, 0, 0.12)';
+    preview.style.border = '1px solid rgba(255, 121, 0, 0.35)';
+    preview.style.color = '#FF7900';
+    dot.style.background = '#FF7900';
+    text.textContent = 'Vinculado a: Equipe Laranja (Gincana)';
+  } else {
+    preview.style.display = 'none';
+  }
+};
+
 function renderAcomodacoesUI() {
   const grid = document.getElementById('acomodacoes-cards-grid');
   if (!grid || !cacheAcomodacoesData) return;
 
-  const acomodacoes = cacheAcomodacoesData.acomodacoes || [];
-  if (acomodacoes.length === 0) {
+  const todosAcomodacoes = cacheAcomodacoesData.acomodacoes || [];
+
+  // Atualizar contadores das equipes na barra de filtros
+  let countVerde = 0;
+  let countLaranja = 0;
+  let countNeutro = 0;
+  todosAcomodacoes.forEach(ac => {
+    const cor = (ac.cor || '').toUpperCase();
+    if (cor === 'VERDE') countVerde++;
+    else if (cor === 'LARANJA') countLaranja++;
+    else countNeutro++;
+  });
+
+  const elVerde = document.getElementById('ac-count-verde');
+  const elLaranja = document.getElementById('ac-count-laranja');
+  const elNeutro = document.getElementById('ac-count-neutro');
+  if (elVerde) elVerde.textContent = `(${countVerde})`;
+  if (elLaranja) elLaranja.textContent = `(${countLaranja})`;
+  if (elNeutro) elNeutro.textContent = `(${countNeutro})`;
+
+  const filtroCor = window.filtroEquipeAcomodacaoAtual || 'TODOS';
+  const acomodacoes = todosAcomodacoes.filter(ac => {
+    const cor = (ac.cor || '').toUpperCase();
+    if (filtroCor === 'TODOS') return true;
+    if (filtroCor === 'VERDE') return cor === 'VERDE';
+    if (filtroCor === 'LARANJA') return cor === 'LARANJA';
+    if (filtroCor === 'NEUTRO') return !cor;
+    return true;
+  });
+
+  if (todosAcomodacoes.length === 0) {
     grid.innerHTML = `
       <div class="card" style="padding: 2.5rem; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 0.75rem auto; display: block; opacity: 0.6;"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
         <p style="font-weight: 600; margin-bottom: 0.35rem;">Nenhuma acomodação cadastrada neste evento.</p>
         <p style="font-size: 0.85rem; margin-bottom: 1rem;">Crie quartos, alojamentos ou chalés para organizar a hospedagem dos participantes.</p>
         <button type="button" class="btn btn-primary" onclick="abrirModalAcomodacao()">Criar Primeira Acomodação</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (acomodacoes.length === 0) {
+    grid.innerHTML = `
+      <div class="card" style="padding: 2.5rem; text-align: center; color: var(--text-muted); grid-column: 1 / -1;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 0.75rem auto; display: block; opacity: 0.6;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p style="font-weight: 600; margin-bottom: 0.35rem;">Nenhum quarto encontrado para este filtro.</p>
+        <p style="font-size: 0.85rem; margin-bottom: 1rem;">Não há quartos vinculados à equipe selecionada.</p>
+        <button type="button" class="btn btn-outline" onclick="filtrarAcomodacoesPorEquipe('TODOS', document.getElementById('btn-filtro-ac-todos'))">Ver Todos os Quartos</button>
       </div>
     `;
     return;
@@ -5751,14 +5835,26 @@ function renderAcomodacoesUI() {
           }).join('')}
         </div>`;
 
+    const corNorm = (ac.cor || '').toUpperCase();
+    let corBadge = '';
+    let cardAccentBorder = '';
+    if (corNorm === 'VERDE') {
+      corBadge = `<span class="badge" style="background: rgba(0, 184, 148, 0.12); color: #00B894; border: 1px solid rgba(0, 184, 148, 0.35); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #00B894; display: inline-block;"></span>Equipe Verde</span>`;
+      cardAccentBorder = 'border-left: 4px solid #00B894;';
+    } else if (corNorm === 'LARANJA') {
+      corBadge = `<span class="badge" style="background: rgba(255, 121, 0, 0.12); color: #FF7900; border: 1px solid rgba(255, 121, 0, 0.35); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #FF7900; display: inline-block;"></span>Equipe Laranja</span>`;
+      cardAccentBorder = 'border-left: 4px solid #FF7900;';
+    }
+
     return `
-      <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem;">
+      <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; ${cardAccentBorder}">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
           <div>
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
               <h3 style="font-size: 1.05rem; font-weight: 800; margin: 0;">${escAc(ac.nome)}</h3>
               <span class="badge" style="background: #F1F5F9; color: #334155;">${escAc(ac.tipo || 'Quarto')}</span>
               ${generoBadge}
+              ${corBadge}
             </div>
             ${ac.descricao ? `<p style="font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">${escAc(ac.descricao)}</p>` : ''}
           </div>
@@ -5895,11 +5991,19 @@ window.abrirModalAcomodacao = function(acomodacaoId = null) {
       document.getElementById('ac-tipo').value = ac.tipo || 'Quarto';
       document.getElementById('ac-capacidade').value = ac.capacidade ?? 10;
       document.getElementById('ac-genero').value = ac.genero_restrito || '';
+      if (document.getElementById('ac-cor')) {
+        document.getElementById('ac-cor').value = (ac.cor || '').toUpperCase();
+        atualizarPreviewCorQuartoModal(ac.cor || '');
+      }
       document.getElementById('ac-descricao').value = ac.descricao || '';
     }
   } else {
     title.textContent = 'Nova Acomodação';
     document.getElementById('ac-capacidade').value = 10;
+    if (document.getElementById('ac-cor')) {
+      document.getElementById('ac-cor').value = '';
+      atualizarPreviewCorQuartoModal('');
+    }
   }
 
   modal.style.display = 'flex';
@@ -5918,6 +6022,7 @@ window.salvarAcomodacao = async function(e) {
     tipo: document.getElementById('ac-tipo').value,
     capacidade: parseInt(document.getElementById('ac-capacidade').value || '0', 10),
     genero_restrito: document.getElementById('ac-genero').value || null,
+    cor: (document.getElementById('ac-cor')?.value || '').trim() || null,
     descricao: document.getElementById('ac-descricao').value.trim() || null
   };
 
@@ -6154,9 +6259,16 @@ window.imprimirAcomodacoes = function() {
           </tr>`).join('')
       : `<tr><td colspan="6" style="color: #64748b; text-align: center;">Sem participantes alocados</td></tr>`;
 
+    const corPrint = (ac.cor || '').toUpperCase();
+    const tagPrint = corPrint === 'VERDE'
+      ? '<span style="background: #E6FDF6; color: #00B894; border: 1px solid #A7F3D0; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: bold; margin-left: 6px;">[Equipe Verde]</span>'
+      : (corPrint === 'LARANJA'
+        ? '<span style="background: #FFF7ED; color: #FF7900; border: 1px solid #FFEDD5; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: bold; margin-left: 6px;">[Equipe Laranja]</span>'
+        : '');
+
     return `
       <div class="room-box">
-        <h3>${escAc(ac.nome)} <small>(${escAc(ac.tipo || 'Quarto')} — ${ocupantes.length}/${ac.capacidade || '∞'})</small></h3>
+        <h3>${escAc(ac.nome)} <small>(${escAc(ac.tipo || 'Quarto')} — ${ocupantes.length}/${ac.capacidade || '∞'})</small> ${tagPrint}</h3>
         ${liderTexto}
         ${ac.descricao ? `<p class="desc">${escAc(ac.descricao)}</p>` : ''}
         <table>

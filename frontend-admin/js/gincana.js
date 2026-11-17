@@ -1,3 +1,35 @@
+
+function renderQuartosVinculados(elId, equipe, corPadrao) {
+  const el = document.getElementById(elId);
+  if (!el || !equipe) return;
+  const count = equipe.total_quartos || 0;
+  const cor = equipe.cor || corPadrao;
+  if (count > 0) {
+    const nomes = (equipe.quartos_nomes || []).join(', ');
+    el.innerHTML = `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem;">
+        <span style="font-weight: 700; color: ${cor}; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+          ${count} Quarto(s) Acomodação
+        </span>
+        <span style="font-weight: 700; color: var(--text-muted); font-size: 0.74rem;">
+          ${equipe.total_ocupantes_quartos || 0} membros (${equipe.total_vagas_quartos || 0} vagas)
+        </span>
+      </div>
+      <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${nomes}">
+        ${nomes}
+      </div>
+    `;
+    el.style.display = 'block';
+  } else {
+    el.innerHTML = `
+      <div style="font-size: 0.74rem; color: var(--text-muted); font-style: italic;">
+        Nenhum quarto de acomodação vinculado a esta equipe.
+      </div>
+    `;
+    el.style.display = 'block';
+  }
+}
 let gincanaAtual = null;
 let adminPollingInterval = null;
 
@@ -82,6 +114,7 @@ function renderizarPainelAdmin(data) {
     if (box1) {
       box1.style.borderColor = data.lider === 1 ? '#F59E0B' : `${eq1.cor}50`;
     }
+    renderQuartosVinculados('quartos-vinculados-eq1', eq1, '#00B894');
   }
 
   // 4. Equipe 2
@@ -112,6 +145,7 @@ function renderizarPainelAdmin(data) {
     if (box2) {
       box2.style.borderColor = data.lider === 2 ? '#F59E0B' : `${eq2.cor}50`;
     }
+    renderQuartosVinculados('quartos-vinculados-eq2', eq2, '#FF7900');
   }
 
   // 5. Histórico de Tarefas

@@ -14,6 +14,7 @@ class Acomodacao(Base):
     tipo = Column(String(60), default="Quarto", nullable=False)
     capacidade = Column(Integer, default=10, nullable=False)
     genero_restrito = Column(String(30), nullable=True)  # MASCULINO, FEMININO, MISTO ou None
+    cor = Column(String(30), nullable=True)  # VERDE, LARANJA ou None (vinculado a Gincana)
     descricao = Column(Text, nullable=True)
     lider_inscricao_id = Column(Integer, ForeignKey("inscricoes.id", ondelete="SET NULL"), nullable=True)
     lider_diaria_id = Column(Integer, ForeignKey("inscricoes_diarias.id", ondelete="SET NULL"), nullable=True)
@@ -61,5 +62,6 @@ class Acomodacao(Base):
             "nome": self.nome,
             "tipo": self.tipo,
             "descricao": self.descricao,
+            "cor": self.cor,
             "lider": self.get_lider_info()
         }

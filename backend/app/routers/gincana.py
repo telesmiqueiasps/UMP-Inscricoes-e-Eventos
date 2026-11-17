@@ -9,6 +9,10 @@ from app.core.security import get_current_admin, require_permissao
 from app.models.usuario import Usuario
 from app.models.evento import Evento
 from app.models.gincana import Gincana, GincanaPonto
+from app.models.acomodacao import Acomodacao
+from app.models.inscricao import Inscricao
+from app.models.diaria import InscricaoDiaria
+from collections import defaultdict
 from app.schemas.gincana import (
     GincanaEquipeUpdate,
     GincanaPontoCreate,
@@ -113,6 +117,48 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesRe
             )
         )
 
+        # Acomodacoes vinculadas as equipes (Verde = Equipe 1, Laranja = Equipe 2)
+    quartos_eq1 = []
+    vagas_eq1 = 0
+    ocup_eq1 = 0
+    quartos_eq2 = []
+    vagas_eq2 = 0
+    ocup_eq2 = 0
+
+    if gincana.evento_id:
+        try:
+            acomodacoes = db.query(Acomodacao).filter(Acomodacao.evento_id == gincana.evento_id).all()
+            ocupantes_map = defaultdict(int)
+            for ins in db.query(Inscricao.acomodacao_id).filter(
+                Inscricao.evento_id == gincana.evento_id,
+                Inscricao.status != "CANCELADA",
+                Inscricao.acomodacao_id.isnot(None)
+            ).all():
+                if ins[0]:
+                    ocupantes_map[ins[0]] += 1
+            for dia in db.query(InscricaoDiaria.acomodacao_id).filter(
+                InscricaoDiaria.evento_id == gincana.evento_id,
+                InscricaoDiaria.status != "CANCELADA",
+                InscricaoDiaria.acomodacao_id.isnot(None)
+            ).all():
+                if dia[0]:
+                    ocupantes_map[dia[0]] += 1
+
+            for ac in acomodacoes:
+                cor_norm = (ac.cor or "").strip().upper()
+                c_ocup = ocupantes_map[ac.id]
+                c_cap = int(ac.capacidade or 0)
+                if cor_norm in ["VERDE", "GREEN", "#00B894"]:
+                    quartos_eq1.append(ac.nome)
+                    vagas_eq1 += c_cap
+                    ocup_eq1 += c_ocup
+                elif cor_norm in ["LARANJA", "ORANGE", "#FF7900"]:
+                    quartos_eq2.append(ac.nome)
+                    vagas_eq2 += c_cap
+                    ocup_eq2 += c_ocup
+        except Exception:
+            pass
+
     evento_titulo = None
     if gincana.evento_id:
         ev = db.query(Evento).filter(Evento.id == gincana.evento_id).first()
@@ -128,13 +174,21 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesRe
             numero=1,
             nome=gincana.nome_equipe_1,
             cor=gincana.cor_equipe_1,
-            pontos=total_eq1
+            pontos=total_eq1,
+            total_quartos=len(quartos_eq1),
+            total_vagas_quartos=vagas_eq1,
+            total_ocupantes_quartos=ocup_eq1,
+            quartos_nomes=quartos_eq1
         ),
         equipe_2=EquipeInfo(
             numero=2,
             nome=gincana.nome_equipe_2,
             cor=gincana.cor_equipe_2,
-            pontos=total_eq2
+            pontos=total_eq2,
+            total_quartos=len(quartos_eq2),
+            total_vagas_quartos=vagas_eq2,
+            total_ocupantes_quartos=ocup_eq2,
+            quartos_nomes=quartos_eq2
         ),
         lider=lider,
         diferenca_pontos=abs(total_eq1 - total_eq2),
