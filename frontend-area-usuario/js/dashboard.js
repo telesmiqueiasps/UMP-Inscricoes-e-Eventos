@@ -1784,3 +1784,28 @@ window.fecharModalOficinaBackdrop = function (e) {
     window.fecharModalOficina();
   }
 };
+
+
+// ==============================================================
+// Sincronização Automática de Acomodação no Portal do Participante
+// ==============================================================
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    const ch = new BroadcastChannel('ump_acomodacoes_sync');
+    ch.onmessage = () => {
+      if (typeof loadDashboard === 'function') loadDashboard();
+    };
+  }
+} catch (_) {}
+
+window.addEventListener('storage', (ev) => {
+  if (ev.key === 'ump_acomodacoes_sync_ts' && ev.newValue) {
+    if (typeof loadDashboard === 'function') loadDashboard();
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && typeof loadDashboard === 'function') {
+    loadDashboard();
+  }
+});

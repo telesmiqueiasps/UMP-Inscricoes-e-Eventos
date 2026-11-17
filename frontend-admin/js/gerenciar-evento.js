@@ -197,7 +197,14 @@ window.switchSubTab = function(tabId, btn) {
     carregarDashboardEvento();
   }
   if (tabId === 'pane-acomodacao') {
-    carregarAcomodacoesEvento();
+    carregarAcomodacoesEvento({ force: true });
+    if (typeof iniciarAutoRefreshAcomodacoes === 'function') {
+      iniciarAutoRefreshAcomodacoes();
+    }
+  } else {
+    if (typeof pararAutoRefreshAcomodacoes === 'function') {
+      pararAutoRefreshAcomodacoes();
+    }
   }
 };
 
@@ -5399,6 +5406,129 @@ function renderizarTabelaAuditoriaIdade() {
 let cacheAcomodacoesData = null;
 let alocarAcomodacaoAtual = null;
 let alocarSelecionados = new Set();
+let ultimaAssinaturaAcomodacoes = '';
+let acomodacoesPollingInterval = null;
+let isCarregandoAcomodacoes = false;
+let acomodacoesBroadcastChannel = null;
+
+try {
+  if (typeof BroadcastChannel !== 'undefined') {
+    acomodacoesBroadcastChannel = new BroadcastChannel('ump_acomodacoes_sync');
+    acomodacoesBroadcastChannel.onmessage = (ev) => {
+      if (!ev || !ev.data) return;
+      if (String(ev.data.eventoId) === String(selectedEventoId)) {
+        carregarAcomodacoesEvento({ silencioso: true, force: true });
+        sincronizarListasDependentesAcomodacao();
+      }
+    };
+  }
+} catch (_) {}
+
+window.addEventListener('storage', (ev) => {
+  if (ev.key === 'ump_acomodacoes_sync_ts' && ev.newValue) {
+    try {
+      const payload = JSON.parse(ev.newValue);
+      if (String(payload.eventoId) === String(selectedEventoId)) {
+        carregarAcomodacoesEvento({ silencioso: true, force: true });
+        sincronizarListasDependentesAcomodacao();
+      }
+    } catch (_) {}
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    const paneAc = document.getElementById('pane-acomodacao');
+    if (paneAc && paneAc.classList.contains('active')) {
+      carregarAcomodacoesEvento({ silencioso: true });
+    }
+  }
+});
+
+window.addEventListener('focus', () => {
+  const paneAc = document.getElementById('pane-acomodacao');
+  if (paneAc && paneAc.classList.contains('active')) {
+    carregarAcomodacoesEvento({ silencioso: true });
+  }
+});
+
+function gerarAssinaturaAcomodacoes(data) {
+  if (!data) return '';
+  try {
+    const acs = (data.acomodacoes || []).map(ac => ({
+      id: ac.id,
+      n: ac.nome,
+      t: ac.tipo,
+      c: ac.capacidade,
+      g: ac.genero_restrito,
+      d: ac.descricao,
+      o: ac.ocupados_count,
+      l: ac.lider ? `${ac.lider.tipo}:${ac.lider.registro_id}:${ac.lider.nome}` : '',
+      oc: (ac.ocupantes || []).map(p => `${p.tipo}:${p.registro_id}:${p.is_lider ? 1 : 0}:${p.checkin_realizado ? 1 : 0}:${p.status}`).join(',')
+    }));
+    const sem = (data.sem_acomodacao || []).map(p => `${p.tipo}:${p.registro_id}:${p.status}`).join(',');
+    return JSON.stringify({ acs, sem, r: data.resumo });
+  } catch (_) {
+    return String(Date.now());
+  }
+}
+
+function atualizarBadgeSyncAcomodacoes(mudou = false) {
+  const textEl = document.getElementById('ac-sync-status-text');
+  const dotEl = document.getElementById('ac-sync-dot');
+  const horaStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (textEl) {
+    textEl.textContent = `Atualizado automaticamente às ${horaStr}`;
+  }
+  if (dotEl && mudou) {
+    dotEl.style.transform = 'scale(1.35)';
+    dotEl.style.transition = 'transform 0.25s ease';
+    setTimeout(() => {
+      dotEl.style.transform = 'scale(1)';
+    }, 350);
+  }
+}
+
+function sincronizarListasDependentesAcomodacao() {
+  try {
+    if (typeof loadListaPresenca === 'function') loadListaPresenca();
+    if (typeof loadInscricoes === 'function') loadInscricoes();
+    if (typeof carregarDiaristas === 'function') carregarDiaristas();
+  } catch (e) {
+    console.warn('Erro ao sincronizar listas dependentes de acomodação:', e);
+  }
+}
+
+async function notificarEAtualizarAcomodacoes() {
+  await carregarAcomodacoesEvento({ force: true });
+  sincronizarListasDependentesAcomodacao();
+  try {
+    const payload = { eventoId: selectedEventoId, ts: Date.now() };
+    if (acomodacoesBroadcastChannel) {
+      acomodacoesBroadcastChannel.postMessage(payload);
+    }
+    localStorage.setItem('ump_acomodacoes_sync_ts', JSON.stringify(payload));
+  } catch (_) {}
+}
+
+window.iniciarAutoRefreshAcomodacoes = function() {
+  if (acomodacoesPollingInterval) clearInterval(acomodacoesPollingInterval);
+  acomodacoesPollingInterval = setInterval(() => {
+    const paneAc = document.getElementById('pane-acomodacao');
+    if (!paneAc || !paneAc.classList.contains('active') || document.hidden) return;
+    // Evitar interromper caso o usuário esteja com um select de alocação rápida focado/aberto
+    const activeEl = document.activeElement;
+    if (activeEl && activeEl.classList && activeEl.classList.contains('ac-quick-select')) return;
+    carregarAcomodacoesEvento({ silencioso: true });
+  }, 3500);
+};
+
+window.pararAutoRefreshAcomodacoes = function() {
+  if (acomodacoesPollingInterval) {
+    clearInterval(acomodacoesPollingInterval);
+    acomodacoesPollingInterval = null;
+  }
+};
 
 function escAc(str) {
   if (str === null || str === undefined) return '';
@@ -5442,11 +5572,28 @@ function formatarIdadeAcomodacao(p) {
   return 'Idade N/I';
 }
 
-window.carregarAcomodacoesEvento = async function() {
+window.carregarAcomodacoesEvento = async function(opcoes = {}) {
   if (!selectedEventoId) return;
+  const { silencioso = false, force = false } = opcoes;
+  if (isCarregandoAcomodacoes && silencioso && !force) return;
+  isCarregandoAcomodacoes = true;
+
   try {
-    const data = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes`);
+    const data = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes?_t=${Date.now()}`, {
+      cache: 'no-store'
+    });
+    const novaAssinatura = gerarAssinaturaAcomodacoes(data);
+    const teveMudanca = novaAssinatura !== ultimaAssinaturaAcomodacoes;
+    const tinhaAssinaturaAnterior = Boolean(ultimaAssinaturaAcomodacoes);
+
     cacheAcomodacoesData = data;
+
+    if (!force && !teveMudanca && silencioso) {
+      isCarregandoAcomodacoes = false;
+      return;
+    }
+
+    ultimaAssinaturaAcomodacoes = novaAssinatura;
 
     const resumo = data.resumo || {};
     const setKpi = (id, val) => {
@@ -5458,14 +5605,60 @@ window.carregarAcomodacoesEvento = async function() {
     setKpi('ac-kpi-alocados', resumo.total_alocados);
     setKpi('ac-kpi-sem', resumo.total_sem_acomodacao);
 
+    // Preservar posição de scroll das listas internas dos quartos antes de re-renderizar
+    const scrollPositions = {};
+    document.querySelectorAll('.ac-ocupantes-scroll[data-ac-id]').forEach(el => {
+      scrollPositions[el.getAttribute('data-ac-id')] = el.scrollTop;
+    });
+
     renderAcomodacoesUI();
+
+    document.querySelectorAll('.ac-ocupantes-scroll[data-ac-id]').forEach(el => {
+      const saved = scrollPositions[el.getAttribute('data-ac-id')];
+      if (saved !== undefined) el.scrollTop = saved;
+    });
+
     renderSemAcomodacaoLista();
-  } catch (err) {
-    console.error('Erro ao carregar acomodações:', err);
-    const grid = document.getElementById('acomodacoes-cards-grid');
-    if (grid) {
-      grid.innerHTML = `<div class="card" style="padding: 2rem; text-align: center; color: #DC2626; grid-column: 1 / -1;">Erro ao carregar acomodações: ${escAc(err.message)}</div>`;
+
+    // Se o modal de alocação estiver aberto, mantê-lo atualizado em tempo real
+    const modalAlocar = document.getElementById('modal-alocar-acomodacao');
+    if (modalAlocar && modalAlocar.style.display === 'flex' && alocarAcomodacaoAtual) {
+      const acAtualizada = (data.acomodacoes || []).find(a => a.id === alocarAcomodacaoAtual.id);
+      if (acAtualizada) {
+        alocarAcomodacaoAtual = acAtualizada;
+        const vagasText = acAtualizada.capacidade > 0
+          ? `${acAtualizada.vagas_restantes} vaga(s) restante(s) de ${acAtualizada.capacidade}`
+          : 'Capacidade ilimitada';
+        const subEl = document.getElementById('modal-alocar-subtitle');
+        if (subEl) subEl.textContent = `${acAtualizada.tipo || 'Quarto'} • ${vagasText}`;
+        const disponiveisSet = new Set((data.sem_acomodacao || []).map(p => `${p.tipo}:${p.registro_id}`));
+        alocarSelecionados.forEach(k => {
+          if (!disponiveisSet.has(k)) alocarSelecionados.delete(k);
+        });
+        renderListaAlocacaoModal();
+      } else {
+        fecharModalAlocarAcomodacao();
+      }
     }
+
+    atualizarBadgeSyncAcomodacoes(teveMudanca);
+
+    if (silencioso && tinhaAssinaturaAnterior && teveMudanca) {
+      sincronizarListasDependentesAcomodacao();
+      if (typeof showToast === 'function') {
+        showToast('Alocações atualizadas automaticamente.', 'success');
+      }
+    }
+  } catch (err) {
+    if (!silencioso) {
+      console.error('Erro ao carregar acomodações:', err);
+      const grid = document.getElementById('acomodacoes-cards-grid');
+      if (grid) {
+        grid.innerHTML = `<div class="card" style="padding: 2rem; text-align: center; color: #DC2626; grid-column: 1 / -1;">Erro ao carregar acomodações: ${escAc(err.message)}</div>`;
+      }
+    }
+  } finally {
+    isCarregandoAcomodacoes = false;
   }
 };
 
@@ -5524,7 +5717,7 @@ function renderAcomodacoesUI() {
     const ocupantes = ac.ocupantes || [];
     const ocupantesHtml = ocupantes.length === 0
       ? `<div style="padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); background: #F8FAFC; border-radius: var(--radius-md);">Nenhum participante alocado.</div>`
-      : `<div style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
+      : `<div class="ac-ocupantes-scroll" data-ac-id="${ac.id}" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;">
           ${ocupantes.map(oc => {
             const tipoTag = oc.tipo === 'DIARIA'
               ? `<span style="font-size: 0.68rem; background: #EDE9FE; color: #6D28D9; padding: 1px 5px; border-radius: 4px; font-weight: 700;">Diária</span>`
@@ -5650,7 +5843,7 @@ window.renderSemAcomodacaoLista = function() {
             </td>
             <td style="padding: 0.65rem; text-align: right;">
               ${acomodacoes.length > 0 ? `
-                <select class="form-control" style="display: inline-block; width: auto; max-width: 210px; padding: 0.3rem 0.5rem; font-size: 0.8rem;" onchange="alocarRapidoParticipante(this.value, '${p.tipo}', ${p.registro_id})">
+                <select class="form-control ac-quick-select" style="display: inline-block; width: auto; max-width: 210px; height: 36px; padding: 0 1.75rem 0 0.5rem; font-size: 0.8rem;" onchange="alocarRapidoParticipante(this.value, '${p.tipo}', ${p.registro_id})">
                   <option value="">Selecionar quarto...</option>
                   ${optionsHtml}
                 </select>
@@ -5670,14 +5863,17 @@ window.alocarRapidoParticipante = async function(acomodacaoId, tipo, registroId)
       inscricao_ids: tipo === 'REGULAR' ? [registroId] : [],
       diaria_ids: tipo === 'DIARIA' ? [registroId] : []
     };
-    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/alocar`, {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}/alocar`, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
-    await carregarAcomodacoesEvento();
+    if (typeof showToast === 'function') {
+      showToast(res.mensagem || 'Participante alocado com sucesso!', 'success');
+    }
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao alocar participante.');
-    await carregarAcomodacoesEvento();
+    await carregarAcomodacoesEvento({ force: true });
   }
 };
 
@@ -5726,19 +5922,23 @@ window.salvarAcomodacao = async function(e) {
   };
 
   try {
+    let res;
     if (editId) {
-      await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${editId}`, {
+      res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${editId}`, {
         method: 'PUT',
         body: JSON.stringify(payload)
       });
     } else {
-      await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes`, {
+      res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes`, {
         method: 'POST',
         body: JSON.stringify(payload)
       });
     }
     fecharModalAcomodacao();
-    await carregarAcomodacoesEvento();
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Acomodação salva com sucesso!', 'success');
+    }
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao salvar acomodação.');
   }
@@ -5747,10 +5947,13 @@ window.salvarAcomodacao = async function(e) {
 window.excluirAcomodacao = async function(acomodacaoId, nome) {
   if (!confirm(`Deseja excluir a acomodação "${nome}"? Os participantes alocados voltarão para a lista de espera.`)) return;
   try {
-    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}`, {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${acomodacaoId}`, {
       method: 'DELETE'
     });
-    await carregarAcomodacoesEvento();
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Acomodação excluída com sucesso.', 'success');
+    }
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao excluir acomodação.');
   }
@@ -5862,12 +6065,15 @@ window.confirmarAlocacaoAcomodacao = async function() {
   });
 
   try {
-    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${alocarAcomodacaoAtual.id}/alocar`, {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/${alocarAcomodacaoAtual.id}/alocar`, {
       method: 'POST',
       body: JSON.stringify({ inscricao_ids, diaria_ids })
     });
     fecharModalAlocarAcomodacao();
-    await carregarAcomodacoesEvento();
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || 'Participante(s) alocado(s) com sucesso!', 'success');
+    }
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao alocar participantes.');
   }
@@ -5876,11 +6082,14 @@ window.confirmarAlocacaoAcomodacao = async function() {
 window.desalocarParticipanteAcomodacao = async function(tipo, registroId, nome) {
   if (!confirm(`Remover "${nome}" desta acomodação?`)) return;
   try {
-    await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/desalocar`, {
+    const res = await API.request(`/admin/eventos/${selectedEventoId}/acomodacoes/desalocar`, {
       method: 'POST',
       body: JSON.stringify({ tipo, registro_id: registroId })
     });
-    await carregarAcomodacoesEvento();
+    if (typeof showToast === 'function') {
+      showToast((res && res.mensagem) || `"${nome}" removido da acomodação.`, 'success');
+    }
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao remover participante.');
   }
@@ -5896,7 +6105,7 @@ window.definirLiderAcomodacao = async function(acomodacaoId, registroId, tipo, n
     if (typeof showToast === 'function') {
       showToast(`"${nome}" definido como líder da acomodação!`, 'success');
     }
-    await carregarAcomodacoesEvento();
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao definir líder da acomodação.');
   }
@@ -5912,7 +6121,7 @@ window.removerLiderAcomodacao = async function(acomodacaoId) {
     if (typeof showToast === 'function') {
       showToast('Líder da acomodação removido.', 'success');
     }
-    await carregarAcomodacoesEvento();
+    await notificarEAtualizarAcomodacoes();
   } catch (err) {
     alert(err.message || 'Erro ao remover líder da acomodação.');
   }
