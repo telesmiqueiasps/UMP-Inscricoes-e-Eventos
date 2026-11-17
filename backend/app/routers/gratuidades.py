@@ -37,6 +37,7 @@ def _serializar_gratuita(g: InscricaoGratuita) -> Dict[str, Any]:
         "acomodacao_id": g.acomodacao_id,
         "acomodacao_nome": ac.nome if ac else None,
         "acomodacao_tipo": ac.tipo if ac else None,
+        "acomodacao_cor": ac.cor if ac else None,
         "acomodacao": ac.to_summary_dict() if ac else None,
         "created_at": g.created_at.isoformat() if g.created_at else None,
         "updated_at": g.updated_at.isoformat() if g.updated_at else None

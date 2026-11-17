@@ -1,3 +1,94 @@
+
+// --- Helper: Determinar Cor do Card e Pulseira no Check-in ---
+window.obterInfoPulseiraCheckin = function(item) {
+  if (!item) {
+    return {
+      codigo: 'AMARELA',
+      nome: 'Pulseira Amarela',
+      tipo: 'DIARIA',
+      rotulo: 'Diária / Sem Quarto',
+      corHex: '#F59E0B',
+      corDark: '#D97706',
+      bgLight: '#FFFBEB',
+      borderHex: '#FDE68A',
+      textHex: '#92400E',
+      badgeHtml: '<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> PULSEIRA AMARELA</span>',
+      bannerHtml: '<div style="background: #FFFBEB; border: 2px solid #F59E0B; color: #92400E; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #F59E0B; display: inline-block; box-shadow: 0 0 0 2px #FEF3C7;"></span> ENTREGAR PULSEIRA AMARELA</span><span style="font-size: 0.75rem; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px;">DIÁRIA / SEM QUARTO</span></div>'
+    };
+  }
+
+  const ac = item.acomodacao || null;
+  const acNome = (ac && ac.nome) ? ac.nome : (item.acomodacao_nome || null);
+  const corRaw = (ac && ac.cor) ? ac.cor : (item.acomodacao_cor || '');
+  const corNorm = String(corRaw || '').toUpperCase().trim();
+
+  // Caso 1: Sem acomodação vinculada => Diária / Sem Pernoite => Pulseira Amarela
+  if (!acNome) {
+    return {
+      codigo: 'AMARELA',
+      nome: 'Pulseira Amarela',
+      tipo: 'DIARIA',
+      rotulo: 'Diária / Sem Quarto',
+      corHex: '#F59E0B',
+      corDark: '#D97706',
+      bgLight: '#FFFBEB',
+      borderHex: '#FDE68A',
+      textHex: '#92400E',
+      badgeHtml: '<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> PULSEIRA AMARELA</span>',
+      bannerHtml: '<div style="background: #FFFBEB; border: 2px solid #F59E0B; color: #92400E; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #F59E0B; display: inline-block; box-shadow: 0 0 0 2px #FEF3C7;"></span> ENTREGAR PULSEIRA AMARELA</span><span style="font-size: 0.75rem; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px;">DIÁRIA / SEM QUARTO</span></div>'
+    };
+  }
+
+  // Caso 2: Acomodação com Cor VERDE
+  if (corNorm === 'VERDE') {
+    return {
+      codigo: 'VERDE',
+      nome: 'Pulseira Verde',
+      tipo: 'GINCANA_VERDE',
+      rotulo: 'Equipe Verde',
+      corHex: '#00B894',
+      corDark: '#00A381',
+      bgLight: '#F0FDF4',
+      borderHex: '#86EFAC',
+      textHex: '#065F46',
+      badgeHtml: '<span class="badge" style="background: #DCFCE7; color: #065F46; border: 1.5px solid #00B894; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #00B894; display: inline-block;"></span> PULSEIRA VERDE</span>',
+      bannerHtml: '<div style="background: #F0FDF4; border: 2px solid #00B894; color: #065F46; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #00B894; display: inline-block; box-shadow: 0 0 0 2px #DCFCE7;"></span> ENTREGAR PULSEIRA VERDE</span><span style="font-size: 0.75rem; background: #DCFCE7; border: 1px solid #86EFAC; padding: 2px 7px; border-radius: 4px;">EQUIPE VERDE</span></div>'
+    };
+  }
+
+  // Caso 3: Acomodação com Cor LARANJA
+  if (corNorm === 'LARANJA') {
+    return {
+      codigo: 'LARANJA',
+      nome: 'Pulseira Laranja',
+      tipo: 'GINCANA_LARANJA',
+      rotulo: 'Equipe Laranja',
+      corHex: '#FF7900',
+      corDark: '#EA580C',
+      bgLight: '#FFF7ED',
+      borderHex: '#FDBA74',
+      textHex: '#9A3412',
+      badgeHtml: '<span class="badge" style="background: #FFEDD5; color: #9A3412; border: 1.5px solid #FF7900; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #FF7900; display: inline-block;"></span> PULSEIRA LARANJA</span>',
+      bannerHtml: '<div style="background: #FFF7ED; border: 2px solid #FF7900; color: #9A3412; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #FF7900; display: inline-block; box-shadow: 0 0 0 2px #FFEDD5;"></span> ENTREGAR PULSEIRA LARANJA</span><span style="font-size: 0.75rem; background: #FFEDD5; border: 1px solid #FDBA74; padding: 2px 7px; border-radius: 4px;">EQUIPE LARANJA</span></div>'
+    };
+  }
+
+  // Caso 4: Acomodação SEM cor definida => Organização => Pulseira Prata / Branca
+  return {
+    codigo: 'PRATA',
+    nome: 'Pulseira Prata / Branca',
+    tipo: 'ORGANIZACAO',
+    rotulo: 'Organização',
+    corHex: '#94A3B8',
+    corDark: '#64748B',
+    bgLight: '#F8FAFC',
+    borderHex: '#CBD5E1',
+    textHex: '#1E293B',
+    badgeHtml: '<span class="badge" style="background: #F1F5F9; color: #1E293B; border: 1.5px solid #94A3B8; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; display: inline-block;"></span> PULSEIRA PRATA (ORG)</span>',
+    bannerHtml: '<div style="background: #F8FAFC; border: 2px solid #94A3B8; color: #1E293B; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #94A3B8; display: inline-block; box-shadow: 0 0 0 2px #E2E8F0;"></span> ENTREGAR PULSEIRA PRATA / BRANCA</span><span style="font-size: 0.75rem; background: #E2E8F0; border: 1px solid #CBD5E1; padding: 2px 7px; border-radius: 4px;">ORGANIZAÇÃO</span></div>'
+  };
+};
+
 let selectedEventoId = null;
 let eventoAtual = null;
 let cachedInscricoesList = [];
@@ -2746,17 +2837,25 @@ function renderTabelaPresenca() {
     const btnText = ins.checkin_realizado ? "Desfazer Check-in" : "Confirmar Check-in";
     const btnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
 
+    const pulseira = obterInfoPulseiraCheckin(ins);
     const acNomeTabela = (ins.acomodacao && ins.acomodacao.nome) ? ins.acomodacao.nome : ins.acomodacao_nome;
     const acomodacaoCell = acNomeTabela
-      ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600;">${escAc(acNomeTabela)}</span>`
-      : `<span style="color: var(--text-muted); font-size: 0.78rem;">Não definida</span>`;
+      ? `<div style="display: flex; flex-direction: column; gap: 3px;">
+           <span class="badge" style="background: ${pulseira.bgLight}; color: ${pulseira.textHex}; border: 1.5px solid ${pulseira.borderHex}; font-weight: 700;">${escAc(acNomeTabela)}</span>
+           ${pulseira.badgeHtml}
+         </div>`
+      : `<div style="display: flex; flex-direction: column; gap: 3px;">
+           <span class="badge" style="background: #FFFBEB; color: #92400E; border: 1.5px solid #FDE68A; font-weight: 700;">Sem Quarto (Diária)</span>
+           ${pulseira.badgeHtml}
+         </div>`;
 
     return `
-      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle; border-left: 4px solid ${pulseira.corHex};">
         <td data-label="Participante" style="padding: 0.75rem;">
           <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
             <strong style="color: var(--text-dark);">${ins.nome}</strong>
             ${tipoBadge}
+            ${pulseira.badgeHtml}
           </div>
           <div style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</div>
           <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem; align-items: center; flex-wrap: wrap;">
@@ -2833,11 +2932,29 @@ async function processarQrCodeEscaneado(codigo) {
 
     // Preencher Ficha de Triagem
     currentTriagemCode = codigo;
+    const pulseira = obterInfoPulseiraCheckin(res);
+
+    // Banner de Destaque da Pulseira
+    const pulseiraBanner = document.getElementById('triagem-pulseira-banner');
+    if (pulseiraBanner) {
+      pulseiraBanner.style.display = 'block';
+      pulseiraBanner.innerHTML = pulseira.bannerHtml;
+    }
+
+    // Colorir container do nome de acordo com a pulseira
+    const nomeContainer = document.getElementById('triagem-nome-container') || document.querySelector('.triagem-nome-container');
+    if (nomeContainer) {
+      nomeContainer.style.background = pulseira.bgLight;
+      nomeContainer.style.border = `1.5px solid ${pulseira.borderHex}`;
+      nomeContainer.style.borderLeft = `6px solid ${pulseira.corHex}`;
+    }
 
     const avatarEl = document.getElementById('triagem-avatar');
     if (avatarEl) {
       const iniciais = obterIniciaisNome(res.nome || 'P');
       avatarEl.innerHTML = `<span style="font-weight: 800; font-size: 0.95rem;">${iniciais}</span>`;
+      avatarEl.style.background = pulseira.corHex;
+      avatarEl.style.color = (pulseira.codigo === 'AMARELA') ? '#78350F' : '#FFFFFF';
     }
 
     document.getElementById('triagem-nome').textContent = res.nome;
@@ -2849,7 +2966,7 @@ async function processarQrCodeEscaneado(codigo) {
     const elIdade = document.getElementById('triagem-idade');
     if (elIdade) elIdade.textContent = (res.idade !== null && res.idade !== undefined) ? `${res.idade} anos` : 'Não informada';
 
-    // Atualizar badge de tipo (Integral vs Diária)
+    // Atualizar badge de tipo (Integral vs Diária vs Gratuidade)
     const tipoBadge = document.getElementById('triagem-tipo-badge');
     const diariaDiasContainer = document.getElementById('triagem-diaria-dias-container');
     if (tipoBadge) {
@@ -2857,6 +2974,10 @@ async function processarQrCodeEscaneado(codigo) {
         tipoBadge.textContent = 'Diária';
         tipoBadge.style.background = '#EDE9FE';
         tipoBadge.style.color = '#6D28D9';
+      } else if (res.tipo === 'GRATUIDADE') {
+        tipoBadge.textContent = 'Gratuidade';
+        tipoBadge.style.background = '#ECFDF5';
+        tipoBadge.style.color = '#047857';
       } else {
         tipoBadge.textContent = 'Integral';
         tipoBadge.style.background = '#EFF6FF';
@@ -2894,30 +3015,42 @@ async function processarQrCodeEscaneado(codigo) {
 
       if (acNome) {
         const liderInfoCheckin = (acLider && acLider.nome)
-          ? `<div style="font-size: 0.75rem; color: #047857; margin-top: 3px;"><strong>Líder do Quarto:</strong> ${escAc(acLider.nome)}${acLider.telefone ? ` (${escAc(acLider.telefone)})` : ''}</div>`
+          ? `<div style="font-size: 0.75rem; color: ${pulseira.textHex}; margin-top: 3px;"><strong>Líder do Quarto:</strong> ${escAc(acLider.nome)}${acLider.telefone ? ` (${escAc(acLider.telefone)})` : ''}</div>`
           : '';
 
+        let badgeCorAcomodacao = '';
+        if (pulseira.codigo === 'VERDE') {
+          badgeCorAcomodacao = '<span class="badge" style="background: #00B894; color: #FFFFFF; font-size: 0.7rem; font-weight: 800; margin-left: 0.35rem;">EQUIPE VERDE</span>';
+        } else if (pulseira.codigo === 'LARANJA') {
+          badgeCorAcomodacao = '<span class="badge" style="background: #FF7900; color: #FFFFFF; font-size: 0.7rem; font-weight: 800; margin-left: 0.35rem;">EQUIPE LARANJA</span>';
+        } else {
+          badgeCorAcomodacao = '<span class="badge" style="background: #64748B; color: #FFFFFF; font-size: 0.7rem; font-weight: 800; margin-left: 0.35rem;">ORGANIZAÇÃO</span>';
+        }
+
         acTriagemContainer.innerHTML = `
-          <div style="background: #ECFDF5; border: 1.5px solid #A7F3D0; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #065F46; width: 100%;">
-            <div style="background: #D1FAE5; padding: 0.35rem; border-radius: var(--radius-sm); color: #059669; display: flex; align-items: center;">
+          <div style="background: ${pulseira.bgLight}; border: 1.5px solid ${pulseira.borderHex}; border-left: 6px solid ${pulseira.corHex}; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: ${pulseira.textHex}; width: 100%;">
+            <div style="background: ${pulseira.borderHex}; padding: 0.4rem; border-radius: var(--radius-sm); color: ${pulseira.textHex}; display: flex; align-items: center;">
               ${ICONS.bed}
             </div>
-            <div>
-              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #047857; display: block; letter-spacing: 0.04em;">Acomodação Atribuída</span>
-              <strong style="font-size: 0.95rem; color: #064E3B;">${escAc(acNome)}${acTipo ? ` (${escAc(acTipo)})` : ''}</strong>
+            <div style="flex: 1; min-width: 0;">
+              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: ${pulseira.textHex}; display: block; letter-spacing: 0.04em;">Acomodação Atribuída</span>
+              <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+                <strong style="font-size: 0.95rem; color: var(--text-dark);">${escAc(acNome)}${acTipo ? ` (${escAc(acTipo)})` : ''}</strong>
+                ${badgeCorAcomodacao}
+              </div>
               ${liderInfoCheckin}
             </div>
           </div>
         `;
       } else {
         acTriagemContainer.innerHTML = `
-          <div style="background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #64748B; width: 100%;">
-            <div style="background: #E2E8F0; padding: 0.35rem; border-radius: var(--radius-sm); color: #64748B; display: flex; align-items: center;">
+          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-left: 6px solid #F59E0B; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #92400E; width: 100%;">
+            <div style="background: #FEF3C7; padding: 0.4rem; border-radius: var(--radius-sm); color: #B45309; display: flex; align-items: center;">
               ${ICONS.bed}
             </div>
             <div>
-              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #94A3B8; display: block; letter-spacing: 0.04em;">Acomodação</span>
-              <span style="font-size: 0.85rem; font-weight: 600; color: #64748B;">Não definida pela organização</span>
+              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #B45309; display: block; letter-spacing: 0.04em;">Acomodação</span>
+              <span style="font-size: 0.88rem; font-weight: 700; color: #92400E;">Sem acomodação vinculada (Diária / Sem Pernoite)</span>
             </div>
           </div>
         `;

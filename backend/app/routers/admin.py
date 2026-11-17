@@ -1071,6 +1071,7 @@ def obter_detalhes_checkin(
             "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
             "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
             "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
+            "acomodacao_cor": inscricao.acomodacao.cor if inscricao.acomodacao else None,
             "tamanho_camiseta": info_part["tamanho_camiseta"],
             "data_nascimento": info_part["data_nascimento"],
             "idade": info_part["idade"]
@@ -1113,6 +1114,7 @@ def obter_detalhes_checkin(
             "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
             "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
             "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
+            "acomodacao_cor": diaria.acomodacao.cor if diaria.acomodacao else None,
             "tamanho_camiseta": info_part["tamanho_camiseta"],
             "data_nascimento": info_part["data_nascimento"],
             "idade": info_part["idade"]
@@ -1142,6 +1144,7 @@ def obter_detalhes_checkin(
             "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
             "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
             "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
+            "acomodacao_cor": gratuita.acomodacao.cor if gratuita.acomodacao else None,
             "tamanho_camiseta": "-",
             "data_nascimento": "-",
             "idade": "-"
@@ -1203,6 +1206,7 @@ def realizar_checkin(
             "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
             "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
             "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
+            "acomodacao_cor": inscricao.acomodacao.cor if inscricao.acomodacao else None,
             "tamanho_camiseta": info_part["tamanho_camiseta"],
             "idade": info_part["idade"],
             "mensagem": "Check-in realizado com sucesso! (Inscrição Integral)"
@@ -1250,6 +1254,7 @@ def realizar_checkin(
             "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
             "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
             "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
+            "acomodacao_cor": diaria.acomodacao.cor if diaria.acomodacao else None,
             "tamanho_camiseta": info_part["tamanho_camiseta"],
             "idade": info_part["idade"],
             "mensagem": f"Check-in de diária realizado com sucesso! (Dias: {dias_str})"
@@ -1284,6 +1289,7 @@ def realizar_checkin(
             "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
             "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
             "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
+            "acomodacao_cor": gratuita.acomodacao.cor if gratuita.acomodacao else None,
             "tamanho_camiseta": "-",
             "idade": "-",
             "mensagem": "Check-in de gratuidade realizado com sucesso!"
@@ -1363,6 +1369,7 @@ def listar_participantes_checkin(
                 "acomodacao": ins.acomodacao.to_summary_dict() if ins.acomodacao else None,
                 "acomodacao_nome": ins.acomodacao.nome if ins.acomodacao else None,
                 "acomodacao_tipo": ins.acomodacao.tipo if ins.acomodacao else None,
+                "acomodacao_cor": ins.acomodacao.cor if ins.acomodacao else None,
                 "tamanho_camiseta": info_part["tamanho_camiseta"],
                 "data_nascimento": info_part["data_nascimento"],
                 "idade": info_part["idade"]
@@ -1388,6 +1395,7 @@ def listar_participantes_checkin(
                 "acomodacao": d.acomodacao.to_summary_dict() if d.acomodacao else None,
                 "acomodacao_nome": d.acomodacao.nome if d.acomodacao else None,
                 "acomodacao_tipo": d.acomodacao.tipo if d.acomodacao else None,
+                "acomodacao_cor": d.acomodacao.cor if d.acomodacao else None,
                 "tamanho_camiseta": info_part["tamanho_camiseta"],
                 "data_nascimento": info_part["data_nascimento"],
                 "idade": info_part["idade"]
@@ -1412,6 +1420,7 @@ def listar_participantes_checkin(
                 "acomodacao": g.acomodacao.to_summary_dict() if g.acomodacao else None,
                 "acomodacao_nome": g.acomodacao.nome if g.acomodacao else None,
                 "acomodacao_tipo": g.acomodacao.tipo if g.acomodacao else None,
+                "acomodacao_cor": g.acomodacao.cor if g.acomodacao else None,
                 "tamanho_camiseta": "-",
                 "data_nascimento": "-",
                 "idade": "-"
