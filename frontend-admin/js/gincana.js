@@ -2,7 +2,7 @@
 function renderQuartosVinculados(elId, equipe, corPadrao) {
   const el = document.getElementById(elId);
   if (!el || !equipe) return;
-  const count = equipe.total_quartos || 0;
+  const count = Number(equipe.total_quartos || 0);
   const cor = equipe.cor || corPadrao;
   if (count > 0) {
     const nomes = (equipe.quartos_nomes || []).join(', ');
@@ -10,14 +10,14 @@ function renderQuartosVinculados(elId, equipe, corPadrao) {
       <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem;">
         <span style="font-weight: 700; color: ${cor}; display: inline-flex; align-items: center; gap: 4px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
-          ${count} Quarto(s) Acomodação
+          ${count} Quarto(s) Vinculado(s)
         </span>
         <span style="font-weight: 700; color: var(--text-muted); font-size: 0.74rem;">
-          ${equipe.total_ocupantes_quartos || 0} membros (${equipe.total_vagas_quartos || 0} vagas)
+          ${equipe.total_ocupantes_quartos || 0} membro(s) (${equipe.total_vagas_quartos || 0} vagas)
         </span>
       </div>
-      <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${nomes}">
-        ${nomes}
+      <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; word-break: break-word;" title="${escapeHTML(nomes)}">
+        <strong>Quartos:</strong> ${escapeHTML(nomes)}
       </div>
     `;
     el.style.display = 'block';
@@ -59,7 +59,13 @@ async function inicializarGincanaAdmin() {
 
 async function carregarGincanaAdmin(silencioso = false) {
   try {
-    const data = await API.request('/gincana/ativa');
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventoId = urlParams.get('evento_id') || sessionStorage.getItem('ump_evento_id') || localStorage.getItem('ump_ultimo_evento_id');
+    let url = '/gincana/ativa';
+    if (eventoId) {
+      url += `?evento_id=${encodeURIComponent(eventoId)}`;
+    }
+    const data = await API.request(url);
     if (!data) return;
 
     gincanaAtual = data;
@@ -77,6 +83,10 @@ function renderizarPainelAdmin(data) {
   const pageTitulo = document.getElementById('page-gincana-titulo');
   if (pageTitulo && data.titulo) {
     pageTitulo.textContent = data.titulo;
+  }
+  const subEl = document.querySelector('.page-header p');
+  if (subEl && data.evento_titulo) {
+    subEl.innerHTML = `Lançamento de tarefas, controle das equipes e placar em tempo real &bull; <span style="font-weight: 700; color: var(--primary);">Evento: ${escapeHTML(data.evento_titulo)}</span>`;
   }
 
   // 2. Link Público

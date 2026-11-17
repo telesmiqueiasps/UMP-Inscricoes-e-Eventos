@@ -134,6 +134,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const urlParams = new URLSearchParams(window.location.search);
   selectedEventoId = urlParams.get('evento_id');
+  if (selectedEventoId) {
+    sessionStorage.setItem('ump_evento_id', selectedEventoId);
+    localStorage.setItem('ump_ultimo_evento_id', selectedEventoId);
+    document.querySelectorAll('a[href="gincana.html"]').forEach(a => {
+      a.href = `gincana.html?evento_id=${encodeURIComponent(selectedEventoId)}`;
+    });
+  }
 
   if (!selectedEventoId) {
     showToast('Nenhum evento selecionado.', 'error');

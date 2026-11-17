@@ -53,7 +53,7 @@ def _obter_ou_criar_gincana_ativa(db: Session, evento_id: Optional[int] = None) 
     return gincana
 
 
-def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesResponse:
+def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Optional[int] = None) -> GincanaDetalhesResponse:
     total_eq1 = (
         db.query(func.coalesce(func.sum(GincanaPonto.pontos), 0))
         .filter(GincanaPonto.gincana_id == gincana.id, GincanaPonto.equipe == 1)
@@ -117,7 +117,31 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesRe
             )
         )
 
-        # Acomodacoes vinculadas as equipes (Verde = Equipe 1, Laranja = Equipe 2)
+        # Resolucao dinamica do Evento vinculado
+    target_evento_id = gincana.evento_id or evento_id_param
+    if not target_evento_id:
+        try:
+            # 1. Prioriza o evento que possui acomodacoes cadastradas com cor definida
+            ac_com_cor = db.query(Acomodacao).filter(Acomodacao.cor.isnot(None)).order_by(Acomodacao.id.desc()).first()
+            if ac_com_cor and ac_com_cor.evento_id:
+                target_evento_id = ac_com_cor.evento_id
+            else:
+                # 2. Busca o evento ativo mais recente ou qualquer evento
+                ev_ativo = db.query(Evento).filter(Evento.ativo == True).order_by(Evento.id.desc()).first()
+                if not ev_ativo:
+                    ev_ativo = db.query(Evento).order_by(Evento.id.desc()).first()
+                if ev_ativo:
+                    target_evento_id = ev_ativo.id
+
+            # Persistir o vinculo na gincana para consultas subsequentes
+            if target_evento_id and not gincana.evento_id:
+                gincana.evento_id = target_evento_id
+                db.commit()
+                db.refresh(gincana)
+        except Exception:
+            db.rollback()
+
+    # Acomodacoes vinculadas as equipes (Verde = Equipe 1, Laranja = Equipe 2)
     quartos_eq1 = []
     vagas_eq1 = 0
     ocup_eq1 = 0
@@ -125,50 +149,81 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session) -> GincanaDetalhesRe
     vagas_eq2 = 0
     ocup_eq2 = 0
 
-    if gincana.evento_id:
-        try:
-            acomodacoes = db.query(Acomodacao).filter(Acomodacao.evento_id == gincana.evento_id).all()
-            ocupantes_map = defaultdict(int)
-            for ins in db.query(Inscricao.acomodacao_id).filter(
-                Inscricao.evento_id == gincana.evento_id,
-                Inscricao.status != "CANCELADA",
-                Inscricao.acomodacao_id.isnot(None)
-            ).all():
-                if ins[0]:
-                    ocupantes_map[ins[0]] += 1
-            for dia in db.query(InscricaoDiaria.acomodacao_id).filter(
-                InscricaoDiaria.evento_id == gincana.evento_id,
-                InscricaoDiaria.status != "CANCELADA",
-                InscricaoDiaria.acomodacao_id.isnot(None)
-            ).all():
-                if dia[0]:
-                    ocupantes_map[dia[0]] += 1
+    try:
+        query_ac = db.query(Acomodacao)
+        if target_evento_id:
+            query_ac = query_ac.filter(Acomodacao.evento_id == target_evento_id)
+        acomodacoes = query_ac.all()
 
-            for ac in acomodacoes:
-                cor_norm = (ac.cor or "").strip().upper()
-                c_ocup = ocupantes_map[ac.id]
-                c_cap = int(ac.capacidade or 0)
-                if cor_norm in ["VERDE", "GREEN", "#00B894"]:
-                    quartos_eq1.append(ac.nome)
-                    vagas_eq1 += c_cap
-                    ocup_eq1 += c_ocup
-                elif cor_norm in ["LARANJA", "ORANGE", "#FF7900"]:
-                    quartos_eq2.append(ac.nome)
-                    vagas_eq2 += c_cap
-                    ocup_eq2 += c_ocup
-        except Exception:
-            pass
+        ocupantes_map = defaultdict(int)
+        query_ins = db.query(Inscricao.acomodacao_id).filter(
+            Inscricao.status != "CANCELADA",
+            Inscricao.acomodacao_id.isnot(None)
+        )
+        if target_evento_id:
+            query_ins = query_ins.filter(Inscricao.evento_id == target_evento_id)
+        for ins in query_ins.all():
+            if ins[0]:
+                ocupantes_map[ins[0]] += 1
+
+        query_dia = db.query(InscricaoDiaria.acomodacao_id).filter(
+            InscricaoDiaria.status != "CANCELADA",
+            InscricaoDiaria.acomodacao_id.isnot(None)
+        )
+        if target_evento_id:
+            query_dia = query_dia.filter(InscricaoDiaria.evento_id == target_evento_id)
+        for dia in query_dia.all():
+            if dia[0]:
+                ocupantes_map[dia[0]] += 1
+
+        eq1_cor = (gincana.cor_equipe_1 or "").strip().upper()
+        eq2_cor = (gincana.cor_equipe_2 or "").strip().upper()
+        eq1_nome = (gincana.nome_equipe_1 or "").strip().upper()
+        eq2_nome = (gincana.nome_equipe_2 or "").strip().upper()
+
+        for ac in acomodacoes:
+            cor_norm = (ac.cor or "").strip().upper()
+            if not cor_norm:
+                continue
+            c_ocup = ocupantes_map[ac.id]
+            c_cap = int(ac.capacidade or 0)
+
+            # Reconhecimento amplo e resiliente de cores / equipes
+            if (
+                cor_norm in ["VERDE", "GREEN", "#00B894", "1", "EQUIPE 1", "EQUIPE_1"]
+                or cor_norm == eq1_cor
+                or (cor_norm and cor_norm in eq1_nome)
+                or ("VERDE" in eq1_nome and cor_norm == "VERDE")
+            ):
+                quartos_eq1.append(ac.nome)
+                vagas_eq1 += c_cap
+                ocup_eq1 += c_ocup
+            elif (
+                cor_norm in ["LARANJA", "ORANGE", "#FF7900", "2", "EQUIPE 2", "EQUIPE_2"]
+                or cor_norm == eq2_cor
+                or (cor_norm and cor_norm in eq2_nome)
+                or ("LARANJA" in eq2_nome and cor_norm == "LARANJA")
+            ):
+                quartos_eq2.append(ac.nome)
+                vagas_eq2 += c_cap
+                ocup_eq2 += c_ocup
+    except Exception as e:
+        import logging
+        logging.exception(f"Erro ao processar quartos vinculados na gincana: {e}")
 
     evento_titulo = None
-    if gincana.evento_id:
-        ev = db.query(Evento).filter(Evento.id == gincana.evento_id).first()
-        if ev:
-            evento_titulo = ev.titulo
+    if target_evento_id:
+        try:
+            ev = db.query(Evento).filter(Evento.id == target_evento_id).first()
+            if ev:
+                evento_titulo = ev.titulo
+        except Exception:
+            pass
 
     return GincanaDetalhesResponse(
         id=gincana.id,
         titulo=gincana.titulo,
-        evento_id=gincana.evento_id,
+        evento_id=gincana.evento_id or target_evento_id,
         evento_titulo=evento_titulo,
         equipe_1=EquipeInfo(
             numero=1,
@@ -211,7 +266,7 @@ def obter_gincana_ativa(
 ):
     """Retorna os dados e pontuações em tempo real da gincana ativa."""
     gincana = _obter_ou_criar_gincana_ativa(db, evento_id)
-    return _montar_resposta_gincana(gincana, db)
+    return _montar_resposta_gincana(gincana, db, evento_id_param=evento_id)
 
 
 @router.get("/gincana/{gincana_id}", response_model=GincanaDetalhesResponse)
