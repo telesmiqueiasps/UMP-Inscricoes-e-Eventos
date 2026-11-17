@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   emailInput.addEventListener('input', () => {
     emailVerified = false;
     recoverBtn.disabled = true;
+    recoverBtn.textContent = 'Recuperar Senha';
     statusMsg.style.display = 'none';
     clearMessages();
 
@@ -49,22 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const res = await API.request(`/auth/check-email?email=${encodeURIComponent(email)}`);
-        if (res.exists) {
+        if (res && res.exists) {
           emailVerified = true;
-          showStatus('✅ E-mail encontrado! Botão de recuperação liberado.', 'success');
+          showStatus('E-mail cadastrado encontrado! Clique no botão abaixo para receber sua nova senha.', 'success');
           recoverBtn.disabled = false;
         } else {
           emailVerified = false;
-          showStatus('❌ Este e-mail não está cadastrado em nosso sistema.', 'error');
+          showStatus('Este e-mail não está cadastrado em nosso sistema.', 'error');
           recoverBtn.disabled = true;
         }
       } catch (err) {
-        showStatus('Erro ao verificar e-mail. Tente novamente.', 'error');
+        showStatus('Erro ao verificar e-mail. Verifique sua conexão e tente novamente.', 'error');
         recoverBtn.disabled = true;
       } finally {
         if (spinner) spinner.style.display = 'none';
       }
-    }, 600);
+    }, 500);
   });
 
   // Enviar formulário
@@ -76,25 +77,27 @@ document.addEventListener('DOMContentLoaded', () => {
     clearMessages();
 
     recoverBtn.disabled = true;
-    recoverBtn.innerHTML = '<span class="spinner"></span> Enviando...';
+    recoverBtn.innerHTML = '<span class="spinner"></span> Enviando nova senha...';
 
     try {
-      await API.request('/auth/recuperar-senha', {
+      const res = await API.request('/auth/recuperar-senha', {
         method: 'POST',
         body: JSON.stringify({ email })
       });
 
       successDiv.style.display = 'block';
-      successDiv.textContent = 'Uma nova senha temporária foi gerada e enviada para o seu e-mail com sucesso!';
+      successDiv.innerHTML = `<strong>Sucesso!</strong> ${(res && (res.detail || res.message)) || 'Uma nova senha temporária foi gerada e enviada para o seu e-mail!'}<br><span style="font-size: 0.8rem; opacity: 0.9;">Caso não localize, verifique também sua caixa de Spam/Lixo Eletrônico.</span>`;
+      
       emailInput.value = '';
       emailVerified = false;
-      recoverBtn.disabled = true;
+      recoverBtn.disabled = false;
+      recoverBtn.innerHTML = 'Recuperar Outra Senha';
       statusMsg.style.display = 'none';
     } catch (err) {
       errorDiv.style.display = 'block';
       errorDiv.textContent = err.message || 'Erro ao processar recuperação de senha. Tente novamente.';
       recoverBtn.disabled = false;
-      recoverBtn.textContent = 'Recuperar Senha';
+      recoverBtn.innerHTML = 'Recuperar Senha';
     }
   });
 });

@@ -30,28 +30,37 @@ def fechar_brevo_client():
             _brevo_client = None
 
 
-def enviar_email_brevo(destinatario_email: str, destinatario_nome: str, assunto: str, conteudo_html: str) -> bool:
+def enviar_email_brevo(destinatario_email: str, destinatario_nome: Optional[str], assunto: str, conteudo_html: str) -> bool:
     """
     Função base para envio de e-mails usando a API do Brevo (antigo Sendinblue).
     """
+    if not settings.BREVO_API_KEY or not settings.BREVO_API_KEY.strip():
+        logging.error("BREVO_API_KEY não configurada no ambiente. E-mail não pode ser enviado.")
+        return False
+
     url = "https://api.brevo.com/v3/smtp/email"
     headers = {
         "accept": "application/json",
-        "api-key": settings.BREVO_API_KEY,
+        "api-key": settings.BREVO_API_KEY.strip(),
         "content-type": "application/json"
     }
 
+    dest_email = (destinatario_email or "").strip()
+    if not dest_email:
+        logging.error("Destinatário de e-mail inválido ou vazio.")
+        return False
+
+    to_item = {"email": dest_email}
+    nome_limpo = (destinatario_nome or "").strip()
+    if nome_limpo:
+        to_item["name"] = nome_limpo
+
     payload = {
         "sender": {
-            "name": settings.BREVO_SENDER_NAME,
-            "email": settings.BREVO_SENDER_EMAIL
+            "name": (settings.BREVO_SENDER_NAME or "Sinodal UMP PB").strip(),
+            "email": (settings.BREVO_SENDER_EMAIL or "sinodalumppb@gmail.com").strip()
         },
-        "to": [
-            {
-                "email": destinatario_email,
-                "name": destinatario_nome
-            }
-        ],
+        "to": [to_item],
         "subject": assunto,
         "htmlContent": conteudo_html
     }
@@ -199,15 +208,16 @@ def enviar_email_alerta_vencimento(
     return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
 
 
-def enviar_email_recuperacao_senha(destinatario_email: str, destinatario_nome: str, nova_senha: str) -> bool:
+def enviar_email_recuperacao_senha(destinatario_email: str, destinatario_nome: Optional[str], nova_senha: str) -> bool:
     """
     Envia e-mail contendo a nova senha temporária para o participante.
     """
+    nome_exibicao = (destinatario_nome or "").strip() or "Participante"
     assunto = "Recuperação de Senha - UMP Eventos"
     conteudo_html = f"""
     <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
         <h2 style="color: #1d4ed8; text-align: center; margin-bottom: 20px;">Recuperação de Senha</h2>
-        <p>Olá, <strong>{destinatario_nome}</strong>,</p>
+        <p>Olá, <strong>{nome_exibicao}</strong>,</p>
         <p>Você solicitou a recuperação de sua senha na plataforma UMP Eventos.</p>
         <p>Uma nova senha temporária foi gerada com sucesso para você:</p>
         
@@ -215,13 +225,13 @@ def enviar_email_recuperacao_senha(destinatario_email: str, destinatario_nome: s
             {nova_senha}
         </div>
         
-        <p style="color: #ef4444; font-weight: bold; text-align: center;">🚨 Recomendamos alterar esta senha provisória imediatamente no menu do participante após efetuar o login.</p>
+        <p style="color: #ef4444; font-weight: bold; text-align: center;">Recomendamos alterar esta senha provisória imediatamente no menu do participante após efetuar o login.</p>
         
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-top: 30px; margin-bottom: 20px;" />
-        <p style="font-size: 0.85rem; color: #666; text-align: center;">Desenvolvido por Miquéias Teles</p>
+        <p style="font-size: 0.85rem; color: #666; text-align: center;">Sinodal UMP PB &bull; Organização de Eventos</p>
     </div>
     """
-    return enviar_email_brevo(destinatario_email, destinatario_nome, assunto, conteudo_html)
+    return enviar_email_brevo(destinatario_email, nome_exibicao, assunto, conteudo_html)
 
 
 def enviar_email_confirmacao_diaria(

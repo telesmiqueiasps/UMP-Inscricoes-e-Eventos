@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+import logging
+from app.core.config import settings
 
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token, get_current_user
@@ -111,29 +114,44 @@ def get_me(current_user: Usuario = Depends(get_current_user)):
 @router.post("/recuperar-senha")
 def recuperar_senha(
     req: RecuperarSenhaRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    user = db.query(Usuario).filter(Usuario.email == req.email).first()
+    email_clean = (req.email or "").strip().lower()
+    user = db.query(Usuario).filter(func.lower(Usuario.email) == email_clean).first()
     if not user:
         raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
-    
-    # Gerar senha temporária aleatória de 8 caracteres alfanuméricos legíveis
+
+    # 1. Verificar se o serviço de envio de e-mails (Brevo) está configurado no servidor
+    if not settings.BREVO_API_KEY or not settings.BREVO_API_KEY.strip():
+        logging.error("Recuperação de senha abortada: BREVO_API_KEY não configurada no servidor.")
+        raise HTTPException(
+            status_code=503,
+            detail="O serviço de envio de e-mails não está configurado no servidor (variável BREVO_API_KEY ausente). Por favor, informe aos administradores do evento para redefinir sua senha."
+        )
+
+    # 2. Gerar senha temporária aleatória de 8 caracteres alfanuméricos legíveis
     import secrets
     import string
     alphabet = string.ascii_uppercase + string.digits
     temp_pw = ''.join(secrets.choice(alphabet) for _ in range(8))
-    
-    # Atualizar senha hash
-    user.senha_hash = get_password_hash(temp_pw)
-    db.commit()
-    
-    # Enviar email com a nova senha temporária em background
-    background_tasks.add_task(
-        enviar_email_recuperacao_senha,
+
+    # 3. Disparar envio do e-mail com a nova senha ANTES de sobrescrever a senha antiga no banco
+    nome_usuario = (user.nome or "").strip() or "Participante"
+    email_enviado = enviar_email_recuperacao_senha(
         destinatario_email=user.email,
-        destinatario_nome=user.nome,
+        destinatario_nome=nome_usuario,
         nova_senha=temp_pw
     )
-    
-    return {"detail": "Uma nova senha temporária foi enviada para o seu e-mail."}
+
+    if not email_enviado:
+        logging.error(f"Falha ao enviar e-mail de recuperação de senha para {user.email}.")
+        raise HTTPException(
+            status_code=502,
+            detail="O servidor de e-mail não pôde entregar a mensagem neste momento. Sua senha atual NÃO foi alterada. Verifique se o e-mail está correto ou tente novamente em instantes."
+        )
+
+    # 4. Somente após confirmação de envio do e-mail, salva a nova senha no banco
+    user.senha_hash = get_password_hash(temp_pw)
+    db.commit()
+
+    return {"detail": "Uma nova senha temporária foi enviada para o seu e-mail com sucesso! Verifique sua caixa de entrada e a pasta de spam."}
