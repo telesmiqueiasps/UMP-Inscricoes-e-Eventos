@@ -2860,7 +2860,11 @@ function renderTabelaPresenca() {
           <div style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</div>
           <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem; align-items: center; flex-wrap: wrap;">
             ${ins.tamanho_camiseta ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.68rem; padding: 1px 5px;">Camisa: ${escAc(ins.tamanho_camiseta)}</span>` : ''}
-            ${(ins.idade !== null && ins.idade !== undefined) ? `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos</span>` : ''}
+            ${(ins.idade !== null && ins.idade !== undefined && String(ins.idade).trim() !== '') ? (function(){
+              const num = parseInt(ins.idade, 10);
+              const cat = (!isNaN(num) && num >= 19) ? 'UMP' : 'UPA';
+              return `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos • ${cat}</span>`;
+            })() : ''}
           </div>
         </td>
         <td data-label="CPF" style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
@@ -2913,58 +2917,96 @@ window.filtrarTabelaPresenca = function() {
   renderTabelaPresenca();
 };
 
-async function processarQrCodeEscaneado(codigo) {
+window.abrirFichaCheckin = async function(codigo = null, inscricaoId = null, tipo = 'REGULAR') {
   const alertDiv = document.getElementById('checkin-feedback-alert');
   if (alertDiv) {
     alertDiv.style.display = 'none';
   }
 
-  // Pausar scanner
+  // Pausar scanner se ativo
   if (html5QrcodeScanner) {
-    html5QrcodeScanner.pause(true);
+    try { html5QrcodeScanner.pause(true); } catch (_) {}
   }
 
   try {
-    const res = await API.request(`/admin/eventos/${selectedEventoId}/checkin/detalhes?codigo_checkin=${encodeURIComponent(codigo)}`);
-    
-    // Som / vibração de bipe reconhecido
+    let url;
+    if (codigo) {
+      url = `/admin/eventos/${selectedEventoId}/checkin/detalhes?codigo_checkin=${encodeURIComponent(codigo)}`;
+    } else if (inscricaoId) {
+      url = `/admin/eventos/${selectedEventoId}/checkin/detalhes?inscricao_id=${inscricaoId}&tipo=${encodeURIComponent(tipo)}`;
+    } else {
+      return;
+    }
+
+    const res = await API.request(url);
     playCheckinSound('scan');
-
-    // Preencher Ficha de Triagem
-    currentTriagemCode = codigo;
-    const pulseira = obterInfoPulseiraCheckin(res);
-
-    // Banner de Destaque da Pulseira
-    const pulseiraBanner = document.getElementById('triagem-pulseira-banner');
-    if (pulseiraBanner) {
-      pulseiraBanner.style.display = 'block';
-      pulseiraBanner.innerHTML = pulseira.bannerHtml;
+    preencherFichaTriagemCompleta(res, res.codigo_checkin || codigo);
+  } catch (err) {
+    playCheckinSound('warning');
+    showToast(err.message || 'Erro ao carregar detalhes do participante.', 'error');
+    if (html5QrcodeScanner) {
+      try { html5QrcodeScanner.resume(); } catch (_) {}
     }
+  }
+};
 
-    // Colorir container do nome de acordo com a pulseira
-    const nomeContainer = document.getElementById('triagem-nome-container') || document.querySelector('.triagem-nome-container');
-    if (nomeContainer) {
-      nomeContainer.style.background = pulseira.bgLight;
-      nomeContainer.style.border = `1.5px solid ${pulseira.borderHex}`;
-      nomeContainer.style.borderLeft = `6px solid ${pulseira.corHex}`;
+async function processarQrCodeEscaneado(codigo) {
+  await abrirFichaCheckin(codigo);
+}
+
+function preencherFichaTriagemCompleta(res, codigo) {
+  // Preencher Ficha de Triagem
+  currentTriagemCode = codigo || res.codigo_checkin;
+  const pulseira = obterInfoPulseiraCheckin(res);
+
+  // Banner de Destaque da Pulseira
+  const pulseiraBanner = document.getElementById('triagem-pulseira-banner');
+  if (pulseiraBanner) {
+    pulseiraBanner.style.display = 'block';
+    pulseiraBanner.innerHTML = pulseira.bannerHtml;
+  }
+
+  // Colorir container do nome de acordo com a pulseira
+  const nomeContainer = document.getElementById('triagem-nome-container') || document.querySelector('.triagem-nome-container');
+  if (nomeContainer) {
+    nomeContainer.style.background = pulseira.bgLight;
+    nomeContainer.style.border = `1.5px solid ${pulseira.borderHex}`;
+    nomeContainer.style.borderLeft = `6px solid ${pulseira.corHex}`;
+  }
+
+  const avatarEl = document.getElementById('triagem-avatar');
+  if (avatarEl) {
+    const iniciais = obterIniciaisNome(res.nome || 'P');
+    avatarEl.innerHTML = `<span style="font-weight: 800; font-size: 0.95rem;">${iniciais}</span>`;
+    avatarEl.style.background = pulseira.corHex;
+    avatarEl.style.color = (pulseira.codigo === 'AMARELA') ? '#78350F' : '#FFFFFF';
+  }
+
+  document.getElementById('triagem-nome').textContent = res.nome;
+  document.getElementById('triagem-cpf').textContent = res.cpf ? formatarCPF(res.cpf) : 'Não informado';
+  document.getElementById('triagem-email').textContent = res.email || 'Não informado';
+
+  const elCamiseta = document.getElementById('triagem-camiseta');
+  if (elCamiseta) elCamiseta.textContent = res.tamanho_camiseta || 'Não informado';
+
+  // Idade com classificação discreta UPA (< 19) vs UMP (>= 19)
+  const elIdade = document.getElementById('triagem-idade');
+  if (elIdade) {
+    if (res.idade !== null && res.idade !== undefined && String(res.idade).trim() !== '') {
+      const idadeNum = parseInt(res.idade, 10);
+      const cat = (!isNaN(idadeNum) && idadeNum >= 19) ? 'UMP' : 'UPA';
+      const catBg = (!isNaN(idadeNum) && idadeNum >= 19) ? '#EFF6FF' : '#FEF3C7';
+      const catColor = (!isNaN(idadeNum) && idadeNum >= 19) ? '#1D4ED8' : '#D97706';
+      elIdade.innerHTML = `
+        <div style="display: flex; align-items: baseline; gap: 0.45rem;">
+          <span>${res.idade} anos</span>
+          <span style="font-size: 0.72rem; font-weight: 800; background: ${catBg}; color: ${catColor}; border: 1px solid ${catColor}33; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em;">${cat}</span>
+        </div>
+      `;
+    } else {
+      elIdade.textContent = 'Não informada';
     }
-
-    const avatarEl = document.getElementById('triagem-avatar');
-    if (avatarEl) {
-      const iniciais = obterIniciaisNome(res.nome || 'P');
-      avatarEl.innerHTML = `<span style="font-weight: 800; font-size: 0.95rem;">${iniciais}</span>`;
-      avatarEl.style.background = pulseira.corHex;
-      avatarEl.style.color = (pulseira.codigo === 'AMARELA') ? '#78350F' : '#FFFFFF';
-    }
-
-    document.getElementById('triagem-nome').textContent = res.nome;
-    document.getElementById('triagem-cpf').textContent = res.cpf ? formatarCPF(res.cpf) : 'Não informado';
-    document.getElementById('triagem-email').textContent = res.email || 'Não informado';
-
-    const elCamiseta = document.getElementById('triagem-camiseta');
-    if (elCamiseta) elCamiseta.textContent = res.tamanho_camiseta || 'Não informado';
-    const elIdade = document.getElementById('triagem-idade');
-    if (elIdade) elIdade.textContent = (res.idade !== null && res.idade !== undefined) ? `${res.idade} anos` : 'Não informada';
+  }
 
     // Atualizar badge de tipo (Integral vs Diária vs Gratuidade)
     const tipoBadge = document.getElementById('triagem-tipo-badge');
@@ -3111,13 +3153,6 @@ async function processarQrCodeEscaneado(codigo) {
 
     // Exibir Ficha de Triagem Overlay
     document.getElementById('checkin-scanned-card').style.display = 'flex';
-  } catch (err) {
-    playCheckinSound('warning');
-    showToast(err.message || 'Código de QR Code inválido ou não cadastrado.', 'error');
-    if (html5QrcodeScanner) {
-      html5QrcodeScanner.resume();
-    }
-  }
 }
 
 window.confirmarCheckinTriagem = async function() {
@@ -3142,6 +3177,12 @@ window.confirmarCheckinTriagem = async function() {
     cancelarTriagem();
     await loadListaPresenca();
     await carregarDiaristas();
+    if (typeof buscarParticipantesCheckin === 'function') {
+      const searchInput = document.getElementById('checkin-search-input');
+      if (searchInput && searchInput.value.trim().length >= 2) {
+        buscarParticipantesCheckin();
+      }
+    }
   } catch (err) {
     playCheckinSound('warning');
     showToast(err.message || "Erro ao realizar check-in.", "error");
@@ -3180,63 +3221,29 @@ window.buscarParticipantesCheckin = async function() {
     }
 
     resultsList.innerHTML = list.map(ins => {
-      let badgeClass = 'badge-warning';
-      if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
-      else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
+      const pulseira = obterInfoPulseiraCheckin(ins);
+      const codigoParam = ins.codigo_checkin ? `'${escAc(ins.codigo_checkin)}'` : 'null';
+      const openFn = `abrirFichaCheckin(${codigoParam}, ${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')`;
 
-      const tipoBadge = ins.tipo === 'DIARIA'
-        ? `<span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.7rem;">Diária (${ins.dias_formatados || 'Dias'})</span>`
-        : `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.7rem;">Integral</span>`;
-
-      const checkinBadge = ins.checkin_realizado ? 
-        `<span class="badge badge-success">Checked-in</span>` : 
-        `<span class="badge badge-warning">Ausente</span>`;
-
-      const acNome = (ins.acomodacao && ins.acomodacao.nome) ? ins.acomodacao.nome : ins.acomodacao_nome;
-      const acTipo = (ins.acomodacao && ins.acomodacao.tipo) ? ins.acomodacao.tipo : ins.acomodacao_tipo;
-      const acomodacaoBadge = acNome
-        ? `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
-             <span>${escAc(acNome)}${acTipo ? ' (' + escAc(acTipo) + ')' : ''}</span>
-           </span>`
-        : `<span class="badge" style="background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; font-size: 0.72rem;">Sem acomodação</span>`;
-
-      const camisaBadge = ins.tamanho_camiseta
-        ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
-             <span>Camisa: ${escAc(ins.tamanho_camiseta)}</span>
-           </span>`
-        : '';
-
-      const idadeBadge = (ins.idade !== null && ins.idade !== undefined)
-        ? `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.72rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
-             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-             <span>${ins.idade} anos</span>
-           </span>`
-        : '';
-
-      const checkinBtnText = ins.checkin_realizado ? "Desfazer Check-in" : "Check-in Manual";
-      const checkinBtnClass = ins.checkin_realizado ? "btn btn-outline" : "btn btn-primary";
+      const btnText = ins.checkin_realizado ? "Checked-in" : "Check-in";
+      const btnStyle = ins.checkin_realizado
+        ? "background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC;"
+        : "background: var(--primary); color: #FFFFFF; border: none;";
 
       return `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: var(--radius-md); margin-bottom: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: ${pulseira.bgLight}; border: 1.5px solid ${pulseira.borderHex}; border-left: 6px solid ${pulseira.corHex}; padding: 0.85rem 1.1rem; border-radius: var(--radius-md); margin-bottom: 0.65rem; gap: 0.75rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;" onclick="${openFn}" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.03)';">
           <div style="min-width: 0; flex: 1;">
-            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-              <span style="font-weight: 700; font-size: 0.9rem;">${escAc(ins.nome)}</span>
-              ${tipoBadge}
+            <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-dark); margin-bottom: 0.25rem;">
+              ${escAc(ins.nome)}
             </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">CPF: ${escAc(ins.cpf) || 'N/A'} | Email: ${escAc(ins.email)}</div>
-            <div style="display: flex; gap: 0.35rem; margin-top: 0.35rem; align-items: center; flex-wrap: wrap;">
-              <span class="badge ${badgeClass}">${ins.status}</span>
-              ${checkinBadge}
-              ${acomodacaoBadge}
-              ${camisaBadge}
-              ${idadeBadge}
+            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.85rem;">
+              <span><strong>CPF:</strong> ${escAc(ins.cpf) ? formatarCPF(ins.cpf) : 'Não informado'}</span>
+              <span><strong>E-mail:</strong> ${escAc(ins.email) || 'Não informado'}</span>
             </div>
           </div>
-          <div style="flex-shrink: 0;">
-            <button class="${checkinBtnClass}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="realizarCheckinManual(${ins.inscricao_id}, '${ins.tipo || 'REGULAR'}')">
-              ${checkinBtnText}
+          <div style="flex-shrink: 0;" onclick="event.stopPropagation()">
+            <button type="button" class="btn" style="${btnStyle} padding: 0.45rem 1rem; font-size: 0.82rem; font-weight: 700; border-radius: var(--radius-sm);" onclick="${openFn}">
+              ${btnText}
             </button>
           </div>
         </div>

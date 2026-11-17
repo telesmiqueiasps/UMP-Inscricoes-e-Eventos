@@ -1040,11 +1040,119 @@ def _obter_info_participante_checkin(dados_extras):
 @router.get("/admin/eventos/{evento_id}/checkin/detalhes")
 def obter_detalhes_checkin(
     evento_id: int,
-    codigo_checkin: str,
+    codigo_checkin: Optional[str] = Query(None),
+    inscricao_id: Optional[int] = Query(None),
+    tipo: Optional[str] = Query(None),
     admin: Usuario = Depends(require_permissao("secretaria")),
     db: Session = Depends(get_db)
 ):
-    codigo_clean = codigo_checkin.strip()
+    codigo_clean = codigo_checkin.strip() if codigo_checkin else None
+
+    # Se busca direta por ID e Tipo
+    if inscricao_id:
+        tipo_up = (tipo or "REGULAR").upper().strip()
+        if tipo_up == "DIARIA":
+            diaria = db.query(InscricaoDiaria).filter(
+                InscricaoDiaria.evento_id == evento_id,
+                InscricaoDiaria.id == inscricao_id
+            ).first()
+            if diaria:
+                if not diaria.codigo_checkin:
+                    diaria.codigo_checkin = f"DIA-EV{evento_id}-{diaria.id}-{uuid.uuid4().hex[:6].upper()}"
+                    db.commit()
+                info_part = _obter_info_participante_checkin(diaria.dados_extras)
+                hoje = get_hoje_brasil()
+                hoje_iso = hoje.strftime("%Y-%m-%d")
+                dias = diaria.dias_selecionados or []
+                valido_hoje = any(str(d).strip() == hoje_iso or hoje_iso in str(d) or hoje.strftime("%d/%m") in str(d) for d in dias)
+                return {
+                    "id": diaria.id,
+                    "tipo": "DIARIA",
+                    "tipo_label": "Diária",
+                    "nome": diaria.usuario.nome if diaria.usuario else "",
+                    "cpf": diaria.usuario.cpf if diaria.usuario else "",
+                    "email": diaria.usuario.email if diaria.usuario else "",
+                    "status": diaria.status,
+                    "checkin_realizado": diaria.checkin_realizado,
+                    "checkin_data": diaria.checkin_data.isoformat() if diaria.checkin_data else None,
+                    "codigo_checkin": diaria.codigo_checkin,
+                    "valido_hoje": valido_hoje,
+                    "dias_selecionados": dias,
+                    "dias_formatados": ", ".join(dias) if isinstance(dias, list) else str(dias),
+                    "acomodacao": diaria.acomodacao.to_summary_dict() if diaria.acomodacao else None,
+                    "acomodacao_nome": diaria.acomodacao.nome if diaria.acomodacao else None,
+                    "acomodacao_tipo": diaria.acomodacao.tipo if diaria.acomodacao else None,
+                    "acomodacao_cor": diaria.acomodacao.cor if diaria.acomodacao else None,
+                    "tamanho_camiseta": info_part["tamanho_camiseta"],
+                    "data_nascimento": info_part["data_nascimento"],
+                    "idade": info_part["idade"]
+                }
+        elif tipo_up == "GRATUIDADE":
+            gratuita = db.query(InscricaoGratuita).filter(
+                InscricaoGratuita.evento_id == evento_id,
+                InscricaoGratuita.id == inscricao_id
+            ).first()
+            if gratuita:
+                if not gratuita.codigo_checkin:
+                    gratuita.codigo_checkin = f"GRAT-EV{evento_id}-{uuid.uuid4().hex[:8].upper()}"
+                    db.commit()
+                return {
+                    "id": gratuita.id,
+                    "tipo": "GRATUIDADE",
+                    "tipo_label": "Gratuidade / Cortesia",
+                    "nome": gratuita.nome,
+                    "cpf": "",
+                    "email": "",
+                    "contato": gratuita.contato or "",
+                    "status": "CONFIRMADA",
+                    "checkin_realizado": gratuita.checkin_realizado,
+                    "checkin_data": gratuita.checkin_data.isoformat() if gratuita.checkin_data else None,
+                    "codigo_checkin": gratuita.codigo_checkin,
+                    "valido_hoje": True,
+                    "dias_selecionados": [],
+                    "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
+                    "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
+                    "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
+                    "acomodacao_cor": gratuita.acomodacao.cor if gratuita.acomodacao else None,
+                    "tamanho_camiseta": "-",
+                    "data_nascimento": "-",
+                    "idade": "-"
+                }
+        else:
+            inscricao = db.query(Inscricao).filter(
+                Inscricao.evento_id == evento_id,
+                Inscricao.id == inscricao_id
+            ).first()
+            if inscricao:
+                if not inscricao.codigo_checkin:
+                    inscricao.codigo_checkin = f"CHECKIN-EV{evento_id}-{inscricao.id}-{uuid.uuid4().hex[:6].upper()}"
+                    db.commit()
+                usuario = inscricao.usuario
+                info_part = _obter_info_participante_checkin(inscricao.dados_extras)
+                return {
+                    "id": inscricao.id,
+                    "tipo": "REGULAR",
+                    "tipo_label": "Inscrição Integral",
+                    "nome": usuario.nome if usuario else "",
+                    "cpf": usuario.cpf if usuario else "",
+                    "email": usuario.email if usuario else "",
+                    "status": inscricao.status,
+                    "checkin_realizado": inscricao.checkin_realizado,
+                    "checkin_data": inscricao.checkin_data.isoformat() if inscricao.checkin_data else None,
+                    "codigo_checkin": inscricao.codigo_checkin,
+                    "valido_hoje": True,
+                    "dias_selecionados": [],
+                    "acomodacao": inscricao.acomodacao.to_summary_dict() if inscricao.acomodacao else None,
+                    "acomodacao_nome": inscricao.acomodacao.nome if inscricao.acomodacao else None,
+                    "acomodacao_tipo": inscricao.acomodacao.tipo if inscricao.acomodacao else None,
+                    "acomodacao_cor": inscricao.acomodacao.cor if inscricao.acomodacao else None,
+                    "tamanho_camiseta": info_part["tamanho_camiseta"],
+                    "data_nascimento": info_part["data_nascimento"],
+                    "idade": info_part["idade"]
+                }
+
+    if not codigo_clean:
+        raise HTTPException(status_code=400, detail="Código de check-in ou ID do participante é obrigatório.")
 
     # 1. Tentar buscar em Inscricao Regular
     inscricao = db.query(Inscricao).filter(
