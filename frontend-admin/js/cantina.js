@@ -1042,10 +1042,31 @@ window.ajustarEstoqueRapido = async function(produtoId, delta) {
   }
 };
 
+window.aoMudarCategoriaProduto = function(selectEl) {
+  const boxCustom = document.getElementById('box-categoria-personalizada');
+  const inpCustom = document.getElementById('prod-categoria-custom');
+  if (!boxCustom) return;
+
+  if (selectEl && selectEl.value === '__OUTRA__') {
+    boxCustom.style.display = 'block';
+    if (inpCustom) inpCustom.focus();
+  } else {
+    boxCustom.style.display = 'none';
+    if (inpCustom) inpCustom.value = '';
+  }
+};
+
 window.abrirModalProduto = function() {
   document.getElementById('form-produto-cantina').reset();
   document.getElementById('prod-id').value = '';
-  document.getElementById('prod-categoria').value = 'Geral';
+  
+  const selCat = document.getElementById('prod-categoria');
+  if (selCat) selCat.value = '';
+  const boxCustom = document.getElementById('box-categoria-personalizada');
+  if (boxCustom) boxCustom.style.display = 'none';
+  const inpCustom = document.getElementById('prod-categoria-custom');
+  if (inpCustom) inpCustom.value = '';
+
   document.getElementById('prod-estoque').value = '0';
   document.getElementById('modal-produto-titulo').textContent = 'Novo Produto da Cantina';
   atualizarPreviewImagemProduto();
@@ -1059,7 +1080,27 @@ window.abrirModalEditarProduto = function(produtoId) {
 
   document.getElementById('prod-id').value = p.id;
   document.getElementById('prod-nome').value = p.nome;
-  document.getElementById('prod-categoria').value = p.categoria || 'Geral';
+
+  const selCat = document.getElementById('prod-categoria');
+  const boxCustom = document.getElementById('box-categoria-personalizada');
+  const inpCustom = document.getElementById('prod-categoria-custom');
+  const catPadroes = ['Bebidas', 'Lanches', 'Salgados', 'Doces', 'Sobremesas', 'Snacks', 'Bomboniere'];
+  const catVal = (p.categoria || '').trim();
+
+  if (catPadroes.includes(catVal)) {
+    if (selCat) selCat.value = catVal;
+    if (boxCustom) boxCustom.style.display = 'none';
+    if (inpCustom) inpCustom.value = '';
+  } else if (catVal) {
+    if (selCat) selCat.value = '__OUTRA__';
+    if (boxCustom) boxCustom.style.display = 'block';
+    if (inpCustom) inpCustom.value = catVal;
+  } else {
+    if (selCat) selCat.value = '';
+    if (boxCustom) boxCustom.style.display = 'none';
+    if (inpCustom) inpCustom.value = '';
+  }
+
   document.getElementById('prod-imagem-url').value = p.imagem_url || '';
   document.getElementById('prod-estoque').value = p.quantidade_estoque || 0;
   document.getElementById('prod-custo').value = Number(p.valor_custo || 0).toFixed(2);
@@ -1096,7 +1137,7 @@ window.atualizarPreviewImagemProduto = function() {
     return;
   }
 
-  box.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="mostrarErroPreviewImg(this)">`;
+  box.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: contain; padding: 2px;" onerror="mostrarErroPreviewImg(this)">`;
 };
 
 window.aoAlterarCustoOuMargem = function() {
@@ -1144,9 +1185,23 @@ function atualizarResumoLucroModal(precoSugerido, lucroUnitario) {
 window.salvarProdutoCantina = async function(e) {
   e.preventDefault();
   const id = document.getElementById('prod-id').value;
+  const selCat = document.getElementById('prod-categoria');
+  const inpCustom = document.getElementById('prod-categoria-custom');
+  
+  let catFinal = selCat ? selCat.value.trim() : '';
+  if (catFinal === '__OUTRA__' && inpCustom) {
+    catFinal = inpCustom.value.trim();
+  }
+
+  if (!catFinal) {
+    showToast('Por favor, selecione ou informe uma categoria para o produto.', 'warning');
+    if (selCat) selCat.focus();
+    return;
+  }
+
   const payload = {
     nome: document.getElementById('prod-nome').value.trim(),
-    categoria: document.getElementById('prod-categoria').value.trim() || 'Geral',
+    categoria: catFinal,
     imagem_url: document.getElementById('prod-imagem-url').value.trim() || null,
     quantidade_estoque: parseInt(document.getElementById('prod-estoque').value || '0', 10),
     valor_custo: parseFloat(document.getElementById('prod-custo').value || '0') || 0,

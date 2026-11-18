@@ -373,7 +373,9 @@
     .pdv-product-img-wrap img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      object-position: center;
+      padding: 2px;
     }
 
     .pdv-stock-badge {
@@ -1376,15 +1378,21 @@
             <input type="text" id="prod-nome" class="form-control" required placeholder="Ex: Refrigerante Lata 350ml">
           </div>
           <div class="form-group">
-            <label class="form-label">Categoria</label>
-            <input type="text" id="prod-categoria" class="form-control" list="lista-categorias-cantina" placeholder="Ex: Bebidas" value="Geral">
-            <datalist id="lista-categorias-cantina">
-              <option value="Bebidas"></option>
-              <option value="Salgados & Lanches"></option>
-              <option value="Doces & Bomboniere"></option>
-              <option value="Refeições"></option>
-              <option value="Geral"></option>
-            </datalist>
+            <label class="form-label">Categoria *</label>
+            <select id="prod-categoria" class="form-control" required onchange="aoMudarCategoriaProduto(this)">
+              <option value="" disabled selected>Selecione uma categoria...</option>
+              <option value="Bebidas">Bebidas</option>
+              <option value="Lanches">Lanches</option>
+              <option value="Salgados">Salgados</option>
+              <option value="Doces">Doces</option>
+              <option value="Sobremesas">Sobremesas</option>
+              <option value="Snacks">Snacks</option>
+              <option value="Bomboniere">Bomboniere</option>
+              <option value="__OUTRA__">+ Outra Categoria (Digitar)...</option>
+            </select>
+            <div id="box-categoria-personalizada" style="display: none; margin-top: 0.4rem;">
+              <input type="text" id="prod-categoria-custom" class="form-control" placeholder="Digite o nome da categoria..." style="font-size: 0.85rem; height: 36px;">
+            </div>
           </div>
         </div>
 
