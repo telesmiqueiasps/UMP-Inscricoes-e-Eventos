@@ -1278,9 +1278,9 @@
 
               <!-- Nome Principal do Participante -->
               <div class="triagem-nome-container" id="triagem-nome-container">
-                <span class="triagem-section-label">Nome do Participante</span>
+                <span class="triagem-section-label" id="triagem-section-label">Nome do Participante</span>
                 <h3 id="triagem-nome" class="triagem-nome-text">-</h3>
-                <div class="triagem-doc-row">
+                <div class="triagem-doc-row" id="triagem-doc-row">
                   <span class="triagem-meta-chip">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/></svg>
                     <span id="triagem-cpf">-</span>
@@ -1290,10 +1290,19 @@
                     <span id="triagem-email">-</span>
                   </span>
                 </div>
+                <!-- Observação em destaque para Participantes com Gratuidade -->
+                <div id="triagem-observacao-box" style="display: none; margin-top: 0.6rem; background: rgba(0, 184, 148, 0.08); border: 1.5px dashed #00B894; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.84rem;">
+                  <div style="font-weight: 800; display: flex; align-items: center; gap: 0.35rem; color: #004C50; margin-bottom: 0.25rem; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Observação / Motivo da Gratuidade</span>
+                  </div>
+                  <div id="triagem-observacao-texto" style="color: #0F172A; font-weight: 600; line-height: 1.4; word-break: break-word;">-</div>
+                  <div id="triagem-contato-texto" style="margin-top: 0.35rem; font-size: 0.78rem; color: #047857; font-weight: 600; display: none;"></div>
+                </div>
               </div>
 
-              <!-- Destaque Operacional: Camiseta & Idade -->
-              <div class="triagem-kpi-grid">
+              <!-- Destaque Operacional: Camiseta & Idade (oculto para gratuidades) -->
+              <div class="triagem-kpi-grid" id="triagem-kpi-grid">
                 <div class="triagem-kpi-card kpi-camiseta">
                   <div class="triagem-kpi-header">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>

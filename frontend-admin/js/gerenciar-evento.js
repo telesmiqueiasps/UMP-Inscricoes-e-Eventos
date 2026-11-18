@@ -2820,9 +2820,12 @@ function renderTabelaPresenca() {
     if (ins.status === 'CONFIRMADA') badgeClass = 'badge-success';
     else if (ins.status === 'CANCELADA' || ins.status === 'CANCELADO') badgeClass = 'badge-danger';
 
+    const isGratuidade = (ins.tipo === 'GRATUIDADE');
     const tipoBadge = ins.tipo === 'DIARIA'
       ? `<span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.72rem; padding: 2px 6px;">Diária (${ins.dias_formatados || 'Dias'})</span>`
-      : `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.72rem; padding: 2px 6px;">Integral</span>`;
+      : (isGratuidade
+          ? `<span class="badge" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.72rem; font-weight: 700; padding: 2px 6px;">Gratuidade</span>`
+          : `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-size: 0.72rem; padding: 2px 6px;">Integral</span>`);
 
     const checkinStatusHTML = ins.checkin_realizado ? 
       `<div style="color: #10B981; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
@@ -2849,6 +2852,23 @@ function renderTabelaPresenca() {
            ${pulseira.badgeHtml}
          </div>`;
 
+    const subInfoHtml = isGratuidade
+      ? (ins.observacao ? `<div style="font-size: 0.75rem; color: #047857; font-weight: 500;">Obs: ${escAc(ins.observacao)}</div>` : `<div style="font-size: 0.75rem; color: #047857; font-weight: 500;">Cortesia / Gratuidade</div>`)
+      : `<div style="font-size: 0.75rem; color: var(--text-muted);">${ins.email || ''}</div>`;
+
+    const kpisHtml = !isGratuidade ? `
+      <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem; align-items: center; flex-wrap: wrap;">
+        ${ins.tamanho_camiseta ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.68rem; padding: 1px 5px;">Camisa: ${escAc(ins.tamanho_camiseta)}</span>` : ''}
+        ${(ins.idade !== null && ins.idade !== undefined && String(ins.idade).trim() !== '') ? (function(){
+          const num = parseInt(ins.idade, 10);
+          const cat = (!isNaN(num) && num >= 19) ? 'UMP' : 'UPA';
+          return `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos • ${cat}</span>`;
+        })() : ''}
+      </div>
+    ` : '';
+
+    const cpfCell = isGratuidade ? (ins.contato ? `Tel: ${escAc(ins.contato)}` : '<span style="color: var(--text-muted); font-size: 0.8rem;">Cortesia</span>') : (ins.cpf || 'N/A');
+
     return `
       <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle; border-left: 4px solid ${pulseira.corHex};">
         <td data-label="Participante" style="padding: 0.75rem;">
@@ -2857,17 +2877,10 @@ function renderTabelaPresenca() {
             ${tipoBadge}
             ${pulseira.badgeHtml}
           </div>
-          <div style="font-size: 0.75rem; color: var(--text-muted);">${ins.email}</div>
-          <div style="display: flex; gap: 0.35rem; margin-top: 0.25rem; align-items: center; flex-wrap: wrap;">
-            ${ins.tamanho_camiseta ? `<span class="badge" style="background: #F3E8FF; color: #7E22CE; border: 1px solid #E9D5FF; font-size: 0.68rem; padding: 1px 5px;">Camisa: ${escAc(ins.tamanho_camiseta)}</span>` : ''}
-            ${(ins.idade !== null && ins.idade !== undefined && String(ins.idade).trim() !== '') ? (function(){
-              const num = parseInt(ins.idade, 10);
-              const cat = (!isNaN(num) && num >= 19) ? 'UMP' : 'UPA';
-              return `<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 0.68rem; padding: 1px 5px;">${ins.idade} anos • ${cat}</span>`;
-            })() : ''}
-          </div>
+          ${subInfoHtml}
+          ${kpisHtml}
         </td>
-        <td data-label="CPF" style="padding: 0.75rem;">${ins.cpf || 'N/A'}</td>
+        <td data-label="CPF" style="padding: 0.75rem;">${cpfCell}</td>
         <td data-label="Acomodação" style="padding: 0.75rem;">${acomodacaoCell}</td>
         <td data-label="Status" style="padding: 0.75rem;"><span class="badge ${badgeClass}">${ins.status}</span></td>
         <td data-label="Presença" style="padding: 0.75rem;">${checkinStatusHTML}</td>
@@ -2982,6 +2995,8 @@ function preencherFichaTriagemCompleta(res, codigo) {
     avatarEl.style.color = (pulseira.codigo === 'AMARELA') ? '#78350F' : '#FFFFFF';
   }
 
+  const isGratuidade = (res.tipo === 'GRATUIDADE');
+
   document.getElementById('triagem-nome').textContent = res.nome;
   document.getElementById('triagem-cpf').textContent = res.cpf ? formatarCPF(res.cpf) : 'Não informado';
   document.getElementById('triagem-email').textContent = res.email || 'Não informado';
@@ -3008,24 +3023,66 @@ function preencherFichaTriagemCompleta(res, codigo) {
     }
   }
 
-    // Atualizar badge de tipo (Integral vs Diária vs Gratuidade)
-    const tipoBadge = document.getElementById('triagem-tipo-badge');
-    const diariaDiasContainer = document.getElementById('triagem-diaria-dias-container');
-    if (tipoBadge) {
-      if (res.tipo === 'DIARIA') {
-        tipoBadge.textContent = 'Diária';
-        tipoBadge.style.background = '#EDE9FE';
-        tipoBadge.style.color = '#6D28D9';
-      } else if (res.tipo === 'GRATUIDADE') {
-        tipoBadge.textContent = 'Gratuidade';
-        tipoBadge.style.background = '#ECFDF5';
-        tipoBadge.style.color = '#047857';
-      } else {
-        tipoBadge.textContent = 'Integral';
-        tipoBadge.style.background = '#EFF6FF';
-        tipoBadge.style.color = '#1D4ED8';
+  // Ocultar Camiseta e Idade para Gratuidades (pois não se aplicam)
+  const kpiGrid = document.getElementById('triagem-kpi-grid');
+  if (kpiGrid) {
+    kpiGrid.style.display = isGratuidade ? 'none' : 'grid';
+  }
+
+  // No lugar do CPF e E-mail, mostrar Observação da Gratuidade e Contato
+  const docRow = document.getElementById('triagem-doc-row');
+  const obsBox = document.getElementById('triagem-observacao-box');
+  const obsText = document.getElementById('triagem-observacao-texto');
+  const contatoText = document.getElementById('triagem-contato-texto');
+  const secLabel = document.getElementById('triagem-section-label');
+
+  if (secLabel) {
+    secLabel.textContent = isGratuidade ? 'Participante • Inscrição Gratuita / Cortesia' : 'Nome do Participante';
+  }
+
+  if (isGratuidade) {
+    if (docRow) docRow.style.display = 'none';
+    if (obsBox) {
+      obsBox.style.display = 'block';
+      if (obsText) {
+        obsText.textContent = res.observacao ? res.observacao : 'Cortesia / Convidado da organização';
+      }
+      if (contatoText) {
+        if (res.contato) {
+          contatoText.style.display = 'block';
+          contatoText.innerHTML = `<strong>Contato:</strong> ${escAc(res.contato)}`;
+        } else {
+          contatoText.style.display = 'none';
+        }
       }
     }
+  } else {
+    if (docRow) docRow.style.display = 'flex';
+    if (obsBox) obsBox.style.display = 'none';
+  }
+
+  // Atualizar badge de tipo (Integral vs Diária vs Gratuidade)
+  const tipoBadge = document.getElementById('triagem-tipo-badge');
+  const diariaDiasContainer = document.getElementById('triagem-diaria-dias-container');
+  if (tipoBadge) {
+    if (res.tipo === 'DIARIA') {
+      tipoBadge.textContent = 'Diária';
+      tipoBadge.style.background = '#EDE9FE';
+      tipoBadge.style.color = '#6D28D9';
+      tipoBadge.style.border = '1px solid #DDD6FE';
+    } else if (isGratuidade) {
+      tipoBadge.textContent = 'Gratuidade / Cortesia';
+      tipoBadge.style.background = '#ECFDF5';
+      tipoBadge.style.color = '#047857';
+      tipoBadge.style.border = '1.5px solid #A7F3D0';
+      tipoBadge.style.fontWeight = '800';
+    } else {
+      tipoBadge.textContent = 'Integral';
+      tipoBadge.style.background = '#EFF6FF';
+      tipoBadge.style.color = '#1D4ED8';
+      tipoBadge.style.border = '1px solid #BFDBFE';
+    }
+  }
 
     if (diariaDiasContainer) {
       if (res.tipo === 'DIARIA') {
@@ -3230,16 +3287,26 @@ window.buscarParticipantesCheckin = async function() {
         ? "background: #DCFCE7; color: #15803D; border: 1.5px solid #86EFAC;"
         : "background: var(--primary); color: #FFFFFF; border: none;";
 
+      const isGratuidade = (ins.tipo === 'GRATUIDADE');
+      const infoLinha = isGratuidade
+        ? `<div style="font-size: 0.78rem; color: #047857; display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; margin-top: 0.2rem;">
+            <span class="badge" style="background: rgba(0, 184, 148, 0.15); color: #047857; border: 1px solid #A7F3D0; font-weight: 700; font-size: 0.7rem; padding: 1px 6px;">CORTESIA</span>
+            ${ins.contato ? `<span><strong>Contato:</strong> ${escAc(ins.contato)}</span>` : ''}
+            <span><strong>Observação:</strong> ${escAc(ins.observacao || 'Inscrição gratuita / Cortesia')}</span>
+          </div>`
+        : `<div style="font-size: 0.78rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.85rem;">
+            <span><strong>CPF:</strong> ${escAc(ins.cpf) ? formatarCPF(ins.cpf) : 'Não informado'}</span>
+            <span><strong>E-mail:</strong> ${escAc(ins.email) || 'Não informado'}</span>
+          </div>`;
+
       return `
         <div style="display: flex; justify-content: space-between; align-items: center; background: ${pulseira.bgLight}; border: 1.5px solid ${pulseira.borderHex}; border-left: 6px solid ${pulseira.corHex}; padding: 0.85rem 1.1rem; border-radius: var(--radius-md); margin-bottom: 0.65rem; gap: 0.75rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;" onclick="${openFn}" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 3px 8px rgba(0,0,0,0.06)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.03)';">
           <div style="min-width: 0; flex: 1;">
-            <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-dark); margin-bottom: 0.25rem;">
-              ${escAc(ins.nome)}
+            <div style="font-weight: 800; font-size: 0.98rem; color: var(--text-dark); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+              <span>${escAc(ins.nome)}</span>
+              ${isGratuidade ? `<span class="badge" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.7rem; font-weight: 700; padding: 1px 6px;">Gratuidade</span>` : ''}
             </div>
-            <div style="font-size: 0.78rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 0.85rem;">
-              <span><strong>CPF:</strong> ${escAc(ins.cpf) ? formatarCPF(ins.cpf) : 'Não informado'}</span>
-              <span><strong>E-mail:</strong> ${escAc(ins.email) || 'Não informado'}</span>
-            </div>
+            ${infoLinha}
           </div>
           <div style="flex-shrink: 0;" onclick="event.stopPropagation()">
             <button type="button" class="btn" style="${btnStyle} padding: 0.45rem 1rem; font-size: 0.82rem; font-weight: 700; border-radius: var(--radius-sm);" onclick="${openFn}">

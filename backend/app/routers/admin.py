@@ -1104,6 +1104,7 @@ def obter_detalhes_checkin(
                     "cpf": "",
                     "email": "",
                     "contato": gratuita.contato or "",
+                    "observacao": gratuita.observacao or "",
                     "status": "CONFIRMADA",
                     "checkin_realizado": gratuita.checkin_realizado,
                     "checkin_data": gratuita.checkin_data.isoformat() if gratuita.checkin_data else None,
@@ -1243,6 +1244,7 @@ def obter_detalhes_checkin(
             "cpf": "",
             "email": "",
             "contato": gratuita.contato or "",
+            "observacao": gratuita.observacao or "",
             "status": "CONFIRMADA",
             "checkin_realizado": gratuita.checkin_realizado,
             "checkin_data": gratuita.checkin_data.isoformat() if gratuita.checkin_data else None,
@@ -1381,7 +1383,8 @@ def realizar_checkin(
                 "sucesso": False,
                 "tipo": "GRATUIDADE",
                 "status_inscricao": "CONFIRMADA",
-                "participante": {"nome": gratuita.nome, "cpf": "", "email": ""},
+                "participante": {"nome": gratuita.nome, "cpf": "", "email": "", "contato": gratuita.contato or "", "observacao": gratuita.observacao or ""},
+            "observacao": gratuita.observacao or "",
                 "mensagem": f"Check-in de gratuidade já realizado anteriormente em {checkin_dt_str}."
             }
 
@@ -1393,7 +1396,8 @@ def realizar_checkin(
             "sucesso": True,
             "tipo": "GRATUIDADE",
             "status_inscricao": "CONFIRMADA",
-            "participante": {"nome": gratuita.nome, "cpf": "", "email": ""},
+            "participante": {"nome": gratuita.nome, "cpf": "", "email": "", "contato": gratuita.contato or "", "observacao": gratuita.observacao or ""},
+            "observacao": gratuita.observacao or "",
             "acomodacao": gratuita.acomodacao.to_summary_dict() if gratuita.acomodacao else None,
             "acomodacao_nome": gratuita.acomodacao.nome if gratuita.acomodacao else None,
             "acomodacao_tipo": gratuita.acomodacao.tipo if gratuita.acomodacao else None,
@@ -1519,6 +1523,7 @@ def listar_participantes_checkin(
                 "cpf": "",
                 "email": "",
                 "contato": g.contato or "",
+                "observacao": g.observacao or "",
                 "status": "CONFIRMADA",
                 "codigo_checkin": g.codigo_checkin,
                 "checkin_realizado": g.checkin_realizado,
