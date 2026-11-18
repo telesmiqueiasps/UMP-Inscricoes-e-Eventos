@@ -6624,6 +6624,10 @@ window.renderGratuidadesUI = function(lista = cacheGratuidadesData) {
         </td>
         <td style="padding: 0.75rem 1rem; text-align: right;">
           <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
+            <button type="button" class="btn btn-outline" onclick="abrirModalQrCodeGratuidade(${g.id})" title="Gerar Voucher / QR Code de Check-in" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: #00B894; border-color: #A7F3D0; background: #F0FDF4; font-weight: 700;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span>QR Code</span>
+            </button>
             <button type="button" class="btn btn-outline" onclick="abrirModalGratuidade(${g.id})" title="Editar cadastro" style="padding: 0.25rem 0.55rem; font-size: 0.75rem; color: #1D4ED8; border-color: #BFDBFE;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
               <span>Editar</span>
@@ -6801,3 +6805,804 @@ window.toggleCheckinGratuidade = async function(id) {
     alert(err.message || 'Erro ao atualizar check-in.');
   }
 };
+
+// ============================================================================
+// --- GERENCIAMENTO DE QR CODES & VOUCHERS PARA GRATUIDADES ---
+// ============================================================================
+
+let currentGratuidadeQr = null;
+
+function sanitizarNomeArquivo(str) {
+  return (str || 'participante')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .toLowerCase();
+}
+
+function roundRectCanvas(ctx, x, y, width, height, radius) {
+  if (width < 2 * radius) radius = width / 2;
+  if (height < 2 * radius) radius = height / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+/**
+ * Gera um Data URL (base64) de QR Code usando a biblioteca QRCode local
+ */
+window.gerarQrCodeDataUrl = function(codigo, width = 256, height = 256) {
+  return new Promise((resolve) => {
+    if (!codigo) {
+      resolve('');
+      return;
+    }
+    try {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'fixed';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.opacity = '0';
+      tempDiv.style.pointerEvents = 'none';
+      document.body.appendChild(tempDiv);
+
+      if (typeof QRCode === 'undefined') {
+        console.error('Biblioteca QRCode não encontrada no escopo global.');
+        document.body.removeChild(tempDiv);
+        resolve('');
+        return;
+      }
+
+      new QRCode(tempDiv, {
+        text: String(codigo),
+        width: width,
+        height: height,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: typeof QRCode.CorrectLevel !== 'undefined' ? QRCode.CorrectLevel.H : 2
+      });
+
+      // Aguarda o rendering do canvas/img
+      setTimeout(() => {
+        let dataUrl = '';
+        const canvas = tempDiv.querySelector('canvas');
+        if (canvas) {
+          dataUrl = canvas.toDataURL('image/png');
+        } else {
+          const img = tempDiv.querySelector('img');
+          if (img && img.src) dataUrl = img.src;
+        }
+        if (tempDiv.parentNode) {
+          tempDiv.parentNode.removeChild(tempDiv);
+        }
+        resolve(dataUrl);
+      }, 60);
+    } catch (err) {
+      console.error('Erro ao gerar QRCode:', err);
+      resolve('');
+    }
+  });
+};
+
+/**
+ * Desenha o voucher completo de alta resolução em um Canvas HTML
+ */
+window.desenharVoucherCanvas = async function(gratuidade, tituloEvento) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 640;
+  canvas.height = 860;
+  const ctx = canvas.getContext('2d');
+
+  // Fundo Branco
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Topo Gradiente Verde-Petróleo Profundo UMP
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, 170);
+  grad.addColorStop(0, '#001E21');
+  grad.addColorStop(1, '#00363A');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, 170);
+
+  // Faixa de destaque Verde Esmeralda
+  ctx.fillStyle = '#00B894';
+  ctx.fillRect(0, 166, canvas.width, 4);
+
+  // Pílula Superior "UMP EVENTOS • CORTESIA"
+  ctx.fillStyle = 'rgba(0, 184, 148, 0.2)';
+  roundRectCanvas(ctx, 40, 26, 210, 26, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#00B894';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#A7F3D0';
+  ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+  ctx.fillText('UMP EVENTOS • INSCRIÇÃO GRATUITA', 50, 43);
+
+  // Título do Evento
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+  const evtTitle = (tituloEvento || (eventoAtual && eventoAtual.titulo) || 'UMP Eventos');
+  let titleDisplay = evtTitle;
+  if (ctx.measureText(titleDisplay).width > 560) {
+    while (ctx.measureText(titleDisplay + '...').width > 560 && titleDisplay.length > 5) {
+      titleDisplay = titleDisplay.slice(0, -1);
+    }
+    titleDisplay += '...';
+  }
+  ctx.fillText(titleDisplay, 40, 92);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '13px system-ui, -apple-system, sans-serif';
+  ctx.fillText('VOUCHER OFICIAL PARA CHECK-IN', 40, 122);
+
+  // Bloco do Participante
+  ctx.fillStyle = '#F8FAFC';
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 1.5;
+  roundRectCanvas(ctx, 40, 195, 560, 115, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // Borda lateral decorativa esmeralda no nome
+  ctx.fillStyle = '#00B894';
+  roundRectCanvas(ctx, 40, 195, 6, 115, 3);
+  ctx.fill();
+
+  // Nome do participante
+  ctx.fillStyle = '#001E21';
+  ctx.font = 'bold 23px system-ui, -apple-system, sans-serif';
+  let nomeDisplay = gratuidade.nome || 'Participante Convidado';
+  if (ctx.measureText(nomeDisplay).width > 520) {
+    while (ctx.measureText(nomeDisplay + '...').width > 520 && nomeDisplay.length > 5) {
+      nomeDisplay = nomeDisplay.slice(0, -1);
+    }
+    nomeDisplay += '...';
+  }
+  ctx.fillText(nomeDisplay, 62, 238);
+
+  // Tags/Pílulas (Acomodação, Sexo, Contato)
+  let badgeX = 62;
+  if (gratuidade.acomodacao_nome) {
+    const acText = `Acomodação: ${gratuidade.acomodacao_nome}`;
+    ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+    const w = ctx.measureText(acText).width + 20;
+    ctx.fillStyle = '#EFF6FF';
+    ctx.strokeStyle = '#BFDBFE';
+    roundRectCanvas(ctx, badgeX, 260, w, 26, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#1D4ED8';
+    ctx.fillText(acText, badgeX + 10, 277);
+    badgeX += w + 8;
+  }
+
+  if (gratuidade.sexo) {
+    const sText = gratuidade.sexo;
+    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    const w = ctx.measureText(sText).width + 18;
+    ctx.fillStyle = '#F1F5F9';
+    ctx.strokeStyle = '#CBD5E1';
+    roundRectCanvas(ctx, badgeX, 260, w, 26, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#334155';
+    ctx.fillText(sText, badgeX + 9, 277);
+    badgeX += w + 8;
+  }
+
+  // Caixa do QR Code Central
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 1.5;
+  roundRectCanvas(ctx, 160, 335, 320, 320, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  // Desenhar QR Code no Canvas
+  const qrDataUrl = await window.gerarQrCodeDataUrl(gratuidade.codigo_checkin, 280, 280);
+  if (qrDataUrl) {
+    await new Promise((res) => {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 180, 355, 280, 280);
+        res();
+      };
+      img.onerror = () => res();
+      img.src = qrDataUrl;
+    });
+  }
+
+  // Pílula com o Código de Check-in em Monospace
+  ctx.fillStyle = '#F0FDF4';
+  ctx.strokeStyle = '#A7F3D0';
+  ctx.lineWidth = 1.5;
+  roundRectCanvas(ctx, 150, 680, 340, 50, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#004C50';
+  ctx.font = 'bold 20px "Courier New", Courier, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(gratuidade.codigo_checkin || 'CHECKIN-GRAT', 320, 712);
+  ctx.textAlign = 'left';
+
+  // Instruções de Recepção no Rodapé
+  ctx.fillStyle = '#64748B';
+  ctx.font = '13px system-ui, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Apresente este voucher na portaria do evento para ler o QR Code.', 320, 765);
+  ctx.font = '11px system-ui, -apple-system, sans-serif';
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('Identificação individual &bull; UMP Eventos &bull; Sistema Oficial', 320, 788);
+  ctx.textAlign = 'left';
+
+  // Borda externa do cartão
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+
+  return canvas;
+};
+
+/**
+ * Abre o Modal com o Voucher e QR Code individual
+ */
+window.abrirModalQrCodeGratuidade = async function(id) {
+  const g = cacheGratuidadesData.find(item => item.id === id);
+  if (!g) {
+    alert('Participante gratuito não encontrado.');
+    return;
+  }
+  currentGratuidadeQr = g;
+
+  const modal = document.getElementById('modal-qr-gratuidade');
+  const elEvento = document.getElementById('modal-qr-evento-titulo');
+  const elNome = document.getElementById('modal-qr-participante-nome');
+  const elBadges = document.getElementById('modal-qr-badges');
+  const elCanvasTarget = document.getElementById('modal-qr-canvas-target');
+  const elCodigo = document.getElementById('modal-qr-codigo');
+
+  if (elEvento) {
+    elEvento.textContent = (eventoAtual && eventoAtual.titulo) || 'UMP Eventos';
+  }
+  if (elNome) {
+    elNome.textContent = g.nome;
+  }
+  if (elCodigo) {
+    elCodigo.textContent = g.codigo_checkin || '-';
+  }
+
+  if (elBadges) {
+    let badgesHtml = '<span class="badge" style="background: rgba(0, 184, 148, 0.12); color: #00B894; font-weight: 700; border: 1px solid #A7F3D0; font-size: 0.75rem;">Inscrição Gratuita</span>';
+    if (g.sexo) {
+      badgesHtml += `<span class="badge" style="background: #F1F5F9; color: #334155; font-size: 0.75rem;">${escAc(g.sexo)}</span>`;
+    }
+    if (g.acomodacao_nome) {
+      badgesHtml += `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-weight: 600; font-size: 0.75rem;">${escAc(g.acomodacao_nome)}</span>`;
+    }
+    if (g.checkin_realizado) {
+      badgesHtml += `<span class="badge" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-weight: 700; font-size: 0.75rem;">Check-in Realizado</span>`;
+    }
+    elBadges.innerHTML = badgesHtml;
+  }
+
+  // Gerar QR Code na visualização interativa do modal
+  if (elCanvasTarget) {
+    elCanvasTarget.innerHTML = '';
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(elCanvasTarget, {
+        text: String(g.codigo_checkin || ''),
+        width: 190,
+        height: 190,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: typeof QRCode.CorrectLevel !== 'undefined' ? QRCode.CorrectLevel.H : 2
+      });
+    }
+  }
+
+  if (modal) modal.style.display = 'flex';
+};
+
+/**
+ * Fecha o Modal individual de QR Code
+ */
+window.fecharModalQrGratuidade = function() {
+  const modal = document.getElementById('modal-qr-gratuidade');
+  if (modal) modal.style.display = 'none';
+  const elCanvasTarget = document.getElementById('modal-qr-canvas-target');
+  if (elCanvasTarget) elCanvasTarget.innerHTML = '';
+  currentGratuidadeQr = null;
+};
+
+/**
+ * Baixa a imagem PNG do participante atual aberto no modal
+ */
+window.baixarImagemQrGratuidadeAtual = async function() {
+  if (!currentGratuidadeQr) return;
+  try {
+    const titulo = (eventoAtual && eventoAtual.titulo) || 'UMP Eventos';
+    const canvas = await window.desenharVoucherCanvas(currentGratuidadeQr, titulo);
+    const link = document.createElement('a');
+    link.download = `checkin-${sanitizarNomeArquivo(currentGratuidadeQr.nome)}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (typeof showToast === 'function') {
+      showToast('Imagem do QR Code baixada com sucesso!', 'success');
+    }
+  } catch (err) {
+    console.error('Erro ao baixar imagem:', err);
+    alert('Erro ao gerar a imagem do QR Code: ' + err.message);
+  }
+};
+
+/**
+ * Imprime ou gera PDF do voucher individual
+ */
+window.imprimirQrGratuidadeAtual = async function() {
+  if (!currentGratuidadeQr) return;
+  const g = currentGratuidadeQr;
+  const titulo = (eventoAtual && eventoAtual.titulo) || 'UMP Eventos';
+  const qrDataUrl = await window.gerarQrCodeDataUrl(g.codigo_checkin, 260, 260);
+
+  const printWin = window.open('', '_blank');
+  if (!printWin) {
+    alert('O navegador bloqueou a abertura da janela de impressão. Permita popups para este site.');
+    return;
+  }
+
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Check-in - ${escAc(g.nome)}</title>
+      <style>
+        @page { size: A4 portrait; margin: 15mm; }
+        * { box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 85vh;
+          background: #FFFFFF;
+          color: #001E21;
+        }
+        .toolbar {
+          margin-bottom: 20px;
+          display: flex;
+          gap: 10px;
+        }
+        .btn-print {
+          background: #00B894;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: bold;
+          cursor: pointer;
+          font-size: 14px;
+        }
+        .card-voucher {
+          width: 380px;
+          border: 2px solid #004C50;
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+          page-break-inside: avoid;
+        }
+        .header {
+          background: #00363A;
+          color: #FFFFFF;
+          padding: 16px 20px;
+          text-align: center;
+          border-bottom: 3px solid #00B894;
+        }
+        .header .sub {
+          font-size: 11px;
+          color: #A7F3D0;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .header h2 {
+          margin: 6px 0 0 0;
+          font-size: 17px;
+          font-weight: 800;
+          line-height: 1.3;
+        }
+        .body {
+          padding: 20px;
+          text-align: center;
+          background: #FFFFFF;
+        }
+        .name-box {
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
+          border-left: 4px solid #00B894;
+          border-radius: 8px;
+          padding: 10px 14px;
+          margin-bottom: 14px;
+        }
+        .name-box .name {
+          font-size: 18px;
+          font-weight: 800;
+          color: #001E21;
+          word-break: break-word;
+        }
+        .qr-wrap {
+          margin: 14px auto;
+          display: inline-block;
+          padding: 10px;
+          background: #FFFFFF;
+          border: 1px dashed #CBD5E1;
+          border-radius: 8px;
+        }
+        .qr-wrap img {
+          display: block;
+          width: 220px;
+          height: 220px;
+        }
+        .code-pill {
+          font-family: "Courier New", Courier, monospace;
+          font-size: 18px;
+          font-weight: bold;
+          background: #F0FDF4;
+          border: 1px solid #A7F3D0;
+          color: #004C50;
+          padding: 6px 14px;
+          border-radius: 6px;
+          letter-spacing: 0.08em;
+          display: inline-block;
+          margin-top: 6px;
+        }
+        .footer-note {
+          font-size: 11px;
+          color: #64748B;
+          margin-top: 14px;
+          line-height: 1.4;
+          border-top: 1px solid #F1F5F9;
+          padding-top: 10px;
+        }
+        @media print {
+          .toolbar { display: none !important; }
+          body { padding: 0; min-height: auto; }
+          .card-voucher { box-shadow: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toolbar">
+        <button class="btn-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+        <button style="background: #F1F5F9; border: 1px solid #CBD5E1; padding: 8px 14px; border-radius: 6px; cursor: pointer;" onclick="window.close()">Fechar</button>
+      </div>
+
+      <div class="card-voucher">
+        <div class="header">
+          <div class="sub">UMP Eventos &bull; Inscrição Gratuita</div>
+          <h2>${escAc(titulo)}</h2>
+        </div>
+        <div class="body">
+          <div class="name-box">
+            <div class="name">${escAc(g.nome)}</div>
+            ${g.acomodacao_nome ? `<div style="font-size: 12px; color: #1D4ED8; font-weight: 600; margin-top: 4px;">Acomodação: ${escAc(g.acomodacao_nome)}</div>` : ''}
+          </div>
+          <div class="qr-wrap">
+            <img src="${qrDataUrl}" alt="QR Code">
+          </div>
+          <div>
+            <span class="code-pill">${escAc(g.codigo_checkin || '-')}</span>
+          </div>
+          <div class="footer-note">
+            Apresente este voucher na portaria/recepção do evento para realização do check-in.
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() { window.print(); }, 200);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  printWin.document.close();
+};
+
+/**
+ * Abre o Modal Geral de Exportação de todos os QR Codes
+ */
+window.abrirModalExportarTodosQr = function() {
+  const modal = document.getElementById('modal-qr-exportar-todos');
+  const countEl = document.getElementById('modal-exportar-total-count');
+  if (countEl) countEl.textContent = cacheGratuidadesData ? cacheGratuidadesData.length : 0;
+  const progresso = document.getElementById('exportar-todas-progresso');
+  if (progresso) {
+    progresso.style.display = 'none';
+    progresso.textContent = '';
+  }
+  const btn = document.getElementById('btn-baixar-todas-imagens');
+  if (btn) btn.disabled = false;
+  if (modal) modal.style.display = 'flex';
+};
+
+/**
+ * Fecha o Modal Geral de Exportação
+ */
+window.fecharModalExportarTodosQr = function() {
+  const modal = document.getElementById('modal-qr-exportar-todos');
+  if (modal) modal.style.display = 'none';
+};
+
+/**
+ * Exporta TODOS os vouchers em uma folha PDF / Janela de Impressão pronta
+ */
+window.exportarTodosQRCodesGratuidadesPDF = async function() {
+  if (!cacheGratuidadesData || cacheGratuidadesData.length === 0) {
+    alert('Nenhum participante gratuito cadastrado para exportar.');
+    return;
+  }
+
+  const printWin = window.open('', '_blank');
+  if (!printWin) {
+    alert('O navegador bloqueou a abertura da janela de impressão. Permita popups para este site.');
+    return;
+  }
+
+  const titulo = (eventoAtual && eventoAtual.titulo) || 'UMP Eventos';
+
+  // Gerar QR codes para cada participante
+  const cardsHtmlPromises = cacheGratuidadesData.map(async (g) => {
+    const qrUrl = await window.gerarQrCodeDataUrl(g.codigo_checkin, 220, 220);
+    return `
+      <div class="grid-card">
+        <div class="card-head">
+          <div class="tag-grat">UMP EVENTOS &bull; CORTESIA</div>
+          <div class="evt-title">${escAc(titulo)}</div>
+        </div>
+        <div class="card-content">
+          <div class="part-name">${escAc(g.nome)}</div>
+          ${g.acomodacao_nome ? `<div class="room-pill">Quarto: ${escAc(g.acomodacao_nome)}</div>` : ''}
+          <div class="qr-box">
+            <img src="${qrUrl}" alt="QR Code" />
+          </div>
+          <div class="code-box">${escAc(g.codigo_checkin || '-')}</div>
+          <div class="instrucao">Apresente na portaria para check-in</div>
+        </div>
+      </div>
+    `;
+  });
+
+  const cardsHtmlArray = await Promise.all(cardsHtmlPromises);
+  const cardsHtml = cardsHtmlArray.join('');
+
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Todos os Vouchers de Gratuidades - ${escAc(titulo)}</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm;
+        }
+        * { box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          margin: 0;
+          padding: 16px;
+          background: #FFFFFF;
+          color: #001E21;
+        }
+        .no-print-bar {
+          background: #F8FAFC;
+          border: 1px solid #CBD5E1;
+          padding: 12px 18px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+        .btn-action {
+          background: #00B894;
+          color: white;
+          border: none;
+          padding: 8px 18px;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+        .grid-card {
+          border: 1.5px dashed #004C50;
+          border-radius: 10px;
+          overflow: hidden;
+          page-break-inside: avoid;
+          break-inside: avoid;
+          background: #FFFFFF;
+          display: flex;
+          flex-direction: column;
+        }
+        .card-head {
+          background: #00363A;
+          color: #FFFFFF;
+          padding: 8px 12px;
+          text-align: center;
+          border-bottom: 2px solid #00B894;
+        }
+        .tag-grat {
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #A7F3D0;
+        }
+        .evt-title {
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .card-content {
+          padding: 12px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex: 1;
+        }
+        .part-name {
+          font-size: 16px;
+          font-weight: 800;
+          color: #001E21;
+          margin-bottom: 4px;
+          max-width: 90%;
+          word-break: break-word;
+        }
+        .room-pill {
+          font-size: 11px;
+          color: #1D4ED8;
+          font-weight: 700;
+          background: #EFF6FF;
+          padding: 2px 8px;
+          border-radius: 4px;
+          margin-bottom: 6px;
+          border: 1px solid #BFDBFE;
+        }
+        .qr-box {
+          margin: 6px 0;
+          padding: 6px;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 6px;
+          display: inline-block;
+        }
+        .qr-box img {
+          width: 160px;
+          height: 160px;
+          display: block;
+        }
+        .code-box {
+          font-family: "Courier New", Courier, monospace;
+          font-size: 14px;
+          font-weight: bold;
+          background: #F0FDF4;
+          border: 1px solid #A7F3D0;
+          color: #004C50;
+          padding: 3px 10px;
+          border-radius: 4px;
+          margin-top: 4px;
+        }
+        .instrucao {
+          font-size: 10px;
+          color: #64748B;
+          margin-top: 8px;
+        }
+        @media print {
+          .no-print-bar { display: none !important; }
+          body { padding: 0; }
+          .grid-card { border: 1.5px dashed #64748B; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="no-print-bar">
+        <div>
+          <strong style="color: #001E21; font-size: 15px;">Vouchers de Inscrições Gratuitas</strong>
+          <span style="color: #64748B; font-size: 13px; margin-left: 8px;">Total: ${cacheGratuidadesData.length} participante(s)</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-action" onclick="window.print()">Imprimir / Salvar Todos em PDF</button>
+          <button style="background: #E2E8F0; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;" onclick="window.close()">Fechar</button>
+        </div>
+      </div>
+
+      <div class="grid-container">
+        ${cardsHtml}
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() { window.print(); }, 300);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  printWin.document.close();
+};
+
+/**
+ * Baixa as imagens PNG individuais de todos os participantes com gratuidade
+ */
+window.baixarTodasImagensGratuidadesPNG = async function() {
+  if (!cacheGratuidadesData || cacheGratuidadesData.length === 0) {
+    alert('Nenhum participante gratuito para baixar.');
+    return;
+  }
+
+  const progresso = document.getElementById('exportar-todas-progresso');
+  const btn = document.getElementById('btn-baixar-todas-imagens');
+  if (btn) btn.disabled = true;
+  if (progresso) {
+    progresso.style.display = 'block';
+    progresso.textContent = `Preparando exportação de ${cacheGratuidadesData.length} participante(s)...`;
+  }
+
+  const titulo = (eventoAtual && eventoAtual.titulo) || 'UMP Eventos';
+  const total = cacheGratuidadesData.length;
+
+  for (let i = 0; i < total; i++) {
+    const g = cacheGratuidadesData[i];
+    if (progresso) {
+      progresso.textContent = `Processando e baixando ${i + 1} de ${total}: ${g.nome}...`;
+    }
+
+    try {
+      const canvas = await window.desenharVoucherCanvas(g, titulo);
+      const link = document.createElement('a');
+      link.download = `checkin-${String(i + 1).padStart(2, '0')}-${sanitizarNomeArquivo(g.nome)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error(`Erro ao gerar imagem de ${g.nome}:`, e);
+    }
+
+    // Pequena pausa para o navegador não bloquear múltiplos downloads simultâneos
+    await new Promise(r => setTimeout(r, 280));
+  }
+
+  if (progresso) {
+    progresso.textContent = `Concluído! ${total} imagem(ns) baixada(s) com sucesso.`;
+  }
+  if (btn) btn.disabled = false;
+  if (typeof showToast === 'function') {
+    showToast(`Todas as ${total} imagens de check-in foram baixadas!`, 'success');
+  }
+};
+
