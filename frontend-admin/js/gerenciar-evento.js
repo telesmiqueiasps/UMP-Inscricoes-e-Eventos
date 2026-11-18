@@ -17,29 +17,13 @@ window.obterInfoPulseiraCheckin = function(item) {
     };
   }
 
+  const isGratuidade = (item.tipo === 'GRATUIDADE' || (item.codigo_checkin && String(item.codigo_checkin).startsWith('GRAT-')));
   const ac = item.acomodacao || null;
   const acNome = (ac && ac.nome) ? ac.nome : (item.acomodacao_nome || null);
   const corRaw = (ac && ac.cor) ? ac.cor : (item.acomodacao_cor || '');
   const corNorm = String(corRaw || '').toUpperCase().trim();
 
-  // Caso 1: Sem acomodação vinculada => Diária / Sem Pernoite => Pulseira Amarela
-  if (!acNome) {
-    return {
-      codigo: 'AMARELA',
-      nome: 'Pulseira Amarela',
-      tipo: 'DIARIA',
-      rotulo: 'Diária / Sem Quarto',
-      corHex: '#F59E0B',
-      corDark: '#D97706',
-      bgLight: '#FFFBEB',
-      borderHex: '#FDE68A',
-      textHex: '#92400E',
-      badgeHtml: '<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> PULSEIRA AMARELA</span>',
-      bannerHtml: '<div style="background: #FFFBEB; border: 2px solid #F59E0B; color: #92400E; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #F59E0B; display: inline-block; box-shadow: 0 0 0 2px #FEF3C7;"></span> ENTREGAR PULSEIRA AMARELA</span><span style="font-size: 0.75rem; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px;">DIÁRIA / SEM QUARTO</span></div>'
-    };
-  }
-
-  // Caso 2: Acomodação com Cor VERDE
+  // Caso 1: Acomodação com Cor VERDE
   if (corNorm === 'VERDE') {
     return {
       codigo: 'VERDE',
@@ -56,7 +40,7 @@ window.obterInfoPulseiraCheckin = function(item) {
     };
   }
 
-  // Caso 3: Acomodação com Cor LARANJA
+  // Caso 2: Acomodação com Cor LARANJA
   if (corNorm === 'LARANJA') {
     return {
       codigo: 'LARANJA',
@@ -73,7 +57,43 @@ window.obterInfoPulseiraCheckin = function(item) {
     };
   }
 
-  // Caso 4: Acomodação SEM cor definida => Organização => Pulseira Prata / Branca
+  // Caso 3: Participante com GRATUIDADE (sem acomodação OU em quarto sem cor definida)
+  // Recebe pulseira PRATA (assim como a organização e gratuidades com acomodação)
+  if (isGratuidade) {
+    const rotuloGrat = acNome ? 'Gratuidade / Organização' : 'Gratuidade / Sem Quarto';
+    return {
+      codigo: 'PRATA',
+      nome: 'Pulseira Prata / Branca',
+      tipo: 'ORGANIZACAO',
+      rotulo: rotuloGrat,
+      corHex: '#94A3B8',
+      corDark: '#64748B',
+      bgLight: '#F8FAFC',
+      borderHex: '#CBD5E1',
+      textHex: '#1E293B',
+      badgeHtml: '<span class="badge" style="background: #F1F5F9; color: #1E293B; border: 1.5px solid #94A3B8; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; display: inline-block;"></span> PULSEIRA PRATA (CORTESIA)</span>',
+      bannerHtml: `<div style="background: #F8FAFC; border: 2px solid #94A3B8; color: #1E293B; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #94A3B8; display: inline-block; box-shadow: 0 0 0 2px #E2E8F0;"></span> ENTREGAR PULSEIRA PRATA / BRANCA</span><span style="font-size: 0.75rem; background: #E2E8F0; border: 1px solid #CBD5E1; padding: 2px 7px; border-radius: 4px;">${rotuloGrat.toUpperCase()}</span></div>`
+    };
+  }
+
+  // Caso 4: Sem acomodação vinculada (Diária / Sem Pernoite) => Pulseira Amarela
+  if (!acNome) {
+    return {
+      codigo: 'AMARELA',
+      nome: 'Pulseira Amarela',
+      tipo: 'DIARIA',
+      rotulo: 'Diária / Sem Quarto',
+      corHex: '#F59E0B',
+      corDark: '#D97706',
+      bgLight: '#FFFBEB',
+      borderHex: '#FDE68A',
+      textHex: '#92400E',
+      badgeHtml: '<span class="badge" style="background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.03em; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; display: inline-block;"></span> PULSEIRA AMARELA</span>',
+      bannerHtml: '<div style="background: #FFFBEB; border: 2px solid #F59E0B; color: #92400E; padding: 0.65rem 0.9rem; border-radius: 8px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em;"><span style="display: flex; align-items: center; gap: 0.45rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #F59E0B; display: inline-block; box-shadow: 0 0 0 2px #FEF3C7;"></span> ENTREGAR PULSEIRA AMARELA</span><span style="font-size: 0.75rem; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px;">DIÁRIA / SEM QUARTO</span></div>'
+    };
+  }
+
+  // Caso 5: Acomodação SEM cor definida => Organização => Pulseira Prata / Branca
   return {
     codigo: 'PRATA',
     nome: 'Pulseira Prata / Branca',
@@ -2848,7 +2868,7 @@ function renderTabelaPresenca() {
            ${pulseira.badgeHtml}
          </div>`
       : `<div style="display: flex; flex-direction: column; gap: 3px;">
-           <span class="badge" style="background: #FFFBEB; color: #92400E; border: 1.5px solid #FDE68A; font-weight: 700;">Sem Quarto (Diária)</span>
+           <span class="badge" style="background: ${pulseira.bgLight}; color: ${pulseira.textHex}; border: 1.5px solid ${pulseira.borderHex}; font-weight: 700;">${isGratuidade ? 'Sem Quarto (Cortesia)' : 'Sem Quarto (Diária)'}</span>
            ${pulseira.badgeHtml}
          </div>`;
 
@@ -3143,13 +3163,13 @@ function preencherFichaTriagemCompleta(res, codigo) {
         `;
       } else {
         acTriagemContainer.innerHTML = `
-          <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-left: 6px solid #F59E0B; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: #92400E; width: 100%;">
-            <div style="background: #FEF3C7; padding: 0.4rem; border-radius: var(--radius-sm); color: #B45309; display: flex; align-items: center;">
+          <div style="background: ${pulseira.bgLight}; border: 1.5px solid ${pulseira.borderHex}; border-left: 6px solid ${pulseira.corHex}; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; display: flex; align-items: center; gap: 0.65rem; color: ${pulseira.textHex}; width: 100%;">
+            <div style="background: ${pulseira.borderHex}; padding: 0.4rem; border-radius: var(--radius-sm); color: ${pulseira.textHex}; display: flex; align-items: center;">
               ${ICONS.bed}
             </div>
             <div>
-              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #B45309; display: block; letter-spacing: 0.04em;">Acomodação</span>
-              <span style="font-size: 0.88rem; font-weight: 700; color: #92400E;">Sem acomodação vinculada (Diária / Sem Pernoite)</span>
+              <span style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: ${pulseira.textHex}; display: block; letter-spacing: 0.04em;">Acomodação</span>
+              <span style="font-size: 0.88rem; font-weight: 700; color: ${pulseira.textHex};">${isGratuidade ? 'Sem acomodação vinculada (Cortesia / Sem Pernoite)' : 'Sem acomodação vinculada (Diária / Sem Pernoite)'}</span>
             </div>
           </div>
         `;
