@@ -665,9 +665,9 @@ window.renderizarVitrinePDV = function() {
             <div class="pdv-product-cat">${escapeHtml(p.categoria || 'Geral')}</div>
             <div class="pdv-product-title" title="${escapeHtml(p.nome)}">${escapeHtml(p.nome)}</div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.1rem;">
             <div class="pdv-product-price">${formatBRL(p.preco_venda)}</div>
-            ${!esgotado ? `<span style="font-size: 0.65rem; font-weight: 700; color: #FF7900; background: rgba(255,121,0,0.08); padding: 0.15rem 0.35rem; border-radius: 4px;">+ Pedir</span>` : ''}
+            ${!esgotado ? `<span style="font-size: 0.58rem; font-weight: 700; color: #FF7900; background: rgba(255,121,0,0.08); padding: 0.08rem 0.28rem; border-radius: 4px;">+ Pedir</span>` : ''}
           </div>
         </div>
       </div>
