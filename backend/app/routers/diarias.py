@@ -90,10 +90,12 @@ def obter_triagem_diaria_pendente(
         return None
 
     order_nsu = f"DIARIA_TRIAGEM-{triagem.id}"
+    combo_nome = triagem.dados_extras.get("combo_nome") if isinstance(triagem.dados_extras, dict) else None
+    desc_diaria = f"Diária ({combo_nome}) - {triagem.evento.titulo if triagem.evento else 'Evento'}" if combo_nome else f"Diária ({triagem.quantidade_dias}d) - {triagem.evento.titulo if triagem.evento else 'Evento'}"
     checkout_res = infinitepay_service.criar_checkout_link(
         order_nsu=order_nsu,
         valor=triagem.valor_total,
-        descricao=f"Diária ({triagem.quantidade_dias}d) - {triagem.evento.titulo if triagem.evento else 'Evento'}",
+        descricao=desc_diaria,
         customer_email=current_user.email,
         customer_name=current_user.nome
     )

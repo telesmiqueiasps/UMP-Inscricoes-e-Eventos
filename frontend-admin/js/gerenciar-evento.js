@@ -3369,6 +3369,7 @@ window.realizarCheckinManual = async function(inscricaoId, tipo = 'REGULAR') {
 // ==========================================
 
 let cachedDiaristasList = [];
+let cachedCombosDiarias = [];
 
 function gerarDiasDoEvento(dataInicioStr, dataFimStr) {
   const dias = [];
@@ -3469,6 +3470,171 @@ window.renderConfigDiariasUI = function() {
   document.querySelectorAll('.diaria-form-field').forEach(cb => {
     cb.checked = camposDiariaArr.includes(cb.value.toLowerCase());
   });
+
+  // Inicializar Combos de Diárias
+  cachedCombosDiarias = Array.isArray(config.combos) ? JSON.parse(JSON.stringify(config.combos)) : [];
+  renderCombosDiarias();
+};
+
+function calcularBadgeEconomiaCombo(combo, diasGerados) {
+  const comboDias = Array.isArray(combo.dias) ? combo.dias : [];
+  if (comboDias.length === 0) {
+    return `<span style="color: var(--text-muted); font-size: 0.75rem;">Nenhum dia selecionado</span>`;
+  }
+
+  let somaAvulso = 0;
+  const valPadrao = parseFloat(document.getElementById('diaria-valor-padrao')?.value) || 0;
+
+  comboDias.forEach(dIso => {
+    const rowInput = document.querySelector(`.diaria-dia-row[data-data="${dIso}"] .diaria-dia-valor`);
+    const valDia = rowInput ? (parseFloat(rowInput.value) || valPadrao) : valPadrao;
+    somaAvulso += valDia;
+  });
+
+  const valCombo = parseFloat(combo.valor) || 0;
+  const dif = somaAvulso - valCombo;
+
+  if (valCombo > 0 && somaAvulso > 0 && dif > 0) {
+    const pct = Math.round((dif / somaAvulso) * 100);
+    return `<span class="badge" style="background: #DEF7EC; color: #03543F; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem;">Soma avulsa: R$ ${somaAvulso.toFixed(2).replace('.', ',')} • Combo: R$ ${valCombo.toFixed(2).replace('.', ',')} (Economia de R$ ${dif.toFixed(2).replace('.', ',')} / -${pct}%)</span>`;
+  } else if (valCombo > 0 && somaAvulso > 0) {
+    return `<span style="color: var(--text-muted); font-size: 0.75rem;">Soma dos dias avulsos: R$ ${somaAvulso.toFixed(2).replace('.', ',')}</span>`;
+  }
+  return `<span style="color: var(--text-muted); font-size: 0.75rem;">${comboDias.length} ${comboDias.length === 1 ? 'dia marcado' : 'dias marcados'}</span>`;
+}
+
+window.renderCombosDiarias = function() {
+  const container = document.getElementById('diarias-combos-container');
+  if (!container) return;
+
+  const diasGerados = gerarDiasDoEvento(eventoAtual?.data_inicio, eventoAtual?.data_fim);
+
+  if (!cachedCombosDiarias || cachedCombosDiarias.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 1.5rem; text-align: center; border: 1.5px dashed var(--border-color); border-radius: var(--radius-md); background: #FAF5FF; color: var(--text-muted); font-size: 0.85rem;">
+        Nenhum combo cadastrado. Clique no botão <strong>"+ Novo Combo de Diária"</strong> acima para criar pacotes promocionais agrupando múltiplos dias.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = cachedCombosDiarias.map((combo, idx) => {
+    const comboDias = Array.isArray(combo.dias) ? combo.dias : [];
+    const diasCheckboxesHtml = diasGerados.map(d => {
+      const isChecked = comboDias.includes(d.data);
+      return `
+        <label style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; border: 1px solid ${isChecked ? '#8B5CF6' : 'var(--border-color)'}; background: ${isChecked ? '#F5F3FF' : '#FFFFFF'}; border-radius: 6px; font-size: 0.82rem; cursor: pointer; user-select: none;">
+          <input type="checkbox" class="combo-dia-cb" data-combo-idx="${idx}" value="${d.data}" ${isChecked ? 'checked' : ''} onchange="onComboDiaChange(${idx})">
+          <span>${escAc(d.label)}</span>
+        </label>
+      `;
+    }).join('');
+
+    const economiaHtml = calcularBadgeEconomiaCombo(combo, diasGerados);
+
+    return `
+      <div class="combo-card-item" style="border: 1px solid var(--border-color); border-left: 4px solid #8B5CF6; border-radius: var(--radius-md); padding: 1rem 1.25rem; background: #FFFFFF; box-shadow: var(--shadow-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+          <div style="flex: 2; min-width: 220px;">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.25rem;">Nome do Combo</label>
+            <input type="text" class="form-control combo-nome" data-combo-idx="${idx}" placeholder="Ex: Combo Fim de Semana (Sáb + Dom)" value="${escAc(combo.nome || '')}" oninput="cachedCombosDiarias[${idx}].nome = this.value" style="height: 36px; font-size: 0.85rem; font-weight: 600;">
+          </div>
+
+          <div style="flex: 1; min-width: 140px;">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 0.25rem;">Valor do Combo (R$)</label>
+            <input type="number" class="form-control combo-valor" data-combo-idx="${idx}" step="0.01" min="0" placeholder="Ex: 130.00" value="${combo.valor !== undefined && combo.valor !== '' ? combo.valor : ''}" oninput="onComboValorChange(${idx}, this.value)" style="height: 36px; font-size: 0.9rem; font-weight: 800; color: #6D28D9;">
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 0.75rem; padding-top: 1.4rem;">
+            <label style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: ${combo.ativo !== false ? '#059669' : '#64748B'};">
+              <input type="checkbox" class="combo-ativo" ${combo.ativo !== false ? 'checked' : ''} onchange="cachedCombosDiarias[${idx}].ativo = this.checked; renderCombosDiarias();">
+              <span>${combo.ativo !== false ? 'Ativo' : 'Inativo'}</span>
+            </label>
+
+            <button type="button" class="btn btn-outline" onclick="removerComboDiaria(${idx})" title="Excluir Combo" style="padding: 0.35rem 0.6rem; color: #DC2626; border-color: #FECACA; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 0.65rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-dark); margin-bottom: 0.35rem;">
+            Selecione os dias inclusos neste combo (marque pelo menos 2 dias):
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+            ${diasCheckboxesHtml}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">
+          <div style="flex: 2; min-width: 200px;">
+            <input type="text" class="form-control combo-descricao" placeholder="Descrição ou regras do combo (ex: Acesso livre com alimentação inclusa)" value="${escAc(combo.descricao || '')}" oninput="cachedCombosDiarias[${idx}].descricao = this.value" style="height: 32px; font-size: 0.78rem;">
+          </div>
+          <div id="combo-resumo-${idx}">
+            ${economiaHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+window.adicionarNovoComboDiaria = function() {
+  const diasGerados = gerarDiasDoEvento(eventoAtual?.data_inicio, eventoAtual?.data_fim);
+  const diasIniciais = diasGerados.slice(0, 2).map(d => d.data);
+
+  cachedCombosDiarias.push({
+    id: 'combo_' + Date.now(),
+    nome: '',
+    valor: '',
+    descricao: '',
+    dias: diasIniciais,
+    ativo: true
+  });
+  renderCombosDiarias();
+};
+
+window.removerComboDiaria = function(idx) {
+  if (confirm('Deseja excluir este combo de diária?')) {
+    cachedCombosDiarias.splice(idx, 1);
+    renderCombosDiarias();
+  }
+};
+
+window.onComboDiaChange = function(comboIdx) {
+  const container = document.getElementById('diarias-combos-container');
+  if (!container || !cachedCombosDiarias[comboIdx]) return;
+
+  const checkedBoxes = container.querySelectorAll(`.combo-dia-cb[data-combo-idx="${comboIdx}"]:checked`);
+  cachedCombosDiarias[comboIdx].dias = Array.from(checkedBoxes).map(cb => cb.value);
+
+  const diasGerados = gerarDiasDoEvento(eventoAtual?.data_inicio, eventoAtual?.data_fim);
+  const resumoEl = document.getElementById(`combo-resumo-${comboIdx}`);
+  if (resumoEl) {
+    resumoEl.innerHTML = calcularBadgeEconomiaCombo(cachedCombosDiarias[comboIdx], diasGerados);
+  }
+
+  const allBoxes = container.querySelectorAll(`.combo-dia-cb[data-combo-idx="${comboIdx}"]`);
+  allBoxes.forEach(cb => {
+    const parent = cb.parentElement;
+    if (cb.checked) {
+      parent.style.borderColor = '#8B5CF6';
+      parent.style.background = '#F5F3FF';
+    } else {
+      parent.style.borderColor = 'var(--border-color)';
+      parent.style.background = '#FFFFFF';
+    }
+  });
+};
+
+window.onComboValorChange = function(comboIdx, val) {
+  if (!cachedCombosDiarias[comboIdx]) return;
+  cachedCombosDiarias[comboIdx].valor = val ? parseFloat(val) : '';
+  const diasGerados = gerarDiasDoEvento(eventoAtual?.data_inicio, eventoAtual?.data_fim);
+  const resumoEl = document.getElementById(`combo-resumo-${comboIdx}`);
+  if (resumoEl) {
+    resumoEl.innerHTML = calcularBadgeEconomiaCombo(cachedCombosDiarias[comboIdx], diasGerados);
+  }
 };
 
 window.onToggleDiariasChange = function() {
@@ -3513,6 +3679,37 @@ window.salvarConfiguracoesDiarias = async function() {
     diasConfig.push({ data: dataIso, label, ativo, valor });
   });
 
+  // Validar e estruturar combos
+  const combosValidos = [];
+  for (let i = 0; i < cachedCombosDiarias.length; i++) {
+    const c = cachedCombosDiarias[i];
+    const nome = (c.nome || '').trim();
+    const valor = parseFloat(c.valor);
+    const dias = Array.isArray(c.dias) ? c.dias : [];
+
+    if (!nome) {
+      showToast(`O Combo #${i + 1} está sem nome. Preencha o nome do combo.`, 'warning');
+      return;
+    }
+    if (isNaN(valor) || valor <= 0) {
+      showToast(`O Combo "${nome}" possui um valor inválido. Estipule um valor maior que zero.`, 'warning');
+      return;
+    }
+    if (dias.length < 2) {
+      showToast(`O Combo "${nome}" precisa ter pelo menos 2 dias selecionados.`, 'warning');
+      return;
+    }
+
+    combosValidos.push({
+      id: c.id || ('combo_' + (i + 1)),
+      nome: nome,
+      valor: valor,
+      descricao: (c.descricao || '').trim(),
+      dias: dias,
+      ativo: c.ativo !== false
+    });
+  }
+
   const camposSelecionados = Array.from(document.querySelectorAll('.diaria-form-field:checked')).map(cb => cb.value).join(',');
 
   const payload = {
@@ -3520,7 +3717,8 @@ window.salvarConfiguracoesDiarias = async function() {
     config_diarias: {
       valor_padrao: valorPadrao,
       observacao: observacao,
-      dias: diasConfig
+      dias: diasConfig,
+      combos: combosValidos
     },
     campos_formulario_diaria: camposSelecionados || null
   };
@@ -3604,6 +3802,7 @@ function renderTabelaDiaristas() {
         </td>
         <td style="padding: 0.75rem 1rem;">
           ${diasBadges}
+          ${extras.combo_nome ? `<div style="margin-top: 3px;"><span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.45rem;">Combo: ${escAc(extras.combo_nome)}</span></div>` : ''}
           <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">${dia.quantidade_dias} dia(s)</div>
         </td>
         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #6D28D9;">
@@ -4078,8 +4277,9 @@ window.abrirModalFichaDiaria = function(diariaId) {
         </div>
 
         <div class="diaria-dias-banner" style="margin-bottom: 0.85rem;">
-          <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #7E22CE; letter-spacing: 0.04em; margin-bottom: 0.45rem;">
-            Dias Selecionados (${dia.quantidade_dias} dia${dia.quantidade_dias > 1 ? 's' : ''})
+          <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #7E22CE; letter-spacing: 0.04em; margin-bottom: 0.45rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.35rem;">
+            <span>Dias Selecionados (${dia.quantidade_dias} dia${dia.quantidade_dias > 1 ? 's' : ''})</span>
+            ${extras.combo_nome ? `<span class="badge" style="background:#EDE9FE; color:#6D28D9; font-size:0.75rem; font-weight:800; padding:0.2rem 0.55rem; border-radius:6px;">Combo: ${escAc(extras.combo_nome)}</span>` : ''}
           </div>
           <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
             ${diasChipsHTML}

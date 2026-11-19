@@ -14,10 +14,12 @@ from app.services.email import enviar_email_confirmacao_diaria
 logger = logging.getLogger(__name__)
 
 
-def calcular_total_diarias(evento: Evento, dias_selecionados: List[str]) -> Decimal:
+def calcular_total_diarias(evento: Evento, dias_selecionados: List[str], combo_id: Optional[str] = None) -> Decimal:
     """
     Calcula o valor total das diárias selecionadas baseado em evento.config_diarias.
-    Suporta valor customizado por dia ou valor padrão unificado.
+    Suporta:
+    1. Combos promocionais de múltiplos dias com valor fechado estipulado.
+    2. Valor customizado por dia ou valor padrão unificado.
     """
     if not dias_selecionados:
         return Decimal("0.00")
@@ -35,6 +37,46 @@ def calcular_total_diarias(evento: Evento, dias_selecionados: List[str]) -> Deci
                     precos_por_data[d["data"]] = Decimal(str(d.get("valor") or valor_padrao))
                 except Exception:
                     precos_por_data[d["data"]] = valor_padrao
+
+    combos_config = config.get("combos") or []
+    dias_set = set(str(d).strip() for d in dias_selecionados)
+
+    # 1. Se foi especificado um combo_id ou se há combos ativos configurados
+    if isinstance(combos_config, list) and combos_config:
+        # 1a. Caso haja combo_id explícito
+        if combo_id:
+            for combo in combos_config:
+                if isinstance(combo, dict) and str(combo.get("id")) == str(combo_id) and combo.get("ativo", True):
+                    combo_dias = set(str(d).strip() for d in (combo.get("dias") or []))
+                    if combo_dias and combo_dias.issubset(dias_set):
+                        valor_combo = Decimal(str(combo.get("valor") or "0.00"))
+                        dias_extras = dias_set - combo_dias
+                        total_extras = sum(precos_por_data.get(d, valor_padrao) for d in dias_extras)
+                        return valor_combo + total_extras
+
+        # 1b. Busca exata: se os dias selecionados batem exatamente com um combo ativo
+        for combo in combos_config:
+            if isinstance(combo, dict) and combo.get("ativo", True):
+                combo_dias = set(str(d).strip() for d in (combo.get("dias") or []))
+                if combo_dias and combo_dias == dias_set:
+                    return Decimal(str(combo.get("valor") or "0.00"))
+
+        # 1c. Busca por melhor cobertura de combo (ex: combo de 2 dias + 1 dia avulso)
+        melhor_total = None
+        for combo in combos_config:
+            if isinstance(combo, dict) and combo.get("ativo", True):
+                combo_dias = set(str(d).strip() for d in (combo.get("dias") or []))
+                if combo_dias and combo_dias.issubset(dias_set):
+                    valor_combo = Decimal(str(combo.get("valor") or "0.00"))
+                    dias_extras = dias_set - combo_dias
+                    total_extras = sum(precos_por_data.get(d, valor_padrao) for d in dias_extras)
+                    candidato = valor_combo + total_extras
+                    if melhor_total is None or candidato < melhor_total:
+                        melhor_total = candidato
+
+        if melhor_total is not None:
+            total_avulso = sum(precos_por_data.get(str(d).strip(), valor_padrao) for d in dias_selecionados)
+            return min(melhor_total, total_avulso)
 
     total = Decimal("0.00")
     for dia in dias_selecionados:
@@ -71,7 +113,8 @@ def criar_ou_atualizar_triagem_diaria(
             detail="Selecione pelo menos um dia para a sua diária."
         )
 
-    valor_total = calcular_total_diarias(evento, dias_selecionados)
+    combo_id = dados_extras.get("combo_id") if isinstance(dados_extras, dict) else None
+    valor_total = calcular_total_diarias(evento, dias_selecionados, combo_id=combo_id)
     if valor_total <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -109,10 +152,12 @@ def criar_ou_atualizar_triagem_diaria(
 
     # 2. Gerar link de checkout InfinitePay
     order_nsu = f"DIARIA_TRIAGEM-{triagem.id}"
+    combo_nome = dados_extras.get("combo_nome") if isinstance(dados_extras, dict) else None
+    desc_diaria = f"Diaria ({combo_nome}) - {evento.titulo}" if combo_nome else f"Diaria ({len(dias_selecionados)}d) - {evento.titulo}"
     checkout_res = infinitepay_service.criar_checkout_link(
         order_nsu=order_nsu,
         valor=valor_total,
-        descricao=f"Diaria ({len(dias_selecionados)}d) - {evento.titulo}",
+        descricao=desc_diaria,
         customer_email=current_user.email,
         customer_name=current_user.nome
     )

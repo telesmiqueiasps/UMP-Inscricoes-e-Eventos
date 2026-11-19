@@ -618,6 +618,32 @@
               </div>
             </div>
 
+            <!-- Bloco de Combos de Diárias (Pacotes Promocionais) -->
+            <div style="margin-bottom: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                  <h4 style="font-weight: 800; color: #6D28D9; font-size: 1.05rem; margin: 0; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                    <span>Combos de Diárias (Pacotes Promocionais)</span>
+                  </h4>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">
+                    Agrupe múltiplos dias do evento e estipule um valor fechado (ex: "Combo Fim de Semana - Sábado + Domingo por R$ 130").
+                  </p>
+                </div>
+                <button type="button" class="btn btn-outline" onclick="adicionarNovoComboDiaria()" style="padding: 0.45rem 0.9rem; font-size: 0.825rem; display: inline-flex; align-items: center; gap: 0.35rem; color: #6D28D9; border-color: #C4B5FD; background: #F5F3FF; font-weight: 700;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span>Novo Combo de Diária</span>
+                </button>
+              </div>
+
+              <!-- Lista de Combos Cadastrados -->
+              <div id="diarias-combos-container" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="padding: 1.5rem; text-align: center; border: 1.5px dashed var(--border-color); border-radius: var(--radius-md); background: #FAF5FF; color: var(--text-muted); font-size: 0.85rem;">
+                  Nenhum combo cadastrado. Clique no botão <strong>"Novo Combo de Diária"</strong> acima para criar pacotes promocionais.
+                </div>
+              </div>
+            </div>
+
             <!-- Checkboxes de Seleção dos Campos do Formulário de Diária -->
             <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
               <label class="form-label" style="font-weight: 700; color: #6D28D9; font-size: 0.95rem;">Campos do Formulário de Diária</label>

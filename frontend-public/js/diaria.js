@@ -1,5 +1,7 @@
 let eventoAtual = null;
 let diasConfig = [];
+let combosConfig = [];
+let comboSelecionado = null;
 let diasSelecionados = [];
 let dadosExtrasSalvos = {};
 let valorTotalCalculado = 0;
@@ -73,10 +75,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Configuração dos dias
+    // Configuração dos dias e combos
     const configRaw = eventoAtual.config_diarias || {};
     const config = typeof configRaw === 'string' ? JSON.parse(configRaw) : configRaw;
     diasConfig = Array.isArray(config.dias) ? config.dias : [];
+    combosConfig = Array.isArray(config.combos) ? config.combos.filter(c => c.ativo !== false && Array.isArray(c.dias) && c.dias.length > 0) : [];
 
     if (diasConfig.length === 0) {
       eventSummary.innerHTML = `
@@ -112,8 +115,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         <h2 style="font-size: 1.5rem; font-weight: 800; color: #1E293B; margin-bottom: 0.4rem;">${eventoAtual.titulo}</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">${eventoAtual.descricao || ''}</p>
-        <div style="font-size: 0.85rem; color: #64748B;">
-          📍 Local: <strong>${eventoAtual.local || 'A definir'}</strong>
+        <div style="font-size: 0.85rem; color: #64748B; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Local: <strong>${eventoAtual.local || 'A definir'}</strong></span>
         </div>
       </div>
     `;
@@ -131,7 +135,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Renderizar Checklist de Dias
+    // Renderizar Combos Promocionais e Checklist de Dias
+    renderCombosSection();
     renderChecklistDias();
 
   } catch (err) {
@@ -353,8 +358,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalFmt = parseFloat(triagem.valor_total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     banner.innerHTML = `
-      <div style="color: #6B21A8; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem;">
-        ⏳ Solicitação de diária pendente de pagamento
+      <div style="color: #6B21A8; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Solicitação de diária pendente de pagamento</span>
       </div>
       <p style="color: #581C87; font-size: 0.88rem; margin-bottom: 0.5rem; line-height: 1.4;">
         Você já iniciou a compra de diária para: <strong>${diasTexto}</strong> no valor de <strong>${totalFmt}</strong>.
@@ -384,6 +390,130 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 });
+
+// Renderizar Seção de Combos Promocionais de Diárias
+function renderCombosSection() {
+  const section = document.getElementById('combos-diaria-section');
+  const container = document.getElementById('combos-cards-container');
+  if (!section || !container) return;
+
+  if (!combosConfig || combosConfig.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+
+  container.innerHTML = combosConfig.map(combo => {
+    const isSelected = comboSelecionado && comboSelecionado.id === combo.id;
+    const valorFmt = parseFloat(combo.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Calcular economia em relação aos dias avulsos
+    const somaAvulsa = (combo.dias || []).reduce((acc, dStr) => {
+      const dObj = diasConfig.find(d => d.data === dStr);
+      return acc + (dObj ? parseFloat(dObj.valor || 0) : 0);
+    }, 0);
+
+    let economiaHTML = '';
+    if (somaAvulsa > parseFloat(combo.valor || 0)) {
+      const diff = somaAvulsa - parseFloat(combo.valor || 0);
+      const diffFmt = diff.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const percentual = Math.round((diff / somaAvulsa) * 100);
+      economiaHTML = `
+        <span class="combo-badge-tag">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 14-7 7-7-7"/><path d="M12 21V3"/></svg>
+          Economize ${diffFmt} (-${percentual}%)
+        </span>
+      `;
+    }
+
+    // Chips dos dias incluídos
+    const diasChips = (combo.dias || []).map(dStr => {
+      const dObj = diasConfig.find(d => d.data === dStr);
+      const label = dObj && dObj.label ? dObj.label : formatarDataIso(dStr);
+      return `
+        <span class="combo-day-chip">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <span>${label}</span>
+        </span>
+      `;
+    }).join('');
+
+    return `
+      <div class="combo-card-option ${isSelected ? 'selected' : ''}" id="card-combo-${combo.id}" onclick="selecionarCombo('${combo.id}')">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+          <div>
+            <div style="font-weight: 800; color: #1E293B; font-size: 1.05rem; display: flex; align-items: center; gap: 0.45rem;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              <span>${combo.nome}</span>
+            </div>
+            ${combo.descricao ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;">${combo.descricao}</div>` : ''}
+          </div>
+          <div style="text-align: right;">
+            <div class="dia-price" style="margin: 0; line-height: 1.1;">${valorFmt}</div>
+            <div style="font-size: 0.72rem; color: #6D28D9; font-weight: 700; text-transform: uppercase;">Valor Fechado</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.35rem; padding-top: 0.5rem; border-top: 1px dashed #E9D5FF;">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+            ${diasChips}
+          </div>
+          <div>
+            ${economiaHTML}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.selecionarCombo = function(comboId) {
+  const combo = combosConfig.find(c => c.id === comboId);
+  if (!combo) return;
+
+  if (comboSelecionado && comboSelecionado.id === comboId) {
+    limparComboSelecionado();
+    return;
+  }
+
+  comboSelecionado = combo;
+
+  document.querySelectorAll('.combo-card-option').forEach(card => card.classList.remove('selected'));
+  const targetCard = document.getElementById(`card-combo-${comboId}`);
+  if (targetCard) targetCard.classList.add('selected');
+
+  const btnLimpar = document.getElementById('btn-limpar-combo');
+  if (btnLimpar) btnLimpar.style.display = 'inline-block';
+
+  document.querySelectorAll('.cb-dia').forEach(cb => {
+    const deveMarcar = combo.dias.includes(cb.value);
+    cb.checked = deveMarcar;
+    const diaCard = document.getElementById(`card-dia-${cb.value}`);
+    if (diaCard) {
+      if (deveMarcar) diaCard.classList.add('selected');
+      else diaCard.classList.remove('selected');
+    }
+  });
+
+  recalcularTotalDias();
+};
+
+window.limparComboSelecionado = function() {
+  comboSelecionado = null;
+
+  document.querySelectorAll('.combo-card-option').forEach(card => card.classList.remove('selected'));
+  const btnLimpar = document.getElementById('btn-limpar-combo');
+  if (btnLimpar) btnLimpar.style.display = 'none';
+
+  document.querySelectorAll('.cb-dia').forEach(cb => {
+    cb.checked = false;
+    const diaCard = document.getElementById(`card-dia-${cb.value}`);
+    if (diaCard) diaCard.classList.remove('selected');
+  });
+
+  recalcularTotalDias();
+};
 
 // Renderizar Opções de Dias
 function renderChecklistDias() {
@@ -427,25 +557,103 @@ window.toggleDia = function(dataStr, checkbox) {
       card.classList.remove('selected');
     }
   }
+
+  if (comboSelecionado && !checkbox.checked && comboSelecionado.dias.includes(dataStr)) {
+    comboSelecionado = null;
+    document.querySelectorAll('.combo-card-option').forEach(c => c.classList.remove('selected'));
+    const btnLimpar = document.getElementById('btn-limpar-combo');
+    if (btnLimpar) btnLimpar.style.display = 'none';
+  }
+
   recalcularTotalDias();
 };
 
+function obterComboAtivoParaDias(diasArray) {
+  if (!combosConfig || combosConfig.length === 0 || diasArray.length === 0) return null;
+
+  if (comboSelecionado && comboSelecionado.dias.every(d => diasArray.includes(d))) {
+    return comboSelecionado;
+  }
+
+  const matchExato = combosConfig.find(c => {
+    if (!c.dias || c.dias.length !== diasArray.length) return false;
+    return c.dias.every(d => diasArray.includes(d));
+  });
+  if (matchExato) return matchExato;
+
+  let melhorCombo = null;
+  let maiorEconomia = 0;
+
+  combosConfig.forEach(c => {
+    if (c.dias && c.dias.every(d => diasArray.includes(d))) {
+      const somaAvulsaCombo = c.dias.reduce((acc, dStr) => {
+        const dObj = diasConfig.find(d => d.data === dStr);
+        return acc + (dObj ? parseFloat(dObj.valor || 0) : 0);
+      }, 0);
+      const economia = somaAvulsaCombo - parseFloat(c.valor || 0);
+      if (economia > maiorEconomia) {
+        maiorEconomia = economia;
+        melhorCombo = c;
+      }
+    }
+  });
+
+  return melhorCombo;
+}
+
 function recalcularTotalDias() {
   diasSelecionados = [];
-  valorTotalCalculado = 0;
 
   document.querySelectorAll('.cb-dia:checked').forEach(cb => {
     diasSelecionados.push(cb.value);
-    valorTotalCalculado += parseFloat(cb.dataset.valor || 0);
   });
+
+  const comboAtivo = obterComboAtivoParaDias(diasSelecionados);
+
+  document.querySelectorAll('.combo-card-option').forEach(card => card.classList.remove('selected'));
+  const btnLimpar = document.getElementById('btn-limpar-combo');
+  if (comboAtivo) {
+    const cardCombo = document.getElementById(`card-combo-${comboAtivo.id}`);
+    if (cardCombo) cardCombo.classList.add('selected');
+    if (btnLimpar) btnLimpar.style.display = 'inline-block';
+  } else {
+    if (btnLimpar) btnLimpar.style.display = 'none';
+  }
+
+  if (comboAtivo) {
+    valorTotalCalculado = parseFloat(comboAtivo.valor || 0);
+    diasSelecionados.forEach(dStr => {
+      if (!comboAtivo.dias.includes(dStr)) {
+        const dObj = diasConfig.find(d => d.data === dStr);
+        valorTotalCalculado += (dObj ? parseFloat(dObj.valor || 0) : 0);
+      }
+    });
+  } else {
+    valorTotalCalculado = 0;
+    diasSelecionados.forEach(dStr => {
+      const dObj = diasConfig.find(d => d.data === dStr);
+      valorTotalCalculado += (dObj ? parseFloat(dObj.valor || 0) : 0);
+    });
+  }
 
   const countElem = document.getElementById('resumo-dias-count');
   const valorElem = document.getElementById('resumo-total-valor');
 
   if (countElem) {
-    countElem.textContent = diasSelecionados.length === 0 ? 
-      'Nenhum dia selecionado' : 
-      `${diasSelecionados.length} ${diasSelecionados.length === 1 ? 'dia selecionado' : 'dias selecionados'}`;
+    if (diasSelecionados.length === 0) {
+      countElem.textContent = 'Nenhum dia selecionado';
+    } else if (comboAtivo) {
+      countElem.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;">
+          <span>${diasSelecionados.length} dia${diasSelecionados.length > 1 ? 's' : ''}</span>
+          <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 999px;">
+            ${comboAtivo.nome}
+          </span>
+        </div>
+      `;
+    } else {
+      countElem.textContent = `${diasSelecionados.length} ${diasSelecionados.length === 1 ? 'dia selecionado' : 'dias selecionados'}`;
+    }
   }
 
   if (valorElem) {
@@ -457,18 +665,61 @@ function renderResumoCheckout() {
   const resumoDias = document.getElementById('checkout-resumo-dias');
   const resumoTotal = document.getElementById('checkout-resumo-total');
 
+  const comboAtivo = obterComboAtivoParaDias(diasSelecionados);
+
   if (resumoDias) {
-    resumoDias.innerHTML = diasSelecionados.map(dataStr => {
-      const diaObj = diasConfig.find(d => d.data === dataStr);
-      const valor = diaObj ? parseFloat(diaObj.valor) : 0;
-      const dataFmt = formatarDataIso(dataStr);
-      return `
-        <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #E2E8F0;">
-          <span>🗓️ <strong>${dataFmt}</strong> ${diaObj && diaObj.descricao ? `(${diaObj.descricao})` : ''}</span>
-          <span style="font-weight: 700; color: #7E22CE;">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+    if (comboAtivo) {
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1.5px dashed #C084FC;">
+          <div>
+            <div style="font-weight: 800; color: #6B21A8; display: flex; align-items: center; gap: 0.4rem; font-size: 1rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+              <span>Combo Promocional: <strong>${comboAtivo.nome}</strong></span>
+            </div>
+            <div style="font-size: 0.82rem; color: #64748B; margin-top: 4px; line-height: 1.4;">
+              Inclui os dias: ${comboAtivo.dias.map(formatarDataIso).join(' + ')}
+            </div>
+          </div>
+          <div style="font-weight: 800; color: #7E22CE; font-size: 1.15rem; font-family: 'Plus Jakarta Sans', sans-serif;">
+            ${parseFloat(comboAtivo.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </div>
         </div>
       `;
-    }).join('');
+
+      // Dias extras fora do combo
+      const diasExtras = diasSelecionados.filter(d => !comboAtivo.dias.includes(d));
+      diasExtras.forEach(dataStr => {
+        const diaObj = diasConfig.find(d => d.data === dataStr);
+        const valor = diaObj ? parseFloat(diaObj.valor) : 0;
+        const dataFmt = formatarDataIso(dataStr);
+        html += `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #E2E8F0;">
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <span><strong>${dataFmt}</strong> (Diária Adicional)</span>
+            </span>
+            <span style="font-weight: 700; color: #7E22CE;">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+          </div>
+        `;
+      });
+
+      resumoDias.innerHTML = html;
+    } else {
+      resumoDias.innerHTML = diasSelecionados.map(dataStr => {
+        const diaObj = diasConfig.find(d => d.data === dataStr);
+        const valor = diaObj ? parseFloat(diaObj.valor) : 0;
+        const dataFmt = formatarDataIso(dataStr);
+        return `
+          <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #E2E8F0;">
+            <span style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7E22CE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <span><strong>${dataFmt}</strong> ${diaObj && diaObj.descricao ? `(${diaObj.descricao})` : ''}</span>
+            </span>
+            <span style="font-weight: 700; color: #7E22CE;">${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
   if (resumoTotal) {
@@ -481,6 +732,17 @@ window.finalizarDiariaECheckout = async function() {
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-sm"></span> Gerando Checkout...';
+  }
+
+  const comboAtivo = obterComboAtivoParaDias(diasSelecionados);
+  if (comboAtivo) {
+    dadosExtrasSalvos.combo_id = comboAtivo.id;
+    dadosExtrasSalvos.combo_nome = comboAtivo.nome;
+    dadosExtrasSalvos.combo_valor = comboAtivo.valor;
+  } else {
+    delete dadosExtrasSalvos.combo_id;
+    delete dadosExtrasSalvos.combo_nome;
+    delete dadosExtrasSalvos.combo_valor;
   }
 
   try {
@@ -498,9 +760,8 @@ window.finalizarDiariaECheckout = async function() {
     if (step3) step3.style.display = 'none';
     if (step4) step4.style.display = 'block';
 
-    renderResultadoPagamento(res.checkout_url, res.valor_total, res.dias_selecionados);
+    renderResultadoPagamento(res.checkout_url, res.valor_total, res.dias_selecionados, comboAtivo);
 
-    // Se houver checkout_url, abre automaticamente em nova aba
     if (res.checkout_url) {
       window.open(res.checkout_url, '_blank');
     }
@@ -516,12 +777,12 @@ window.finalizarDiariaECheckout = async function() {
   }
 };
 
-function renderResultadoPagamento(checkoutUrl, valorTotal, dias) {
+function renderResultadoPagamento(checkoutUrl, valorTotal, dias, comboAtivo = null) {
   const container = document.getElementById('payment-result');
   if (!container) return;
 
   const userAreaUrl = '/usuario/dashboard.html';
-  const diasFmt = Array.isArray(dias) ? dias.map(formatarDataIso).join('<br>🗓️ ') : dias;
+  const diasFmt = Array.isArray(dias) ? dias.map(formatarDataIso).join('<br>') : dias;
   const valorFmt = parseFloat(valorTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   container.innerHTML = `
@@ -539,11 +800,12 @@ function renderResultadoPagamento(checkoutUrl, valorTotal, dias) {
       </p>
 
       <div style="background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: var(--radius-md); padding: 1.25rem; max-width: 480px; margin: 0 auto 1.75rem; text-align: left;">
-        <div style="font-size: 0.85rem; font-weight: 700; color: #6B21A8; text-transform: uppercase; margin-bottom: 0.5rem;">
-          Dias Contratados:
+        <div style="font-size: 0.85rem; font-weight: 700; color: #6B21A8; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <span>Dias Contratados:</span>
+          ${comboAtivo ? `<span class="badge" style="background:#EDE9FE; color:#6D28D9; font-size:0.75rem; font-weight:700;">Combo: ${comboAtivo.nome}</span>` : ''}
         </div>
         <div style="font-size: 0.95rem; color: #374151; margin-bottom: 1rem; line-height: 1.6;">
-          🗓️ ${diasFmt}
+          ${diasFmt}
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #C084FC; padding-top: 0.75rem;">
           <span style="font-weight: 700; color: #581C87;">Total:</span>
@@ -553,12 +815,16 @@ function renderResultadoPagamento(checkoutUrl, valorTotal, dias) {
 
       ${checkoutUrl ? `
         <a href="${checkoutUrl}" target="_blank" class="btn btn-primary" style="font-size: 1.15rem; padding: 0.9rem 2rem; background: #7E22CE; border-color: #7E22CE; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(126, 34, 206, 0.3);">
-          <span>💳 Pagar na InfinitePay (Pix ou Cartão) &rarr;</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          <span>Pagar na InfinitePay (Pix ou Cartão) &rarr;</span>
         </a>
       ` : ''}
 
       <div style="background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: var(--radius-md); padding: 1rem; max-width: 480px; margin: 1.25rem auto; text-align: left;">
-        <strong style="color: #1E40AF; display: block; margin-bottom: 0.25rem; font-size: 0.9rem;">ℹ️ Confirmação Instantânea</strong>
+        <strong style="color: #1E40AF; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.25rem; font-size: 0.9rem;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span>Confirmação Instantânea</span>
+        </strong>
         <span style="font-size: 0.85rem; color: #1E3A8A; line-height: 1.4; display: block;">
           Após pagar pelo Pix ou cartão no checkout da InfinitePay, seu status atualizará automaticamente e seu QR Code de check-in estará liberado na sua Área do Participante.
         </span>
@@ -964,8 +1230,9 @@ function configurarSelecaoIgrejasEPresbiterios(
       dropdownEl.innerHTML = `
         <div class="church-dropdown-empty">
           Nenhuma igreja encontrada${presbFiltro ? ` no <strong>${presbFiltro}</strong>` : ''}.<br>
-          <a href="javascript:void(0)" id="btn-selecionar-outra" style="color: var(--primary, #4f46e5); font-weight: 700; text-decoration: underline; margin-top: 0.4rem; display: inline-block;">
-            👉 Clique aqui para selecionar "Outra"
+          <a href="javascript:void(0)" id="btn-selecionar-outra" style="color: var(--primary, #4f46e5); font-weight: 700; text-decoration: underline; margin-top: 0.4rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <span>Clique aqui para selecionar "Outra"</span>
           </a>
         </div>
       `;
