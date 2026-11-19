@@ -3,6 +3,8 @@ let diasConfig = [];
 let combosConfig = [];
 let comboSelecionado = null;
 let diasSelecionados = [];
+let diasJaInscritos = [];
+let possuiInscricaoIntegral = false;
 let dadosExtrasSalvos = {};
 let valorTotalCalculado = 0;
 
@@ -236,8 +238,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     formDiariaDados.addEventListener('submit', (e) => {
       e.preventDefault();
 
+      if (possuiInscricaoIntegral) {
+        showToast('Você já possui uma inscrição integral confirmada para este evento.', 'warning');
+        return;
+      }
+
+      // Filtrar apenas dias que o usuário não tem contratados
+      diasSelecionados = diasSelecionados.filter(d => !diasJaInscritos.includes(d));
+
       if (diasSelecionados.length === 0) {
-        showToast('Selecione pelo menos uma data para continuar.', 'error');
+        showToast('Selecione pelo menos uma data nova para continuar.', 'error');
         return;
       }
 
@@ -320,6 +330,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       renderDynamicFormFields();
 
+      // Checar status de diárias já adquiridas e inscrição integral
+      try {
+        const statusRes = await API.request(`/diarias/evento/${eventoId}/meu-status`);
+        if (statusRes) {
+          diasJaInscritos = Array.isArray(statusRes.dias_inscritos) ? statusRes.dias_inscritos : [];
+          possuiInscricaoIntegral = Boolean(statusRes.possui_inscricao_integral);
+        }
+      } catch (e) {
+        diasJaInscritos = [];
+        possuiInscricaoIntegral = false;
+      }
+
+      if (possuiInscricaoIntegral) {
+        exibirAvisoInscricaoIntegral();
+        return;
+      } else {
+        const integralBanner = document.getElementById('inscricao-integral-banner');
+        if (integralBanner) integralBanner.remove();
+      }
+
+      if (diasJaInscritos.length > 0) {
+        exibirAvisoDiasJaInscritos(diasJaInscritos);
+      } else {
+        const adquiridosBanner = document.getElementById('dias-adquiridos-banner');
+        if (adquiridosBanner) adquiridosBanner.remove();
+      }
+
+      // Re-renderizar combos e checklist considerando dias já adquiridos
+      renderCombosSection();
+      renderChecklistDias();
+
       // Checar se possui triagem de diária pendente
       try {
         const triagem = await API.request(`/diarias/triagem/pendente?evento_id=${eventoId}`);
@@ -389,6 +430,57 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (banner) banner.style.display = 'none';
     };
   }
+
+  function exibirAvisoInscricaoIntegral() {
+    let banner = document.getElementById('inscricao-integral-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'inscricao-integral-banner';
+      banner.style.cssText = 'background: #ECFDF5; border: 1.5px solid #10B981; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; text-align: left;';
+      const step2Card = document.getElementById('step-2');
+      if (step2Card) step2Card.insertBefore(banner, step2Card.firstChild);
+    }
+    banner.innerHTML = `
+      <div style="color: #065F46; font-weight: 800; font-size: 1.05rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.45rem;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Inscrição Integral Já Confirmada</span>
+      </div>
+      <p style="color: #047857; font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.85rem;">
+        Você já possui uma inscrição completa confirmada para o evento <strong>${eventoAtual?.titulo || ''}</strong>. Não é necessário adquirir diárias avulsas.
+      </p>
+      <a href="/usuario/dashboard.html" class="btn btn-primary" style="background: #059669; border-color: #059669; font-size: 0.85rem; padding: 0.5rem 1rem; display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none;">
+        <span>Ir para Minha Área de Participante &rarr;</span>
+      </a>
+    `;
+
+    // Ocultar formulário de diária já que a pessoa já tem inscrição completa
+    const formDiaria = document.getElementById('form-diaria-dados');
+    if (formDiaria) {
+      const inputs = formDiaria.querySelectorAll('input, button, select');
+      inputs.forEach(el => el.disabled = true);
+    }
+  }
+
+  function exibirAvisoDiasJaInscritos(dias) {
+    let banner = document.getElementById('dias-adquiridos-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'dias-adquiridos-banner';
+      banner.style.cssText = 'background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: left;';
+      const step2Card = document.getElementById('step-2');
+      if (step2Card) step2Card.insertBefore(banner, step2Card.firstChild);
+    }
+    const diasFmt = dias.map(formatarDataIso).join(', ');
+    banner.innerHTML = `
+      <div style="color: #1E40AF; font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+        <span>Diárias Já Adquiridas</span>
+      </div>
+      <p style="color: #1E3A8A; font-size: 0.85rem; margin: 0; line-height: 1.45;">
+        Você já possui diária confirmada para: <strong>${diasFmt}</strong>. Não é permitido se inscrever em mais de uma diária no mesmo dia. As datas já contratadas estão marcadas como <em>Já Inscrito</em> e bloqueadas para nova seleção.
+      </p>
+    `;
+  }
 });
 
 // Renderizar Seção de Combos Promocionais de Diárias
@@ -408,6 +500,10 @@ function renderCombosSection() {
     const isSelected = comboSelecionado && comboSelecionado.id === combo.id;
     const valorFmt = parseFloat(combo.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    // Checar se o usuário já possui algum dia deste combo (Regra: não pode se inscrever no mesmo dia)
+    const diasConflitantes = (combo.dias || []).filter(d => diasJaInscritos.includes(d));
+    const comboBloqueado = diasConflitantes.length > 0;
+
     // Calcular economia em relação aos dias avulsos
     const somaAvulsa = (combo.dias || []).reduce((acc, dStr) => {
       const dObj = diasConfig.find(d => d.data === dStr);
@@ -415,7 +511,13 @@ function renderCombosSection() {
     }, 0);
 
     let economiaHTML = '';
-    if (somaAvulsa > parseFloat(combo.valor || 0)) {
+    if (comboBloqueado) {
+      economiaHTML = `
+        <span class="badge" style="background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 999px;">
+          Indisponível (Dia já contratado)
+        </span>
+      `;
+    } else if (somaAvulsa > parseFloat(combo.valor || 0)) {
       const diff = somaAvulsa - parseFloat(combo.valor || 0);
       const diffFmt = diff.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
       const percentual = Math.round((diff / somaAvulsa) * 100);
@@ -431,16 +533,21 @@ function renderCombosSection() {
     const diasChips = (combo.dias || []).map(dStr => {
       const dObj = diasConfig.find(d => d.data === dStr);
       const label = dObj && dObj.label ? dObj.label : formatarDataIso(dStr);
+      const diaJaPossui = diasJaInscritos.includes(dStr);
       return `
-        <span class="combo-day-chip">
+        <span class="combo-day-chip" style="${diaJaPossui ? 'background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0;' : ''}">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-          <span>${label}</span>
+          <span>${label}${diaJaPossui ? ' (Já Inscrito)' : ''}</span>
         </span>
       `;
     }).join('');
 
+    const comboCardClasses = ['combo-card-option'];
+    if (isSelected) comboCardClasses.push('selected');
+    if (comboBloqueado) comboCardClasses.push('combo-disabled');
+
     return `
-      <div class="combo-card-option ${isSelected ? 'selected' : ''}" id="card-combo-${combo.id}" onclick="selecionarCombo('${combo.id}')">
+      <div class="${comboCardClasses.join(' ')}" id="card-combo-${combo.id}" onclick="selecionarCombo('${combo.id}')" title="${comboBloqueado ? 'Você já possui inscrição para um dos dias deste combo.' : ''}">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
           <div>
             <div style="font-weight: 800; color: #1E293B; font-size: 1.05rem; display: flex; align-items: center; gap: 0.45rem;">
@@ -450,8 +557,8 @@ function renderCombosSection() {
             ${combo.descricao ? `<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.15rem;">${combo.descricao}</div>` : ''}
           </div>
           <div style="text-align: right;">
-            <div class="dia-price" style="margin: 0; line-height: 1.1;">${valorFmt}</div>
-            <div style="font-size: 0.72rem; color: #6D28D9; font-weight: 700; text-transform: uppercase;">Valor Fechado</div>
+            <div class="dia-price" style="margin: 0; line-height: 1.1; ${comboBloqueado ? 'color: #94A3B8;' : ''}">${valorFmt}</div>
+            <div style="font-size: 0.72rem; color: ${comboBloqueado ? '#94A3B8' : '#6D28D9'}; font-weight: 700; text-transform: uppercase;">Valor Fechado</div>
           </div>
         </div>
 
@@ -472,6 +579,13 @@ window.selecionarCombo = function(comboId) {
   const combo = combosConfig.find(c => c.id === comboId);
   if (!combo) return;
 
+  // Regra: Não pode se inscrever se já possui diária para um dos dias do combo
+  const diasConflitantes = (combo.dias || []).filter(d => diasJaInscritos.includes(d));
+  if (diasConflitantes.length > 0) {
+    showToast('Você já possui diária confirmada para dia(s) deste combo. Não é permitido se inscrever em mais de uma diária no mesmo dia.', 'warning');
+    return;
+  }
+
   if (comboSelecionado && comboSelecionado.id === comboId) {
     limparComboSelecionado();
     return;
@@ -487,6 +601,7 @@ window.selecionarCombo = function(comboId) {
   if (btnLimpar) btnLimpar.style.display = 'inline-block';
 
   document.querySelectorAll('.cb-dia').forEach(cb => {
+    if (cb.disabled) return;
     const deveMarcar = combo.dias.includes(cb.value);
     cb.checked = deveMarcar;
     const diaCard = document.getElementById(`card-dia-${cb.value}`);
@@ -507,6 +622,7 @@ window.limparComboSelecionado = function() {
   if (btnLimpar) btnLimpar.style.display = 'none';
 
   document.querySelectorAll('.cb-dia').forEach(cb => {
+    if (cb.disabled) return;
     cb.checked = false;
     const diaCard = document.getElementById(`card-dia-${cb.value}`);
     if (diaCard) diaCard.classList.remove('selected');
@@ -527,9 +643,34 @@ function renderChecklistDias() {
     return;
   }
 
+  // Verificar se o usuário já possui todas as diárias do evento
+  const todosAdquiridos = diasDisponiveis.every(d => diasJaInscritos.includes(d.data));
+
   container.innerHTML = diasDisponiveis.map(dia => {
     const dataFmt = formatarDataIso(dia.data);
     const valorFmt = parseFloat(dia.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const jaInscrito = diasJaInscritos.includes(dia.data);
+
+    if (jaInscrito) {
+      return `
+        <label class="dia-card-option dia-adquirido" id="card-dia-${dia.data}" title="Você já possui inscrição confirmada para este dia.">
+          <div style="display: flex; align-items: center;">
+            <input type="checkbox" class="cb-dia" value="${dia.data}" data-valor="${dia.valor}" disabled>
+            <div class="dia-info">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span class="dia-nome" style="color: #64748B;">${dataFmt}</span>
+                <span class="badge" style="background:#ECFDF5; color:#065F46; border:1px solid #A7F3D0; font-size:0.75rem; font-weight:700; padding: 0.15rem 0.5rem; border-radius: 999px; display:inline-flex; align-items:center; gap:0.25rem;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Já Inscrito
+                </span>
+              </div>
+              ${dia.descricao ? `<span class="dia-desc">${dia.descricao}</span>` : ''}
+            </div>
+          </div>
+          <div class="dia-price" style="color: #94A3B8; text-decoration: line-through; font-size: 0.95rem;">${valorFmt}</div>
+        </label>
+      `;
+    }
 
     return `
       <label class="dia-card-option" id="card-dia-${dia.data}">
@@ -545,10 +686,23 @@ function renderChecklistDias() {
     `;
   }).join('');
 
+  if (todosAdquiridos) {
+    const summaryBar = document.getElementById('summary-bar');
+    if (summaryBar) {
+      summaryBar.innerHTML = `
+        <div style="width: 100%; text-align: center; color: #065F46; font-weight: 700; padding: 0.5rem;">
+          Você já adquiriu todas as diárias disponíveis para este evento!
+        </div>
+      `;
+    }
+  }
+
   recalcularTotalDias();
 }
 
 window.toggleDia = function(dataStr, checkbox) {
+  if (checkbox.disabled) return;
+
   const card = document.getElementById(`card-dia-${dataStr}`);
   if (card) {
     if (checkbox.checked) {
@@ -604,7 +758,7 @@ function obterComboAtivoParaDias(diasArray) {
 function recalcularTotalDias() {
   diasSelecionados = [];
 
-  document.querySelectorAll('.cb-dia:checked').forEach(cb => {
+  document.querySelectorAll('.cb-dia:checked:not(:disabled)').forEach(cb => {
     diasSelecionados.push(cb.value);
   });
 

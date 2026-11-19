@@ -6,6 +6,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.usuario import Usuario
 from app.models.evento import Evento
+from app.models.inscricao import Inscricao
 from app.models.diaria import DiariaTriagem, InscricaoDiaria
 from app.schemas.diaria import (
     DiariaTriagemCreate,
@@ -13,7 +14,8 @@ from app.schemas.diaria import (
     InscricaoDiariaResponse
 )
 from app.services.diaria_service import (
-    criar_ou_atualizar_triagem_diaria
+    criar_ou_atualizar_triagem_diaria,
+    obter_dias_inscritos_usuario
 )
 from app.services.infinitepay import infinitepay_service
 from app.services.igreja_service import validar_igreja_dados_extras
@@ -45,6 +47,33 @@ def obter_config_diarias_evento(
         "diarias_habilitadas": bool(evento.diarias_habilitadas),
         "config_diarias": evento.config_diarias or {},
         "campos_formulario_diaria": evento.campos_formulario_diaria or ""
+    }
+
+
+@router.get("/evento/{evento_id}/meu-status")
+def obter_meu_status_diaria_evento(
+    evento_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Retorna os dias de diária que o participante já possui confirmados para este evento
+    e se ele possui inscrição integral confirmada.
+    Garante a regra: um participante não pode se inscrever em mais de uma diária no mesmo dia.
+    """
+    dias_inscritos = obter_dias_inscritos_usuario(db, current_user.id, evento_id)
+
+    inscricao_integral = db.query(Inscricao).filter(
+        Inscricao.usuario_id == current_user.id,
+        Inscricao.evento_id == evento_id,
+        Inscricao.status == "CONFIRMADA"
+    ).first()
+
+    return {
+        "usuario_id": current_user.id,
+        "evento_id": evento_id,
+        "dias_inscritos": dias_inscritos,
+        "possui_inscricao_integral": bool(inscricao_integral)
     }
 
 

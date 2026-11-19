@@ -7,6 +7,7 @@ from fastapi import HTTPException, status, BackgroundTasks
 
 from app.models.evento import Evento
 from app.models.usuario import Usuario
+from app.models.inscricao import Inscricao
 from app.models.diaria import DiariaTriagem, InscricaoDiaria
 from app.services.infinitepay import infinitepay_service
 from app.services.email import enviar_email_confirmacao_diaria
@@ -87,6 +88,33 @@ def calcular_total_diarias(evento: Evento, dias_selecionados: List[str], combo_i
     return total
 
 
+def obter_dias_inscritos_usuario(db: Session, usuario_id: int, evento_id: int) -> List[str]:
+    """
+    Retorna a lista ordenada de dias (strings no formato YYYY-MM-DD) para os quais
+    o usuário já possui uma inscrição por diária confirmada neste evento.
+    """
+    diarias = db.query(InscricaoDiaria).filter(
+        InscricaoDiaria.usuario_id == usuario_id,
+        InscricaoDiaria.evento_id == evento_id,
+        InscricaoDiaria.status == "CONFIRMADA"
+    ).all()
+
+    dias_set = set()
+    for d in diarias:
+        lista = d.dias_selecionados
+        if isinstance(lista, list):
+            for item in lista:
+                data_limpa = str(item).strip().split('T')[0]
+                if data_limpa:
+                    dias_set.add(data_limpa)
+        elif isinstance(lista, str):
+            data_limpa = lista.strip().split('T')[0]
+            if data_limpa:
+                dias_set.add(data_limpa)
+
+    return sorted(list(dias_set))
+
+
 def criar_ou_atualizar_triagem_diaria(
     db: Session,
     current_user: Usuario,
@@ -96,6 +124,10 @@ def criar_ou_atualizar_triagem_diaria(
 ) -> Tuple[DiariaTriagem, str]:
     """
     Cria ou atualiza uma DiariaTriagem e gera o link de checkout na InfinitePay.
+    Valida:
+    1. Usuário não pode ter mais de uma diária no mesmo dia (rejeita se já confirmada).
+    2. Usuário não pode se inscrever se já tiver inscrição integral confirmada no evento.
+    3. Remove duplicatas da lista de dias da própria requisição.
     """
     evento = db.query(Evento).filter(Evento.id == evento_id, Evento.ativo == True).first()
     if not evento:
@@ -107,11 +139,49 @@ def criar_ou_atualizar_triagem_diaria(
             detail="Este evento não aceita inscrições por diária."
         )
 
-    if not dias_selecionados or len(dias_selecionados) == 0:
+    # 1. Normalizar e remover duplicatas dos dias solicitados
+    dias_limpos = []
+    if dias_selecionados:
+        for d in dias_selecionados:
+            d_str = str(d).strip().split('T')[0]
+            if d_str and d_str not in dias_limpos:
+                dias_limpos.append(d_str)
+
+    if not dias_limpos or len(dias_limpos) == 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Selecione pelo menos um dia para a sua diária."
         )
+
+    # 2. Verificar se o participante já possui inscrição integral confirmada no evento
+    inscricao_integral = db.query(Inscricao).filter(
+        Inscricao.usuario_id == current_user.id,
+        Inscricao.evento_id == evento.id,
+        Inscricao.status == "CONFIRMADA"
+    ).first()
+    if inscricao_integral:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Você já possui uma inscrição integral confirmada para este evento. Não é necessário adquirir diárias avulsas."
+        )
+
+    # 3. REGRA ESTRITA: Participante não pode se inscrever em mais de uma diária no mesmo dia
+    dias_ja_adquiridos = set(obter_dias_inscritos_usuario(db, current_user.id, evento.id))
+    conflitos = [d for d in dias_limpos if d in dias_ja_adquiridos]
+    if conflitos:
+        conflitos_fmt = []
+        for c in conflitos:
+            partes = c.split('-')
+            if len(partes) == 3:
+                conflitos_fmt.append(f"{partes[2]}/{partes[1]}/{partes[0]}")
+            else:
+                conflitos_fmt.append(c)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Você já possui inscrição confirmada para a diária do(s) dia(s): {', '.join(conflitos_fmt)}. Não é permitido se inscrever em mais de uma diária no mesmo dia."
+        )
+
+    dias_selecionados = dias_limpos
 
     combo_id = dados_extras.get("combo_id") if isinstance(dados_extras, dict) else None
     valor_total = calcular_total_diarias(evento, dias_selecionados, combo_id=combo_id)
@@ -180,6 +250,15 @@ def converter_triagem_em_diaria(
     """
     Converte DiariaTriagem em InscricaoDiaria (CONFIRMADA).
     """
+    if order_nsu:
+        existente_nsu = db.query(InscricaoDiaria).filter(
+            InscricaoDiaria.order_nsu == order_nsu
+        ).first()
+        if existente_nsu:
+            triagem.status = "CONVERTIDA"
+            db.commit()
+            return existente_nsu
+
     if triagem.status == "CONVERTIDA":
         existente = db.query(InscricaoDiaria).filter(
             InscricaoDiaria.usuario_id == triagem.usuario_id,
