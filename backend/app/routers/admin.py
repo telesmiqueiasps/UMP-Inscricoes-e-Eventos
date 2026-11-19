@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, File, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func, cast, String
 from typing import List, Optional
 from decimal import Decimal
@@ -869,7 +869,15 @@ def listar_diarias_evento_admin(
     db: Session = Depends(get_db),
     admin: Usuario = Depends(require_admin_global)
 ):
-    query = db.query(InscricaoDiaria).join(Usuario).filter(InscricaoDiaria.evento_id == evento_id)
+    query = (
+        db.query(InscricaoDiaria)
+        .options(
+            joinedload(InscricaoDiaria.usuario),
+            joinedload(InscricaoDiaria.acomodacao)
+        )
+        .outerjoin(Usuario, InscricaoDiaria.usuario_id == Usuario.id)
+        .filter(InscricaoDiaria.evento_id == evento_id)
+    )
 
     if status_filtro:
         query = query.filter(InscricaoDiaria.status == status_filtro)
@@ -888,10 +896,18 @@ def listar_diarias_evento_admin(
 
     if dia_filtro:
         dia_filtro_limpo = dia_filtro.strip().lower()
-        diarias = [
-            d for d in diarias
-            if any(dia_filtro_limpo in str(x).lower() for x in (d.dias_selecionados or []))
-        ]
+        diarias_filtradas = []
+        for d in diarias:
+            dias_raw = d.dias_selecionados
+            if isinstance(dias_raw, list):
+                dias_arr = dias_raw
+            elif isinstance(dias_raw, str):
+                dias_arr = [dias_raw]
+            else:
+                dias_arr = []
+            if any(dia_filtro_limpo in str(x).lower() for x in dias_arr):
+                diarias_filtradas.append(d)
+        diarias = diarias_filtradas
 
     return diarias
 
