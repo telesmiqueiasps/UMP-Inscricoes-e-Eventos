@@ -175,6 +175,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3"/></svg>
           <span>Check-in</span>
         </button>
+        <button class="tab-btn" id="tab-btn-achados" onclick="switchSubTab('pane-achados', this)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+          <span>Achados e Perdidos</span>
+        </button>
         <button class="tab-btn" id="tab-btn-editar" onclick="switchSubTab('pane-editar', this)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
           <span>Editar Evento</span>
@@ -1434,6 +1438,45 @@
           </div>
           <!-- Controle de Paginação -->
           <div id="presenca-pagination-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;"></div>
+        </div>
+      </div>
+
+      <!-- TAB: ACHADOS E PERDIDOS DO EVENTO -->
+      <div class="tab-pane" id="pane-achados">
+        <div style="background: radial-gradient(circle at 88% 20%, rgba(0, 184, 148, 0.22) 0%, transparent 45%), radial-gradient(circle at 12% 85%, rgba(255, 121, 0, 0.18) 0%, transparent 50%), linear-gradient(135deg, #001E21 0%, #00363A 60%, #004C50 100%); border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12); padding: 1.35rem 1.6rem; color: #FFFFFF; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: 0 10px 28px -10px rgba(0, 30, 33, 0.35);">
+          <div>
+            <h2 style="font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif; font-size: 1.4rem; font-weight: 800; margin: 0 0 0.25rem 0; display: flex; align-items: center; gap: 0.5rem; color: #FFFFFF;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+              <span>Achados & Perdidos do Evento</span>
+            </h2>
+            <p style="color: #CBD5E1; font-size: 0.88rem; margin: 0;">Cadastre itens esquecidos durante este evento, acompanhe reivindicações de participantes e valide entregas.</p>
+          </div>
+          <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+            <a href="achados-e-perdidos.html" class="btn btn-outline" style="color: #FFFFFF; border-color: rgba(255,255,255,0.3); font-size: 0.84rem; text-decoration: none;" target="_blank">
+              <span>Central Geral</span> &rarr;
+            </a>
+            <button type="button" class="btn btn-primary" onclick="abrirModalNovoAchadoEvento()" style="background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%); border: none; font-weight: 700; display: inline-flex; align-items: center; gap: 0.45rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Novo Item Achado</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Indicadores & Filtros -->
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
+          <div style="display: flex; gap: 0.35rem; background: #F1F5F9; padding: 0.25rem; border-radius: 8px;">
+            <button type="button" class="btn tab-achados-ev-btn active" data-status="TODOS" onclick="filtrarAchadosEventoTab('TODOS', this)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; background: #FFFFFF; color: #00363A; border: none; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">Todos (<span id="ev-kpi-achados-tot">0</span>)</button>
+            <button type="button" class="btn tab-achados-ev-btn" data-status="DISPONIVEL" onclick="filtrarAchadosEventoTab('DISPONIVEL', this)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; background: transparent; color: #64748B; border: none; border-radius: 6px;">Disponíveis (<span id="ev-kpi-achados-disp">0</span>)</button>
+            <button type="button" class="btn tab-achados-ev-btn" data-status="REIVINDICADO" onclick="filtrarAchadosEventoTab('REIVINDICADO', this)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; background: transparent; color: #64748B; border: none; border-radius: 6px;">Reivindicados (<span id="ev-kpi-achados-reiv">0</span>)</button>
+            <button type="button" class="btn tab-achados-ev-btn" data-status="ENTREGUE" onclick="filtrarAchadosEventoTab('ENTREGUE', this)" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 700; background: transparent; color: #64748B; border: none; border-radius: 6px;">Entregues (<span id="ev-kpi-achados-entr">0</span>)</button>
+          </div>
+          <input type="text" id="ev-achados-busca" class="form-control" placeholder="Buscar por título ou local..." oninput="filtrarAchadosEventoLocal()" style="max-width: 250px; height: 38px; margin-bottom: 0;">
+        </div>
+
+        <div id="ev-achados-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.15rem;">
+          <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+            Carregando itens de achados e perdidos...
+          </div>
         </div>
       </div>
 

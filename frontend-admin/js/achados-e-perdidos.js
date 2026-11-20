@@ -28,11 +28,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   await carregarEventosSelect();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const evParam = urlParams.get('evento_id') || urlParams.get('id');
+  if (evParam) {
+    const selFiltro = document.getElementById('filtro-evento');
+    if (selFiltro) selFiltro.value = evParam;
+    const selForm = document.getElementById('achado-evento-id');
+    if (selForm) selForm.value = evParam;
+  }
+
   await carregarAchadosAdmin();
 });
 
 window.logoutAdmin = function () {
-  API.clearToken();
+  if (typeof API.removeToken === 'function') {
+    API.removeToken();
+  }
   window.location.href = 'index.html';
 };
 

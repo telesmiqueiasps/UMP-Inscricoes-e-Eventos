@@ -1825,3 +1825,312 @@ document.addEventListener('visibilitychange', () => {
     loadDashboard();
   }
 });
+
+
+// ==============================================================
+// ACHADOS E PERDIDOS - ÁREA DO PARTICIPANTE
+// ==============================================================
+let userAchadosCache = [];
+let statusFiltroUserAtual = 'TODOS';
+
+window.carregarAchadosPerdidosParticipante = async function () {
+  const container = document.getElementById('user-achados-container');
+  if (container) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+        Atualizando itens encontrados...
+      </div>
+    `;
+  }
+
+  const evId = document.getElementById('user-achados-filtro-evento')?.value || '';
+  let url = `/usuario/achados-perdidos?status=${encodeURIComponent(statusFiltroUserAtual)}`;
+  if (evId) url += `&evento_id=${encodeURIComponent(evId)}`;
+
+  try {
+    const list = await API.request(url);
+    userAchadosCache = list || [];
+
+    // Preencher select de eventos se ainda vazio
+    popularSelectEventosUser(userAchadosCache);
+
+    filtrarAchadosUserLocal();
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem 1rem; color: #DC2626;">
+          <p>Não foi possível carregar os itens de achados e perdidos.</p>
+          <button class="btn btn-outline" onclick="carregarAchadosPerdidosParticipante()" style="margin-top: 0.5rem;">Tentar Novamente</button>
+        </div>
+      `;
+    }
+  }
+};
+
+function popularSelectEventosUser(itens) {
+  const sel = document.getElementById('user-achados-filtro-evento');
+  if (!sel || sel.options.length > 1) return;
+
+  const eventosMap = new Map();
+  itens.forEach(it => {
+    if (it.evento_id && it.evento_nome) {
+      eventosMap.set(it.evento_id, it.evento_nome);
+    }
+  });
+
+  if (typeof currentDashboardData !== 'undefined' && currentDashboardData && currentDashboardData.inscricoes) {
+    currentDashboardData.inscricoes.forEach(ins => {
+      if (ins.evento_id && ins.evento_titulo) {
+        eventosMap.set(ins.evento_id, ins.evento_titulo);
+      }
+    });
+  }
+
+  eventosMap.forEach((nome, id) => {
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = nome;
+    sel.appendChild(opt);
+  });
+}
+
+window.filtrarStatusUser = function (status, btnElement) {
+  statusFiltroUserAtual = status;
+  document.querySelectorAll('.achados-filtro-btn').forEach(btn => {
+    btn.style.background = 'transparent';
+    btn.style.color = '#64748B';
+    btn.style.boxShadow = 'none';
+  });
+  if (btnElement) {
+    btnElement.style.background = '#FFFFFF';
+    btnElement.style.color = '#00363A';
+    btnElement.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
+  }
+  carregarAchadosPerdidosParticipante();
+};
+
+window.filtrarAchadosUserLocal = function () {
+  const termo = (document.getElementById('user-achados-busca')?.value || '').toLowerCase().trim();
+  let filtrados = userAchadosCache;
+
+  if (termo) {
+    filtrados = userAchadosCache.filter(it => {
+      const tit = (it.titulo || '').toLowerCase();
+      const loc = (it.local_encontrado || '').toLowerCase();
+      const desc = (it.descricao || '').toLowerCase();
+      const ev = (it.evento_nome || '').toLowerCase();
+      return tit.includes(termo) || loc.includes(termo) || desc.includes(termo) || ev.includes(termo);
+    });
+  }
+
+  renderizarAchadosParticipante(filtrados);
+};
+
+function renderizarAchadosParticipante(itens) {
+  const container = document.getElementById('user-achados-container');
+  if (!container) return;
+
+  if (!itens || itens.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; background: #FFFFFF; border-radius: 12px; border: 1px dashed var(--border-color);">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+        </div>
+        <h3 style="font-weight: 800; font-size: 1.1rem; color: var(--navy); margin: 0 0 0.35rem 0;">Nenhum item encontrado</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Nenhum pertence corresponde à busca no momento.</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = itens.map(it => {
+    const st = (it.status || 'DISPONIVEL').toUpperCase();
+    const souEu = Boolean(it.sou_eu_que_reivindiquei);
+
+    let badgeHtml = '';
+    if (st === 'ENTREGUE') {
+      badgeHtml = `<span class="achado-user-badge" style="background: #64748B; color: #FFFFFF;">Entregue</span>`;
+    } else if (souEu) {
+      badgeHtml = `<span class="achado-user-badge" style="background: #FF7900; color: #FFFFFF;">Marcado por Você</span>`;
+    } else if (st === 'REIVINDICADO') {
+      badgeHtml = `<span class="achado-user-badge" style="background: #D97706; color: #FFFFFF;">Em Análise</span>`;
+    } else {
+      badgeHtml = `<span class="achado-user-badge" style="background: #00B894; color: #FFFFFF;">Aguardando Dono</span>`;
+    }
+
+    const fotoUrl = it.foto_url || 'img/logo.png';
+
+    // Bloco de Ação / Status
+    let acaoHtml = '';
+    if (st === 'ENTREGUE') {
+      acaoHtml = `
+        <div style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #475569; text-align: center; font-weight: 600;">
+          Pertence entregue ao participante
+        </div>
+      `;
+    } else if (souEu) {
+      acaoHtml = `
+        <div class="box-meu-reivindicado">
+          <div style="font-weight: 800; font-size: 0.82rem; color: #EA580C; display: flex; align-items: center; gap: 0.35rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Você marcou este item como seu</span>
+          </div>
+          <div style="font-size: 0.76rem; color: #9A3412;">
+            Dirija-se à secretaria ou à organização do evento para fazer a retirada.
+          </div>
+          <button type="button" class="btn btn-outline" style="margin-top: 0.35rem; font-size: 0.74rem; padding: 0.35rem 0.6rem; border-color: #FDBA74; color: #C2410C;" onclick="cancelarMinhaReivindicacao(${it.id})">
+            Não é meu (Cancelar)
+          </button>
+        </div>
+      `;
+    } else if (st === 'REIVINDICADO') {
+      acaoHtml = `
+        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #92400E; text-align: center;">
+          <strong style="display: block;">Item Reivindicado</strong>
+          <span style="font-size: 0.74rem;">Outro participante indicou ser o dono. Aguardando entrega com a organização.</span>
+        </div>
+      `;
+    } else {
+      acaoHtml = `
+        <button type="button" class="btn-reivindicar" onclick="abrirModalReivindicar(${it.id})">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Este item é meu!</span>
+        </button>
+      `;
+    }
+
+    return `
+      <div class="achado-user-card" id="user-achado-${it.id}">
+        <div class="achado-user-thumb" onclick="abrirUserLightbox('${escapeHtml(fotoUrl)}')">
+          ${badgeHtml}
+          <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(it.titulo)}" onerror="this.src='img/logo.png'">
+          <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.65); color: #FFFFFF; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Ampliar</span>
+          </div>
+        </div>
+
+        <div style="padding: 1.1rem; display: flex; flex-direction: column; flex: 1; gap: 0.65rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); margin: 0; line-height: 1.35;">
+              ${escapeHtml(it.titulo)}
+            </h3>
+            <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.68rem; font-weight: 700; white-space: nowrap;">
+              ${escapeHtml(it.evento_nome || 'Geral')}
+            </span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; color: var(--text-muted);">
+            ${it.local_encontrado ? `
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004C50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span><strong>Encontrado em:</strong> ${escapeHtml(it.local_encontrado)}</span>
+              </div>
+            ` : ''}
+            ${it.data_encontrado ? `
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#004C50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span><strong>Data/Período:</strong> ${escapeHtml(it.data_encontrado)}</span>
+              </div>
+            ` : ''}
+          </div>
+
+          ${it.descricao ? `
+            <div style="font-size: 0.82rem; color: #475569; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.55rem 0.75rem; line-height: 1.4;">
+              ${escapeHtml(it.descricao)}
+            </div>
+          ` : ''}
+
+          <div style="margin-top: auto; padding-top: 0.5rem;">
+            ${acaoHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// --- Modal de Reivindicação do Participante ---
+window.abrirModalReivindicar = function (id) {
+  const item = userAchadosCache.find(it => it.id === id);
+  if (!item) return;
+
+  document.getElementById('reivindicar-item-id').value = item.id;
+  document.getElementById('reivindicar-thumb').src = item.foto_url || 'img/logo.png';
+  document.getElementById('reivindicar-titulo').textContent = item.titulo;
+  document.getElementById('reivindicar-evento').textContent = item.evento_nome || 'Geral';
+  document.getElementById('reivindicar-local').textContent = item.local_encontrado ? `Local: ${item.local_encontrado}` : '';
+  document.getElementById('reivindicar-mensagem').value = '';
+
+  document.getElementById('modal-reivindicar-item').style.display = 'flex';
+};
+
+window.fecharModalReivindicar = function () {
+  document.getElementById('modal-reivindicar-item').style.display = 'none';
+};
+
+window.fecharModalReivindicarBackdrop = function (e) {
+  if (e.target && e.target.id === 'modal-reivindicar-item') {
+    fecharModalReivindicar();
+  }
+};
+
+window.confirmarReivindicacaoItem = async function (e) {
+  e.preventDefault();
+
+  const id = document.getElementById('reivindicar-item-id').value;
+  const mensagem = document.getElementById('reivindicar-mensagem').value.trim();
+
+  const btn = document.getElementById('btn-confirmar-reivindicacao');
+  const txtOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>Salvando...</span>';
+
+  try {
+    const res = await API.request(`/usuario/achados-perdidos/${id}/reivindicar`, {
+      method: 'POST',
+      body: JSON.stringify({ mensagem: mensagem || null })
+    });
+
+    showToast(res.mensagem || 'Você marcou este item como seu!', 'success');
+    fecharModalReivindicar();
+    await carregarAchadosPerdidosParticipante();
+  } catch (err) {
+    showToast(err.message || 'Erro ao reivindicar item.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = txtOriginal;
+  }
+};
+
+window.cancelarMinhaReivindicacao = async function (id) {
+  if (!confirm('Deseja cancelar a reivindicação deste pertence? O item voltará a ficar disponível para outros participantes.')) {
+    return;
+  }
+
+  try {
+    const res = await API.request(`/usuario/achados-perdidos/${id}/cancelar-reivindicacao`, {
+      method: 'POST'
+    });
+    showToast(res.mensagem || 'Reivindicação cancelada com sucesso.', 'info');
+    await carregarAchadosPerdidosParticipante();
+  } catch (err) {
+    showToast(err.message || 'Erro ao cancelar reivindicação.', 'error');
+  }
+};
+
+// --- Lightbox de Imagem do Participante ---
+window.abrirUserLightbox = function (url) {
+  const lb = document.getElementById('modal-user-lightbox');
+  const img = document.getElementById('user-lightbox-img');
+  if (lb && img) {
+    img.src = url;
+    lb.style.display = 'flex';
+  }
+};
+
+window.fecharUserLightbox = function (e) {
+  if (e.target.id === 'modal-user-lightbox') {
+    document.getElementById('modal-user-lightbox').style.display = 'none';
+  }
+};
