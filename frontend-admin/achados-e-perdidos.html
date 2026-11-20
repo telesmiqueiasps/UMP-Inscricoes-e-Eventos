@@ -13,6 +13,7 @@
     html, body {
       max-width: 100vw;
       overflow-x: hidden;
+      background-color: var(--light-bg, #F8FAFC);
     }
 
     .tabular-nums {
@@ -23,8 +24,8 @@
     .achados-top-banner {
       position: relative;
       overflow: hidden;
-      background: radial-gradient(circle at 88% 20%, rgba(0, 184, 148, 0.24) 0%, transparent 45%),
-                  radial-gradient(circle at 12% 85%, rgba(255, 121, 0, 0.20) 0%, transparent 50%),
+      background: radial-gradient(circle at 88% 20%, rgba(0, 184, 148, 0.25) 0%, transparent 45%),
+                  radial-gradient(circle at 12% 85%, rgba(255, 121, 0, 0.22) 0%, transparent 50%),
                   linear-gradient(135deg, #001E21 0%, #00363A 60%, #004C50 100%);
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -35,7 +36,7 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 1.25rem;
       box-shadow: 0 14px 32px -10px rgba(0, 30, 33, 0.35);
     }
 
@@ -51,47 +52,49 @@
     .achados-banner-info {
       position: relative;
       z-index: 1;
+      max-width: 720px;
     }
 
     .achados-banner-title {
       font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      font-size: clamp(1.4rem, 2.5vw, 1.85rem);
       font-weight: 800;
-      margin: 0 0 0.25rem 0;
+      margin: 0 0 0.35rem 0;
       display: flex;
       align-items: center;
       gap: 0.65rem;
+      color: #FFFFFF;
     }
 
     .achados-banner-sub {
       color: #CBD5E1;
       font-size: 0.9rem;
       margin: 0;
-      max-width: 680px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
 
     .btn-novo-item {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.55rem;
       background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%);
       color: #FFFFFF;
       border: none;
-      padding: 0.75rem 1.35rem;
+      padding: 0.8rem 1.4rem;
       border-radius: 10px;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       cursor: pointer;
       box-shadow: 0 4px 14px rgba(255, 121, 0, 0.35);
       transition: all 0.2s ease;
       position: relative;
       z-index: 1;
+      white-space: nowrap;
     }
 
     .btn-novo-item:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(255, 121, 0, 0.45);
+      box-shadow: 0 6px 20px rgba(255, 121, 0, 0.45);
     }
 
     /* KPIs Grid */
@@ -104,15 +107,21 @@
 
     .achados-kpi-card {
       background: #FFFFFF;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 1.15rem 1.25rem;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border-color, #E2E8F0);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       display: flex;
       align-items: center;
-      gap: 0.95rem;
+      gap: 1rem;
       position: relative;
       overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .achados-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
     }
 
     .achados-kpi-card::before {
@@ -130,9 +139,9 @@
     .kpi-entregue::before { background: #64748B; }
 
     .achados-kpi-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -145,49 +154,60 @@
     .kpi-entregue .achados-kpi-icon { background: rgba(100, 116, 139, 0.12); color: #64748B; }
 
     .achados-kpi-val {
-      font-size: 1.6rem;
+      font-size: 1.65rem;
       font-weight: 800;
       font-family: 'Plus Jakarta Sans', sans-serif;
       line-height: 1.1;
-      color: var(--text-dark);
+      color: var(--text-dark, #0F172A);
     }
 
     .achados-kpi-label {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       text-transform: uppercase;
       font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      margin-top: 0.15rem;
+      letter-spacing: 0.05em;
+      color: var(--text-muted, #64748B);
+      margin-top: 0.2rem;
     }
 
     /* Filter Bar */
     .achados-filter-bar {
       background: #FFFFFF;
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 0.9rem 1.15rem;
+      border: 1px solid var(--border-color, #E2E8F0);
+      border-radius: 14px;
+      padding: 0.95rem 1.25rem;
       margin-bottom: 1.25rem;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.85rem;
+      gap: 0.95rem;
       align-items: center;
       justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .achados-filter-left {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 280px;
     }
 
     .achados-tabs-status {
       display: flex;
       gap: 0.35rem;
       background: #F1F5F9;
-      padding: 0.25rem;
-      border-radius: 8px;
+      padding: 0.28rem;
+      border-radius: 10px;
+      flex-wrap: wrap;
     }
 
     .achados-tab-btn {
       background: transparent;
       border: none;
-      padding: 0.45rem 0.85rem;
-      border-radius: 6px;
+      padding: 0.48rem 0.88rem;
+      border-radius: 7px;
       font-size: 0.82rem;
       font-weight: 700;
       color: #64748B;
@@ -195,26 +215,69 @@
       transition: all 0.15s ease;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .achados-tab-btn:hover:not(.active) {
+      color: #00363A;
+      background: rgba(255, 255, 255, 0.6);
     }
 
     .achados-tab-btn.active {
       background: #FFFFFF;
       color: #00363A;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .achados-search-box {
+      position: relative;
+      min-width: 240px;
+      max-width: 340px;
+      width: 100%;
+    }
+
+    .achados-search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94A3B8;
+      pointer-events: none;
+    }
+
+    .achados-search-input {
+      width: 100%;
+      height: 40px;
+      padding-left: 36px;
+      padding-right: 12px;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      background: #F8FAFC;
+      font-size: 0.88rem;
+      color: var(--text-dark, #0F172A);
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .achados-search-input:focus {
+      outline: none;
+      border-color: #00B894;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.15);
     }
 
     /* Grid de Cards */
     .achados-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-      gap: 1.15rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
     }
 
     .achado-card {
       background: #FFFFFF;
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
+      border: 1px solid var(--border-color, #E2E8F0);
+      border-radius: 16px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -224,13 +287,13 @@
     }
 
     .achado-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
     }
 
     .achado-card-thumb {
       width: 100%;
-      height: 200px;
+      height: 220px;
       position: relative;
       background: #001E21;
       overflow: hidden;
@@ -241,6 +304,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       display: block;
       transition: transform 0.3s ease;
     }
@@ -259,9 +323,9 @@
       opacity: 0;
       transition: opacity 0.2s ease;
       color: #FFFFFF;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      gap: 0.35rem;
+      gap: 0.4rem;
     }
 
     .achado-card-thumb:hover .achado-thumb-overlay {
@@ -270,15 +334,15 @@
 
     .achado-status-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      padding: 4px 10px;
+      top: 12px;
+      right: 12px;
+      padding: 5px 12px;
       border-radius: 999px;
       font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.04em;
       text-transform: uppercase;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -297,7 +361,7 @@
     }
 
     @keyframes pulseAlert {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 121, 0, 0.6); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 121, 0, 0.65); }
       50% { box-shadow: 0 0 0 6px rgba(255, 121, 0, 0); }
     }
 
@@ -307,34 +371,36 @@
     }
 
     .achado-card-body {
-      padding: 1.15rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
       flex: 1;
-      gap: 0.65rem;
+      gap: 0.75rem;
     }
 
     .achado-card-title {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 800;
       font-family: 'Plus Jakarta Sans', sans-serif;
-      color: var(--text-dark);
+      color: var(--text-dark, #0F172A);
       margin: 0;
       line-height: 1.35;
+      word-break: break-word;
     }
 
     .achado-meta-row {
       display: flex;
       flex-direction: column;
-      gap: 0.35rem;
-      font-size: 0.82rem;
-      color: var(--text-muted);
+      gap: 0.4rem;
+      font-size: 0.83rem;
+      color: var(--text-muted, #64748B);
     }
 
     .achado-meta-item {
       display: flex;
       align-items: center;
       gap: 0.45rem;
+      word-break: break-word;
     }
 
     .achado-meta-item svg {
@@ -343,38 +409,39 @@
     }
 
     .achado-card-desc {
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       color: #475569;
       line-height: 1.45;
       background: #F8FAFC;
       border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      padding: 0.75rem 0.95rem;
+      word-break: break-word;
     }
 
-    /* Box de Reivindicação */
+    /* Box de Reivindicação do Participante */
     .box-reivindicacao {
       background: #FFF7ED;
       border: 1.5px solid #FDBA74;
       border-left: 5px solid #FF7900;
-      border-radius: 8px;
-      padding: 0.75rem 0.9rem;
-      font-size: 0.82rem;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
       color: #9A3412;
       display: flex;
       flex-direction: column;
-      gap: 0.3rem;
+      gap: 0.35rem;
     }
 
     .box-reivindicacao-title {
       font-weight: 800;
       text-transform: uppercase;
       font-size: 0.72rem;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       color: #EA580C;
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
     }
 
     /* Box de Entrega Concluída */
@@ -382,34 +449,34 @@
       background: #F1F5F9;
       border: 1.5px solid #CBD5E1;
       border-left: 5px solid #64748B;
-      border-radius: 8px;
-      padding: 0.75rem 0.9rem;
-      font-size: 0.82rem;
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      font-size: 0.84rem;
       color: #334155;
       display: flex;
       flex-direction: column;
-      gap: 0.3rem;
+      gap: 0.35rem;
     }
 
     .box-entrega-title {
       font-weight: 800;
       text-transform: uppercase;
       font-size: 0.72rem;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       color: #475569;
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
     }
 
     .achado-card-footer {
-      padding: 0.95rem 1.15rem;
+      padding: 1rem 1.25rem;
       background: #F8FAFC;
-      border-top: 1px solid var(--border-color);
+      border-top: 1px solid var(--border-color, #E2E8F0);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.5rem;
+      gap: 0.65rem;
       flex-wrap: wrap;
       margin-top: auto;
     }
@@ -418,19 +485,20 @@
       background: linear-gradient(135deg, #00B894 0%, #009677 100%);
       color: #FFFFFF;
       border: none;
-      padding: 0.55rem 0.95rem;
+      padding: 0.6rem 1.05rem;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
       cursor: pointer;
       transition: all 0.15s ease;
+      white-space: nowrap;
     }
 
     .btn-entregar-item:hover {
-      box-shadow: 0 4px 12px rgba(0, 184, 148, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 184, 148, 0.35);
       transform: translateY(-1px);
     }
 
@@ -438,14 +506,16 @@
       background: #FFF1F2;
       color: #E11D48;
       border: 1px solid #FECDD3;
-      padding: 0.5rem 0.75rem;
+      padding: 0.55rem 0.85rem;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+      white-space: nowrap;
     }
 
     .btn-rejeitar-reivindicacao:hover {
@@ -456,19 +526,141 @@
       background: #F1F5F9;
       color: #475569;
       border: 1px solid #CBD5E1;
-      padding: 0.45rem 0.75rem;
+      padding: 0.5rem 0.85rem;
       border-radius: 8px;
       font-weight: 600;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
     }
 
-    /* Uploader de Foto */
+    .btn-desfazer-entrega:hover {
+      background: #E2E8F0;
+      color: #1E293B;
+    }
+
+    /* ========================================================
+       MODAIS - ESTILIZAÇÃO DE ALTO PADRÃO (FIXED OVERLAY)
+       ======================================================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0, 30, 33, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    .modal-overlay.active,
+    .modal-overlay.show {
+      display: flex !important;
+    }
+
+    .modal-card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 54, 58, 0.12);
+      box-shadow: 0 25px 60px -15px rgba(0, 30, 33, 0.45);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      animation: modalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      margin: auto;
+    }
+
+    @keyframes modalPop {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #001E21 0%, #00363A 100%);
+      color: #FFFFFF;
+      padding: 1.2rem 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #FF7900;
+      flex-shrink: 0;
+    }
+
+    .modal-header h2,
+    .modal-header h3 {
+      color: #FFFFFF;
+      font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #FFFFFF;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.06);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      background: #FFFFFF;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    /* Uploader de Foto no Modal */
     .foto-uploader-box {
       border: 2px dashed #CBD5E1;
-      border-radius: 12px;
+      border-radius: 14px;
       background: #F8FAFC;
-      padding: 1.15rem;
+      padding: 1.25rem;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -482,23 +674,136 @@
 
     .foto-uploader-preview {
       width: 100%;
-      max-height: 230px;
+      max-height: 220px;
       border-radius: 10px;
       object-fit: cover;
       margin-top: 0.75rem;
       display: none;
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border-color, #E2E8F0);
+    }
+
+    .foto-preview-actions {
+      display: none;
+      margin-top: 0.5rem;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    /* Estilo para formulários dentro do modal */
+    .form-group-achados {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group-achados label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1E293B;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group-achados input,
+    .form-group-achados select,
+    .form-group-achados textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      color: #0F172A;
+      background: #FFFFFF;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .form-group-achados input:focus,
+    .form-group-achados select:focus,
+    .form-group-achados textarea:focus {
+      outline: none;
+      border-color: #00B894;
+      box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.15);
+    }
+
+    /* Lightbox Modal */
+    #modal-lightbox {
+      background: rgba(0, 20, 25, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .lightbox-container {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-img {
+      max-width: 90vw;
+      max-height: 82vh;
+      border-radius: 14px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      object-fit: contain;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .lightbox-close-btn {
+      position: absolute;
+      top: -46px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .lightbox-close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.08);
+    }
+
+    @media (max-width: 768px) {
+      .achados-top-banner {
+        padding: 1.25rem 1rem;
+      }
+      .achados-filter-bar {
+        padding: 0.85rem;
+      }
+      .achados-search-box {
+        max-width: 100%;
+      }
+      .modal-card {
+        max-width: 96vw;
+      }
+      .modal-body {
+        padding: 1.15rem;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app-layout">
+
+  <div class="admin-layout" id="admin-achados">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header-mobile">
         <div class="sidebar-brand">
-          <img src="img/logo.png" alt="UMP Sinodal" style="height: 38px; width: auto; object-fit: contain;">
-          <span style="font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; color: #FFFFFF;">UMP Admin</span>
+          <img src="img/logo.png" alt="Logo UMP" onerror="this.style.display='none';">
+          <span>UMP Eventos</span>
         </div>
       </div>
       
@@ -555,13 +860,13 @@
       <div class="achados-top-banner">
         <div class="achados-banner-info">
           <h1 class="achados-banner-title">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
             <span>Achados & Perdidos</span>
           </h1>
-          <p class="achados-banner-sub">Tire uma foto e cadastre qualquer item esquecido ou encontrado. Os participantes podem reivindicar diretamente pelo painel e a organização valida a entrega.</p>
+          <p class="achados-banner-sub">Tire uma foto e cadastre qualquer item esquecido ou encontrado no evento. Os participantes podem reivindicar diretamente pelo painel e a organização valida a entrega.</p>
         </div>
         <button type="button" class="btn-novo-item" onclick="abrirModalNovoAchado()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span>Cadastrar Item Encontrado</span>
         </button>
       </div>
@@ -611,8 +916,8 @@
 
       <!-- Barra de Filtros -->
       <div class="achados-filter-bar">
-        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1; min-width: 260px;">
-          <select id="filtro-evento" class="form-control" onchange="carregarAchadosAdmin()" style="max-width: 320px; font-weight: 700; height: 38px;">
+        <div class="achados-filter-left">
+          <select id="filtro-evento" class="form-control" onchange="carregarAchadosAdmin()" style="max-width: 320px; font-weight: 700; height: 40px; margin-bottom: 0;">
             <option value="">Todos os Eventos</option>
           </select>
 
@@ -635,8 +940,9 @@
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <input type="text" id="filtro-busca" class="form-control" placeholder="Buscar por título, local ou descrição..." oninput="filtrarCardsLocalmente()" style="width: 270px; height: 38px;">
+        <div class="achados-search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="filtro-busca" class="achados-search-input" placeholder="Buscar por título, local ou descrição..." oninput="filtrarCardsLocalmente()">
         </div>
       </div>
 
@@ -651,89 +957,91 @@
   </div>
 
   <!-- Modal: Cadastrar / Editar Item Achado -->
-  <div id="modal-achado" class="modal-overlay" style="display: none;">
-    <div class="modal-card" style="max-width: 580px; width: 95%;">
+  <div id="modal-achado" class="modal-overlay" onclick="fecharModalAchadoBackdrop(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h2 id="modal-achado-titulo" style="font-size: 1.25rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+        <h2 id="modal-achado-titulo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
           <span>Cadastrar Item Encontrado</span>
         </h2>
-        <button type="button" class="modal-close" onclick="fecharModalAchado()">&times;</button>
+        <button type="button" class="modal-close" onclick="fecharModalAchado()" title="Fechar">&times;</button>
       </div>
 
       <form id="form-achado" onsubmit="salvarAchadoAdmin(event)">
         <input type="hidden" id="achado-id">
         <input type="hidden" id="achado-foto-url">
 
-        <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="modal-body">
 
           <!-- Upload de Imagem com Captura por Câmera ou Arquivo -->
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="form-group-achados">
+            <label>
               <span>Foto do Item Encontrado <strong style="color: #EF4444;">*</strong></span>
-              <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500;">Câmera ou Arquivo</span>
+              <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">Câmera ou Arquivo</span>
             </label>
 
             <div class="foto-uploader-box" onclick="document.getElementById('input-foto-file').click()">
               <input type="file" id="input-foto-file" accept="image/*" style="display: none;" onchange="processarUploadFotoAchado(this)">
               <div id="uploader-placeholder">
-                <div style="width: 44px; height: 44px; margin: 0 auto 0.5rem auto; border-radius: 50%; background: rgba(0, 184, 148, 0.12); color: #00B894; display: flex; align-items: center; justify-content: center;">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <div style="width: 48px; height: 48px; margin: 0 auto 0.6rem auto; border-radius: 50%; background: rgba(0, 184, 148, 0.12); color: #00B894; display: flex; align-items: center; justify-content: center;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
-                <div style="font-weight: 700; font-size: 0.88rem; color: #00363A;">Tirar Foto ou Escolher Arquivo</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">PNG, JPG ou WEBP até 15MB</div>
+                <div style="font-weight: 700; font-size: 0.92rem; color: #00363A;">Tirar Foto ou Escolher Imagem</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem;">PNG, JPG ou WEBP até 15MB</div>
               </div>
+
               <img id="preview-foto-achado" class="foto-uploader-preview" alt="Preview da foto">
-              <div id="upload-spinner" style="display: none; padding: 1rem; color: #00B894; font-weight: 700; font-size: 0.85rem;">
+              <div id="upload-spinner" style="display: none; padding: 1.25rem; color: #00B894; font-weight: 700; font-size: 0.88rem;">
+                <div style="display: inline-block; width: 24px; height: 24px; border: 3px solid #00B894; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem;"></div>
                 Enviando imagem para o Supabase Storage...
               </div>
             </div>
 
-            <!-- Opção Secundária: Colar URL -->
-            <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-              <input type="url" id="achado-foto-url-input" class="form-control" placeholder="Ou cole o link direto da imagem..." oninput="atualizarUrlManualFoto(this.value)" style="margin-bottom: 0; font-size: 0.8rem; height: 34px;">
+            <!-- Opção Secundária: Link direto da imagem -->
+            <div style="margin-top: 0.5rem;">
+              <input type="url" id="achado-foto-url-input" class="form-control" placeholder="Ou cole a URL direta de uma imagem já existente..." oninput="atualizarUrlManualFoto(this.value)" style="font-size: 0.82rem; height: 36px; margin-bottom: 0;">
             </div>
           </div>
 
           <!-- Título / Identificação do Item -->
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Título / Objeto Encontrado <strong style="color: #EF4444;">*</strong></label>
-            <input type="text" id="achado-titulo" class="form-control" required placeholder="Ex: Casaco moletom preto Nike, Bíblia com capa marrom, Garrafa Stanley azul...">
+          <div class="form-group-achados">
+            <label>Título / Nome do Objeto <strong style="color: #EF4444;">*</strong></label>
+            <input type="text" id="achado-titulo" required placeholder="Ex: Casaco moletom preto Nike, Bíblia capa marrom, Garrafa Stanley azul...">
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem;">
             <!-- Evento Vinculado -->
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Evento Vinculado</label>
-              <select id="achado-evento-id" class="form-control">
-                <option value="">Geral / Sem Evento</option>
+            <div class="form-group-achados">
+              <label>Evento Vinculado</label>
+              <select id="achado-evento-id">
+                <option value="">Geral / Sem Evento Específico</option>
               </select>
             </div>
 
             <!-- Local Encontrado -->
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">Local Onde Foi Encontrado</label>
-              <input type="text" id="achado-local" class="form-control" placeholder="Ex: Refeitório, Quadra, Tenda Principal...">
+            <div class="form-group-achados">
+              <label>Local Onde Foi Encontrado</label>
+              <input type="text" id="achado-local" placeholder="Ex: Refeitório, Quadra, Tenda Principal...">
             </div>
           </div>
 
           <!-- Data Encontrado -->
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Data / Período Encontrado</label>
-            <input type="text" id="achado-data" class="form-control" placeholder="Ex: Hoje à tarde, 20/11/2026, Sábado pela manhã...">
+          <div class="form-group-achados">
+            <label>Data / Período Encontrado</label>
+            <input type="text" id="achado-data" placeholder="Ex: Hoje à tarde, 20/11/2026, Sábado pela manhã...">
           </div>
 
           <!-- Descrição Detalhada -->
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Descrição & Detalhes Específicos</label>
-            <textarea id="achado-descricao" class="form-control" rows="3" placeholder="Ex: Casaco tamanho M com zíper prateado, possui um chaveiro no bolso direito."></textarea>
+          <div class="form-group-achados">
+            <label>Descrição & Detalhes Específicos</label>
+            <textarea id="achado-descricao" rows="3" placeholder="Ex: Casaco tamanho M com zíper prateado, possui um chaveiro com fita vermelha no bolso direito."></textarea>
           </div>
 
         </div>
 
-        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.65rem;">
-          <button type="button" class="btn btn-outline" onclick="fecharModalAchado()">Cancelar</button>
-          <button type="submit" id="btn-salvar-achado" class="btn-novo-item" style="box-shadow: none;">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="fecharModalAchado()" style="padding: 0.65rem 1.15rem; font-weight: 600;">Cancelar</button>
+          <button type="submit" id="btn-salvar-achado" class="btn-novo-item" style="box-shadow: none; padding: 0.65rem 1.35rem;">
             <span>Salvar Item</span>
           </button>
         </div>
@@ -742,43 +1050,44 @@
   </div>
 
   <!-- Modal: Registrar / Confirmar Entrega Realizada -->
-  <div id="modal-entrega" class="modal-overlay" style="display: none;">
-    <div class="modal-card" style="max-width: 480px; width: 95%;">
-      <div class="modal-header">
-        <h2 style="font-size: 1.2rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; display: flex; align-items: center; gap: 0.5rem; color: #00363A;">
+  <div id="modal-entrega" class="modal-overlay" onclick="fecharModalEntregaBackdrop(event)">
+    <div class="modal-card" style="max-width: 490px;" onclick="event.stopPropagation()">
+      <div class="modal-header" style="border-bottom-color: #00B894;">
+        <h2 style="font-size: 1.2rem;">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B894" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>Confirmar Entrega do Item</span>
+          <span>Confirmar Devolução do Item</span>
         </h2>
-        <button type="button" class="modal-close" onclick="fecharModalEntrega()">&times;</button>
+        <button type="button" class="modal-close" onclick="fecharModalEntrega()" title="Fechar">&times;</button>
       </div>
 
       <form id="form-entrega" onsubmit="salvarConfirmacaoEntrega(event)">
         <input type="hidden" id="entrega-item-id">
 
-        <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.95rem;">
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0.85rem; display: flex; align-items: center; gap: 0.85rem;">
-            <img id="entrega-thumb" src="" alt="Item" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0;">
+        <div class="modal-body">
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 0.85rem 1rem; display: flex; align-items: center; gap: 0.95rem;">
+            <img id="entrega-thumb" src="" alt="Item" style="width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border-color); flex-shrink: 0; background: #001E21;">
             <div>
-              <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Objeto Sendo Entregue</div>
-              <div id="entrega-item-titulo" style="font-weight: 800; font-size: 0.95rem; color: var(--text-dark);"></div>
+              <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.04em;">Objeto Sendo Entregue</div>
+              <div id="entrega-item-titulo" style="font-weight: 800; font-size: 0.98rem; color: var(--text-dark, #0F172A); margin-top: 0.15rem; line-height: 1.3;"></div>
             </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Entregue Para (Nome do Participante) <strong style="color: #EF4444;">*</strong></label>
-            <input type="text" id="entrega-para-nome" class="form-control" required placeholder="Nome de quem recebeu o item">
+          <div class="form-group-achados">
+            <label>Entregue Para (Nome do Participante) <strong style="color: #EF4444;">*</strong></label>
+            <input type="text" id="entrega-para-nome" required placeholder="Nome de quem recebeu o item">
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Observações da Entrega (Opcional)</label>
-            <textarea id="entrega-observacao" class="form-control" rows="2" placeholder="Ex: Conferido documento e itens no bolso. Entregue pessoalmente na secretaria."></textarea>
+          <div class="form-group-achados">
+            <label>Observações da Entrega (Opcional)</label>
+            <textarea id="entrega-observacao" rows="3" placeholder="Ex: Conferido documento e pertences no bolso. Entregue pessoalmente na secretaria do evento."></textarea>
           </div>
         </div>
 
-        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.65rem;">
-          <button type="button" class="btn btn-outline" onclick="fecharModalEntrega()">Cancelar</button>
-          <button type="submit" class="btn-entregar-item" style="padding: 0.7rem 1.25rem;">
-            <span>Confirmar Entrega Concluída</span>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="fecharModalEntrega()" style="padding: 0.65rem 1.15rem; font-weight: 600;">Cancelar</button>
+          <button type="submit" class="btn-entregar-item" style="padding: 0.7rem 1.35rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Confirmar Entrega</span>
           </button>
         </div>
       </form>
@@ -786,12 +1095,18 @@
   </div>
 
   <!-- Modal Lightbox para Imagem Ampliada -->
-  <div id="modal-lightbox" class="modal-overlay" style="display: none;" onclick="fecharLightbox(event)">
-    <div style="max-width: 90vw; max-height: 90vh; position: relative; display: flex; align-items: center; justify-content: center;">
-      <button type="button" class="modal-close" style="position: absolute; top: -40px; right: 0; color: #FFFFFF; font-size: 2rem; background: none; border: none; cursor: pointer;" onclick="document.getElementById('modal-lightbox').style.display='none'">&times;</button>
-      <img id="lightbox-img" src="" alt="Visualização ampliada" style="max-width: 90vw; max-height: 85vh; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); object-fit: contain;">
+  <div id="modal-lightbox" class="modal-overlay" onclick="fecharLightbox(event)">
+    <div class="lightbox-container" onclick="event.stopPropagation()">
+      <button type="button" class="lightbox-close-btn" onclick="fecharLightboxManual()" title="Fechar imagem">&times;</button>
+      <img id="lightbox-img" class="lightbox-img" src="" alt="Visualização ampliada">
     </div>
   </div>
+
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 
   <script src="js/api.js"></script>
   <script src="js/admin.js"></script>

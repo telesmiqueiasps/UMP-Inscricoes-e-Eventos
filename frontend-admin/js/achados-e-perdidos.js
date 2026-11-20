@@ -16,9 +16,10 @@ const ICONS = {
   user: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   phone: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
   message: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>`,
-  edit: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
-  trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-  zoom: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
+  edit: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+  trash: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+  zoom: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`,
+  whatsapp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.23 8.23zm4.51-6.17c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.12.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.17-.48-.29z"/></svg>`
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -26,6 +27,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'index.html';
     return;
   }
+
+  // Fechar modais ao pressionar tecla Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      fecharModalAchado();
+      fecharModalEntrega();
+      fecharLightboxManual();
+    }
+  });
 
   await carregarEventosSelect();
 
@@ -76,8 +86,9 @@ window.carregarAchadosAdmin = async function () {
   const container = document.getElementById('achados-grid-container');
   if (container) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-        Atualizando itens de achados e perdidos...
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; color: var(--text-muted);">
+        <div style="display: inline-block; width: 32px; height: 32px; border: 3px solid #00B894; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 0.75rem;"></div>
+        <div>Atualizando lista de achados e perdidos...</div>
       </div>
     `;
   }
@@ -95,9 +106,13 @@ window.carregarAchadosAdmin = async function () {
   } catch (err) {
     if (container) {
       container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #DC2626;">
-          <p><strong>Erro ao carregar achados e perdidos:</strong> ${escapeHtml(err.message || 'Falha de comunicação')}</p>
-          <button class="btn btn-outline" onclick="carregarAchadosAdmin()" style="margin-top: 0.5rem;">Tentar Novamente</button>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: #FFFFFF; border-radius: 14px; border: 1px solid #FECDD3;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
+            ${ICONS.alertTriangle}
+          </div>
+          <h3 style="font-weight: 800; font-size: 1.1rem; color: #991B1B; margin: 0 0 0.4rem 0;">Não foi possível carregar os itens</h3>
+          <p style="color: #64748B; font-size: 0.88rem; margin: 0 0 1rem 0;">${escapeHtml(err.message || 'Falha de comunicação com o servidor.')}</p>
+          <button class="btn btn-outline" onclick="carregarAchadosAdmin()" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Tentar Novamente</button>
         </div>
       `;
     }
@@ -163,14 +178,15 @@ function renderizarCardsAchados(itens) {
 
   if (!itens || itens.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: #FFFFFF; border-radius: 14px; border: 1px dashed var(--border-color);">
-        <div style="width: 54px; height: 54px; border-radius: 50%; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1.5rem; background: #FFFFFF; border-radius: 16px; border: 1.5px dashed var(--border-color, #CBD5E1);">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.85rem auto;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
         </div>
-        <h3 style="font-weight: 800; font-size: 1.15rem; color: var(--text-dark); margin: 0 0 0.35rem 0;">Nenhum item encontrado</h3>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0 0 1rem 0;">Nenhum achado corresponde aos filtros atuais.</p>
+        <h3 style="font-weight: 800; font-size: 1.2rem; color: var(--text-dark, #0F172A); margin: 0 0 0.35rem 0; font-family: 'Outfit', sans-serif;">Nenhum item encontrado</h3>
+        <p style="color: var(--text-muted, #64748B); font-size: 0.9rem; margin: 0 0 1.25rem 0; max-width: 440px; margin-left: auto; margin-right: auto;">Não há nenhum objeto esquecido cadastrado com esses critérios de busca.</p>
         <button type="button" class="btn-novo-item" onclick="abrirModalNovoAchado()">
-          <span>Cadastrar Primeiro Item</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Cadastrar Item Agora</span>
         </button>
       </div>
     `;
@@ -196,6 +212,7 @@ function renderizarCardsAchados(itens) {
     let blocoReivindicacao = '';
     if (st === 'REIVINDICADO' && it.reivindicado_por) {
       const part = it.reivindicado_por;
+      const foneLimpo = part.telefone ? part.telefone.replace(/\D/g, '') : '';
       blocoReivindicacao = `
         <div class="box-reivindicacao">
           <div class="box-reivindicacao-title">
@@ -203,8 +220,22 @@ function renderizarCardsAchados(itens) {
             <span>Reivindicado por Participante</span>
           </div>
           <div><strong>Nome:</strong> ${escapeHtml(part.nome)}</div>
-          ${part.telefone ? `<div><strong>Contato:</strong> ${escapeHtml(part.telefone)}</div>` : ''}
-          ${it.reivindicacao_mensagem ? `<div style="margin-top: 3px; font-style: italic; background: rgba(255,255,255,0.7); padding: 4px 6px; border-radius: 4px;">"${escapeHtml(it.reivindicacao_mensagem)}"</div>` : ''}
+          ${part.telefone ? `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-top: 2px;">
+              <span><strong>Contato:</strong> ${escapeHtml(part.telefone)}</span>
+              ${foneLimpo ? `
+                <a href="https://wa.me/55${foneLimpo}" target="_blank" class="btn btn-outline" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; background: #25D366; color: #FFFFFF; border-color: #25D366; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 6px;">
+                  ${ICONS.whatsapp}
+                  <span>WhatsApp</span>
+                </a>
+              ` : ''}
+            </div>
+          ` : ''}
+          ${it.reivindicacao_mensagem ? `
+            <div style="margin-top: 4px; font-style: italic; background: rgba(255,255,255,0.85); padding: 5px 8px; border-radius: 6px; border: 1px dashed #FDBA74;">
+              "${escapeHtml(it.reivindicacao_mensagem)}"
+            </div>
+          ` : ''}
         </div>
       `;
     }
@@ -216,7 +247,7 @@ function renderizarCardsAchados(itens) {
         <div class="box-entrega-feita">
           <div class="box-entrega-title">
             ${ICONS.checkCircle}
-            <span>Entrega Realizada</span>
+            <span>Entrega Concluída</span>
           </div>
           <div><strong>Recebido por:</strong> ${escapeHtml(it.entregue_para_nome || 'Participante')}</div>
           ${it.entregue_por_nome ? `<div><strong>Entregue por:</strong> ${escapeHtml(it.entregue_por_nome)}</div>` : ''}
@@ -233,7 +264,7 @@ function renderizarCardsAchados(itens) {
           ${ICONS.checkCircle}
           <span>Marcar Entregue</span>
         </button>
-        <button type="button" class="btn-rejeitar-reivindicacao" onclick="rejeitarReivindicacaoAdmin(${it.id})" title="Liberar item caso o participante não seja o dono">
+        <button type="button" class="btn-rejeitar-reivindicacao" onclick="rejeitarReivindicacaoAdmin(${it.id})" title="Liberar item caso o participante não seja o dono real">
           <span>Liberar Item</span>
         </button>
       `;
@@ -246,7 +277,7 @@ function renderizarCardsAchados(itens) {
       `;
     } else if (st === 'ENTREGUE') {
       botoesAcao = `
-        <button type="button" class="btn-desfazer-entrega" onclick="desfazerEntregaAdmin(${it.id})" title="Desfazer entrega e voltar status">
+        <button type="button" class="btn-desfazer-entrega" onclick="desfazerEntregaAdmin(${it.id})" title="Desfazer entrega e voltar item para o painel">
           <span>Desfazer Entrega</span>
         </button>
       `;
@@ -264,9 +295,9 @@ function renderizarCardsAchados(itens) {
         </div>
 
         <div class="achado-card-body">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.65rem;">
             <h3 class="achado-card-title">${escapeHtml(it.titulo)}</h3>
-            <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.7rem; font-weight: 700; white-space: nowrap;">
+            <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.72rem; font-weight: 700; white-space: nowrap; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 6px;">
               ${escapeHtml(it.evento_nome || 'Geral')}
             </span>
           </div>
@@ -295,15 +326,15 @@ function renderizarCardsAchados(itens) {
         </div>
 
         <div class="achado-card-footer">
-          <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap;">
             ${botoesAcao}
           </div>
 
           <div style="display: flex; gap: 0.35rem; align-items: center; margin-left: auto;">
-            <button type="button" class="btn btn-outline" style="padding: 0.38rem 0.6rem; font-size: 0.75rem;" onclick="abrirModalEditarAchado(${it.id})" title="Editar Item">
+            <button type="button" class="btn btn-outline" style="padding: 0.45rem 0.65rem; font-size: 0.8rem; color: #475569;" onclick="abrirModalEditarAchado(${it.id})" title="Editar Detalhes">
               ${ICONS.edit}
             </button>
-            <button type="button" class="btn btn-outline" style="padding: 0.38rem 0.6rem; font-size: 0.75rem; color: #EF4444; border-color: #FECDD3;" onclick="excluirAchadoAdmin(${it.id}, '${escapeHtml(it.titulo)}')" title="Excluir Item">
+            <button type="button" class="btn btn-outline" style="padding: 0.45rem 0.65rem; font-size: 0.8rem; color: #EF4444; border-color: #FECDD3;" onclick="excluirAchadoAdmin(${it.id}, '${escapeHtml(it.titulo)}')" title="Excluir Item">
               ${ICONS.trash}
             </button>
           </div>
@@ -377,8 +408,9 @@ window.abrirModalNovoAchado = function () {
   document.getElementById('form-achado').reset();
   document.getElementById('achado-id').value = '';
   document.getElementById('achado-foto-url').value = '';
+  document.getElementById('achado-foto-url-input').value = '';
   document.getElementById('modal-achado-titulo').innerHTML = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
     <span>Cadastrar Item Encontrado</span>
   `;
 
@@ -397,7 +429,11 @@ window.abrirModalNovoAchado = function () {
     if (selForm) selForm.value = evAtual;
   }
 
-  document.getElementById('modal-achado').style.display = 'flex';
+  const modal = document.getElementById('modal-achado');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
 };
 
 window.abrirModalEditarAchado = function (id) {
@@ -427,15 +463,29 @@ window.abrirModalEditarAchado = function (id) {
   }
 
   document.getElementById('modal-achado-titulo').innerHTML = `
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
     <span>Editar Item Encontrado</span>
   `;
 
-  document.getElementById('modal-achado').style.display = 'flex';
+  const modal = document.getElementById('modal-achado');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
 };
 
 window.fecharModalAchado = function () {
-  document.getElementById('modal-achado').style.display = 'none';
+  const modal = document.getElementById('modal-achado');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+};
+
+window.fecharModalAchadoBackdrop = function (e) {
+  if (e.target.id === 'modal-achado') {
+    fecharModalAchado();
+  }
 };
 
 // --- Salvar Item (Novo ou Edição) ---
@@ -496,7 +546,7 @@ window.salvarAchadoAdmin = async function (e) {
 
 // --- Excluir Item ---
 window.excluirAchadoAdmin = async function (id, titulo) {
-  if (!confirm(`Tem certeza que deseja excluir o item "${titulo}"? Esta ação removerá a foto do sistema.`)) {
+  if (!confirm(`Tem certeza que deseja excluir o item "${titulo}"? Esta ação removerá o registro do sistema.`)) {
     return;
   }
 
@@ -523,11 +573,25 @@ window.abrirModalEntrega = function (id) {
   document.getElementById('entrega-para-nome').value = nomeReiv;
   document.getElementById('entrega-observacao').value = '';
 
-  document.getElementById('modal-entrega').style.display = 'flex';
+  const modal = document.getElementById('modal-entrega');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
 };
 
 window.fecharModalEntrega = function () {
-  document.getElementById('modal-entrega').style.display = 'none';
+  const modal = document.getElementById('modal-entrega');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+};
+
+window.fecharModalEntregaBackdrop = function (e) {
+  if (e.target.id === 'modal-entrega') {
+    fecharModalEntrega();
+  }
 };
 
 window.salvarConfirmacaoEntrega = async function (e) {
@@ -589,12 +653,21 @@ window.abrirLightbox = function (url) {
   if (lb && img) {
     img.src = url;
     lb.style.display = 'flex';
+    lb.classList.add('active');
   }
 };
 
 window.fecharLightbox = function (e) {
   if (e.target.id === 'modal-lightbox') {
-    document.getElementById('modal-lightbox').style.display = 'none';
+    fecharLightboxManual();
+  }
+};
+
+window.fecharLightboxManual = function () {
+  const lb = document.getElementById('modal-lightbox');
+  if (lb) {
+    lb.style.display = 'none';
+    lb.classList.remove('active');
   }
 };
 
