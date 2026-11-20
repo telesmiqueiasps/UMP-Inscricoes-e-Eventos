@@ -22,7 +22,8 @@ from app.routers import (
     cantina,
     oficinas,
     acomodacoes,
-    gratuidades
+    gratuidades,
+    achados_perdidos
 )
 
 
@@ -239,6 +240,30 @@ async def lifespan(app: FastAPI):
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_gratuitas_checkin ON inscricoes_gratuitas(codigo_checkin);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_inscricoes_gratuitas_acomodacao ON inscricoes_gratuitas(acomodacao_id);"))
                 conn.execute(text("ALTER TABLE acomodacoes ADD COLUMN IF NOT EXISTS lider_gratuita_id INTEGER REFERENCES inscricoes_gratuitas(id) ON DELETE SET NULL;"))
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS achados_perdidos (
+                        id SERIAL PRIMARY KEY,
+                        evento_id INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
+                        titulo VARCHAR(160) NOT NULL,
+                        descricao TEXT,
+                        local_encontrado VARCHAR(160),
+                        data_encontrado VARCHAR(30),
+                        foto_url TEXT NOT NULL,
+                        status VARCHAR(30) DEFAULT 'DISPONIVEL' NOT NULL,
+                        reivindicado_por_usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                        reivindicado_em TIMESTAMP WITH TIME ZONE,
+                        reivindicacao_mensagem TEXT,
+                        entregue_em TIMESTAMP WITH TIME ZONE,
+                        entregue_por_nome VARCHAR(150),
+                        entregue_para_nome VARCHAR(150),
+                        entregue_observacao TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_achados_evento ON achados_perdidos(evento_id);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_achados_status ON achados_perdidos(status);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_achados_reivindicado ON achados_perdidos(reivindicado_por_usuario_id);"))
 
                 conn.commit()
                 logging.info("Colunas e índices verificados/criados com sucesso.")
@@ -345,6 +370,7 @@ app.include_router(cantina.router, prefix=settings.API_V1_STR)
 app.include_router(oficinas.router, prefix=settings.API_V1_STR)
 app.include_router(acomodacoes.router, prefix=settings.API_V1_STR)
 app.include_router(gratuidades.router, prefix=settings.API_V1_STR)
+app.include_router(achados_perdidos.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

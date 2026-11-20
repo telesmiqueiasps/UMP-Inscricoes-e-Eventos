@@ -41,6 +41,12 @@ window.switchTab = function (tabId) {
     if (typeof window.carregarOficinasParticipante === 'function') {
       window.carregarOficinasParticipante();
     }
+  } else if (tabId === 'tab-achados') {
+    const el = document.getElementById('menu-achados');
+    if (el) el.classList.add('active');
+    if (typeof window.carregarAchadosPerdidosParticipante === 'function') {
+      window.carregarAchadosPerdidosParticipante();
+    }
   } else if (tabId === 'tab-senha') {
     const el = document.getElementById('menu-senha');
     if (el) el.classList.add('active');

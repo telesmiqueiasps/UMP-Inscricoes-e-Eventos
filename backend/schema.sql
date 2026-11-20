@@ -287,3 +287,30 @@ ALTER TABLE inscricoes ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES
 ALTER TABLE inscricoes_diarias ADD COLUMN IF NOT EXISTS acomodacao_id INTEGER REFERENCES acomodacoes(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS ix_inscricoes_acomodacao_id ON inscricoes(acomodacao_id);
 CREATE INDEX IF NOT EXISTS ix_inscricoes_diarias_acomodacao_id ON inscricoes_diarias(acomodacao_id);
+
+-- ==========================================
+-- 11. ACHADOS E PERDIDOS DO EVENTO
+-- ==========================================
+CREATE TABLE IF NOT EXISTS achados_perdidos (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER REFERENCES eventos(id) ON DELETE SET NULL,
+    titulo VARCHAR(160) NOT NULL,
+    descricao TEXT,
+    local_encontrado VARCHAR(160),
+    data_encontrado VARCHAR(30),
+    foto_url TEXT NOT NULL,
+    status VARCHAR(30) DEFAULT 'DISPONIVEL' NOT NULL,
+    reivindicado_por_usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    reivindicado_em TIMESTAMP WITH TIME ZONE,
+    reivindicacao_mensagem TEXT,
+    entregue_em TIMESTAMP WITH TIME ZONE,
+    entregue_por_nome VARCHAR(150),
+    entregue_para_nome VARCHAR(150),
+    entregue_observacao TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_achados_evento ON achados_perdidos(evento_id);
+CREATE INDEX IF NOT EXISTS idx_achados_status ON achados_perdidos(status);
+CREATE INDEX IF NOT EXISTS idx_achados_reivindicado ON achados_perdidos(reivindicado_por_usuario_id);

@@ -20,6 +20,7 @@ from app.models.cantina import (
 )
 from app.models.oficina import Oficina, OficinaInscricao, OficinaConfig
 from app.models.acomodacao import Acomodacao
+from app.models.achado_perdido import AchadoPerdido
 
 __all__ = [
     "Base",
@@ -44,5 +45,7 @@ __all__ = [
     "CantinaVendaItem",
     "Oficina",
     "OficinaInscricao",
-    "OficinaConfig"
+    "OficinaConfig",
+    "Acomodacao",
+    "AchadoPerdido"
 ]
