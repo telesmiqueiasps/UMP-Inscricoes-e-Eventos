@@ -1061,6 +1061,7 @@ function aplicarRestricoesPerfilAdmin(user) {
     const isCantina = dataAba === 'cantina' || href.includes('cantina') || text.includes('cantina');
     const isEventos = dataAba === 'eventos' || href.includes('index') || text.includes('dashboard') || text.includes('evento');
     const isAchados = dataAba === 'achados' || href.includes('achados') || text.includes('achados');
+    const isCineflix = dataAba === 'cineflix' || href.includes('cineflix') || text.includes('cineflix');
     const isConfig = dataAba === 'configuracoes' || href.includes('configura') || text.includes('configura');
 
     const toggleItem = (permitido) => {
@@ -1083,6 +1084,8 @@ function aplicarRestricoesPerfilAdmin(user) {
       toggleItem(temPermissao('eventos'));
     } else if (isAchados) {
       toggleItem(isGlobal || temPermissao('achados') || temPermissao('secretaria') || temPermissao('eventos'));
+    } else if (isCineflix) {
+      toggleItem(isGlobal || temPermissao('cineflix') || temPermissao('secretaria') || temPermissao('eventos'));
     } else if (isConfig) {
       toggleItem(temPermissao('configuracoes'));
     }

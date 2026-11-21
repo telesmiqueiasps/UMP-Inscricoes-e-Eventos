@@ -314,3 +314,48 @@ CREATE TABLE IF NOT EXISTS achados_perdidos (
 CREATE INDEX IF NOT EXISTS idx_achados_evento ON achados_perdidos(evento_id);
 CREATE INDEX IF NOT EXISTS idx_achados_status ON achados_perdidos(status);
 CREATE INDEX IF NOT EXISTS idx_achados_reivindicado ON achados_perdidos(reivindicado_por_usuario_id);
+
+
+-- Cineflix - Concurso de Fantasias & Desfile
+CREATE TABLE IF NOT EXISTS cineflix_configs (
+    evento_id INTEGER PRIMARY KEY REFERENCES eventos(id) ON DELETE CASCADE,
+    votacao_aberta BOOLEAN DEFAULT TRUE NOT NULL,
+    token_jurado_1 VARCHAR(64) NOT NULL,
+    nome_jurado_1 VARCHAR(100) DEFAULT 'Jurado 1' NOT NULL,
+    token_jurado_2 VARCHAR(64) NOT NULL,
+    nome_jurado_2 VARCHAR(100) DEFAULT 'Jurado 2' NOT NULL,
+    token_jurado_3 VARCHAR(64) NOT NULL,
+    nome_jurado_3 VARCHAR(100) DEFAULT 'Jurado 3' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cineflix_fantasias (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+    nome_participante VARCHAR(150) NOT NULL,
+    personagem VARCHAR(150) NOT NULL,
+    universo VARCHAR(150) NOT NULL,
+    descricao TEXT,
+    foto_url TEXT,
+    ordem_apresentacao INTEGER DEFAULT 0 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cineflix_votos (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos(id) ON DELETE CASCADE,
+    fantasia_id INTEGER NOT NULL REFERENCES cineflix_fantasias(id) ON DELETE CASCADE,
+    numero_jurado INTEGER NOT NULL,
+    nota_impacto_visual FLOAT DEFAULT 0.0 NOT NULL,
+    nota_performance FLOAT DEFAULT 0.0 NOT NULL,
+    nota_dedicacao FLOAT DEFAULT 0.0 NOT NULL,
+    observacao TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_cineflix_fantasia_jurado UNIQUE (fantasia_id, numero_jurado)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cineflix_fantasias_ev ON cineflix_fantasias(evento_id);
+CREATE INDEX IF NOT EXISTS idx_cineflix_votos_fantasia ON cineflix_votos(fantasia_id);

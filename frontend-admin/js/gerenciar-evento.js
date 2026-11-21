@@ -172,6 +172,7 @@ function aplicarRestricoesPerfilNoEvento(user) {
     else if (aba === 'gincana') permitido = isGlobal || permissoes.includes('gincana');
     else if (aba === 'cantina') permitido = isGlobal || permissoes.includes('cantina');
     else if (aba === 'achados') permitido = true;
+    else if (aba === 'cineflix') permitido = true;
     else if (aba === 'configuracoes') permitido = isGlobal || permissoes.includes('configuracoes');
 
     if (!permitido) {

@@ -23,7 +23,8 @@ from app.routers import (
     oficinas,
     acomodacoes,
     gratuidades,
-    achados_perdidos
+    achados_perdidos,
+    cineflix
 )
 
 
@@ -371,6 +372,7 @@ app.include_router(oficinas.router, prefix=settings.API_V1_STR)
 app.include_router(acomodacoes.router, prefix=settings.API_V1_STR)
 app.include_router(gratuidades.router, prefix=settings.API_V1_STR)
 app.include_router(achados_perdidos.router, prefix=settings.API_V1_STR)
+app.include_router(cineflix.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

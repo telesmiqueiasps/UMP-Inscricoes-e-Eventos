@@ -21,6 +21,7 @@ from app.models.cantina import (
 from app.models.oficina import Oficina, OficinaInscricao, OficinaConfig
 from app.models.acomodacao import Acomodacao
 from app.models.achado_perdido import AchadoPerdido
+from app.models.cineflix import CineflixConfig, CineflixFantasia, CineflixVoto
 
 __all__ = [
     "Base",
@@ -47,5 +48,8 @@ __all__ = [
     "OficinaInscricao",
     "OficinaConfig",
     "Acomodacao",
-    "AchadoPerdido"
+    "AchadoPerdido",
+    "CineflixConfig",
+    "CineflixFantasia",
+    "CineflixVoto"
 ]
