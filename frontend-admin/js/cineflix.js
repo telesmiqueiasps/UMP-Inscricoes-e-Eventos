@@ -21,8 +21,20 @@ const ICONS = {
   arrowUp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
   arrowDown: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
   play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
-  stop: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>`
+  stop: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>`,
+  youtube: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`
 };
+
+function extrairUrlYoutube(texto) {
+  if (!texto) return '';
+  const t = String(texto).trim();
+  if (t.startsWith('http://') || t.startsWith('https://')) return t;
+  if (t.includes('youtube.com') || t.includes('youtu.be')) return 'https://' + t;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return 'https://www.youtube.com/watch?v=' + t;
+  const m = t.match(/(https?:\/\/[^\s]+)/);
+  if (m) return m[0];
+  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t);
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!API.getToken()) {
@@ -196,6 +208,14 @@ function renderizarControlePalcoAdmin(cfg) {
           <div style="font-size: 0.85rem; color: #CBD5E1; margin-top: 2px;">
             Participante: <strong>${escapeHtml(fAtiva.nome_participante)}</strong>
           </div>
+          ${fAtiva.descricao ? `
+            <div style="margin-top: 6px;">
+              <a href="${escapeHtml(extrairUrlYoutube(fAtiva.descricao))}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4rem; color: #FFD166; font-size: 0.82rem; font-weight: 800; text-decoration: underline;">
+                ${ICONS.youtube}
+                <span>Trilha Sonora Cadastrada &nearr;</span>
+              </a>
+            </div>
+          ` : ''}
         </div>
 
         <!-- Status dos 3 Jurados em Tempo Real -->
@@ -224,6 +244,13 @@ function renderizarControlePalcoAdmin(cfg) {
 
         <!-- Ações do Palco -->
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          ${fAtiva.descricao ? `
+            <a href="${escapeHtml(extrairUrlYoutube(fAtiva.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); color: #FFFFFF; font-weight: 800; border: none; padding: 0.5rem 0.95rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 0, 0, 0.45); cursor: pointer;" title="Abrir música da apresentação no YouTube em nova aba">
+              ${ICONS.youtube}
+              <span>Tocar Música (YouTube)</span>
+              ${ICONS.externalLink}
+            </a>
+          ` : ''}
           <button type="button" class="btn btn-sm" onclick="desativarPalcoAdmin()" style="background: rgba(239, 68, 68, 0.2); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.5); font-weight: 700; padding: 0.5rem 0.85rem; border-radius: 8px; cursor: pointer;">
             ${ICONS.stop}
             <span>Liberar Palco</span>
@@ -662,10 +689,21 @@ function renderizarFantasiasAdmin() {
           </div>
 
           ${f.descricao ? `
-            <div style="font-size: 0.82rem; color: #64748B; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 0.5rem 0.75rem; line-height: 1.4;">
-              ${escapeHtml(f.descricao)}
+            <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 0.45rem 0.65rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.2rem;">
+              <div style="display: flex; align-items: center; gap: 0.35rem; min-width: 0; flex: 1;">
+                ${ICONS.youtube}
+                <span style="font-size: 0.74rem; font-weight: 700; color: #991B1B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Trilha Sonora</span>
+              </div>
+              <a href="${escapeHtml(extrairUrlYoutube(f.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #DC2626; color: #FFFFFF; font-size: 0.74rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;" title="Abrir música da apresentação no YouTube em nova aba">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Tocar Música</span>
+              </a>
             </div>
-          ` : ''}
+          ` : `
+            <div style="font-size: 0.74rem; color: #94A3B8; font-style: italic;">
+              Sem música do YouTube cadastrada
+            </div>
+          `}
 
           <!-- Botão de Ação do Palco / Desfile -->
           <div style="margin-top: auto; padding-top: 0.65rem; border-top: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -754,6 +792,11 @@ function renderizarItensSequenciaModal() {
         </div>
 
         <div style="display: flex; gap: 0.35rem; align-items: center;">
+          ${item.descricao ? `
+            <a href="${escapeHtml(extrairUrlYoutube(item.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="padding: 0.35rem 0.55rem; color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center;" title="Tocar música no YouTube em nova aba">
+              ${ICONS.youtube}
+            </a>
+          ` : ''}
           <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.55rem;" ${idx === 0 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''} onclick="moverSequenciaItem(${idx}, -1)" title="Subir na fila">
             ${ICONS.arrowUp}
           </button>

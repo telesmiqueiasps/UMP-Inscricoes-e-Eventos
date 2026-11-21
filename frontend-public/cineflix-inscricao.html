@@ -458,13 +458,17 @@
           <span class="form-hint">Selecione uma das sugestões ou digite de onde vem seu personagem.</span>
         </div>
 
-        <!-- Detalhes / Observações (Opcional) -->
+        <!-- Link do YouTube (Música da Apresentação) -->
         <div class="form-group">
           <label class="form-label" for="campo-descricao">
-            <span>Detalhes da Fantasia ou Apresentação</span>
+            <span style="display: flex; align-items: center; gap: 0.45rem;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <span>Link do YouTube (Música da Apresentação)</span>
+            </span>
             <span class="form-label-optional">Opcional</span>
           </label>
-          <textarea id="campo-descricao" class="form-control-custom" placeholder="Conte algum detalhe, acessório especial ou como será sua pose/atuação na passarela..." maxlength="500"></textarea>
+          <input type="url" id="campo-descricao" class="form-control-custom" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." maxlength="300">
+          <span class="form-hint">Cole o link da música ou trilha sonora no YouTube que deverá tocar quando você entrar na passarela.</span>
         </div>
 
         <!-- Botão de Envio -->
@@ -614,8 +618,13 @@
         </div>
         ${f.descricao ? `
           <div class="resumo-item" style="flex-direction: column; gap: 0.25rem;">
-            <span class="resumo-item-label">Detalhes:</span>
-            <span class="resumo-item-val" style="text-align: left; font-size: 0.82rem; color: #CBD5E1; font-weight: normal;">${escapeHtml(f.descricao)}</span>
+            <span class="resumo-item-label">Música / Trilha Sonora:</span>
+            <div style="display: flex; align-items: center; gap: 0.45rem; margin-top: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <a href="${escapeHtml(extrairUrlYoutube(f.descricao))}" target="_blank" rel="noopener noreferrer" style="color: #FFD166; font-size: 0.84rem; text-decoration: underline; font-weight: 700;">
+                Ouvir no YouTube &nearr;
+              </a>
+            </div>
           </div>
         ` : ''}
       `;
@@ -639,6 +648,17 @@
       setTimeout(() => {
         toast.style.display = 'none';
       }, 3500);
+    }
+
+    function extrairUrlYoutube(texto) {
+      if (!texto) return '';
+      const t = String(texto).trim();
+      if (t.startsWith('http://') || t.startsWith('https://')) return t;
+      if (t.includes('youtube.com') || t.includes('youtu.be')) return 'https://' + t;
+      if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return 'https://www.youtube.com/watch?v=' + t;
+      const m = t.match(/(https?:\/\/[^\s]+)/);
+      if (m) return m[0];
+      return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t);
     }
 
     function escapeHtml(str) {
