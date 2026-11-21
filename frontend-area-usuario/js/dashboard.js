@@ -1,4 +1,15 @@
 
+// Utilitário de escape de HTML global para a área do usuário
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Controle do Menu Mobile (Drawer 3 tracinhos)
 window.toggleMenuMobile = function () {
   const sidebar = document.getElementById('main-sidebar');
@@ -2170,10 +2181,10 @@ window.carregarCineflixParticipante = async function () {
     if (selectEvento) {
       const evs = data.eventos_disponiveis || [];
       if (evs.length === 0) {
-        selectEvento.innerHTML = '<option value="">Nenhum evento com inscrição ativa encontrado</option>';
+        selectEvento.innerHTML = '<option value="">Nenhum evento disponível encontrado</option>';
       } else {
         selectEvento.innerHTML = evs.map(ev => `
-          <option value="${ev.id}">${escapeHtml(ev.nome)}</option>
+          <option value="${ev.id}">${escapeHtml(ev.nome || ev.titulo || 'Evento')}</option>
         `).join('');
       }
     }
@@ -2199,7 +2210,8 @@ window.carregarCineflixParticipante = async function () {
     if (loading) {
       loading.innerHTML = `
         <div style="text-align: center; color: #EF4444; padding: 2.5rem 1rem;">
-          <div style="font-weight: 700; margin-bottom: 0.75rem; font-size: 1rem;">Não foi possível carregar os dados do Cineflix.</div>
+          <div style="font-weight: 700; margin-bottom: 0.35rem; font-size: 1rem;">Não foi possível carregar os dados do Cineflix.</div>
+          <div style="font-size: 0.82rem; color: #64748B; margin-bottom: 1rem;">${escapeHtml(err.message || 'Erro ao comunicar com o servidor.')}</div>
           <button class="btn btn-primary btn-sm" onclick="carregarCineflixParticipante()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             <span>Tentar Novamente</span>

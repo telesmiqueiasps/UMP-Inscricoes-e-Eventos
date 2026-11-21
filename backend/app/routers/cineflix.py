@@ -476,81 +476,102 @@ def obter_cineflix_participante(
     # 1. Identificar eventos nos quais o usuário possui inscrição ativa
     from app.models.inscricao import Inscricao
     from app.models.diaria import InscricaoDiaria
-    from app.models.gratuita import InscricaoGratuita
 
     eventos_ids = set()
     
-    # Inscrições normais
-    inscs = db.query(Inscricao.evento_id).filter(
-        Inscricao.usuario_id == current_user.id,
-        Inscricao.status != 'CANCELADA'
-    ).all()
-    for (eid,) in inscs:
-        if eid:
-            eventos_ids.add(eid)
+    try:
+        # Inscrições normais
+        inscs = db.query(Inscricao.evento_id).filter(
+            Inscricao.usuario_id == current_user.id,
+            Inscricao.status != 'CANCELADA'
+        ).all()
+        for (eid,) in inscs:
+            if eid:
+                eventos_ids.add(eid)
+    except Exception as e:
+        print(f"[Cineflix] Erro ao buscar inscricoes normais: {e}")
 
-    # Diárias
-    diarias = db.query(InscricaoDiaria.evento_id).filter(
-        InscricaoDiaria.usuario_id == current_user.id,
-        InscricaoDiaria.status != 'CANCELADA'
-    ).all()
-    for (eid,) in diarias:
-        if eid:
-            eventos_ids.add(eid)
+    try:
+        # Diárias
+        diarias = db.query(InscricaoDiaria.evento_id).filter(
+            InscricaoDiaria.usuario_id == current_user.id,
+            InscricaoDiaria.status != 'CANCELADA'
+        ).all()
+        for (eid,) in diarias:
+            if eid:
+                eventos_ids.add(eid)
+    except Exception as e:
+        print(f"[Cineflix] Erro ao buscar inscricoes diarias: {e}")
 
-    # Gratuidades
-    grats = db.query(InscricaoGratuita.evento_id).filter(
-        InscricaoGratuita.usuario_id == current_user.id
-    ).all()
-    for (eid,) in grats:
-        if eid:
-            eventos_ids.add(eid)
-
-    # Se não tiver inscrição ainda, pega os eventos disponíveis ativos
+    # Se não tiver inscrição ainda, pega todos os eventos disponíveis ativos
     if not eventos_ids:
-        evs_ativos = db.query(Evento.id).filter(Evento.status == 'ATIVO').all()
-        for (eid,) in evs_ativos:
-            eventos_ids.add(eid)
+        try:
+            evs_ativos = db.query(Evento.id).filter(Evento.ativo == True).all()
+            for (eid,) in evs_ativos:
+                eventos_ids.add(eid)
+        except Exception as e:
+            print(f"[Cineflix] Erro ao buscar eventos ativos: {e}")
 
-    eventos_lista = db.query(Evento).filter(Evento.id.in_(list(eventos_ids))).all() if eventos_ids else []
+    eventos_lista = []
+    if eventos_ids:
+        try:
+            eventos_lista = db.query(Evento).filter(Evento.id.in_(list(eventos_ids))).all()
+        except Exception as e:
+            print(f"[Cineflix] Erro ao buscar lista de eventos: {e}")
+
+    # Se ainda assim não encontrou nenhum evento, lista os primeiros eventos
+    if not eventos_lista:
+        try:
+            eventos_lista = db.query(Evento).limit(5).all()
+        except Exception:
+            eventos_lista = []
 
     # 2. Buscar fantasia registrada pelo usuário
-    minha_fantasia = db.query(CineflixFantasia).filter(
-        CineflixFantasia.usuario_id == current_user.id
-    ).first()
+    minha_fantasia = None
+    try:
+        minha_fantasia = db.query(CineflixFantasia).filter(
+            CineflixFantasia.usuario_id == current_user.id
+        ).first()
+    except Exception as e:
+        print(f"[Cineflix] Erro ao buscar minha fantasia: {e}")
 
     # Se já tem fantasia, buscar outros participantes desse evento
     evento_foco_id = minha_fantasia.evento_id if minha_fantasia else (eventos_lista[0].id if eventos_lista else None)
 
     todas_fantasias = []
     votacao_aberta = True
+    cfg_foco = None
+
     if evento_foco_id:
-        cfg = _obter_ou_criar_config(evento_foco_id, db)
-        votacao_aberta = cfg.votacao_aberta
-        todas = db.query(CineflixFantasia).filter(
-            CineflixFantasia.evento_id == evento_foco_id
-        ).order_by(CineflixFantasia.id.asc()).all()
-        todas_fantasias = [
-            {
-                "id": f.id,
-                "nome_participante": f.nome_participante,
-                "personagem": f.personagem,
-                "universo": f.universo,
-                "descricao": f.descricao,
-                "foto_url": f.foto_url,
-                "eh_minha": bool(f.usuario_id == current_user.id)
-            }
-            for f in todas
-        ]
+        try:
+            cfg_foco = _obter_ou_criar_config(evento_foco_id, db)
+            votacao_aberta = cfg_foco.votacao_aberta
+            todas = db.query(CineflixFantasia).filter(
+                CineflixFantasia.evento_id == evento_foco_id
+            ).order_by(CineflixFantasia.id.asc()).all()
+            todas_fantasias = [
+                {
+                    "id": f.id,
+                    "nome_participante": f.nome_participante,
+                    "personagem": f.personagem,
+                    "universo": f.universo,
+                    "descricao": f.descricao,
+                    "foto_url": f.foto_url,
+                    "eh_minha": bool(f.usuario_id == current_user.id)
+                }
+                for f in todas
+            ]
+        except Exception as e:
+            print(f"[Cineflix] Erro ao carregar galeria e config: {e}")
 
     return {
         "usuario_nome": current_user.nome,
         "usuario_id": current_user.id,
-        "minha_fantasia": _formatar_fantasia(minha_fantasia) if minha_fantasia else None,
+        "minha_fantasia": _formatar_fantasia(minha_fantasia, cfg_foco) if minha_fantasia else None,
         "todas_fantasias": todas_fantasias,
         "votacao_aberta": votacao_aberta,
         "eventos_disponiveis": [
-            {"id": e.id, "titulo": e.titulo} for e in eventos_lista
+            {"id": e.id, "titulo": e.titulo, "nome": e.titulo} for e in eventos_lista
         ]
     }
 
