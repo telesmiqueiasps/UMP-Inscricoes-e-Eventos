@@ -13,7 +13,7 @@
     :root {
       --bg-dark: #001417;
       --bg-surface: #002226;
-      --bg-card: rgba(0, 38, 42, 0.9);
+      --bg-card: rgba(0, 38, 42, 0.92);
       --border-subtle: rgba(255, 255, 255, 0.12);
       --gold: #FFB703;
       --orange: #FF7900;
@@ -38,8 +38,8 @@
     body {
       background-color: var(--bg-dark);
       background-image:
-        radial-gradient(circle at 10% 10%, rgba(0, 184, 148, 0.18) 0%, transparent 45%),
-        radial-gradient(circle at 90% 90%, rgba(255, 121, 0, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 10% 10%, rgba(0, 184, 148, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(255, 121, 0, 0.16) 0%, transparent 45%),
         linear-gradient(180deg, #001214 0%, #001E21 50%, #001214 100%);
       background-attachment: fixed;
       color: var(--text-light);
@@ -55,20 +55,19 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Container Seguro */
     .jurado-container {
       width: 100%;
-      max-width: 900px;
+      max-width: 760px;
       margin: 0 auto;
       padding: 1.25rem 1rem;
     }
 
     /* Header Superior */
     .jurado-header-card {
-      background: linear-gradient(135deg, rgba(0, 30, 33, 0.95) 0%, rgba(0, 54, 58, 0.9) 100%);
+      background: linear-gradient(135deg, rgba(0, 30, 33, 0.96) 0%, rgba(0, 54, 58, 0.92) 100%);
       border: 1px solid var(--border-subtle);
       border-radius: 18px;
-      padding: 1.5rem 1.6rem;
+      padding: 1.25rem 1.4rem;
       margin-bottom: 1.25rem;
       box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
       position: relative;
@@ -91,7 +90,7 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 0.75rem;
-      margin-bottom: 0.85rem;
+      margin-bottom: 0.75rem;
     }
 
     .jurado-badge-pill {
@@ -135,445 +134,412 @@
 
     .jurado-title {
       font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-      font-size: clamp(1.4rem, 4vw, 1.9rem);
+      font-size: clamp(1.3rem, 4vw, 1.7rem);
       font-weight: 900;
       color: #FFFFFF;
-      margin-bottom: 0.35rem;
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
+      margin-bottom: 0.25rem;
     }
 
     .jurado-sub {
       color: #CBD5E1;
-      font-size: 0.9rem;
-      line-height: 1.45;
+      font-size: 0.86rem;
+      line-height: 1.4;
     }
 
-    /* Barra de Progresso do Jurado */
-    .jurado-progress-box {
-      margin-top: 1.25rem;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 12px;
-      padding: 0.85rem 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Pulsing Live Dot */
+    .live-pulse-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #00B894;
+      display: inline-block;
+      box-shadow: 0 0 10px #00B894;
+      animation: livePulse 1.8s infinite ease-in-out;
     }
 
-    .jurado-progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #E2E8F0;
-      margin-bottom: 0.5rem;
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
     }
 
-    .jurado-progress-bar-bg {
-      width: 100%;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .jurado-progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #FF7900 0%, #00B894 100%);
-      border-radius: 999px;
-      transition: width 0.3s ease;
-    }
-
-    /* Abas de Filtro */
-    .jurado-filter-tabs {
-      display: flex;
-      gap: 0.45rem;
-      background: rgba(0, 30, 33, 0.8);
-      padding: 0.3rem;
-      border-radius: 12px;
-      border: 1px solid var(--border-subtle);
-      margin-bottom: 1.25rem;
-    }
-
-    .jurado-filter-btn {
-      flex: 1;
-      padding: 0.65rem 0.85rem;
-      border-radius: 9px;
-      border: none;
-      background: transparent;
-      color: #94A3B8;
-      font-size: 0.84rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: center;
-    }
-
-    .jurado-filter-btn.active {
-      background: #004C50;
-      color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Cards de Fantasias para Votação */
-    .fantasias-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .fantasia-vote-card {
+    /* Card de Apresentação Ativa no Palco */
+    .palco-card {
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 18px;
+      border: 2px solid rgba(255, 183, 3, 0.4);
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .fantasia-vote-card.avaliada {
-      border-color: rgba(0, 184, 148, 0.4);
-    }
-
-    .fantasia-card-top {
-      padding: 1.25rem 1.4rem;
-      display: flex;
-      gap: 1.15rem;
-      align-items: flex-start;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(0, 20, 23, 0.4);
-    }
-
-    .fantasia-thumb-wrap {
-      width: 84px;
-      height: 84px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #001214;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      flex-shrink: 0;
-      cursor: pointer;
+      box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 183, 3, 0.15);
       position: relative;
     }
 
-    .fantasia-thumb-wrap img {
+    .palco-banner-top {
+      background: linear-gradient(90deg, #FF7900 0%, #E66A00 100%);
+      padding: 0.6rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .palco-personagem-header {
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      gap: 1.15rem;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(0, 20, 23, 0.45);
+    }
+
+    .palco-thumb-wrap {
+      width: 90px;
+      height: 90px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #001214;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .palco-thumb-wrap img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .fantasia-info-main {
+    .palco-info-main {
       flex: 1;
       min-width: 0;
     }
 
-    .fantasia-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .fantasia-personagem {
+    .palco-personagem-nome {
       font-family: 'Teko', 'Outfit', sans-serif;
-      font-size: 1.7rem;
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
       font-weight: 700;
       color: #FFFFFF;
-      line-height: 1.1;
+      line-height: 1.05;
       letter-spacing: 0.03em;
       text-transform: uppercase;
       word-break: break-word;
     }
 
-    .fantasia-universo-badge {
-      background: rgba(255, 121, 0, 0.18);
-      border: 1px solid rgba(255, 121, 0, 0.4);
-      color: #FFB703;
-      padding: 3px 10px;
+    .palco-universo-badge {
+      display: inline-block;
+      background: rgba(255, 183, 3, 0.18);
+      border: 1px solid rgba(255, 183, 3, 0.45);
+      color: var(--gold);
+      padding: 2px 10px;
       border-radius: 6px;
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
     }
 
-    .fantasia-participante {
-      color: #94A3B8;
-      font-size: 0.88rem;
+    .palco-participante-nome {
+      color: #CBD5E1;
+      font-size: 0.92rem;
       font-weight: 600;
-      margin-top: 0.2rem;
       display: flex;
       align-items: center;
       gap: 0.4rem;
     }
 
-    .fantasia-desc-preview {
+    .palco-descricao-box {
       margin-top: 0.5rem;
       font-size: 0.82rem;
-      color: #CBD5E1;
-      background: rgba(0, 0, 0, 0.25);
+      color: #94A3B8;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 0.75rem;
       border-radius: 8px;
-      padding: 0.45rem 0.75rem;
-      line-height: 1.4;
-      word-break: break-word;
+      line-height: 1.45;
     }
 
-    /* Área de Votação (3 Categorias) */
-    .fantasia-scoring-body {
+    /* Formulário de Voto com Botões de 1 a 5 */
+    .voto-body {
       padding: 1.25rem 1.4rem;
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
+      gap: 1.15rem;
     }
 
-    .score-category-row {
-      background: rgba(0, 18, 20, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .cat-card {
+      background: rgba(0, 18, 20, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 14px;
-      padding: 0.95rem 1.15rem;
+      padding: 1rem 1.15rem;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.85rem;
+      transition: border-color 0.2s ease;
     }
 
-    .score-cat-header {
+    .cat-card.filled {
+      border-color: rgba(0, 184, 148, 0.45);
+      background: rgba(0, 36, 40, 0.6);
+    }
+
+    .cat-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    .score-cat-title {
+    .cat-title-text {
       font-size: 0.95rem;
       font-weight: 800;
       color: #FFFFFF;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.45rem;
     }
 
-    .score-cat-desc {
+    .cat-desc-text {
       font-size: 0.74rem;
       color: #94A3B8;
-      margin-top: 0.15rem;
+      margin-top: 2px;
     }
 
-    .score-live-val {
+    .cat-selected-badge {
       font-family: 'Teko', sans-serif;
       font-size: 1.8rem;
       font-weight: 700;
       color: var(--gold);
-      line-height: 1;
-      min-width: 50px;
+      min-width: 44px;
       text-align: right;
+      line-height: 1;
     }
 
-    /* Controles de Nota (Slider + Stepper) */
-    .score-controls-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .btn-step {
-      width: 38px;
-      height: 38px;
-      border-radius: 9px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #FFFFFF;
-      font-size: 1.25rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      flex-shrink: 0;
-      user-select: none;
-    }
-
-    .btn-step:hover {
-      background: rgba(255, 255, 255, 0.18);
-      border-color: var(--gold);
-    }
-
-    .btn-step:active {
-      transform: scale(0.92);
-    }
-
-    .score-slider {
-      flex: 1;
-      height: 8px;
-      accent-color: #FFB703;
-      cursor: pointer;
-      outline: none;
-    }
-
-    /* Rodapé do Card de Votação */
-    .fantasia-card-footer {
-      padding: 1rem 1.4rem;
-      background: rgba(0, 15, 18, 0.6);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0.85rem;
-    }
-
-    .fantasia-total-preview {
-      display: flex;
-      align-items: baseline;
+    /* Grade com os 5 botões grandes de 1 a 5 */
+    .score-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 0.5rem;
     }
 
-    .fantasia-total-label {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #94A3B8;
-      font-weight: 700;
+    .score-num-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      color: #E2E8F0;
+      border-radius: 12px;
+      height: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      font-weight: 900;
+      font-size: 1.35rem;
+      transition: all 0.15s ease;
+      user-select: none;
     }
 
-    .fantasia-total-number {
+    .score-num-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .score-num-btn:active {
+      transform: scale(0.95);
+    }
+
+    .score-num-btn.selected {
+      background: linear-gradient(135deg, #FFB703 0%, #FF7900 100%);
+      border-color: #FFFFFF;
+      color: #001417;
+      box-shadow: 0 4px 14px rgba(255, 183, 3, 0.45);
+      transform: scale(1.04);
+    }
+
+    /* Subtotal e Envio */
+    .palco-card-footer {
+      padding: 1.15rem 1.4rem;
+      background: rgba(0, 15, 18, 0.85);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .subtotal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .subtotal-label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94A3B8;
+      font-weight: 800;
+    }
+
+    .subtotal-val {
       font-family: 'Teko', sans-serif;
-      font-size: 2.1rem;
+      font-size: 2.3rem;
       font-weight: 700;
       color: #00B894;
       line-height: 1;
     }
 
-    .fantasia-total-max {
-      font-size: 0.8rem;
-      color: #64748B;
-      font-weight: 600;
-    }
-
-    .btn-salvar-voto {
+    .btn-enviar-voto {
+      width: 100%;
+      padding: 0.95rem;
+      border-radius: 12px;
+      border: none;
       background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%);
       color: #FFFFFF;
-      border: none;
-      padding: 0.75rem 1.35rem;
-      border-radius: 10px;
+      font-size: 1.05rem;
       font-weight: 800;
-      font-size: 0.88rem;
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: 0.03em;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 16px rgba(255, 121, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-enviar-voto:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 121, 0, 0.5);
+    }
+
+    .btn-enviar-voto:disabled {
+      background: rgba(255, 255, 255, 0.12);
+      color: #64748B;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Telas de Espera / Estado Vazio / Voto Concluído */
+    .espera-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 3.5rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .espera-icon-circle {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: rgba(0, 184, 148, 0.15);
+      color: #00B894;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem auto;
+      border: 2px solid rgba(0, 184, 148, 0.35);
+    }
+
+    .espera-icon-circle.gold {
+      background: rgba(255, 183, 3, 0.15);
+      color: #FFB703;
+      border-color: rgba(255, 183, 3, 0.35);
+    }
+
+    .espera-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 0.5rem;
+    }
+
+    .espera-desc {
+      color: #94A3B8;
+      font-size: 0.92rem;
+      max-width: 480px;
+      margin: 0 auto 1.5rem auto;
+      line-height: 1.5;
+    }
+
+    .espera-sync-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 14px rgba(255, 121, 0, 0.35);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.78rem;
+      color: #CBD5E1;
+      font-weight: 600;
     }
 
-    .btn-salvar-voto:hover {
-      box-shadow: 0 6px 18px rgba(255, 121, 0, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .btn-salvar-voto.salvo {
-      background: linear-gradient(135deg, #00B894 0%, #009677 100%);
-      box-shadow: 0 4px 14px rgba(0, 184, 148, 0.35);
-    }
-
-    /* Lightbox Modal */
+    /* Lightbox */
     .jurado-lightbox {
       display: none;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.92);
       z-index: 99999;
-      background: rgba(0, 10, 12, 0.95);
-      backdrop-filter: blur(10px);
       align-items: center;
       justify-content: center;
       padding: 1rem;
     }
 
-    .jurado-lightbox.active {
-      display: flex;
-    }
-
     .jurado-lightbox-img {
-      max-width: 90vw;
-      max-height: 85vh;
-      border-radius: 14px;
+      max-width: 95vw;
+      max-height: 90vh;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
       object-fit: contain;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-    }
-
-    @media (max-width: 600px) {
-      .jurado-container {
-        padding: 0.75rem 0.5rem;
-      }
-      .jurado-header-card {
-        padding: 1.25rem 1rem;
-      }
-      .fantasia-card-top {
-        padding: 1rem;
-      }
-      .fantasia-scoring-body {
-        padding: 1rem;
-      }
-      .fantasia-card-footer {
-        padding: 0.85rem 1rem;
-      }
-      .btn-salvar-voto {
-        width: 100%;
-        justify-content: center;
-        padding: 0.85rem 1rem;
-      }
     }
   </style>
 </head>
 <body>
 
   <div class="jurado-container">
-    
-    <!-- Cabeçalho do Jurado -->
+
+    <!-- Header do Jurado -->
     <header class="jurado-header-card">
       <div class="jurado-header-top">
         <div class="jurado-badge-pill" id="badge-jurado-numero">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-          <span id="txt-jurado-titulo">Jurado Oficial</span>
+          <span id="txt-jurado-titulo">Bancada de Jurados</span>
         </div>
 
         <div class="jurado-status-tag status-aberta" id="tag-votacao-status">
-          <span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block;"></span>
-          <span id="txt-votacao-status">Votação Aberta</span>
+          <span class="live-pulse-dot"></span>
+          <span id="txt-votacao-status">Sincronizado ao Vivo</span>
         </div>
       </div>
 
       <h1 class="jurado-title">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
-        <span id="txt-evento-nome">Cineflix - Avaliação</span>
+        <span id="txt-evento-nome">Cineflix — Avaliação de Desfile</span>
       </h1>
-      <p class="jurado-sub">Atribua notas de 0 a 10 para cada participante nas 3 categorias: <strong>Impacto Visual</strong>, <strong>Performance</strong> e <strong>Dedicação</strong>.</p>
-
-      <!-- Progresso de Votação -->
-      <div class="jurado-progress-box">
-        <div class="jurado-progress-header">
-          <span>Progresso da sua avaliação</span>
-          <span class="tabular-nums" id="txt-progresso-avaliacoes">0 de 0 avaliados</span>
-        </div>
-        <div class="jurado-progress-bar-bg">
-          <div class="jurado-progress-bar-fill" id="bar-progresso-fill" style="width: 0%;"></div>
-        </div>
-      </div>
+      <p class="jurado-sub">
+        Atribua notas inteiras de <strong>1 a 5</strong> em cada uma das 3 categorias. Quando você confirmar o voto, a fantasia será computada e sumirá da sua tela até o próximo desfile entrar na passarela.
+      </p>
     </header>
 
-    <!-- Filtros de Visualização -->
-    <div class="jurado-filter-tabs">
-      <button type="button" class="jurado-filter-btn active" onclick="filtrarExibicao('TODOS', this)">Todas as Fantasias</button>
-      <button type="button" class="jurado-filter-btn" onclick="filtrarExibicao('PENDENTES', this)">Pendentes</button>
-      <button type="button" class="jurado-filter-btn" onclick="filtrarExibicao('AVALIADAS', this)">Já Avaliadas</button>
-    </div>
-
-    <!-- Lista de Participantes -->
-    <main class="fantasias-list" id="lista-fantasias-jurado">
-      <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
-        Carregando lista de participantes do Cineflix...
+    <!-- Área de Conteúdo Dinâmico -->
+    <main id="conteudo-jurado-palco">
+      <div class="espera-card">
+        <div class="espera-icon-circle gold">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h2 class="espera-title">Conectando à Passarela...</h2>
+        <p class="espera-desc">Aguardando comunicação com a mesa de som e coordenação do Cineflix.</p>
       </div>
     </main>
 
@@ -588,29 +554,40 @@
   <script>
     let tokenAtual = '';
     let dadosJuradoCache = null;
-    let filtroAtual = 'TODOS';
+    let pollingInterval = null;
+
+    // Estado local da avaliação atual (notas de 1 a 5)
+    let notaImpacto = 0;
+    let notaPerformance = 0;
+    let notaDedicacao = 0;
+    let fantasiaAtivaIdAtual = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       tokenAtual = urlParams.get('token') || '';
 
       if (!tokenAtual) {
-        document.getElementById('lista-fantasias-jurado').innerHTML = `
-          <div style="text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.4);">
-            <div style="width: 52px; height: 52px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); color: #EF4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem auto;">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        document.getElementById('conteudo-jurado-palco').innerHTML = `
+          <div class="espera-card" style="border-color: rgba(239, 68, 68, 0.4);">
+            <div class="espera-icon-circle" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; border-color: rgba(239, 68, 68, 0.35);">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.4rem;">Link de Jurado Inválido</h3>
-            <p style="color: #94A3B8; font-size: 0.9rem;">Este link não contém um token de jurado válido. Solicite o link oficial com a organização do evento.</p>
+            <h2 class="espera-title" style="color: #F87171;">Link de Jurado Inválido</h2>
+            <p class="espera-desc">Este link não possui a chave de acesso oficial de jurado. Solicite o link correto com a organização do evento.</p>
           </div>
         `;
         return;
       }
 
-      await carregarPainelJurado();
+      await carregarPainelJurado(true);
+
+      // Iniciar polling a cada 3.5 segundos para atualizar automaticamente conforme o admin chama fantasias
+      pollingInterval = setInterval(() => {
+        carregarPainelJurado(false);
+      }, 3500);
     });
 
-    async function carregarPainelJurado() {
+    async function carregarPainelJurado(isInitial = false) {
       try {
         const res = await API.request(`/public/cineflix/jurado?token=${encodeURIComponent(tokenAtual)}`);
         dadosJuradoCache = res;
@@ -623,228 +600,246 @@
         const statusTxt = document.getElementById('txt-votacao-status');
         if (res.votacao_aberta) {
           statusTag.className = 'jurado-status-tag status-aberta';
-          statusTxt.textContent = 'Votação Aberta';
+          statusTxt.innerHTML = '<span class="live-pulse-dot"></span> Sincronizado ao Vivo';
         } else {
           statusTag.className = 'jurado-status-tag status-fechada';
           statusTxt.textContent = 'Votação Encerrada';
         }
 
-        atualizarProgresso();
-        renderizarFantasias();
+        renderizarEstadoPalco();
       } catch (err) {
-        document.getElementById('lista-fantasias-jurado').innerHTML = `
-          <div style="text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.4);">
-            <h3 style="font-size: 1.2rem; font-weight: 800; color: #EF4444; margin-bottom: 0.4rem;">Erro ao Carregar Votação</h3>
-            <p style="color: #94A3B8; font-size: 0.9rem;">${err.message || 'Falha de comunicação com o servidor.'}</p>
-            <button type="button" class="btn-salvar-voto" onclick="carregarPainelJurado()" style="margin-top: 1rem;">Tentar Novamente</button>
-          </div>
-        `;
+        if (isInitial) {
+          document.getElementById('conteudo-jurado-palco').innerHTML = `
+            <div class="espera-card" style="border-color: rgba(239, 68, 68, 0.4);">
+              <h2 class="espera-title" style="color: #EF4444;">Erro ao Conectar</h2>
+              <p class="espera-desc">${escapeHtml(err.message || 'Falha de comunicação com o servidor.')}</p>
+              <button type="button" class="btn-enviar-voto" onclick="carregarPainelJurado(true)" style="max-width: 240px; margin: 0 auto;">Tentar Novamente</button>
+            </div>
+          `;
+        }
       }
     }
 
-    function atualizarProgresso() {
+    function renderizarEstadoPalco() {
+      const main = document.getElementById('conteudo-jurado-palco');
       if (!dadosJuradoCache) return;
-      const total = dadosJuradoCache.fantasias.length;
-      const avaliadas = dadosJuradoCache.fantasias.filter(f => f.avaliado).length;
 
-      document.getElementById('txt-progresso-avaliacoes').textContent = `${avaliadas} de ${total} avaliados`;
-      const pct = total > 0 ? Math.round((avaliadas / total) * 100) : 0;
-      document.getElementById('bar-progresso-fill').style.width = `${pct}%`;
-    }
+      const { votacao_aberta, palco_ativo, ja_votou_na_ativa, fantasia_ativa, personagem_avaliado } = dadosJuradoCache;
 
-    function filtrarExibicao(filtro, btnEl) {
-      filtroAtual = filtro;
-      document.querySelectorAll('.jurado-filter-btn').forEach(b => b.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
-      renderizarFantasias();
-    }
-
-    function renderizarFantasias() {
-      const container = document.getElementById('lista-fantasias-jurado');
-      if (!dadosJuradoCache || !dadosJuradoCache.fantasias) return;
-
-      let lista = dadosJuradoCache.fantasias;
-      if (filtroAtual === 'PENDENTES') {
-        lista = lista.filter(f => !f.avaliado);
-      } else if (filtroAtual === 'AVALIADAS') {
-        lista = lista.filter(f => f.avaliado);
-      }
-
-      if (lista.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 3.5rem 1rem; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-subtle);">
-            <h3 style="font-size: 1.15rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.35rem;">Nenhum participante nesta categoria</h3>
-            <p style="color: var(--text-muted); font-size: 0.88rem;">Altere os filtros acima para ver todas as fantasias.</p>
+      // 1. Se votação estiver encerrada globalmente
+      if (!votacao_aberta) {
+        main.innerHTML = `
+          <div class="espera-card">
+            <div class="espera-icon-circle" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; border-color: rgba(239, 68, 68, 0.35);">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h2 class="espera-title">Votação Temporariamente Fechada</h2>
+            <p class="espera-desc">A organização pausou a votação do Cineflix. Aguarde a reabertura para continuar avaliando.</p>
+            <div class="espera-sync-pill">
+              <span class="live-pulse-dot"></span>
+              <span>Aguardando liberação da organização...</span>
+            </div>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = lista.map(f => {
-        const fotoUrl = f.foto_url || 'img/logo.png';
-        const cardClass = f.avaliado ? 'fantasia-vote-card avaliada' : 'fantasia-vote-card';
-
-        const nImpacto = (f.nota_impacto_visual || 0).toFixed(1);
-        const nPerformance = (f.nota_performance || 0).toFixed(1);
-        const nDedicacao = (f.nota_dedicacao || 0).toFixed(1);
-        const total = (parseFloat(nImpacto) + parseFloat(nPerformance) + parseFloat(nDedicacao)).toFixed(1);
-
-        const btnTxt = f.avaliado ? 'Nota Salva' : 'Confirmar Avaliação';
-        const btnClass = f.avaliado ? 'btn-salvar-voto salvo' : 'btn-salvar-voto';
-
-        return `
-          <article class="${cardClass}" id="card-fantasia-${f.id}">
-            <!-- Topo com dados da fantasia -->
-            <div class="fantasia-card-top">
-              <div class="fantasia-thumb-wrap" onclick="abrirJuradoLightbox('${escapeHtml(fotoUrl)}')">
-                <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(f.personagem)}" onerror="this.src='img/logo.png'">
-              </div>
-
-              <div class="fantasia-info-main">
-                <div class="fantasia-header-row">
-                  <h2 class="fantasia-personagem">${escapeHtml(f.personagem)}</h2>
-                  <span class="fantasia-universo-badge">${escapeHtml(f.universo)}</span>
-                </div>
-
-                <div class="fantasia-participante">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  <span>${escapeHtml(f.nome_participante)}</span>
-                </div>
-
-                ${f.descricao ? `
-                  <div class="fantasia-desc-preview">${escapeHtml(f.descricao)}</div>
-                ` : ''}
-              </div>
+      // 2. Se o jurado já votou na fantasia que está no palco ("some pra eles")
+      if (ja_votou_na_ativa) {
+        main.innerHTML = `
+          <div class="espera-card" style="border-color: rgba(0, 184, 148, 0.45); background: linear-gradient(180deg, rgba(0, 36, 40, 0.95) 0%, rgba(0, 24, 27, 0.95) 100%);">
+            <div class="espera-icon-circle" style="background: rgba(0, 184, 148, 0.2); color: #00B894; border-color: #00B894;">
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-
-            <!-- Corpo de Pontuação (3 Categorias) -->
-            <div class="fantasia-scoring-body">
-              
-              <!-- 1. Impacto Visual -->
-              <div class="score-category-row">
-                <div class="score-cat-header">
-                  <div>
-                    <div class="score-cat-title">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB703" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                      <span>Impacto Visual & Estética</span>
-                    </div>
-                    <div class="score-cat-desc">Fidelidade do traje, maquiagem, vestuário e impacto ao entrar</div>
-                  </div>
-                  <div class="score-live-val tabular-nums" id="val-impacto-${f.id}">${nImpacto}</div>
-                </div>
-                <div class="score-controls-wrap">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'impacto', -0.5)">-</button>
-                  <input type="range" class="score-slider" id="slider-impacto-${f.id}" min="0" max="10" step="0.5" value="${nImpacto}" oninput="sincronizarSlider(${f.id}, 'impacto', this.value)">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'impacto', +0.5)">+</button>
-                </div>
-              </div>
-
-              <!-- 2. Performance -->
-              <div class="score-category-row">
-                <div class="score-cat-header">
-                  <div>
-                    <div class="score-cat-title">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                      <span>Performance & Atuação</span>
-                    </div>
-                    <div class="score-cat-desc">Interpretação do personagem, pose, encenação e presença de palco</div>
-                  </div>
-                  <div class="score-live-val tabular-nums" id="val-performance-${f.id}">${nPerformance}</div>
-                </div>
-                <div class="score-controls-wrap">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'performance', -0.5)">-</button>
-                  <input type="range" class="score-slider" id="slider-performance-${f.id}" min="0" max="10" step="0.5" value="${nPerformance}" oninput="sincronizarSlider(${f.id}, 'performance', this.value)">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'performance', +0.5)">+</button>
-                </div>
-              </div>
-
-              <!-- 3. Dedicação -->
-              <div class="score-category-row">
-                <div class="score-cat-header">
-                  <div>
-                    <div class="score-cat-title">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00B894" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      <span>Dedicação & Criatividade</span>
-                    </div>
-                    <div class="score-cat-desc">Esforço na caracterização, detalhes próprios e elaboração</div>
-                  </div>
-                  <div class="score-live-val tabular-nums" id="val-dedicacao-${f.id}">${nDedicacao}</div>
-                </div>
-                <div class="score-controls-wrap">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'dedicacao', -0.5)">-</button>
-                  <input type="range" class="score-slider" id="slider-dedicacao-${f.id}" min="0" max="10" step="0.5" value="${nDedicacao}" oninput="sincronizarSlider(${f.id}, 'dedicacao', this.value)">
-                  <button type="button" class="btn-step" onclick="alterarNota(${f.id}, 'dedicacao', +0.5)">+</button>
-                </div>
-              </div>
-
+            <h2 class="espera-title" style="color: #00B894;">Voto Registrado com Sucesso!</h2>
+            <p class="espera-desc">
+              Você já avaliou as 3 categorias de <strong>${escapeHtml(personagem_avaliado || 'este participante')}</strong>.
+              <br><br>
+              Aguarde a organização chamar o <strong>próximo participante</strong> para a passarela.
+            </p>
+            <div class="espera-sync-pill">
+              <span class="live-pulse-dot"></span>
+              <span>Aguardando próxima apresentação entrar no palco...</span>
             </div>
-
-            <!-- Rodapé com Total e Botão Salvar -->
-            <div class="fantasia-card-footer">
-              <div class="fantasia-total-preview">
-                <span class="fantasia-total-label">Total da Fantasia:</span>
-                <span class="fantasia-total-number tabular-nums" id="val-total-${f.id}">${total}</span>
-                <span class="fantasia-total-max">/ 30.0</span>
-              </div>
-
-              <button type="button" class="${btnClass}" id="btn-votar-${f.id}" onclick="salvarVoto(${f.id})">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                <span>${btnTxt}</span>
-              </button>
-            </div>
-          </article>
+          </div>
         `;
-      }).join('');
-    }
-
-    function sincronizarSlider(id, cat, val) {
-      const num = Math.min(10, Math.max(0, parseFloat(val) || 0));
-      document.getElementById(`val-${cat}-${id}`).textContent = num.toFixed(1);
-      atualizarTotalCard(id);
-    }
-
-    function alterarNota(id, cat, delta) {
-      const slider = document.getElementById(`slider-${cat}-${id}`);
-      let atual = parseFloat(slider.value) || 0;
-      let nova = Math.min(10, Math.max(0, atual + delta));
-      slider.value = nova;
-      sincronizarSlider(id, cat, nova);
-    }
-
-    function atualizarTotalCard(id) {
-      const n1 = parseFloat(document.getElementById(`slider-impacto-${id}`).value) || 0;
-      const n2 = parseFloat(document.getElementById(`slider-performance-${id}`).value) || 0;
-      const n3 = parseFloat(document.getElementById(`slider-dedicacao-${id}`).value) || 0;
-      const tot = (n1 + n2 + n3).toFixed(1);
-      document.getElementById(`val-total-${id}`).textContent = tot;
-
-      const btn = document.getElementById(`btn-votar-${id}`);
-      btn.classList.remove('salvo');
-      btn.querySelector('span').textContent = 'Confirmar Avaliação';
-    }
-
-    async function salvarVoto(fantasiaId) {
-      if (!dadosJuradoCache || !dadosJuradoCache.votacao_aberta) {
-        showToast('A votação está encerrada no momento.', 'error');
         return;
       }
 
-      const nImpacto = parseFloat(document.getElementById(`slider-impacto-${fantasiaId}`).value) || 0;
-      const nPerformance = parseFloat(document.getElementById(`slider-performance-${fantasiaId}`).value) || 0;
-      const nDedicacao = parseFloat(document.getElementById(`slider-dedicacao-${fantasiaId}`).value) || 0;
+      // 3. Se nenhuma fantasia está no palco agora
+      if (!palco_ativo || !fantasia_ativa) {
+        main.innerHTML = `
+          <div class="espera-card">
+            <div class="espera-icon-circle gold">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h2 class="espera-title">Passarela em Espera</h2>
+            <p class="espera-desc">
+              Nenhuma fantasia está no palco para votação neste momento.
+              <br>
+              Assim que o apresentador chamar o próximo desfile, a tela de votação abrirá automaticamente aqui.
+            </p>
+            <div class="espera-sync-pill">
+              <span class="live-pulse-dot"></span>
+              <span>Monitorando passarela ao vivo...</span>
+            </div>
+          </div>
+        `;
+        return;
+      }
 
-      const btn = document.getElementById(`btn-votar-${fantasiaId}`);
-      const txtAntigo = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span>Salvando...</span>';
+      // 4. Fantasia ativa no palco disponível para votação!
+      // Se trocou de fantasia, reseta as notas locais
+      if (fantasiaAtivaIdAtual !== fantasia_ativa.id) {
+        fantasiaAtivaIdAtual = fantasia_ativa.id;
+        notaImpacto = 0;
+        notaPerformance = 0;
+        notaDedicacao = 0;
+      }
+
+      const fotoUrl = fantasia_ativa.foto_url || 'img/logo.png';
+      const totalSomado = notaImpacto + notaPerformance + notaDedicacao;
+      const todasPreenchidas = (notaImpacto > 0 && notaPerformance > 0 && notaDedicacao > 0);
+
+      main.innerHTML = `
+        <article class="palco-card">
+          <!-- Banner de palco -->
+          <div class="palco-banner-top">
+            <span style="display: flex; align-items: center; gap: 0.4rem;">
+              <span class="live-pulse-dot"></span>
+              No Palco Agora
+            </span>
+            <span>Apresentação #${fantasia_ativa.ordem || 1}</span>
+          </div>
+
+          <!-- Dados do Personagem -->
+          <div class="palco-personagem-header">
+            <div class="palco-thumb-wrap" onclick="abrirJuradoLightbox('${escapeHtml(fotoUrl)}')">
+              <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(fantasia_ativa.personagem)}" onerror="this.src='img/logo.png'">
+            </div>
+
+            <div class="palco-info-main">
+              <span class="palco-universo-badge">${escapeHtml(fantasia_ativa.universo)}</span>
+              <h2 class="palco-personagem-nome">${escapeHtml(fantasia_ativa.personagem)}</h2>
+              
+              <div class="palco-participante-nome">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>${escapeHtml(fantasia_ativa.nome_participante)}</span>
+              </div>
+
+              ${fantasia_ativa.descricao ? `
+                <div class="palco-descricao-box">${escapeHtml(fantasia_ativa.descricao)}</div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Corpo de Votação (Notas 1 a 5) -->
+          <div class="voto-body">
+            
+            <!-- Categoria 1: Impacto Visual -->
+            <div class="cat-card ${notaImpacto > 0 ? 'filled' : ''}" id="cat-card-impacto">
+              <div class="cat-header">
+                <div>
+                  <div class="cat-title-text">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFB703" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    <span>1. Impacto Visual & Fidelidade</span>
+                  </div>
+                  <div class="cat-desc-text">Traje, maquiagem, acabamento e impacto na passarela</div>
+                </div>
+                <div class="cat-selected-badge tabular-nums" id="badge-nota-impacto">${notaImpacto > 0 ? notaImpacto + ' pts' : '-'}</div>
+              </div>
+              <div class="score-buttons-grid">
+                ${[1, 2, 3, 4, 5].map(n => `
+                  <button type="button" class="score-num-btn ${notaImpacto === n ? 'selected' : ''}" onclick="selecionarNota('impacto', ${n})">${n}</button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Categoria 2: Performance -->
+            <div class="cat-card ${notaPerformance > 0 ? 'filled' : ''}" id="cat-card-performance">
+              <div class="cat-header">
+                <div>
+                  <div class="cat-title-text">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>2. Performance & Presença</span>
+                  </div>
+                  <div class="cat-desc-text">Interpretação do personagem, pose e atuação no palco</div>
+                </div>
+                <div class="cat-selected-badge tabular-nums" id="badge-nota-performance">${notaPerformance > 0 ? notaPerformance + ' pts' : '-'}</div>
+              </div>
+              <div class="score-buttons-grid">
+                ${[1, 2, 3, 4, 5].map(n => `
+                  <button type="button" class="score-num-btn ${notaPerformance === n ? 'selected' : ''}" onclick="selecionarNota('performance', ${n})">${n}</button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Categoria 3: Dedicação -->
+            <div class="cat-card ${notaDedicacao > 0 ? 'filled' : ''}" id="cat-card-dedicacao">
+              <div class="cat-header">
+                <div>
+                  <div class="cat-title-text">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00B894" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span>3. Dedicação & Criatividade</span>
+                  </div>
+                  <div class="cat-desc-text">Esforço na confecção, adereços e riqueza de detalhes</div>
+                </div>
+                <div class="cat-selected-badge tabular-nums" id="badge-nota-dedicacao">${notaDedicacao > 0 ? notaDedicacao + ' pts' : '-'}</div>
+              </div>
+              <div class="score-buttons-grid">
+                ${[1, 2, 3, 4, 5].map(n => `
+                  <button type="button" class="score-num-btn ${notaDedicacao === n ? 'selected' : ''}" onclick="selecionarNota('dedicacao', ${n})">${n}</button>
+                `).join('')}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Rodapé com Subtotal e Confirmação -->
+          <div class="palco-card-footer">
+            <div class="subtotal-row">
+              <span class="subtotal-label">Subtotal do Seu Voto:</span>
+              <div class="subtotal-val tabular-nums">
+                ${totalSomado} <small style="font-size: 1rem; color: #94A3B8;">/ 15 pts</small>
+              </div>
+            </div>
+
+            <button type="button" class="btn-enviar-voto" id="btn-confirmar-voto" ${!todasPreenchidas ? 'disabled' : ''} onclick="enviarVotoPalco(${fantasia_ativa.id})">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>${todasPreenchidas ? 'Confirmar e Enviar Avaliação' : 'Selecione as 3 Notas de 1 a 5'}</span>
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    window.selecionarNota = function (categoria, valor) {
+      if (categoria === 'impacto') notaImpacto = valor;
+      else if (categoria === 'performance') notaPerformance = valor;
+      else if (categoria === 'dedicacao') notaDedicacao = valor;
+
+      renderizarEstadoPalco();
+    };
+
+    window.enviarVotoPalco = async function (fantasiaId) {
+      if (!notaImpacto || !notaPerformance || !notaDedicacao) {
+        alert('Por favor, selecione as notas de 1 a 5 para todas as 3 categorias.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-confirmar-voto');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Computando voto...</span>';
+      }
 
       try {
         const payload = {
           token: tokenAtual,
           fantasia_id: fantasiaId,
-          nota_impacto_visual: nImpacto,
-          nota_performance: nPerformance,
-          nota_dedicacao: nDedicacao
+          nota_impacto_visual: parseInt(notaImpacto, 10),
+          nota_performance: parseInt(notaPerformance, 10),
+          nota_dedicacao: parseInt(notaDedicacao, 10)
         };
 
         const res = await API.request('/public/cineflix/jurado/votar', {
@@ -852,52 +847,46 @@
           body: JSON.stringify(payload)
         });
 
-        showToast(res.mensagem || 'Avaliação registrada com sucesso!', 'success');
-
-        // Atualizar estado em cache
-        const item = dadosJuradoCache.fantasias.find(f => f.id === fantasiaId);
-        if (item) {
-          item.avaliado = true;
-          item.nota_impacto_visual = nImpacto;
-          item.nota_performance = nPerformance;
-          item.nota_dedicacao = nDedicacao;
+        // Voto computado: a fantasia some para o jurado imediatamente!
+        if (dadosJuradoCache) {
+          dadosJuradoCache.ja_votou_na_ativa = true;
+          dadosJuradoCache.personagem_avaliado = res.personagem || 'este participante';
+          dadosJuradoCache.fantasia_ativa = null;
         }
 
-        atualizarProgresso();
-
-        btn.classList.add('salvo');
-        btn.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-          <span>Nota Salva</span>
-        `;
-        document.getElementById(`card-fantasia-${fantasiaId}`).classList.add('avaliada');
+        renderizarEstadoPalco();
       } catch (err) {
-        showToast(err.message || 'Erro ao registrar voto.', 'error');
-        btn.innerHTML = txtAntigo;
-      } finally {
-        btn.disabled = false;
+        alert(err.message || 'Erro ao enviar voto.');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<span>Tentar Novamente</span>';
+        }
       }
-    }
+    };
 
-    function abrirJuradoLightbox(src) {
-      const lb = document.getElementById('jurado-lightbox');
+    // --- Lightbox ---
+    window.abrirJuradoLightbox = function (url) {
+      const modal = document.getElementById('jurado-lightbox');
       const img = document.getElementById('jurado-lightbox-img');
-      img.src = src;
-      lb.classList.add('active');
-    }
+      if (modal && img) {
+        img.src = url;
+        modal.style.display = 'flex';
+      }
+    };
 
-    function fecharJuradoLightbox() {
-      document.getElementById('jurado-lightbox').classList.remove('active');
-    }
+    window.fecharJuradoLightbox = function () {
+      const modal = document.getElementById('jurado-lightbox');
+      if (modal) modal.style.display = 'none';
+    };
 
     function escapeHtml(str) {
-      if (!str) return '';
+      if (str === null || str === undefined) return '';
       return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>

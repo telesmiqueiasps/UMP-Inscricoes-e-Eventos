@@ -10,6 +10,9 @@ class CineflixConfig(Base):
     evento_id = Column(Integer, ForeignKey("eventos.id", ondelete="CASCADE"), primary_key=True)
     votacao_aberta = Column(Boolean, default=True, nullable=False)
     
+    # Fantasia ativa no palco no momento (apenas esta aparece para os jurados votarem)
+    fantasia_ativa_id = Column(Integer, ForeignKey("cineflix_fantasias.id", ondelete="SET NULL"), nullable=True)
+
     # 3 Jurados oficiais
     token_jurado_1 = Column(String(64), nullable=False)
     nome_jurado_1 = Column(String(100), default="Jurado 1", nullable=False)
@@ -24,6 +27,7 @@ class CineflixConfig(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     evento = relationship("Evento")
+    fantasia_ativa = relationship("CineflixFantasia", foreign_keys=[fantasia_ativa_id])
 
 
 class CineflixFantasia(Base):

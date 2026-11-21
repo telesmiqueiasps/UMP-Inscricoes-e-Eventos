@@ -7,6 +7,8 @@ let configCache = null;
 let fantasiasCache = [];
 let rankingCache = [];
 let abaAtiva = 'ranking';
+let autoRefreshTimer = null;
+let itensSequenciaModal = [];
 
 // Ícones SVG Vetoriais (Zero Emojis - AGENTS.md)
 const ICONS = {
@@ -15,7 +17,11 @@ const ICONS = {
   externalLink: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
   trophy: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
   edit: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
-  trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`
+  trash: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+  arrowUp: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>`,
+  arrowDown: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
+  play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
+  stop: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>`
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,11 +34,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Escape') {
       fecharModalFantasia();
       fecharModalConfigJurados();
+      fecharModalSequencia();
       fecharLightboxCineflixManual();
     }
   });
 
   await carregarEventosCineflix();
+
+  // Polling em segundo plano para manter o status do palco sincronizado a cada 4 segundos
+  autoRefreshTimer = setInterval(() => {
+    if (eventoIdSelecionado) {
+      carregarConfigJurados(true);
+    }
+  }, 4000);
 });
 
 window.logoutAdmin = function () {
@@ -106,7 +120,7 @@ async function carregarDadosCineflix() {
 }
 
 // --- Carregar Configuração e Links dos Jurados ---
-async function carregarConfigJurados() {
+async function carregarConfigJurados(silent = false) {
   try {
     const cfg = await API.request(`/admin/cineflix/config?evento_id=${eventoIdSelecionado}`);
     configCache = cfg;
@@ -115,22 +129,201 @@ async function carregarConfigJurados() {
     const btnToggle = document.getElementById('btn-toggle-votacao');
 
     if (cfg.votacao_aberta) {
-      badgeStatus.innerHTML = `<span class="badge" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-weight: 700; padding: 4px 10px;">Votação Aberta</span>`;
-      btnToggle.innerHTML = `<span>Encerrar Votação</span>`;
-      btnToggle.style.color = '#EF4444';
-      btnToggle.style.borderColor = '#FECDD3';
+      if (badgeStatus) badgeStatus.innerHTML = `<span class="badge" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-weight: 700; padding: 4px 10px;">Votação Aberta</span>`;
+      if (btnToggle) {
+        btnToggle.innerHTML = `<span>Encerrar Votação</span>`;
+        btnToggle.style.color = '#EF4444';
+        btnToggle.style.borderColor = '#FECDD3';
+      }
     } else {
-      badgeStatus.innerHTML = `<span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECDD3; font-weight: 700; padding: 4px 10px;">Votação Encerrada</span>`;
-      btnToggle.innerHTML = `<span>Abrir Votação</span>`;
-      btnToggle.style.color = '#059669';
-      btnToggle.style.borderColor = '#A7F3D0';
+      if (badgeStatus) badgeStatus.innerHTML = `<span class="badge" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECDD3; font-weight: 700; padding: 4px 10px;">Votação Encerrada</span>`;
+      if (btnToggle) {
+        btnToggle.innerHTML = `<span>Abrir Votação</span>`;
+        btnToggle.style.color = '#059669';
+        btnToggle.style.borderColor = '#A7F3D0';
+      }
     }
 
     renderizarCardsJurados(cfg);
+    renderizarControlePalcoAdmin(cfg);
   } catch (err) {
-    console.error('Erro ao carregar config dos jurados:', err);
+    if (!silent) console.error('Erro ao carregar config dos jurados:', err);
   }
 }
+
+// --- Renderizar Card de Controle do Palco / Apresentação em Tempo Real ---
+function renderizarControlePalcoAdmin(cfg) {
+  const container = document.getElementById('palco-controle-section');
+  if (!container) return;
+
+  if (!cfg) cfg = configCache;
+  if (!cfg) return;
+
+  const fAtiva = cfg.fantasia_ativa;
+
+  if (fAtiva) {
+    container.className = 'palco-controle-card';
+    const foto = fAtiva.foto_url || 'img/logo.png';
+
+    const j1 = cfg.jurado_1;
+    const j2 = cfg.jurado_2;
+    const j3 = cfg.jurado_3;
+
+    const votosRecebidos = (j1.votou_ativa ? 1 : 0) + (j2.votou_ativa ? 1 : 0) + (j3.votou_ativa ? 1 : 0);
+
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.15); padding-bottom: 0.65rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span class="live-pulse-dot"></span>
+          <span style="font-weight: 800; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: #00B894;">AO VIVO NA PASSARELA — VOTAÇÃO ABERTA PARA JURADOS</span>
+        </div>
+        <span class="badge" style="background: rgba(255, 183, 3, 0.2); color: #FFB703; border: 1px solid rgba(255, 183, 3, 0.4); font-weight: 800; font-size: 0.78rem;">
+          Apresentação #${fAtiva.ordem_apresentacao || 1}
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 1.15rem; align-items: center; flex-wrap: wrap;">
+        <img src="${escapeHtml(foto)}" alt="${escapeHtml(fAtiva.personagem)}" onclick="abrirLightboxCineflix('${escapeHtml(foto)}')" style="width: 72px; height: 72px; border-radius: 12px; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.25); cursor: pointer; flex-shrink: 0;">
+        
+        <div style="flex: 1; min-width: 220px;">
+          <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: #FFB703; letter-spacing: 0.05em; margin-bottom: 2px;">
+            ${escapeHtml(fAtiva.universo)}
+          </div>
+          <div style="font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: #FFFFFF; line-height: 1.1;">
+            ${escapeHtml(fAtiva.personagem)}
+          </div>
+          <div style="font-size: 0.85rem; color: #CBD5E1; margin-top: 2px;">
+            Participante: <strong>${escapeHtml(fAtiva.nome_participante)}</strong>
+          </div>
+        </div>
+
+        <!-- Status dos 3 Jurados em Tempo Real -->
+        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+          <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 0.45rem 0.75rem; text-align: center;">
+            <div style="font-size: 0.68rem; color: #94A3B8; text-transform: uppercase; font-weight: 700;">${escapeHtml(j1.nome)}</div>
+            <div style="font-size: 0.82rem; font-weight: 800; color: ${j1.votou_ativa ? '#00B894' : '#F59E0B'};">
+              ${j1.votou_ativa ? '✓ Votou' : 'Aguardando'}
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 0.45rem 0.75rem; text-align: center;">
+            <div style="font-size: 0.68rem; color: #94A3B8; text-transform: uppercase; font-weight: 700;">${escapeHtml(j2.nome)}</div>
+            <div style="font-size: 0.82rem; font-weight: 800; color: ${j2.votou_ativa ? '#00B894' : '#F59E0B'};">
+              ${j2.votou_ativa ? '✓ Votou' : 'Aguardando'}
+            </div>
+          </div>
+
+          <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 0.45rem 0.75rem; text-align: center;">
+            <div style="font-size: 0.68rem; color: #94A3B8; text-transform: uppercase; font-weight: 700;">${escapeHtml(j3.nome)}</div>
+            <div style="font-size: 0.82rem; font-weight: 800; color: ${j3.votou_ativa ? '#00B894' : '#F59E0B'};">
+              ${j3.votou_ativa ? '✓ Votou' : 'Aguardando'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Ações do Palco -->
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm" onclick="desativarPalcoAdmin()" style="background: rgba(239, 68, 68, 0.2); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.5); font-weight: 700; padding: 0.5rem 0.85rem; border-radius: 8px; cursor: pointer;">
+            ${ICONS.stop}
+            <span>Liberar Palco</span>
+          </button>
+          <button type="button" class="btn btn-sm" onclick="chamarProximaPalcoAdmin()" style="background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%); color: #FFFFFF; border: none; font-weight: 800; padding: 0.5rem 0.95rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(255, 121, 0, 0.4);">
+            ${ICONS.play}
+            <span>Próxima Apresentação</span>
+          </button>
+        </div>
+      </div>
+    `;
+  } else {
+    container.className = 'palco-controle-card vazio';
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.85rem;">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; color: #FFB703;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 1.05rem; color: #FFFFFF;">Nenhum participante no palco agora</div>
+            <div style="font-size: 0.84rem; color: #94A3B8;">Os 3 jurados estão na tela de espera aguardando o próximo desfile entrar na passarela.</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" onclick="abrirModalSequenciaDesfile()" style="font-size: 0.82rem; padding: 0.5rem 0.85rem; color: #CBD5E1; border-color: rgba(255, 255, 255, 0.2);">
+            <span>Ver Sequência</span>
+          </button>
+          <button type="button" class="btn-cineflix-primary" onclick="chamarProximaPalcoAdmin()" style="font-size: 0.84rem; padding: 0.55rem 1.1rem;">
+            ${ICONS.play}
+            <span>Chamar Próxima da Fila</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// --- Colocar / Tirar Fantasia do Palco ---
+window.ativarNoPalcoAdmin = async function (fantasiaId) {
+  try {
+    const res = await API.request('/admin/cineflix/ativar-palco', {
+      method: 'PUT',
+      body: JSON.stringify({
+        evento_id: eventoIdSelecionado,
+        fantasia_id: fantasiaId
+      })
+    });
+
+    showToast(res.mensagem || 'Fantasia colocada no palco com sucesso!', 'success');
+    await Promise.all([carregarConfigJurados(), carregarListaFantasias()]);
+  } catch (err) {
+    showToast(err.message || 'Erro ao colocar fantasia no palco.', 'error');
+  }
+};
+
+window.desativarPalcoAdmin = async function () {
+  try {
+    const res = await API.request('/admin/cineflix/ativar-palco', {
+      method: 'PUT',
+      body: JSON.stringify({
+        evento_id: eventoIdSelecionado,
+        fantasia_id: null
+      })
+    });
+
+    showToast(res.mensagem || 'Palco liberado com sucesso.', 'info');
+    await Promise.all([carregarConfigJurados(), carregarListaFantasias()]);
+  } catch (err) {
+    showToast(err.message || 'Erro ao liberar palco.', 'error');
+  }
+};
+
+window.chamarProximaPalcoAdmin = async function () {
+  if (fantasiasCache.length === 0) {
+    showToast('Nenhuma fantasia cadastrada neste evento.', 'error');
+    return;
+  }
+
+  // Ordenar por ordem de apresentação
+  const ordenadas = [...fantasiasCache].sort((a, b) => (a.ordem_apresentacao || 0) - (b.ordem_apresentacao || 0));
+
+  let proxima = null;
+  const ativaId = configCache ? configCache.fantasia_ativa_id : null;
+
+  if (ativaId) {
+    const idx = ordenadas.findIndex(f => f.id === ativaId);
+    if (idx !== -1 && idx + 1 < ordenadas.length) {
+      proxima = ordenadas[idx + 1];
+    } else {
+      proxima = ordenadas[0]; // Volta pro início se chegou no fim
+    }
+  } else {
+    proxima = ordenadas[0];
+  }
+
+  if (proxima) {
+    await ativarNoPalcoAdmin(proxima.id);
+  }
+};
 
 function renderizarCardsJurados(cfg) {
   const container = document.getElementById('container-jurados-cards');
@@ -179,14 +372,16 @@ window.copiarLinkJurado = function (url, btnEl) {
     span.textContent = 'Copiado!';
     setTimeout(() => { span.textContent = oldText; }, 2000);
   }).catch(() => {
-    showToast('Não foi possível copiar automaticamente.', 'warning');
+    prompt('Copie o link abaixo:', url);
   });
 };
 
 window.toggleVotacaoStatus = async function () {
   if (!configCache) return;
   const novoStatus = !configCache.votacao_aberta;
-  const msgConfirm = novoStatus ? 'Deseja abrir a votação do Cineflix para os jurados?' : 'Deseja encerrar a votação do Cineflix? Os jurados não poderão mais alterar notas.';
+  const msgConfirm = novoStatus
+    ? 'Deseja ABRIR a votação do Cineflix para os jurados?'
+    : 'Deseja ENCERRAR a votação do Cineflix? Os jurados não poderão votar enquanto estiver fechada.';
 
   if (!confirm(msgConfirm)) return;
 
@@ -237,7 +432,7 @@ async function carregarRankingCineflix() {
               
               <div style="margin-top: auto; padding-top: 0.75rem; border-top: 1px dashed rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: baseline;">
                 <span style="font-size: 0.78rem; text-transform: uppercase; color: #64748B; font-weight: 700;">Pontuação Total:</span>
-                <span class="podio-total-score tabular-nums">${item.pontuacao_total.toFixed(1)} <small style="font-size: 0.9rem; color: #64748B;">pts</small></span>
+                <span class="podio-total-score tabular-nums">${item.pontuacao_total.toFixed(0)} <small style="font-size: 0.9rem; color: #64748B;">/ 45 pts</small></span>
               </div>
             </div>
           `;
@@ -251,52 +446,69 @@ async function carregarRankingCineflix() {
         tbody.innerHTML = `
           <tr>
             <td colspan="8" style="text-align: center; padding: 2.5rem; color: #94A3B8;">
-              Nenhuma fantasia cadastrada neste evento.
+              Nenhuma fantasia cadastrada ou sem avaliações registradas ainda.
             </td>
           </tr>
         `;
         return;
       }
 
-      tbody.innerHTML = rankingCache.map(r => {
-        const j1 = r.nota_j1 !== null ? `${r.nota_j1.toFixed(1)}` : '<span style="color: #CBD5E1;">-</span>';
-        const j2 = r.nota_j2 !== null ? `${r.nota_j2.toFixed(1)}` : '<span style="color: #CBD5E1;">-</span>';
-        const j3 = r.nota_j3 !== null ? `${r.nota_j3.toFixed(1)}` : '<span style="color: #CBD5E1;">-</span>';
+      tbody.innerHTML = rankingCache.map(it => {
+        const medalhas = { 1: '🥇', 2: '🥈', 3: '🥉' };
+        const posBadge = medalhas[it.posicao]
+          ? `<span style="font-size: 1.25rem;">${medalhas[it.posicao]}</span>`
+          : `<span class="badge" style="background: #F1F5F9; color: #475569; font-weight: 800; font-size: 0.8rem;">${it.posicao}º</span>`;
 
-        let badgePos = `<span style="font-weight: 800; font-size: 0.95rem; color: #64748B;">#${r.posicao}</span>`;
-        if (r.posicao === 1) badgePos = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #FEF3C7; color: #B45309; font-weight: 800;">1º</span>`;
-        if (r.posicao === 2) badgePos = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #F1F5F9; color: #475569; font-weight: 800;">2º</span>`;
-        if (r.posicao === 3) badgePos = `<span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #FFEDD5; color: #C2410C; font-weight: 800;">3º</span>`;
+        const renderNotaJ = (val, det, numJ) => {
+          if (val === null || val === undefined) return '<span style="color: #CBD5E1;">—</span>';
+          return `
+            <span class="score-pill-jurado tabular-nums" onclick="verDetalhesNotas(${it.fantasia_id}, ${numJ})" title="Clique para ver detalhes das notas">
+              ${val.toFixed(0)} <small style="font-size: 0.7rem; color: #64748B;">/ 15</small>
+            </span>
+          `;
+        };
 
         return `
           <tr>
-            <td style="text-align: center;">${badgePos}</td>
+            <td style="text-align: center;">${posBadge}</td>
             <td>
-              <strong style="color: #0F172A; font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif;">${escapeHtml(r.personagem)}</strong>
-              <div style="font-size: 0.76rem; color: #FF7900; font-weight: 700; text-transform: uppercase;">${escapeHtml(r.universo)}</div>
+              <div style="font-weight: 800; font-size: 0.95rem; color: #0F172A;">${escapeHtml(it.personagem)}</div>
+              <span style="font-size: 0.72rem; font-weight: 700; color: #FF7900; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(it.universo)}</span>
             </td>
-            <td>
-              <span style="font-weight: 600; color: #334155;">${escapeHtml(r.nome_participante)}</span>
-            </td>
-            <td style="text-align: center; font-weight: 700;" class="tabular-nums">${j1}</td>
-            <td style="text-align: center; font-weight: 700;" class="tabular-nums">${j2}</td>
-            <td style="text-align: center; font-weight: 700;" class="tabular-nums">${j3}</td>
-            <td style="text-align: center; font-weight: 800; color: #00363A;" class="tabular-nums">${r.media_final.toFixed(1)}</td>
-            <td style="text-align: right; padding-right: 1.5rem;">
-              <strong style="font-size: 1.15rem; color: #00B894; font-family: 'Teko', sans-serif;" class="tabular-nums">${r.pontuacao_total.toFixed(1)}</strong>
+            <td style="font-weight: 600; color: #334155;">${escapeHtml(it.nome_participante)}</td>
+            <td style="text-align: center;">${renderNotaJ(it.nota_j1, it.detalhes_j1, 1)}</td>
+            <td style="text-align: center;">${renderNotaJ(it.nota_j2, it.detalhes_j2, 2)}</td>
+            <td style="text-align: center;">${renderNotaJ(it.nota_j3, it.detalhes_j3, 3)}</td>
+            <td style="text-align: center; font-weight: 700; color: #475569;" class="tabular-nums">${it.media_final.toFixed(1)}</td>
+            <td style="text-align: right; padding-right: 1.5rem; font-family: 'Teko', sans-serif; font-size: 1.45rem; font-weight: 700; color: #00B894;" class="tabular-nums">
+              ${it.pontuacao_total.toFixed(0)} <small style="font-size: 0.85rem; color: #64748B;">pts</small>
             </td>
           </tr>
         `;
       }).join('');
     }
   } catch (err) {
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:2rem; color:#EF4444;">Erro ao carregar ranking.</td></tr>`;
-    }
+    console.error('Erro ao carregar ranking:', err);
   }
 }
 
-// --- Carregar Lista de Fantasias Cadastradas ---
+// --- Detalhes das Notas de um Jurado ---
+window.verDetalhesNotas = function (fantasiaId, numJ) {
+  const item = rankingCache.find(r => r.fantasia_id === fantasiaId);
+  if (!item) return;
+
+  const det = numJ === 1 ? item.detalhes_j1 : (numJ === 2 ? item.detalhes_j2 : item.detalhes_j3);
+  const nomeJ = configCache ? configCache[`jurado_${numJ}`].nome : `Jurado ${numJ}`;
+
+  if (!det) {
+    showToast(`O ${nomeJ} ainda não registrou notas para esta fantasia.`, 'info');
+    return;
+  }
+
+  alert(`Notas de ${nomeJ} para "${item.personagem}":\n\n• Impacto Visual: ${det.impacto} pts (máx 5)\n• Performance: ${det.performance} pts (máx 5)\n• Dedicação: ${det.dedicacao} pts (máx 5)\n\nTotal do Jurado: ${det.impacto + det.performance + det.dedicacao} de 15 pts`);
+};
+
+// --- Carregar Lista de Fantasias ---
 async function carregarListaFantasias() {
   if (!eventoIdSelecionado) return;
   try {
@@ -319,7 +531,9 @@ function renderizarFantasiasAdmin() {
   if (!container) return;
 
   const termo = (document.getElementById('filtro-busca-fantasias')?.value || '').toLowerCase().trim();
-  let itens = fantasiasCache;
+  
+  // Ordenar por ordem_apresentacao crescente
+  let itens = [...fantasiasCache].sort((a, b) => (a.ordem_apresentacao || 0) - (b.ordem_apresentacao || 0));
 
   if (termo) {
     itens = itens.filter(f => {
@@ -343,22 +557,38 @@ function renderizarFantasiasAdmin() {
     return;
   }
 
-  container.innerHTML = itens.map(f => {
+  const ativaId = configCache ? configCache.fantasia_ativa_id : null;
+
+  container.innerHTML = itens.map((f, idx) => {
     const fotoUrl = f.foto_url || 'img/logo.png';
+    const estaNoPalco = (ativaId && ativaId === f.id);
 
     return `
-      <div class="fantasia-admin-card" id="fantasia-card-${f.id}">
+      <div class="fantasia-admin-card" id="fantasia-card-${f.id}" style="${estaNoPalco ? 'border: 2px solid #00B894; box-shadow: 0 0 16px rgba(0, 184, 148, 0.25);' : ''}">
         <div class="fantasia-card-thumb" onclick="abrirLightboxCineflix('${escapeHtml(fotoUrl)}')">
           <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(f.personagem)}" onerror="this.src='img/logo.png'">
+          
+          <span style="position: absolute; top: 10px; left: 10px; background: rgba(0, 20, 23, 0.85); color: #FFFFFF; border-radius: 6px; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            #${f.ordem_apresentacao || (idx + 1)}
+          </span>
+
           <span style="position: absolute; top: 10px; right: 10px; background: rgba(0, 30, 33, 0.85); color: #FFB703; border: 1px solid rgba(255, 183, 3, 0.4); border-radius: 6px; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; text-transform: uppercase;">
             ${escapeHtml(f.universo)}
           </span>
         </div>
 
         <div style="padding: 1.15rem; display: flex; flex-direction: column; flex: 1; gap: 0.65rem;">
-          <h3 style="font-size: 1.1rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; color: #0F172A; margin: 0; line-height: 1.3;">
-            ${escapeHtml(f.personagem)}
-          </h3>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+            <h3 style="font-size: 1.15rem; font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; color: #0F172A; margin: 0; line-height: 1.25;">
+              ${escapeHtml(f.personagem)}
+            </h3>
+            
+            ${estaNoPalco ? `
+              <span class="badge" style="background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; font-weight: 800; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                <span class="live-pulse-dot"></span> No Palco
+              </span>
+            ` : ''}
+          </div>
 
           <div style="font-size: 0.85rem; color: #475569; font-weight: 600;">
             Participante: <strong>${escapeHtml(f.nome_participante)}</strong>
@@ -370,10 +600,21 @@ function renderizarFantasiasAdmin() {
             </div>
           ` : ''}
 
-          <div style="margin-top: auto; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9;">
-            <span style="font-size: 0.8rem; color: #64748B; font-weight: 700;">
-              Total: <strong style="color: #00B894; font-size: 1rem;" class="tabular-nums">${f.total_pontos.toFixed(1)} pts</strong>
-            </span>
+          <!-- Botão de Ação do Palco / Desfile -->
+          <div style="margin-top: auto; padding-top: 0.65rem; border-top: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <div>
+              ${estaNoPalco ? `
+                <button type="button" class="btn btn-sm" onclick="desativarPalcoAdmin()" style="background: #00B894; color: #FFFFFF; font-weight: 800; border: none; padding: 0.4rem 0.75rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  ${ICONS.stop}
+                  <span>No Palco (Liberar)</span>
+                </button>
+              ` : `
+                <button type="button" class="btn btn-sm" onclick="ativarNoPalcoAdmin(${f.id})" style="background: #FFF7ED; color: #EA580C; border: 1.5px solid #FDBA74; font-weight: 800; padding: 0.4rem 0.75rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  ${ICONS.play}
+                  <span>Chamar para Palco</span>
+                </button>
+              `}
+            </div>
 
             <div style="display: flex; gap: 0.35rem;">
               <button type="button" class="btn btn-outline" style="padding: 0.4rem 0.65rem;" onclick="abrirModalEditarFantasia(${f.id})" title="Editar Fantasia">
@@ -390,13 +631,137 @@ function renderizarFantasiasAdmin() {
   }).join('');
 }
 
-// --- Upload de Foto da Fantasia ---
-window.processarUploadFotoFantasia = async function (inputElement) {
-  const file = inputElement.files[0];
-  if (!file) return;
+// ==========================================
+// MODAL: DEFINIR SEQUÊNCIA DE DESFILE
+// ==========================================
+window.abrirModalSequenciaDesfile = function () {
+  if (fantasiasCache.length === 0) {
+    showToast('Nenhuma fantasia cadastrada neste evento para ordenar.', 'error');
+    return;
+  }
 
-  const spinner = document.getElementById('upload-spinner-fantasia');
+  // Clona e ordena pela ordem atual
+  itensSequenciaModal = [...fantasiasCache].sort((a, b) => (a.ordem_apresentacao || 0) - (b.ordem_apresentacao || 0));
+
+  renderizarItensSequenciaModal();
+
+  const modal = document.getElementById('modal-sequencia-desfile');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+  }
+};
+
+window.fecharModalSequencia = function () {
+  const modal = document.getElementById('modal-sequencia-desfile');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('active');
+  }
+};
+
+window.fecharModalSequenciaBackdrop = function (e) {
+  if (e.target.id === 'modal-sequencia-desfile') {
+    fecharModalSequencia();
+  }
+};
+
+function renderizarItensSequenciaModal() {
+  const container = document.getElementById('lista-sequencia-desfile-itens');
+  if (!container) return;
+
+  container.innerHTML = itensSequenciaModal.map((item, idx) => {
+    return `
+      <div class="sequencia-item-row">
+        <div style="font-weight: 800; font-size: 0.95rem; color: #FF7900; min-width: 40px;">
+          ${idx + 1}º
+        </div>
+
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 800; font-size: 0.95rem; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${escapeHtml(item.personagem)}
+          </div>
+          <div style="font-size: 0.78rem; color: #64748B;">
+            ${escapeHtml(item.nome_participante)} &bull; <span style="color: #FF7900; font-weight: 700;">${escapeHtml(item.universo)}</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.35rem; align-items: center;">
+          <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.55rem;" ${idx === 0 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''} onclick="moverSequenciaItem(${idx}, -1)" title="Subir na fila">
+            ${ICONS.arrowUp}
+          </button>
+          <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.55rem;" ${idx === itensSequenciaModal.length - 1 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''} onclick="moverSequenciaItem(${idx}, 1)" title="Descer na fila">
+            ${ICONS.arrowDown}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.moverSequenciaItem = function (idx, offset) {
+  const targetIdx = idx + offset;
+  if (targetIdx < 0 || targetIdx >= itensSequenciaModal.length) return;
+
+  const temp = itensSequenciaModal[idx];
+  itensSequenciaModal[idx] = itensSequenciaModal[targetIdx];
+  itensSequenciaModal[targetIdx] = temp;
+
+  renderizarItensSequenciaModal();
+};
+
+window.salvarSequenciaDesfile = async function () {
+  const btn = document.getElementById('btn-salvar-sequencia');
+  const txtAntigo = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>Salvando sequência...</span>';
+
+  try {
+    const payload = {
+      evento_id: eventoIdSelecionado,
+      sequencia: itensSequenciaModal.map((it, idx) => ({
+        id: it.id,
+        ordem: idx + 1
+      }))
+    };
+
+    await API.request('/admin/cineflix/sequencia', {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+
+    showToast('Sequência de desfile atualizada com sucesso!', 'success');
+    fecharModalSequencia();
+    await Promise.all([carregarListaFantasias(), carregarConfigJurados()]);
+  } catch (err) {
+    showToast(err.message || 'Erro ao salvar sequência de desfile.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = txtAntigo;
+  }
+};
+
+// ==========================================
+// UPLOAD DE FOTO E MODAL DE FANTASIA
+// ==========================================
+window.uploadFotoFantasia = async function (inputElement) {
+  if (!inputElement.files || !inputElement.files[0]) return;
+  const file = inputElement.files[0];
+
+  if (!file.type.startsWith('image/')) {
+    showToast('Por favor selecione um arquivo de imagem válido.', 'error');
+    inputElement.value = '';
+    return;
+  }
+
+  if (file.size > 15 * 1024 * 1024) {
+    showToast('A imagem deve ter no máximo 15MB.', 'error');
+    inputElement.value = '';
+    return;
+  }
+
   const placeholder = document.getElementById('uploader-placeholder-fantasia');
+  const spinner = document.getElementById('uploader-spinner-fantasia');
   const preview = document.getElementById('preview-foto-fantasia');
 
   if (placeholder) placeholder.style.display = 'none';
@@ -427,7 +792,6 @@ window.processarUploadFotoFantasia = async function (inputElement) {
   }
 };
 
-// --- Modal de Fantasia (Admin) ---
 window.abrirModalNovaFantasia = function () {
   document.getElementById('form-fantasia-admin').reset();
   document.getElementById('fantasia-id').value = '';

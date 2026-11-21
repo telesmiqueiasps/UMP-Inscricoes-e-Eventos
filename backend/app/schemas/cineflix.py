@@ -24,10 +24,25 @@ class FantasiaUpdate(BaseModel):
 class VotoJuradoSubmit(BaseModel):
     token: str
     fantasia_id: int
-    nota_impacto_visual: float = Field(..., ge=0.0, le=10.0)
-    nota_performance: float = Field(..., ge=0.0, le=10.0)
-    nota_dedicacao: float = Field(..., ge=0.0, le=10.0)
+    nota_impacto_visual: int = Field(..., ge=1, le=5)
+    nota_performance: int = Field(..., ge=1, le=5)
+    nota_dedicacao: int = Field(..., ge=1, le=5)
     observacao: Optional[str] = None
+
+
+class SequenciaDesfileItem(BaseModel):
+    id: int
+    ordem: int
+
+
+class SequenciaDesfilePayload(BaseModel):
+    evento_id: int
+    sequencia: List[SequenciaDesfileItem]
+
+
+class AtivarPalcoPayload(BaseModel):
+    evento_id: int
+    fantasia_id: Optional[int] = None
 
 
 class CineflixConfigUpdate(BaseModel):
@@ -89,6 +104,8 @@ class CineflixConfigResponse(BaseModel):
     evento_id: int
     evento_nome: Optional[str] = None
     votacao_aberta: bool
+    fantasia_ativa_id: Optional[int] = None
+    fantasia_ativa: Optional[Dict[str, Any]] = None
     jurado_1: Dict[str, Any]
     jurado_2: Dict[str, Any]
     jurado_3: Dict[str, Any]

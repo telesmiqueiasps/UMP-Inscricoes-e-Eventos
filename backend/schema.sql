@@ -320,6 +320,7 @@ CREATE INDEX IF NOT EXISTS idx_achados_reivindicado ON achados_perdidos(reivindi
 CREATE TABLE IF NOT EXISTS cineflix_configs (
     evento_id INTEGER PRIMARY KEY REFERENCES eventos(id) ON DELETE CASCADE,
     votacao_aberta BOOLEAN DEFAULT TRUE NOT NULL,
+    fantasia_ativa_id INTEGER,
     token_jurado_1 VARCHAR(64) NOT NULL,
     nome_jurado_1 VARCHAR(100) DEFAULT 'Jurado 1' NOT NULL,
     token_jurado_2 VARCHAR(64) NOT NULL,

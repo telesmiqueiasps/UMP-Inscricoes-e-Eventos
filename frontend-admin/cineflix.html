@@ -228,6 +228,59 @@
       background: #20BA5A;
     }
 
+    /* Controle do Palco / Ao Vivo */
+    .palco-controle-card {
+      background: linear-gradient(135deg, #001E21 0%, #00363A 100%);
+      border: 2px solid #00B894;
+      border-radius: 16px;
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1.25rem;
+      color: #FFFFFF;
+      box-shadow: 0 10px 30px -8px rgba(0, 30, 33, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .palco-controle-card.vazio {
+      border: 1.5px dashed rgba(255, 255, 255, 0.25);
+      background: linear-gradient(135deg, #001417 0%, #002226 100%);
+    }
+
+    .live-pulse-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #00B894;
+      display: inline-block;
+      box-shadow: 0 0 10px #00B894;
+      animation: livePulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+
+    @keyframes pulsePalco {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.6); }
+      50% { box-shadow: 0 0 0 8px rgba(0, 184, 148, 0); }
+    }
+
+    .sequencia-item-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      background: #FFFFFF;
+      transition: background-color 0.15s ease;
+    }
+
+    .sequencia-item-row:hover {
+      background: #F8FAFC;
+    }
+
     /* Abas do Cineflix */
     .cineflix-tabs-bar {
       display: flex;
@@ -728,7 +781,11 @@
           </select>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.65rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" onclick="abrirModalSequenciaDesfile()" style="font-size: 0.84rem; padding: 0.5rem 0.95rem; font-weight: 700; color: #EA580C; border-color: #FED7AA; background: #FFF7ED;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span>Sequência do Desfile</span>
+          </button>
           <button type="button" class="btn btn-outline" onclick="abrirModalConfigJurados()" style="font-size: 0.84rem; padding: 0.5rem 0.95rem; font-weight: 700;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Configurar Jurados</span>
@@ -738,6 +795,11 @@
           </button>
         </div>
       </div>
+
+      <!-- Controle do Palco / Desfile ao Vivo -->
+      <section class="palco-controle-card" id="palco-controle-section">
+        <!-- Renderizado dinamicamente via JS -->
+      </section>
 
       <!-- Links dos 3 Jurados -->
       <section class="jurados-section-card">
@@ -955,6 +1017,36 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Definir Sequência de Desfile -->
+  <div id="modal-sequencia-desfile" class="modal-overlay" onclick="fecharModalSequenciaBackdrop(event)">
+    <div class="modal-card" style="max-width: 640px;" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span>Sequência de Desfile na Passarela</span>
+        </h2>
+        <button type="button" class="modal-close" onclick="fecharModalSequencia()" title="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: #64748B; margin: 0 0 0.5rem 0;">
+          Organize a ordem em que os personagens desfilarão. Use os botões <strong>Subir / Descer</strong> para reordenar ou digite o número da posição diretamente.
+        </p>
+
+        <div id="lista-sequencia-desfile-itens" style="display: flex; flex-direction: column; gap: 0.65rem;">
+          <!-- Carregado via JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="fecharModalSequencia()">Cancelar</button>
+        <button type="button" class="btn-cineflix-primary" id="btn-salvar-sequencia" onclick="salvarSequenciaDesfile()" style="box-shadow: none;">
+          <span>Salvar Sequência de Desfile</span>
+        </button>
+      </div>
     </div>
   </div>
 

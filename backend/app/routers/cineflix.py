@@ -20,7 +20,9 @@ from app.schemas.cineflix import (
     FantasiaResponse,
     RankingItemResponse,
     CineflixConfigResponse,
-    VotoJuradoResponse
+    VotoJuradoResponse,
+    SequenciaDesfilePayload,
+    AtivarPalcoPayload
 )
 
 router = APIRouter(tags=["Cineflix"])
@@ -43,6 +45,7 @@ def _garantir_tabelas_cineflix():
                     CREATE TABLE IF NOT EXISTS cineflix_configs (
                         evento_id INTEGER PRIMARY KEY REFERENCES eventos(id) ON DELETE CASCADE,
                         votacao_aberta BOOLEAN DEFAULT TRUE NOT NULL,
+                        fantasia_ativa_id INTEGER,
                         token_jurado_1 VARCHAR(64) NOT NULL,
                         nome_jurado_1 VARCHAR(100) DEFAULT 'Jurado 1' NOT NULL,
                         token_jurado_2 VARCHAR(64) NOT NULL,
@@ -53,6 +56,7 @@ def _garantir_tabelas_cineflix():
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                conn.execute(text("ALTER TABLE cineflix_configs ADD COLUMN IF NOT EXISTS fantasia_ativa_id INTEGER;"))
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS cineflix_fantasias (
                         id SERIAL PRIMARY KEY,
@@ -292,34 +296,109 @@ def obter_config_cineflix_admin(
     votos_j2 = db.query(CineflixVoto).filter(CineflixVoto.evento_id == evento_id, CineflixVoto.numero_jurado == 2).count()
     votos_j3 = db.query(CineflixVoto).filter(CineflixVoto.evento_id == evento_id, CineflixVoto.numero_jurado == 3).count()
 
+    # Fantasia ativa no palco agora
+    fantasia_ativa_dict = None
+    votou_ativa_j1 = False
+    votou_ativa_j2 = False
+    votou_ativa_j3 = False
+
+    if cfg.fantasia_ativa_id:
+        f_ativa = db.query(CineflixFantasia).filter(
+            CineflixFantasia.id == cfg.fantasia_ativa_id,
+            CineflixFantasia.evento_id == evento_id
+        ).first()
+        if f_ativa:
+            fantasia_ativa_dict = _formatar_fantasia(f_ativa, cfg)
+            # Buscar votos dos jurados nesta fantasia ativa
+            votos_ativa = db.query(CineflixVoto.numero_jurado).filter(CineflixVoto.fantasia_id == f_ativa.id).all()
+            nums = {n for (n,) in votos_ativa}
+            votou_ativa_j1 = 1 in nums
+            votou_ativa_j2 = 2 in nums
+            votou_ativa_j3 = 3 in nums
+        else:
+            cfg.fantasia_ativa_id = None
+            db.commit()
+
     return {
         "evento_id": cfg.evento_id,
         "evento_nome": evento.titulo,
         "votacao_aberta": cfg.votacao_aberta,
+        "fantasia_ativa_id": cfg.fantasia_ativa_id,
+        "fantasia_ativa": fantasia_ativa_dict,
         "jurado_1": {
             "numero": 1,
             "nome": cfg.nome_jurado_1,
             "token": cfg.token_jurado_1,
             "votos_computados": votos_j1,
-            "total_fantasias": total_fantasias
+            "total_fantasias": total_fantasias,
+            "votou_ativa": votou_ativa_j1
         },
         "jurado_2": {
             "numero": 2,
             "nome": cfg.nome_jurado_2,
             "token": cfg.token_jurado_2,
             "votos_computados": votos_j2,
-            "total_fantasias": total_fantasias
+            "total_fantasias": total_fantasias,
+            "votou_ativa": votou_ativa_j2
         },
         "jurado_3": {
             "numero": 3,
             "nome": cfg.nome_jurado_3,
             "token": cfg.token_jurado_3,
             "votos_computados": votos_j3,
-            "total_fantasias": total_fantasias
+            "total_fantasias": total_fantasias,
+            "votou_ativa": votou_ativa_j3
         },
         "total_fantasias": total_fantasias,
         "total_avaliadas": min(votos_j1, votos_j2, votos_j3)
     }
+
+
+@router.put("/admin/cineflix/ativar-palco")
+def ativar_fantasia_palco_admin(
+    dados: AtivarPalcoPayload,
+    db: Session = Depends(get_db),
+    admin_user: Usuario = Depends(get_current_admin)
+):
+    _garantir_tabelas_cineflix()
+    cfg = _obter_ou_criar_config(dados.evento_id, db)
+
+    if dados.fantasia_id is not None:
+        fantasia = db.query(CineflixFantasia).filter(
+            CineflixFantasia.id == dados.fantasia_id,
+            CineflixFantasia.evento_id == dados.evento_id
+        ).first()
+        if not fantasia:
+            raise HTTPException(status_code=404, detail="Fantasia não encontrada neste evento.")
+        cfg.fantasia_ativa_id = fantasia.id
+        msg = f"{fantasia.personagem} ({fantasia.nome_participante}) está agora no palco para votação!"
+    else:
+        cfg.fantasia_ativa_id = None
+        msg = "Palco liberado. Nenhuma fantasia está ativa para votação no momento."
+
+    db.commit()
+    db.refresh(cfg)
+    return {
+        "mensagem": msg,
+        "fantasia_ativa_id": cfg.fantasia_ativa_id
+    }
+
+
+@router.put("/admin/cineflix/sequencia")
+def definir_sequencia_desfile_admin(
+    dados: SequenciaDesfilePayload,
+    db: Session = Depends(get_db),
+    admin_user: Usuario = Depends(get_current_admin)
+):
+    _garantir_tabelas_cineflix()
+    for item in dados.sequencia:
+        db.query(CineflixFantasia).filter(
+            CineflixFantasia.id == item.id,
+            CineflixFantasia.evento_id == dados.evento_id
+        ).update({"ordem_apresentacao": item.ordem})
+
+    db.commit()
+    return {"mensagem": "Sequência de desfile atualizada com sucesso!"}
 
 
 @router.put("/admin/cineflix/config")
@@ -685,36 +764,47 @@ def painel_jurado_publico(
     evento = db.query(Evento).filter(Evento.id == cfg.evento_id).first()
     evento_nome = evento.titulo if evento else "Evento"
 
-    # Buscar todas as fantasias do evento
-    fantasias = db.query(CineflixFantasia).filter(
-        CineflixFantasia.evento_id == cfg.evento_id
-    ).order_by(CineflixFantasia.ordem_apresentacao.asc(), CineflixFantasia.id.asc()).all()
+    # Verificar se há fantasia no palco ativa para votação
+    fantasia_ativa_res = None
+    ja_votou_na_ativa = False
+    personagem_avaliado = None
 
-    # Buscar os votos existentes deste jurado
-    votos = db.query(CineflixVoto).filter(
+    if cfg.fantasia_ativa_id and cfg.votacao_aberta:
+        f_ativa = db.query(CineflixFantasia).filter(
+            CineflixFantasia.id == cfg.fantasia_ativa_id,
+            CineflixFantasia.evento_id == cfg.evento_id
+        ).first()
+
+        if f_ativa:
+            # Verificar se este jurado já votou nela
+            voto_existente = db.query(CineflixVoto).filter(
+                CineflixVoto.fantasia_id == f_ativa.id,
+                CineflixVoto.numero_jurado == numero_jurado
+            ).first()
+
+            if voto_existente:
+                # O jurado já votou em todas as categorias: a fantasia SOME para ele
+                ja_votou_na_ativa = True
+                personagem_avaliado = f_ativa.personagem
+                fantasia_ativa_res = None
+            else:
+                # O jurado ainda não votou: exibe apenas esta fantasia
+                ja_votou_na_ativa = False
+                fantasia_ativa_res = {
+                    "id": f_ativa.id,
+                    "nome_participante": f_ativa.nome_participante,
+                    "personagem": f_ativa.personagem,
+                    "universo": f_ativa.universo,
+                    "descricao": f_ativa.descricao,
+                    "foto_url": f_ativa.foto_url,
+                    "ordem": f_ativa.ordem_apresentacao
+                }
+
+    total_fantasias = db.query(CineflixFantasia).filter(CineflixFantasia.evento_id == cfg.evento_id).count()
+    total_avaliadas = db.query(CineflixVoto).filter(
         CineflixVoto.evento_id == cfg.evento_id,
         CineflixVoto.numero_jurado == numero_jurado
-    ).all()
-    votos_map = {v.fantasia_id: v for v in votos}
-
-    fantasias_res = []
-    for f in fantasias:
-        meu_voto = votos_map.get(f.id)
-        fantasias_res.append({
-            "id": f.id,
-            "nome_participante": f.nome_participante,
-            "personagem": f.personagem,
-            "universo": f.universo,
-            "descricao": f.descricao,
-            "foto_url": f.foto_url,
-            "ordem": f.ordem_apresentacao,
-            "avaliado": bool(meu_voto is not None),
-            "nota_impacto_visual": meu_voto.nota_impacto_visual if meu_voto else 0.0,
-            "nota_performance": meu_voto.nota_performance if meu_voto else 0.0,
-            "nota_dedicacao": meu_voto.nota_dedicacao if meu_voto else 0.0,
-            "total_minha_nota": round(meu_voto.nota_impacto_visual + meu_voto.nota_performance + meu_voto.nota_dedicacao, 2) if meu_voto else 0.0,
-            "observacao": meu_voto.observacao if meu_voto else None
-        })
+    ).count()
 
     return {
         "evento_id": cfg.evento_id,
@@ -722,9 +812,12 @@ def painel_jurado_publico(
         "votacao_aberta": cfg.votacao_aberta,
         "numero_jurado": numero_jurado,
         "nome_jurado": nome_jurado,
-        "total_fantasias": len(fantasias),
-        "total_avaliadas_por_mim": len(votos),
-        "fantasias": fantasias_res
+        "palco_ativo": bool(cfg.fantasia_ativa_id is not None),
+        "ja_votou_na_ativa": ja_votou_na_ativa,
+        "personagem_avaliado": personagem_avaliado,
+        "fantasia_ativa": fantasia_ativa_res,
+        "total_fantasias": total_fantasias,
+        "total_avaliadas_por_mim": total_avaliadas
     }
 
 
@@ -749,6 +842,15 @@ def jurado_votar_publico(
     if not cfg.votacao_aberta:
         raise HTTPException(status_code=400, detail="A votação está temporariamente encerrada pela organização.")
 
+    # Validar notas de 1 a 5 apenas (inteiros, sem meios pontos)
+    for cat, nota in [
+        ("Impacto Visual", dados.nota_impacto_visual),
+        ("Performance", dados.nota_performance),
+        ("Dedicação", dados.nota_dedicacao)
+    ]:
+        if nota not in [1, 2, 3, 4, 5]:
+            raise HTTPException(status_code=400, detail=f"A nota de {cat} deve ser um número inteiro de 1 a 5.")
+
     numero_jurado = 1
     if cfg.token_jurado_2 == token_clean:
         numero_jurado = 2
@@ -772,29 +874,27 @@ def jurado_votar_publico(
             evento_id=cfg.evento_id,
             fantasia_id=fantasia.id,
             numero_jurado=numero_jurado,
-            nota_impacto_visual=round(dados.nota_impacto_visual, 2),
-            nota_performance=round(dados.nota_performance, 2),
-            nota_dedicacao=round(dados.nota_dedicacao, 2),
+            nota_impacto_visual=float(dados.nota_impacto_visual),
+            nota_performance=float(dados.nota_performance),
+            nota_dedicacao=float(dados.nota_dedicacao),
             observacao=dados.observacao.strip() if dados.observacao else None
         )
         db.add(voto)
     else:
-        voto.nota_impacto_visual = round(dados.nota_impacto_visual, 2)
-        voto.nota_performance = round(dados.nota_performance, 2)
-        voto.nota_dedicacao = round(dados.nota_dedicacao, 2)
+        voto.nota_impacto_visual = float(dados.nota_impacto_visual)
+        voto.nota_performance = float(dados.nota_performance)
+        voto.nota_dedicacao = float(dados.nota_dedicacao)
         voto.observacao = dados.observacao.strip() if dados.observacao else None
 
     db.commit()
     db.refresh(voto)
 
-    total_somado = round(voto.nota_impacto_visual + voto.nota_performance + voto.nota_dedicacao, 2)
+    total_somado = int(voto.nota_impacto_visual + voto.nota_performance + voto.nota_dedicacao)
 
     return {
-        "mensagem": f"Notas salvas com sucesso para {fantasia.personagem} ({fantasia.nome_participante})!",
+        "mensagem": f"Voto registrado com sucesso para {fantasia.personagem}!",
         "fantasia_id": fantasia.id,
+        "personagem": fantasia.personagem,
         "numero_jurado": numero_jurado,
-        "nota_impacto_visual": voto.nota_impacto_visual,
-        "nota_performance": voto.nota_performance,
-        "nota_dedicacao": voto.nota_dedicacao,
         "total": total_somado
     }
