@@ -12,6 +12,14 @@ class FantasiaCreate(BaseModel):
     foto_url: Optional[str] = None
 
 
+class PublicInscricaoFantasia(BaseModel):
+    evento_id: int
+    nome_participante: str = Field(..., min_length=2, max_length=150)
+    personagem: str = Field(..., min_length=2, max_length=150)
+    universo: str = Field(..., min_length=2, max_length=150)
+    descricao: Optional[str] = None
+
+
 class FantasiaUpdate(BaseModel):
     nome_participante: Optional[str] = None
     personagem: Optional[str] = None

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Cineflix — Inscrição do Concurso de Fantasias</title>
+  <link rel="icon" href="img/logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root {
+      --bg-dark: #001417;
+      --bg-surface: #002226;
+      --bg-card: rgba(0, 34, 38, 0.95);
+      --border-subtle: rgba(255, 255, 255, 0.12);
+      --gold: #FFB703;
+      --orange: #FF7900;
+      --orange-hover: #E66A00;
+      --emerald: #00B894;
+      --text-light: #FFFFFF;
+      --text-muted: #94A3B8;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      background-color: var(--bg-dark);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(circle at 10% 8%, rgba(0, 184, 148, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 90% 92%, rgba(255, 121, 0, 0.18) 0%, transparent 45%),
+        linear-gradient(180deg, #001012 0%, #001A1D 50%, #001012 100%);
+      background-attachment: fixed;
+      color: var(--text-light);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      padding-bottom: 3.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container-inscricao {
+      width: 100%;
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    /* Header Superior */
+    .header-cineflix {
+      text-align: center;
+      margin-bottom: 1.75rem;
+      position: relative;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 183, 3, 0.14);
+      border: 1px solid rgba(255, 183, 3, 0.35);
+      color: #FFD166;
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.85rem;
+    }
+
+    .title-cineflix {
+      font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1.15;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .title-cineflix span {
+      background: linear-gradient(135deg, #FFB703 0%, #FF7900 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sub-cineflix {
+      font-size: 0.92rem;
+      color: #CBD5E1;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.45;
+    }
+
+    /* Card Principal */
+    .card-inscricao {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 1.85rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-inscricao::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #FF7900 0%, #FFB703 50%, #00B894 100%);
+    }
+
+    /* Grupos de Formulário */
+    .form-group {
+      margin-bottom: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .form-label {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-label-required {
+      color: #FF7900;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .form-label-optional {
+      color: #94A3B8;
+      font-size: 0.74rem;
+      font-weight: 500;
+    }
+
+    .form-control-custom {
+      width: 100%;
+      height: 48px;
+      padding: 0 1rem;
+      background: rgba(0, 18, 20, 0.85);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      font-size: 0.96rem;
+      color: #FFFFFF;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .form-control-custom:focus {
+      border-color: #FFB703;
+      background: rgba(0, 24, 28, 0.95);
+      box-shadow: 0 0 0 3px rgba(255, 183, 3, 0.2);
+    }
+
+    .form-control-custom::placeholder {
+      color: #64748B;
+      font-size: 0.88rem;
+    }
+
+    select.form-control-custom {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFB703' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.15rem;
+      padding-right: 2.8rem;
+      cursor: pointer;
+    }
+
+    select.form-control-custom option {
+      background: #002226;
+      color: #FFFFFF;
+      padding: 0.5rem;
+    }
+
+    textarea.form-control-custom {
+      height: auto;
+      min-height: 85px;
+      padding: 0.85rem 1rem;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .form-hint {
+      font-size: 0.74rem;
+      color: #94A3B8;
+      line-height: 1.35;
+    }
+
+    /* Botão de Envio */
+    .btn-submit-cineflix {
+      width: 100%;
+      height: 52px;
+      background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.02rem;
+      font-weight: 800;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      box-shadow: 0 8px 24px -4px rgba(255, 121, 0, 0.45);
+      transition: all 0.22s ease;
+      margin-top: 1.75rem;
+    }
+
+    .btn-submit-cineflix:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -4px rgba(255, 121, 0, 0.55);
+      background: linear-gradient(135deg, #FF8A1C 0%, #FF7900 100%);
+    }
+
+    .btn-submit-cineflix:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-submit-cineflix:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      filter: grayscale(30%);
+    }
+
+    /* Estado de Sucesso */
+    .card-sucesso {
+      display: none;
+      text-align: center;
+      padding: 2.25rem 1.5rem;
+    }
+
+    .sucesso-badge-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(0, 184, 148, 0.15);
+      border: 2px solid #00B894;
+      color: #00B894;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem auto;
+      box-shadow: 0 0 25px rgba(0, 184, 148, 0.35);
+    }
+
+    .sucesso-titulo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-bottom: 0.45rem;
+    }
+
+    .sucesso-desc {
+      font-size: 0.92rem;
+      color: #CBD5E1;
+      margin-bottom: 1.5rem;
+      line-height: 1.45;
+    }
+
+    .resumo-inscricao-box {
+      background: rgba(0, 18, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 1.15rem 1.25rem;
+      text-align: left;
+      margin-bottom: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .resumo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      font-size: 0.88rem;
+    }
+
+    .resumo-item-label {
+      color: #94A3B8;
+      font-weight: 600;
+    }
+
+    .resumo-item-val {
+      color: #FFFFFF;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .btn-nova-inscricao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: transparent;
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      padding: 0.75rem 1.4rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-nova-inscricao:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #FFFFFF;
+    }
+
+    /* Toast Notification */
+    .toast-box {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      left: 1.5rem;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 0.9rem 1.15rem;
+      border-radius: 12px;
+      background: #00363A;
+      color: #FFFFFF;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 0.65rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      z-index: 9999;
+    }
+
+    .toast-box.success {
+      background: #064E3B;
+      border-color: #059669;
+    }
+
+    .toast-box.error {
+      background: #7F1D1D;
+      border-color: #DC2626;
+    }
+
+    @media (max-width: 600px) {
+      .container-inscricao {
+        padding: 1.25rem 0.85rem;
+      }
+      .card-inscricao {
+        padding: 1.35rem 1.1rem;
+        border-radius: 16px;
+      }
+      .title-cineflix {
+        font-size: 1.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container-inscricao">
+
+    <!-- Header do Concurso -->
+    <header class="header-cineflix">
+      <div class="brand-pill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        <span>Cineflix — Concurso de Fantasias</span>
+      </div>
+      <h1 class="title-cineflix">Inscreva seu <span>Personagem</span></h1>
+      <p class="sub-cineflix">Cadastre sua fantasia para desfilar na passarela oficial. Você será avaliado pela bancada de 3 jurados nas categorias de Impacto, Performance e Dedicação.</p>
+    </header>
+
+    <!-- Card do Formulário de Inscrição -->
+    <main class="card-inscricao" id="card-formulario-wrapper">
+      <form id="form-inscricao-cineflix" onsubmit="enviarInscricaoPublica(event)">
+
+        <!-- Seleção do Evento -->
+        <div class="form-group">
+          <label class="form-label" for="campo-evento">
+            <span>Evento</span>
+            <span class="form-label-required">Obrigatório</span>
+          </label>
+          <select id="campo-evento" class="form-control-custom" required>
+            <option value="">Carregando eventos disponíveis...</option>
+          </select>
+        </div>
+
+        <!-- Nome do Participante (Digitável) -->
+        <div class="form-group">
+          <label class="form-label" for="campo-nome">
+            <span>Seu Nome Completo</span>
+            <span class="form-label-required">Obrigatório</span>
+          </label>
+          <input type="text" id="campo-nome" class="form-control-custom" placeholder="Digite seu nome completo" required minlength="2" maxlength="150" autocomplete="name">
+        </div>
+
+        <!-- Nome do Personagem / Fantasia -->
+        <div class="form-group">
+          <label class="form-label" for="campo-personagem">
+            <span>Nome do Personagem ou Fantasia</span>
+            <span class="form-label-required">Obrigatório</span>
+          </label>
+          <input type="text" id="campo-personagem" class="form-control-custom" placeholder="Ex: Gandalf, Mulher-Maravilha, Woody, Darth Vader..." required minlength="2" maxlength="150">
+        </div>
+
+        <!-- Universo / Origem do Personagem -->
+        <div class="form-group">
+          <label class="form-label" for="campo-universo">
+            <span>Universo ou Origem</span>
+            <span class="form-label-required">Obrigatório</span>
+          </label>
+          <input type="text" id="campo-universo" list="lista-universos" class="form-control-custom" placeholder="Ex: Marvel, DC Comics, Disney, Star Wars, Cinema..." required minlength="2" maxlength="150">
+          <datalist id="lista-universos">
+            <option value="Marvel">
+            <option value="DC Comics">
+            <option value="Disney & Pixar">
+            <option value="Star Wars">
+            <option value="Harry Potter">
+            <option value="Anime & Mangá">
+            <option value="Cinema & Séries Clássicas">
+            <option value="Games & Jogos">
+            <option value="Histórias Bíblicas">
+            <option value="Desenhos Animados">
+            <option value="Literatura & Contos de Fadas">
+            <option value="Criativo / Autoral">
+          </datalist>
+          <span class="form-hint">Selecione uma das sugestões ou digite de onde vem seu personagem.</span>
+        </div>
+
+        <!-- Detalhes / Observações (Opcional) -->
+        <div class="form-group">
+          <label class="form-label" for="campo-descricao">
+            <span>Detalhes da Fantasia ou Apresentação</span>
+            <span class="form-label-optional">Opcional</span>
+          </label>
+          <textarea id="campo-descricao" class="form-control-custom" placeholder="Conte algum detalhe, acessório especial ou como será sua pose/atuação na passarela..." maxlength="500"></textarea>
+        </div>
+
+        <!-- Botão de Envio -->
+        <button type="submit" class="btn-submit-cineflix" id="btn-enviar-inscricao">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Confirmar Minha Inscrição</span>
+        </button>
+
+      </form>
+    </main>
+
+    <!-- Card de Sucesso (Oculto inicialmente) -->
+    <section class="card-inscricao card-sucesso" id="card-sucesso-wrapper">
+      <div class="sucesso-badge-circle">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="sucesso-titulo">Inscrição Confirmada!</h2>
+      <p class="sucesso-desc">Sua fantasia foi cadastrada com sucesso na ordem de desfile do Cineflix. Prepare-se para a passarela!</p>
+
+      <div class="resumo-inscricao-box" id="resumo-inscricao-dados">
+        <!-- Preenchido via JavaScript -->
+      </div>
+
+      <button type="button" class="btn-nova-inscricao" onclick="resetarParaNovaInscricao()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Inscrever Outro Personagem</span>
+      </button>
+    </section>
+
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-aviso" class="toast-box"></div>
+
+  <script src="js/api.js"></script>
+  <script>
+    let eventosCache = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await carregarEventos();
+    });
+
+    async function carregarEventos() {
+      const select = document.getElementById('campo-evento');
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const preSelectedEvento = urlParams.get('evento_id');
+
+        const evs = await API.request('/public/cineflix/eventos');
+        eventosCache = evs || [];
+
+        if (eventosCache.length === 0) {
+          select.innerHTML = '<option value="">Nenhum evento ativo com concurso Cineflix</option>';
+          return;
+        }
+
+        select.innerHTML = eventosCache.map(ev => `
+          <option value="${ev.id}" ${preSelectedEvento && String(ev.id) === String(preSelectedEvento) ? 'selected' : ''}>
+            ${escapeHtml(ev.titulo || 'Evento')}
+          </option>
+        `).join('');
+
+        if (preSelectedEvento && !select.value) {
+          select.value = eventosCache[0].id;
+        }
+      } catch (err) {
+        console.error('Erro ao buscar eventos:', err);
+        select.innerHTML = '<option value="1">Acamp Sinodal / Geral</option>';
+      }
+    }
+
+    async function enviarInscricaoPublica(e) {
+      e.preventDefault();
+
+      const eventoId = document.getElementById('campo-evento').value;
+      const nome = document.getElementById('campo-nome').value.trim();
+      const personagem = document.getElementById('campo-personagem').value.trim();
+      const universo = document.getElementById('campo-universo').value.trim();
+      const descricao = document.getElementById('campo-descricao').value.trim();
+
+      if (!eventoId) {
+        mostrarToast('Selecione o evento para participar.', 'error');
+        return;
+      }
+      if (!nome) {
+        mostrarToast('Por favor digite o seu nome completo.', 'error');
+        return;
+      }
+      if (!personagem) {
+        mostrarToast('Informe o nome do seu personagem ou fantasia.', 'error');
+        return;
+      }
+      if (!universo) {
+        mostrarToast('Informe o universo do personagem.', 'error');
+        return;
+      }
+
+      const payload = {
+        evento_id: parseInt(eventoId, 10),
+        nome_participante: nome,
+        personagem: personagem,
+        universo: universo,
+        descricao: descricao || null
+      };
+
+      const btn = document.getElementById('btn-enviar-inscricao');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+        <span>Confirmando inscrição...</span>
+      `;
+
+      try {
+        const res = await API.request('/public/cineflix/inscrever', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        mostrarSucesso(res.fantasia || payload);
+      } catch (err) {
+        mostrarToast(err.message || 'Erro ao realizar inscrição. Tente novamente.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    }
+
+    function mostrarSucesso(f) {
+      document.getElementById('card-formulario-wrapper').style.display = 'none';
+      const cardSucesso = document.getElementById('card-sucesso-wrapper');
+      cardSucesso.style.display = 'block';
+
+      const box = document.getElementById('resumo-inscricao-dados');
+      box.innerHTML = `
+        <div class="resumo-item">
+          <span class="resumo-item-label">Participante:</span>
+          <span class="resumo-item-val">${escapeHtml(f.nome_participante)}</span>
+        </div>
+        <div class="resumo-item">
+          <span class="resumo-item-label">Personagem:</span>
+          <span class="resumo-item-val" style="color: #FFB703;">${escapeHtml(f.personagem)}</span>
+        </div>
+        <div class="resumo-item">
+          <span class="resumo-item-label">Universo:</span>
+          <span class="resumo-item-val" style="color: #FF7900;">${escapeHtml(f.universo)}</span>
+        </div>
+        ${f.descricao ? `
+          <div class="resumo-item" style="flex-direction: column; gap: 0.25rem;">
+            <span class="resumo-item-label">Detalhes:</span>
+            <span class="resumo-item-val" style="text-align: left; font-size: 0.82rem; color: #CBD5E1; font-weight: normal;">${escapeHtml(f.descricao)}</span>
+          </div>
+        ` : ''}
+      `;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetarParaNovaInscricao() {
+      document.getElementById('form-inscricao-cineflix').reset();
+      document.getElementById('card-sucesso-wrapper').style.display = 'none';
+      document.getElementById('card-formulario-wrapper').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function mostrarToast(msg, tipo = 'info') {
+      const toast = document.getElementById('toast-aviso');
+      if (!toast) return;
+      toast.className = `toast-box ${tipo}`;
+      toast.textContent = msg;
+      toast.style.display = 'flex';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 3500);
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>

@@ -145,6 +145,7 @@ async function carregarConfigJurados(silent = false) {
     }
 
     renderizarCardsJurados(cfg);
+    atualizarCardLinkInscricaoPublica(cfg);
     renderizarControlePalcoAdmin(cfg);
   } catch (err) {
     if (!silent) console.error('Erro ao carregar config dos jurados:', err);
@@ -323,6 +324,46 @@ window.chamarProximaPalcoAdmin = async function () {
   if (proxima) {
     await ativarNoPalcoAdmin(proxima.id);
   }
+};
+
+function atualizarCardLinkInscricaoPublica(cfg) {
+  const inputEl = document.getElementById('input-link-inscricao-publica');
+  const btnZap = document.getElementById('btn-whatsapp-inscricao-publica');
+  const btnAbrir = document.getElementById('btn-abrir-inscricao-publica');
+
+  if (!inputEl) return;
+
+  const baseUrl = window.location.origin;
+  const linkPublico = `${baseUrl}/cineflix-inscricao.html?evento_id=${eventoIdSelecionado}`;
+  const evNome = (cfg && cfg.evento_nome) ? cfg.evento_nome : 'Acamp Sinodal';
+
+  inputEl.value = linkPublico;
+
+  if (btnZap) {
+    const txtZap = encodeURIComponent(`Olá! Inscreva seu personagem no Concurso de Fantasias Cineflix (${evNome}) acessando o link:\n${linkPublico}`);
+    btnZap.href = `https://wa.me/?text=${txtZap}`;
+  }
+
+  if (btnAbrir) {
+    btnAbrir.href = linkPublico;
+  }
+}
+
+window.copiarLinkInscricaoPublica = function () {
+  const inputEl = document.getElementById('input-link-inscricao-publica');
+  if (!inputEl) return;
+
+  navigator.clipboard.writeText(inputEl.value).then(() => {
+    showToast('Link de inscrição pública copiado com sucesso!', 'success');
+    const txtEl = document.getElementById('btn-txt-copiar-inscricao');
+    if (txtEl) {
+      const old = txtEl.textContent;
+      txtEl.textContent = 'Copiado!';
+      setTimeout(() => { txtEl.textContent = old; }, 2000);
+    }
+  }).catch(() => {
+    prompt('Copie o link abaixo:', inputEl.value);
+  });
 };
 
 function renderizarCardsJurados(cfg) {
@@ -560,22 +601,34 @@ function renderizarFantasiasAdmin() {
   const ativaId = configCache ? configCache.fantasia_ativa_id : null;
 
   container.innerHTML = itens.map((f, idx) => {
-    const fotoUrl = f.foto_url || 'img/logo.png';
     const estaNoPalco = (ativaId && ativaId === f.id);
+    const ordemNum = f.ordem_apresentacao || (idx + 1);
 
-    return `
-      <div class="fantasia-admin-card" id="fantasia-card-${f.id}" style="${estaNoPalco ? 'border: 2px solid #00B894; box-shadow: 0 0 16px rgba(0, 184, 148, 0.25);' : ''}">
-        <div class="fantasia-card-thumb" onclick="abrirLightboxCineflix('${escapeHtml(fotoUrl)}')">
-          <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(f.personagem)}" onerror="this.src='img/logo.png'">
-          
+    const thumbHtml = f.foto_url
+      ? `<div class="fantasia-card-thumb" onclick="abrirLightboxCineflix('${escapeHtml(f.foto_url)}')">
+          <img src="${escapeHtml(f.foto_url)}" alt="${escapeHtml(f.personagem)}" onerror="this.parentElement.style.display='none'">
           <span style="position: absolute; top: 10px; left: 10px; background: rgba(0, 20, 23, 0.85); color: #FFFFFF; border-radius: 6px; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
-            #${f.ordem_apresentacao || (idx + 1)}
+            #${ordemNum}
           </span>
-
           <span style="position: absolute; top: 10px; right: 10px; background: rgba(0, 30, 33, 0.85); color: #FFB703; border: 1px solid rgba(255, 183, 3, 0.4); border-radius: 6px; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; text-transform: uppercase;">
             ${escapeHtml(f.universo)}
           </span>
-        </div>
+        </div>`
+      : `<div style="height: 105px; background: linear-gradient(135deg, #001E21 0%, #00363A 100%); position: relative; display: flex; align-items: center; justify-content: center; color: #FFB703;">
+          <span style="position: absolute; top: 10px; left: 10px; background: rgba(0, 20, 23, 0.85); color: #FFFFFF; border-radius: 6px; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            #${ordemNum}
+          </span>
+          <span style="position: absolute; top: 10px; right: 10px; background: rgba(0, 30, 33, 0.85); color: #FFB703; border: 1px solid rgba(255, 183, 3, 0.4); border-radius: 6px; font-size: 0.72rem; font-weight: 800; padding: 3px 8px; text-transform: uppercase;">
+            ${escapeHtml(f.universo)}
+          </span>
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 183, 3, 0.4); display: flex; align-items: center; justify-content: center; color: #FFB703; font-weight: 800; font-size: 1.05rem;">
+            ${escapeHtml((f.personagem || 'C').slice(0, 2).toUpperCase())}
+          </div>
+        </div>`;
+
+    return `
+      <div class="fantasia-admin-card" id="fantasia-card-${f.id}" style="${estaNoPalco ? 'border: 2px solid #00B894; box-shadow: 0 0 16px rgba(0, 184, 148, 0.25);' : ''}">
+        ${thumbHtml}
 
         <div style="padding: 1.15rem; display: flex; flex-direction: column; flex: 1; gap: 0.65rem;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">

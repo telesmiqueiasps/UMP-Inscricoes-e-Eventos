@@ -57,6 +57,9 @@ const redirectsContent = `# Redirecionamentos de conveniência para as pastas
 /admin/         /admin/index.html         301
 /cantina        /cantina.html             200
 /cardapio       /cantina.html             200
+/cineflix       /cineflix-inscricao.html  200
+/fantasia       /cineflix-inscricao.html  200
+/jurado         /cineflix-jurado.html     200
 `;
 
 fs.writeFileSync(path.join(distDir, '_redirects'), redirectsContent, 'utf-8');

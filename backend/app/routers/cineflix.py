@@ -14,6 +14,7 @@ from app.models.evento import Evento
 from app.models.cineflix import CineflixConfig, CineflixFantasia, CineflixVoto
 from app.schemas.cineflix import (
     FantasiaCreate,
+    PublicInscricaoFantasia,
     FantasiaUpdate,
     VotoJuradoSubmit,
     CineflixConfigUpdate,
@@ -724,6 +725,96 @@ def excluir_fantasia_participante(
     db.delete(fantasia)
     db.commit()
     return {"mensagem": "Inscrição no Cineflix cancelada com sucesso."}
+
+
+# ==============================================================
+# ENDPOINTS PÚBLICOS DE INSCRIÇÃO (Sem necessidade de login)
+# ==============================================================
+
+@router.get("/public/cineflix/eventos")
+def listar_eventos_publicos_cineflix(
+    db: Session = Depends(get_db)
+):
+    _garantir_tabelas_cineflix()
+    # Buscar eventos ativos
+    evs = db.query(Evento).filter(Evento.ativo == True).order_by(Evento.data_inicio.asc(), Evento.id.desc()).all()
+    if not evs:
+        # Fallback para qualquer evento se nenhum ativo
+        evs = db.query(Evento).order_by(Evento.id.desc()).limit(10).all()
+
+    return [
+        {
+            "id": e.id,
+            "titulo": e.titulo,
+            "descricao": e.descricao,
+            "data_inicio": e.data_inicio.isoformat() if e.data_inicio else None
+        }
+        for e in evs
+    ]
+
+
+@router.post("/public/cineflix/inscrever", status_code=status.HTTP_201_CREATED)
+def inscrever_fantasia_publico(
+    dados: PublicInscricaoFantasia,
+    db: Session = Depends(get_db)
+):
+    _garantir_tabelas_cineflix()
+
+    evento = db.query(Evento).filter(Evento.id == dados.evento_id).first()
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado.")
+
+    cfg = _obter_ou_criar_config(dados.evento_id, db)
+    if not cfg.votacao_aberta:
+        raise HTTPException(status_code=400, detail="As inscrições e votações do Cineflix estão encerradas para este evento.")
+
+    nome = (dados.nome_participante or "").strip()
+    if len(nome) < 2:
+        raise HTTPException(status_code=400, detail="Por favor, digite seu nome completo.")
+
+    personagem = (dados.personagem or "").strip()
+    if len(personagem) < 2:
+        raise HTTPException(status_code=400, detail="Por favor, informe o nome do seu personagem.")
+
+    universo = (dados.universo or "").strip()
+    if len(universo) < 2:
+        raise HTTPException(status_code=400, detail="Por favor, informe o universo do seu personagem (ex: Marvel, DC, Cinema, Disney, Anime...).")
+
+    descricao = dados.descricao.strip() if dados.descricao else None
+
+    # Obter a maior ordem de apresentação atual para colocar este no final da fila
+    from sqlalchemy import func
+    max_ordem = db.query(func.max(CineflixFantasia.ordem_apresentacao)).filter(
+        CineflixFantasia.evento_id == dados.evento_id
+    ).scalar() or 0
+
+    nova = CineflixFantasia(
+        evento_id=dados.evento_id,
+        usuario_id=None,
+        nome_participante=nome,
+        personagem=personagem,
+        universo=universo,
+        descricao=descricao,
+        foto_url=None,
+        ordem_apresentacao=max_ordem + 1
+    )
+    db.add(nova)
+    db.commit()
+    db.refresh(nova)
+
+    return {
+        "mensagem": f"Fantasia '{nova.personagem}' inscrita com sucesso no Cineflix!",
+        "fantasia": {
+            "id": nova.id,
+            "evento_id": nova.evento_id,
+            "evento_titulo": evento.titulo,
+            "nome_participante": nova.nome_participante,
+            "personagem": nova.personagem,
+            "universo": nova.universo,
+            "descricao": nova.descricao,
+            "ordem_apresentacao": nova.ordem_apresentacao
+        }
+    }
 
 
 # ==============================================================
