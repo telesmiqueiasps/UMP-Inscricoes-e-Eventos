@@ -78,7 +78,19 @@ const API = {
             window.deslogarWizard();
           }
         }
-        throw new Error(data.detail || 'Ocorreu um erro na requisição.');
+
+        let errorMsg = 'Ocorreu um erro na requisição.';
+        if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.map(d => (d && d.msg) ? d.msg : JSON.stringify(d)).join('; ');
+        } else if (data.detail && typeof data.detail === 'object') {
+          errorMsg = data.detail.msg || JSON.stringify(data.detail);
+        } else if (data.mensagem) {
+          errorMsg = data.mensagem;
+        }
+
+        throw new Error(errorMsg);
       }
 
       return data;

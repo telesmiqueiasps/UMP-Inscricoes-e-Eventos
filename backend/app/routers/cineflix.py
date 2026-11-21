@@ -229,54 +229,6 @@ def criar_fantasia_admin(
     return _formatar_fantasia(nova, cfg)
 
 
-@router.put("/admin/cineflix/{id}")
-def atualizar_fantasia_admin(
-    id: int,
-    dados: FantasiaUpdate,
-    db: Session = Depends(get_db),
-    admin_user: Usuario = Depends(get_current_admin)
-):
-    _garantir_tabelas_cineflix()
-    fantasia = db.query(CineflixFantasia).filter(CineflixFantasia.id == id).first()
-    if not fantasia:
-        raise HTTPException(status_code=404, detail="Fantasia não encontrada.")
-
-    if dados.nome_participante is not None:
-        fantasia.nome_participante = dados.nome_participante.strip()
-    if dados.personagem is not None:
-        fantasia.personagem = dados.personagem.strip()
-    if dados.universo is not None:
-        fantasia.universo = dados.universo.strip()
-    if dados.descricao is not None:
-        fantasia.descricao = dados.descricao.strip() if dados.descricao else None
-    if dados.foto_url is not None:
-        fantasia.foto_url = dados.foto_url.strip() if dados.foto_url else None
-    if dados.ordem_apresentacao is not None:
-        fantasia.ordem_apresentacao = dados.ordem_apresentacao
-
-    db.commit()
-    db.refresh(fantasia)
-
-    cfg = _obter_ou_criar_config(fantasia.evento_id, db)
-    return _formatar_fantasia(fantasia, cfg)
-
-
-@router.delete("/admin/cineflix/{id}")
-def excluir_fantasia_admin(
-    id: int,
-    db: Session = Depends(get_db),
-    admin_user: Usuario = Depends(get_current_admin)
-):
-    _garantir_tabelas_cineflix()
-    fantasia = db.query(CineflixFantasia).filter(CineflixFantasia.id == id).first()
-    if not fantasia:
-        raise HTTPException(status_code=404, detail="Fantasia não encontrada.")
-
-    db.delete(fantasia)
-    db.commit()
-    return {"mensagem": "Fantasia excluída com sucesso."}
-
-
 @router.get("/admin/cineflix/config", response_model=CineflixConfigResponse)
 def obter_config_cineflix_admin(
     evento_id: int = Query(...),
@@ -496,6 +448,54 @@ def obter_ranking_cineflix(
         it["posicao"] = idx
 
     return itens
+
+
+@router.put("/admin/cineflix/{id}")
+def atualizar_fantasia_admin(
+    id: int,
+    dados: FantasiaUpdate,
+    db: Session = Depends(get_db),
+    admin_user: Usuario = Depends(get_current_admin)
+):
+    _garantir_tabelas_cineflix()
+    fantasia = db.query(CineflixFantasia).filter(CineflixFantasia.id == id).first()
+    if not fantasia:
+        raise HTTPException(status_code=404, detail="Fantasia não encontrada.")
+
+    if dados.nome_participante is not None:
+        fantasia.nome_participante = dados.nome_participante.strip()
+    if dados.personagem is not None:
+        fantasia.personagem = dados.personagem.strip()
+    if dados.universo is not None:
+        fantasia.universo = dados.universo.strip()
+    if dados.descricao is not None:
+        fantasia.descricao = dados.descricao.strip() if dados.descricao else None
+    if dados.foto_url is not None:
+        fantasia.foto_url = dados.foto_url.strip() if dados.foto_url else None
+    if dados.ordem_apresentacao is not None:
+        fantasia.ordem_apresentacao = dados.ordem_apresentacao
+
+    db.commit()
+    db.refresh(fantasia)
+
+    cfg = _obter_ou_criar_config(fantasia.evento_id, db)
+    return _formatar_fantasia(fantasia, cfg)
+
+
+@router.delete("/admin/cineflix/{id}")
+def excluir_fantasia_admin(
+    id: int,
+    db: Session = Depends(get_db),
+    admin_user: Usuario = Depends(get_current_admin)
+):
+    _garantir_tabelas_cineflix()
+    fantasia = db.query(CineflixFantasia).filter(CineflixFantasia.id == id).first()
+    if not fantasia:
+        raise HTTPException(status_code=404, detail="Fantasia não encontrada.")
+
+    db.delete(fantasia)
+    db.commit()
+    return {"mensagem": "Fantasia excluída com sucesso."}
 
 
 @router.post("/admin/cineflix/upload")

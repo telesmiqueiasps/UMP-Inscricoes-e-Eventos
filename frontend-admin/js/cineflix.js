@@ -266,11 +266,19 @@ function renderizarControlePalcoAdmin(cfg) {
 // --- Colocar / Tirar Fantasia do Palco ---
 window.ativarNoPalcoAdmin = async function (fantasiaId) {
   try {
+    const evId = parseInt(eventoIdSelecionado, 10) || parseInt(document.getElementById('filtro-evento-cineflix')?.value, 10);
+    if (!evId) {
+      showToast('Selecione um evento válido antes de ativar o palco.', 'error');
+      return;
+    }
+
+    const fId = (fantasiaId !== null && fantasiaId !== undefined) ? parseInt(fantasiaId, 10) : null;
+
     const res = await API.request('/admin/cineflix/ativar-palco', {
       method: 'PUT',
       body: JSON.stringify({
-        evento_id: eventoIdSelecionado,
-        fantasia_id: fantasiaId
+        evento_id: evId,
+        fantasia_id: fId
       })
     });
 
@@ -283,10 +291,16 @@ window.ativarNoPalcoAdmin = async function (fantasiaId) {
 
 window.desativarPalcoAdmin = async function () {
   try {
+    const evId = parseInt(eventoIdSelecionado, 10) || parseInt(document.getElementById('filtro-evento-cineflix')?.value, 10);
+    if (!evId) {
+      showToast('Selecione um evento válido.', 'error');
+      return;
+    }
+
     const res = await API.request('/admin/cineflix/ativar-palco', {
       method: 'PUT',
       body: JSON.stringify({
-        evento_id: eventoIdSelecionado,
+        evento_id: evId,
         fantasia_id: null
       })
     });

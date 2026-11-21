@@ -57,7 +57,19 @@ const API = {
         if (response.status === 401 || response.status === 403) {
           showToast('Sessão expirada ou sem acesso administrativo.', 'error');
         }
-        throw new Error(data.detail || 'Ocorreu um erro na requisição.');
+
+        let errorMsg = 'Ocorreu um erro na requisição.';
+        if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMsg = data.detail.map(d => (d && d.msg) ? d.msg : JSON.stringify(d)).join('; ');
+        } else if (data.detail && typeof data.detail === 'object') {
+          errorMsg = data.detail.msg || JSON.stringify(data.detail);
+        } else if (data.mensagem) {
+          errorMsg = data.mensagem;
+        }
+
+        throw new Error(errorMsg);
       }
 
       return data;
@@ -79,7 +91,7 @@ function showToast(message, type = 'info') {
 
   const toast = document.createElement('div');
   toast.style.cssText = `padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; background: ${type === 'success' ? '#059669' : '#DC2626'}; box-shadow: 0 4px 12px rgba(0,0,0,0.15);`;
-  toast.textContent = message;
+  toast.textContent = typeof message === 'string' ? message : JSON.stringify(message);
   container.appendChild(toast);
 
   setTimeout(() => toast.remove(), 4000);
