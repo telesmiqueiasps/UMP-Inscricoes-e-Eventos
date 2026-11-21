@@ -467,7 +467,7 @@
             </span>
             <span class="form-label-optional">Opcional</span>
           </label>
-          <input type="url" id="campo-descricao" class="form-control-custom" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." maxlength="300">
+          <input type="text" id="campo-descricao" class="form-control-custom" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." maxlength="300">
           <span class="form-hint">Cole o link da música ou trilha sonora no YouTube que deverá tocar quando você entrar na passarela.</span>
         </div>
 
@@ -547,7 +547,8 @@
       const nome = document.getElementById('campo-nome').value.trim();
       const personagem = document.getElementById('campo-personagem').value.trim();
       const universo = document.getElementById('campo-universo').value.trim();
-      const descricao = document.getElementById('campo-descricao').value.trim();
+      const descricaoRaw = document.getElementById('campo-descricao').value.trim();
+      const descricao = descricaoRaw ? sanitizarUrlYoutube(descricaoRaw) : null;
 
       if (!eventoId) {
         mostrarToast('Selecione o evento para participar.', 'error');
@@ -571,7 +572,7 @@
         nome_participante: nome,
         personagem: personagem,
         universo: universo,
-        descricao: descricao || null
+        descricao: descricao
       };
 
       const btn = document.getElementById('btn-enviar-inscricao');
@@ -621,9 +622,9 @@
             <span class="resumo-item-label">Música / Trilha Sonora:</span>
             <div style="display: flex; align-items: center; gap: 0.45rem; margin-top: 2px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              <a href="${escapeHtml(extrairUrlYoutube(f.descricao))}" target="_blank" rel="noopener noreferrer" style="color: #FFD166; font-size: 0.84rem; text-decoration: underline; font-weight: 700;">
-                Ouvir no YouTube &nearr;
-              </a>
+              <button type="button" onclick="abrirLinkYoutube('${escapeJsString(f.descricao)}', event)" style="background: none; border: none; padding: 0; color: #FFD166; font-size: 0.84rem; text-decoration: underline; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <span>Ouvir no YouTube &nearr;</span>
+              </button>
             </div>
           </div>
         ` : ''}
@@ -650,15 +651,80 @@
       }, 3500);
     }
 
-    function extrairUrlYoutube(texto) {
+    function extrairVideoIdYoutube(str) {
+      if (!str) return null;
+      const s = String(str).trim();
+      const patterns = [
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+        /[?&]v=([\w-]{11})/,
+        /\/shorts\/([\w-]{11})/,
+        /\/embed\/([\w-]{11})/
+      ];
+      for (const p of patterns) {
+        const match = s.match(p);
+        if (match && match[1]) return match[1];
+      }
+      if (/^[\w-]{11}$/.test(s)) return s;
+      return null;
+    }
+
+    function sanitizarUrlYoutube(texto) {
       if (!texto) return '';
-      const t = String(texto).trim();
-      if (t.startsWith('http://') || t.startsWith('https://')) return t;
-      if (t.includes('youtube.com') || t.includes('youtu.be')) return 'https://' + t;
-      if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return 'https://www.youtube.com/watch?v=' + t;
-      const m = t.match(/(https?:\/\/[^\s]+)/);
-      if (m) return m[0];
-      return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t);
+      let raw = String(texto).trim();
+      raw = raw.replace(/^["'‘“\(\[\{]+|["'’”\)\]\}]+$/g, '').trim();
+      const iframeSrcMatch = raw.match(/src=["']([^"']+)["']/i);
+      if (iframeSrcMatch && iframeSrcMatch[1]) raw = iframeSrcMatch[1].trim();
+      const urlMatch = raw.match(/https?:\/\/[^\s"'<>]+/i);
+      if (urlMatch) raw = urlMatch[0];
+      if (/^https?\/\//i.test(raw)) raw = raw.replace(/^(https?)\/\//i, '$1://');
+      const videoId = extrairVideoIdYoutube(raw);
+      if (videoId) return 'https://www.youtube.com/watch?v=' + videoId;
+      const playlistMatch = raw.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+      if (playlistMatch && playlistMatch[1]) return 'https://www.youtube.com/playlist?list=' + playlistMatch[1];
+      if (/^https?:\/\//i.test(raw)) {
+        try { const parsed = new URL(raw); return parsed.href; } catch(e){}
+      }
+      if (/^(www\.)?(youtube\.com|youtu\.be)\//i.test(raw)) return 'https://' + raw;
+      if (raw.length > 0) return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(raw);
+      return '';
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '');
+    }
+
+    function abrirLinkYoutube(urlOuTexto, event) {
+      if (event) {
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }
+
+      const finalUrl = sanitizarUrlYoutube(urlOuTexto);
+      if (!finalUrl) {
+        mostrarToast('Nenhum link ou música do YouTube cadastrado.', 'info');
+        return;
+      }
+
+      try {
+        const win = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          const a = document.createElement('a');
+          a.href = finalUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } catch (err) {
+        window.location.href = finalUrl;
+      }
     }
 
     function escapeHtml(str) {

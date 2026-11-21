@@ -728,7 +728,12 @@
               </div>
 
               ${fantasia_ativa.descricao ? `
-                <div class="palco-descricao-box">${escapeHtml(fantasia_ativa.descricao)}</div>
+                <div style="margin-top: 0.5rem;">
+                  <button type="button" onclick="abrirLinkYoutube('${escapeJsString(fantasia_ativa.descricao)}', event)" style="background: rgba(220, 38, 38, 0.18); border: 1px solid rgba(220, 38, 38, 0.45); color: #FCA5A5; font-size: 0.78rem; font-weight: 700; padding: 0.35rem 0.7rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; text-decoration: none;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    <span>Música / Trilha (YouTube) &nearr;</span>
+                  </button>
+                </div>
               ` : ''}
             </div>
           </div>
@@ -877,6 +882,82 @@
     window.fecharJuradoLightbox = function () {
       const modal = document.getElementById('jurado-lightbox');
       if (modal) modal.style.display = 'none';
+    };
+
+    function extrairVideoIdYoutube(str) {
+      if (!str) return null;
+      const s = String(str).trim();
+      const patterns = [
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+        /[?&]v=([\w-]{11})/,
+        /\/shorts\/([\w-]{11})/,
+        /\/embed\/([\w-]{11})/
+      ];
+      for (const p of patterns) {
+        const match = s.match(p);
+        if (match && match[1]) return match[1];
+      }
+      if (/^[\w-]{11}$/.test(s)) return s;
+      return null;
+    }
+
+    function sanitizarUrlYoutube(texto) {
+      if (!texto) return '';
+      let raw = String(texto).trim();
+      raw = raw.replace(/^["'‘“\(\[\{]+|["'’”\)\]\}]+$/g, '').trim();
+      const iframeSrcMatch = raw.match(/src=["']([^"']+)["']/i);
+      if (iframeSrcMatch && iframeSrcMatch[1]) raw = iframeSrcMatch[1].trim();
+      const urlMatch = raw.match(/https?:\/\/[^\s"'<>]+/i);
+      if (urlMatch) raw = urlMatch[0];
+      if (/^https?\/\//i.test(raw)) raw = raw.replace(/^(https?)\/\//i, '$1://');
+      const videoId = extrairVideoIdYoutube(raw);
+      if (videoId) return 'https://www.youtube.com/watch?v=' + videoId;
+      const playlistMatch = raw.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+      if (playlistMatch && playlistMatch[1]) return 'https://www.youtube.com/playlist?list=' + playlistMatch[1];
+      if (/^https?:\/\//i.test(raw)) {
+        try { const parsed = new URL(raw); return parsed.href; } catch(e){}
+      }
+      if (/^(www\.)?(youtube\.com|youtu\.be)\//i.test(raw)) return 'https://' + raw;
+      if (raw.length > 0) return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(raw);
+      return '';
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '');
+    }
+
+    window.abrirLinkYoutube = function (urlOuTexto, event) {
+      if (event) {
+        if (typeof event.preventDefault === 'function') event.preventDefault();
+        if (typeof event.stopPropagation === 'function') event.stopPropagation();
+      }
+
+      const finalUrl = sanitizarUrlYoutube(urlOuTexto);
+      if (!finalUrl) {
+        alert('Nenhum link ou música do YouTube cadastrado para esta apresentação.');
+        return;
+      }
+
+      try {
+        const win = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          const a = document.createElement('a');
+          a.href = finalUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      } catch (err) {
+        window.location.href = finalUrl;
+      }
     };
 
     function escapeHtml(str) {

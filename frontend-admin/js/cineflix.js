@@ -25,16 +25,97 @@ const ICONS = {
   youtube: `<svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`
 };
 
-function extrairUrlYoutube(texto) {
-  if (!texto) return '';
-  const t = String(texto).trim();
-  if (t.startsWith('http://') || t.startsWith('https://')) return t;
-  if (t.includes('youtube.com') || t.includes('youtu.be')) return 'https://' + t;
-  if (/^[a-zA-Z0-9_-]{11}$/.test(t)) return 'https://www.youtube.com/watch?v=' + t;
-  const m = t.match(/(https?:\/\/[^\s]+)/);
-  if (m) return m[0];
-  return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(t);
+function extrairVideoIdYoutube(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  const patterns = [
+    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?v=|watch\?.+&v=))([\w-]{11})/,
+    /[?&]v=([\w-]{11})/,
+    /\/shorts\/([\w-]{11})/,
+    /\/embed\/([\w-]{11})/
+  ];
+  for (const p of patterns) {
+    const match = s.match(p);
+    if (match && match[1]) return match[1];
+  }
+  if (/^[\w-]{11}$/.test(s)) return s;
+  return null;
 }
+
+function sanitizarUrlYoutube(texto) {
+  if (!texto) return '';
+  let raw = String(texto).trim();
+  raw = raw.replace(/^["'‘“\(\[\{]+|["'’”\)\]\}]+$/g, '').trim();
+  const iframeSrcMatch = raw.match(/src=["']([^"']+)["']/i);
+  if (iframeSrcMatch && iframeSrcMatch[1]) raw = iframeSrcMatch[1].trim();
+  const urlMatch = raw.match(/https?:\/\/[^\s"'<>]+/i);
+  if (urlMatch) raw = urlMatch[0];
+  if (/^https?\/\//i.test(raw)) raw = raw.replace(/^(https?)\/\//i, '$1://');
+  const videoId = extrairVideoIdYoutube(raw);
+  if (videoId) return 'https://www.youtube.com/watch?v=' + videoId;
+  const playlistMatch = raw.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+  if (playlistMatch && playlistMatch[1]) return 'https://www.youtube.com/playlist?list=' + playlistMatch[1];
+  if (/^https?:\/\//i.test(raw)) {
+    try { const parsed = new URL(raw); return parsed.href; } catch (e) {}
+  }
+  if (/^(www\.)?(youtube\.com|youtu\.be)\//i.test(raw)) return 'https://' + raw;
+  if (raw.length > 0) return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(raw);
+  return '';
+}
+
+// Mantido para compatibilidade retroativa
+function extrairUrlYoutube(texto) {
+  return sanitizarUrlYoutube(texto);
+}
+
+function escapeJsString(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
+
+window.abrirLinkYoutube = function (urlOuTexto, event) {
+  if (event) {
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+    if (typeof event.stopPropagation === 'function') event.stopPropagation();
+  }
+
+  const finalUrl = sanitizarUrlYoutube(urlOuTexto);
+  if (!finalUrl) {
+    showToast('Nenhum link ou música do YouTube cadastrado para esta fantasia.', 'info');
+    return;
+  }
+
+  try {
+    const win = window.open(finalUrl, '_blank', 'noopener,noreferrer');
+    if (!win || win.closed || typeof win.closed === 'undefined') {
+      const a = document.createElement('a');
+      a.href = finalUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  } catch (err) {
+    console.warn('Erro ao abrir nova aba:', err);
+    window.location.href = finalUrl;
+  }
+};
+
+window.testarLinkYoutubeModalAdmin = function () {
+  const input = document.getElementById('fantasia-descricao');
+  const val = input ? input.value : '';
+  if (!val || !val.trim()) {
+    showToast('Digite ou cole o link do YouTube no campo antes de testar.', 'info');
+    return;
+  }
+  window.abrirLinkYoutube(val);
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!API.getToken()) {
@@ -210,7 +291,7 @@ function renderizarControlePalcoAdmin(cfg) {
           </div>
           ${fAtiva.descricao ? `
             <div style="margin-top: 6px;">
-              <a href="${escapeHtml(extrairUrlYoutube(fAtiva.descricao))}" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.4rem; color: #FFD166; font-size: 0.82rem; font-weight: 800; text-decoration: underline;">
+              <a href="${escapeHtml(sanitizarUrlYoutube(fAtiva.descricao))}" target="_blank" rel="noopener noreferrer" onclick="abrirLinkYoutube('${escapeJsString(fAtiva.descricao)}', event)" style="display: inline-flex; align-items: center; gap: 0.4rem; color: #FFD166; font-size: 0.82rem; font-weight: 800; text-decoration: underline; cursor: pointer;">
                 ${ICONS.youtube}
                 <span>Trilha Sonora Cadastrada &nearr;</span>
               </a>
@@ -245,11 +326,11 @@ function renderizarControlePalcoAdmin(cfg) {
         <!-- Ações do Palco -->
         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
           ${fAtiva.descricao ? `
-            <a href="${escapeHtml(extrairUrlYoutube(fAtiva.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); color: #FFFFFF; font-weight: 800; border: none; padding: 0.5rem 0.95rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 0, 0, 0.45); cursor: pointer;" title="Abrir música da apresentação no YouTube em nova aba">
+            <button type="button" class="btn btn-sm" onclick="abrirLinkYoutube('${escapeJsString(fAtiva.descricao)}', event)" style="background: linear-gradient(135deg, #FF0000 0%, #CC0000 100%); color: #FFFFFF; font-weight: 800; border: none; padding: 0.5rem 0.95rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.45rem; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 0, 0, 0.45); cursor: pointer;" title="Abrir música da apresentação no YouTube em nova aba">
               ${ICONS.youtube}
               <span>Tocar Música (YouTube)</span>
               ${ICONS.externalLink}
-            </a>
+            </button>
           ` : ''}
           <button type="button" class="btn btn-sm" onclick="desativarPalcoAdmin()" style="background: rgba(239, 68, 68, 0.2); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.5); font-weight: 700; padding: 0.5rem 0.85rem; border-radius: 8px; cursor: pointer;">
             ${ICONS.stop}
@@ -694,10 +775,10 @@ function renderizarFantasiasAdmin() {
                 ${ICONS.youtube}
                 <span style="font-size: 0.74rem; font-weight: 700; color: #991B1B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Trilha Sonora</span>
               </div>
-              <a href="${escapeHtml(extrairUrlYoutube(f.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #DC2626; color: #FFFFFF; font-size: 0.74rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;" title="Abrir música da apresentação no YouTube em nova aba">
+              <button type="button" class="btn btn-sm" onclick="abrirLinkYoutube('${escapeJsString(f.descricao)}', event)" style="background: #DC2626; color: #FFFFFF; font-size: 0.74rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0; border: none; cursor: pointer;" title="Abrir música da apresentação no YouTube em nova aba">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span>Tocar Música</span>
-              </a>
+              </button>
             </div>
           ` : `
             <div style="font-size: 0.74rem; color: #94A3B8; font-style: italic;">
@@ -793,9 +874,9 @@ function renderizarItensSequenciaModal() {
 
         <div style="display: flex; gap: 0.35rem; align-items: center;">
           ${item.descricao ? `
-            <a href="${escapeHtml(extrairUrlYoutube(item.descricao))}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="padding: 0.35rem 0.55rem; color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center;" title="Tocar música no YouTube em nova aba">
+            <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.55rem; color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center; cursor: pointer;" onclick="abrirLinkYoutube('${escapeJsString(item.descricao)}', event)" title="Tocar música no YouTube em nova aba">
               ${ICONS.youtube}
-            </a>
+            </button>
           ` : ''}
           <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.55rem;" ${idx === 0 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : ''} onclick="moverSequenciaItem(${idx}, -1)" title="Subir na fila">
             ${ICONS.arrowUp}
@@ -979,7 +1060,8 @@ window.salvarFantasiaAdmin = async function (e) {
   const nomePart = document.getElementById('fantasia-participante-nome').value.trim();
   const personagem = document.getElementById('fantasia-personagem').value.trim();
   const universo = document.getElementById('fantasia-universo').value.trim();
-  const descricao = document.getElementById('fantasia-descricao').value.trim();
+  const descricaoRaw = document.getElementById('fantasia-descricao').value.trim();
+  const descricao = descricaoRaw ? sanitizarUrlYoutube(descricaoRaw) : null;
   const fotoUrl = document.getElementById('fantasia-foto-url').value.trim();
 
   const payload = {
@@ -987,7 +1069,7 @@ window.salvarFantasiaAdmin = async function (e) {
     nome_participante: nomePart,
     personagem: personagem,
     universo: universo,
-    descricao: descricao || null,
+    descricao: descricao,
     foto_url: fotoUrl || null
   };
 

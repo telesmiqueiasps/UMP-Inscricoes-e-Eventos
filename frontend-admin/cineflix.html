@@ -979,7 +979,14 @@
               </span>
               <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 500;">Opcional</span>
             </label>
-            <input type="url" id="fantasia-descricao" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/...">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="text" id="fantasia-descricao" placeholder="https://www.youtube.com/watch?v=... ou https://youtu.be/..." style="flex: 1;">
+              <button type="button" class="btn btn-outline" onclick="testarLinkYoutubeModalAdmin()" style="font-size: 0.78rem; padding: 0.5rem 0.75rem; white-space: nowrap; color: #DC2626; border-color: #FECACA; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer;" title="Testar link no YouTube agora">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Testar</span>
+              </button>
+            </div>
+            <span style="font-size: 0.74rem; color: var(--text-muted); margin-top: 4px; display: block;">Cole o link do vídeo, short, código de compartilhamento ou nome da música.</span>
           </div>
         </div>
 
