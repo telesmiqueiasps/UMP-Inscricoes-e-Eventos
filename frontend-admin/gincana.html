@@ -127,6 +127,138 @@
       transform: translateY(-1px);
     }
 
+    /* Card de Controle de Visibilidade do Placar (Modo Mistério / Apuração Secreta) */
+    .card-visibilidade-placar {
+      background: linear-gradient(135deg, #001E21 0%, #00363A 100%);
+      border: 1.5px solid rgba(0, 184, 148, 0.4);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      box-shadow: 0 10px 28px -6px rgba(0, 30, 33, 0.35);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-visibilidade-placar.modo-oculto {
+      border-color: rgba(255, 183, 3, 0.65);
+      background: linear-gradient(135deg, #00191C 0%, #002B2E 100%);
+      box-shadow: 0 10px 28px -6px rgba(255, 183, 3, 0.2);
+    }
+
+    .visibilidade-info {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .visibilidade-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .visibilidade-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #00B894;
+      box-shadow: 0 0 10px #00B894;
+      flex-shrink: 0;
+    }
+
+    .card-visibilidade-placar.modo-oculto .visibilidade-status-dot {
+      background: #FFB703;
+      box-shadow: 0 0 12px #FFB703;
+      animation: pulseGold 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseGold {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .visibilidade-status-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: 0.02em;
+    }
+
+    .visibilidade-chip {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(0, 184, 148, 0.2);
+      color: #00B894;
+      border: 1px solid rgba(0, 184, 148, 0.4);
+    }
+
+    .card-visibilidade-placar.modo-oculto .visibilidade-chip {
+      background: rgba(255, 183, 3, 0.2);
+      color: #FFB703;
+      border-color: rgba(255, 183, 3, 0.5);
+    }
+
+    .visibilidade-desc {
+      font-size: 0.85rem;
+      color: #CBD5E1;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .btn-toggle-visibilidade {
+      padding: 0.7rem 1.35rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: none;
+      white-space: nowrap;
+    }
+
+    .btn-toggle-visibilidade:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-toggle-visibilidade.btn-visivel {
+      background: linear-gradient(135deg, #FFB703 0%, #F59E0B 100%);
+      color: #001E21;
+      box-shadow: 0 4px 14px rgba(255, 183, 3, 0.35);
+    }
+
+    .btn-toggle-visibilidade.btn-visivel:hover:not(:disabled) {
+      background: linear-gradient(135deg, #FFC42E 0%, #FFB703 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 183, 3, 0.45);
+    }
+
+    .btn-toggle-visibilidade.btn-oculto {
+      background: linear-gradient(135deg, #00B894 0%, #009E7E 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 14px rgba(0, 184, 148, 0.35);
+    }
+
+    .btn-toggle-visibilidade.btn-oculto:hover:not(:disabled) {
+      background: linear-gradient(135deg, #00D2A7 0%, #00B894 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 184, 148, 0.45);
+    }
+
     /* Cards das Equipes no Admin */
     .teams-grid-admin {
       display: grid;
@@ -531,6 +663,30 @@
             </svg>
             <span>Abrir Placar ao Vivo</span>
           </a>
+        </div>
+      </div>
+
+      <!-- Card de Controle de Visibilidade do Placar Público (Modo Mistério / Apuração em Sigilo) -->
+      <div class="card-visibilidade-placar" id="card-visibilidade-placar">
+        <div class="visibilidade-info">
+          <div class="visibilidade-badge-row">
+            <span class="visibilidade-status-dot" id="visibilidade-status-dot"></span>
+            <span class="visibilidade-status-text" id="visibilidade-status-text">Placar Público: Visível</span>
+            <span class="visibilidade-chip" id="visibilidade-chip">Tempo Real</span>
+          </div>
+          <p class="visibilidade-desc" id="visibilidade-desc">
+            O público está acompanhando a pontuação e os líderes em tempo real.
+          </p>
+        </div>
+
+        <div class="visibilidade-action">
+          <button type="button" class="btn-toggle-visibilidade btn-visivel" id="btn-toggle-visibilidade" onclick="toggleVisibilidadePlacar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <span>Borrar Placar (Modo Mistério)</span>
+          </button>
         </div>
       </div>
 

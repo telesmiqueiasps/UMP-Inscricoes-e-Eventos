@@ -12,6 +12,10 @@ class GincanaEquipeUpdate(BaseModel):
     evento_id: Optional[int] = None
 
 
+class GincanaVisibilidadeUpdate(BaseModel):
+    placar_oculto: bool
+
+
 class GincanaPontoCreate(BaseModel):
     equipe: int = Field(..., ge=1, le=2)
     titulo: str = Field(..., min_length=1, max_length=200)
@@ -50,9 +54,10 @@ class GincanaDetalhesResponse(BaseModel):
     titulo: str
     evento_id: Optional[int] = None
     evento_titulo: Optional[str] = None
+    placar_oculto: bool = False
     equipe_1: EquipeInfo
     equipe_2: EquipeInfo
-    lider: Any  # 1, 2 ou "empate"
+    lider: Any  # 1, 2, "empate" ou "misterio"
     diferenca_pontos: int
     total_geral: int
     porcentagem_eq1: float

@@ -961,6 +961,130 @@
     }
 
     /* ==============================================================
+       MODO MISTÉRIO / APURAÇÃO EM SIGILO (PLACAR BORRADO)
+       ============================================================== */
+    .banner-sigilo-publico {
+      background: linear-gradient(135deg, rgba(0, 30, 33, 0.95) 0%, rgba(0, 48, 52, 0.95) 100%);
+      border: 1.5px solid rgba(255, 183, 3, 0.55);
+      border-radius: 14px;
+      padding: 0.95rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.95rem;
+      box-shadow: 0 8px 24px -4px rgba(255, 183, 3, 0.25);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      animation: bannerSigiloSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes bannerSigiloSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .banner-sigilo-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 183, 3, 0.15);
+      border: 1px solid rgba(255, 183, 3, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFB703;
+      flex-shrink: 0;
+    }
+
+    .banner-sigilo-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .banner-sigilo-text strong {
+      display: block;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #FFD166;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .banner-sigilo-text p {
+      margin: 3px 0 0 0;
+      font-size: 0.8rem;
+      color: #CBD5E1;
+      line-height: 1.4;
+    }
+
+    /* Efeito de Borrão Estético no Placar */
+    .score-display-box {
+      position: relative;
+    }
+
+    .score-oculto-blur .team-score {
+      filter: blur(16px);
+      opacity: 0.5;
+      user-select: none;
+      pointer-events: none;
+      transform: scale(1.04);
+      letter-spacing: 0.08em;
+      transition: filter 0.4s ease, opacity 0.4s ease;
+    }
+
+    .score-sigilo-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      background: rgba(0, 18, 20, 0.45);
+      border-radius: 12px;
+      z-index: 5;
+      pointer-events: none;
+      backdrop-filter: blur(1px);
+    }
+
+    .score-sigilo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(255, 183, 3, 0.18);
+      border: 1px solid rgba(255, 183, 3, 0.5);
+      color: #FFD166;
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px rgba(255, 183, 3, 0.2);
+    }
+
+    /* Animação na barra de disputa quando em apuração */
+    .modo-sigilo-bar .bar-fill-1,
+    .modo-sigilo-bar .bar-fill-2 {
+      background: linear-gradient(90deg, rgba(255, 183, 3, 0.3) 0%, rgba(255, 121, 0, 0.4) 50%, rgba(255, 183, 3, 0.3) 100%) !important;
+      background-size: 200% 100% !important;
+      animation: shimmerBar 2.5s infinite linear !important;
+    }
+
+    @keyframes shimmerBar {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Pontos no Histórico Borrados */
+    .task-points.sigilo-blur {
+      filter: blur(6px);
+      opacity: 0.65;
+      user-select: none;
+    }
+
+    /* ==============================================================
        RESPONSIVIDADE MOBILE RIGOROSA
        No mobile: VS estritamente no meio dos 2 cards [Card1][VS][Card2]
        ============================================================== */
@@ -1292,6 +1416,20 @@
         </button>
       </div>
     </header>
+
+    <!-- Banner de Apuração em Sigilo / Modo Mistério (Exibido quando placar está oculto/borrado) -->
+    <div id="banner-sigilo-publico" class="banner-sigilo-publico" style="display: none;">
+      <div class="banner-sigilo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB703" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="banner-sigilo-text">
+        <strong>APURAÇÃO EM SIGILO &bull; MODO MISTÉRIO ATIVO</strong>
+        <p>A contagem de pontos segue normalmente pelos organizadores, mas a pontuação pública está temporariamente em sigilo para manter o suspense da grande final!</p>
+      </div>
+    </div>
 
     <!-- Arena do Placar (Duelo Lado a Lado com VS no Centro) -->
     <div class="arena-scoreboard">

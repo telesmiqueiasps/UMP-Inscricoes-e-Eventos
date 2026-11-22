@@ -61,11 +61,18 @@ async function carregarGincanaAdmin(silencioso = false) {
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const eventoId = urlParams.get('evento_id') || sessionStorage.getItem('ump_evento_id') || localStorage.getItem('ump_ultimo_evento_id');
-    let url = '/gincana/ativa';
+    let url = '/admin/gincana/ativa';
     if (eventoId) {
       url += `?evento_id=${encodeURIComponent(eventoId)}`;
     }
-    const data = await API.request(url);
+    let data;
+    try {
+      data = await API.request(url);
+    } catch (e) {
+      let fallbackUrl = '/gincana/ativa';
+      if (eventoId) fallbackUrl += `?evento_id=${encodeURIComponent(eventoId)}`;
+      data = await API.request(fallbackUrl);
+    }
     if (!data) return;
 
     gincanaAtual = data;
@@ -95,6 +102,9 @@ function renderizarPainelAdmin(data) {
     const urlPublica = obterUrlPublicaPlacar(data.id);
     linkPublicoEl.href = urlPublica;
   }
+
+  // 2.1 Controle de Visibilidade / Modo Mistério
+  renderizarControleVisibilidade(data);
 
   // 3. Equipe 1
   const eq1 = data.equipe_1;
@@ -225,6 +235,87 @@ function renderizarTabelaPontos(historico) {
 
   tbody.innerHTML = html;
 }
+
+// Controle de Visibilidade / Modo Mistério (Placar Borrado)
+function renderizarControleVisibilidade(data) {
+  const card = document.getElementById('card-visibilidade-placar');
+  const dot = document.getElementById('visibilidade-status-dot');
+  const txt = document.getElementById('visibilidade-status-text');
+  const chip = document.getElementById('visibilidade-chip');
+  const desc = document.getElementById('visibilidade-desc');
+  const btn = document.getElementById('btn-toggle-visibilidade');
+  if (!card || !btn) return;
+
+  const estaOculto = Boolean(data.placar_oculto);
+
+  if (estaOculto) {
+    card.classList.add('modo-oculto');
+    if (dot) dot.style.background = '#FFB703';
+    if (txt) txt.textContent = 'Placar Público: BORRADO (Modo Mistério)';
+    if (chip) chip.textContent = 'Apuração em Sigilo';
+    if (desc) {
+      desc.textContent = 'A pontuação está borrada para o público no telão e celulares. Você continua acompanhando e lançando pontos normalmente.';
+    }
+    btn.className = 'btn-toggle-visibilidade btn-oculto';
+    btn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      <span>Revelar Placar ao Público</span>
+    `;
+    btn.title = 'Clique para desborrar e revelar o placar oficial com os vencedores para todo o público';
+  } else {
+    card.classList.remove('modo-oculto');
+    if (dot) dot.style.background = '#00B894';
+    if (txt) txt.textContent = 'Placar Público: 100% Visível e Aberto';
+    if (chip) chip.textContent = 'Tempo Real';
+    if (desc) {
+      desc.textContent = 'O público e o telão estão visualizando os pontos, o líder e o histórico em tempo real.';
+    }
+    btn.className = 'btn-toggle-visibilidade btn-visivel';
+    btn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </svg>
+      <span>Borrar Placar (Modo Mistério)</span>
+    `;
+    btn.title = 'Clique para congelar/borrar a pontuação pública antes da revelação final';
+  }
+}
+
+window.toggleVisibilidadePlacar = async function () {
+  if (!gincanaAtual || !gincanaAtual.id) {
+    showToast('Aguarde o carregamento da gincana.', 'info');
+    return;
+  }
+
+  const novoOculto = !Boolean(gincanaAtual.placar_oculto);
+  const btn = document.getElementById('btn-toggle-visibilidade');
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await API.request(`/admin/gincana/${gincanaAtual.id}/visibilidade`, {
+      method: 'PUT',
+      body: JSON.stringify({ placar_oculto: novoOculto })
+    });
+
+    gincanaAtual = res;
+    renderizarPainelAdmin(res);
+
+    if (novoOculto) {
+      showToast('Modo Mistério ativado! O placar público agora está BORRADO para os participantes.', 'info');
+    } else {
+      showToast('Placar público REVELADO com sucesso para todo o público!', 'success');
+    }
+  } catch (err) {
+    console.error('Erro ao alternar visibilidade:', err);
+    showToast(err.message || 'Erro ao alterar visibilidade do placar.', 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
 
 // Modal de Lançamento de Pontos por Equipe
 function abrirModalPontuarEquipe(equipeNum) {

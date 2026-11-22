@@ -11,6 +11,7 @@ class Gincana(Base):
     evento_id = Column(Integer, ForeignKey("eventos.id", ondelete="SET NULL"), nullable=True, index=True)
     titulo = Column(String(200), default="Gincana UMP", nullable=False)
     ativa = Column(Boolean, default=True, nullable=False)
+    placar_oculto = Column(Boolean, default=False, nullable=False)
 
     # Configurações Equipe 1
     nome_equipe_1 = Column(String(100), default="Equipe 1", nullable=False)

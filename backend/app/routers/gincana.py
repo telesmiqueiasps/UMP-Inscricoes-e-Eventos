@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
@@ -15,6 +15,7 @@ from app.models.diaria import InscricaoDiaria
 from collections import defaultdict
 from app.schemas.gincana import (
     GincanaEquipeUpdate,
+    GincanaVisibilidadeUpdate,
     GincanaPontoCreate,
     GincanaPontoResponse,
     GincanaDetalhesResponse,
@@ -23,8 +24,45 @@ from app.schemas.gincana import (
 
 router = APIRouter(tags=["Gincana"])
 
+_TABELA_GINCANA_VERIFICADA = False
+
+
+def _garantir_colunas_gincana(db: Session):
+    global _TABELA_GINCANA_VERIFICADA
+    if _TABELA_GINCANA_VERIFICADA:
+        return
+    try:
+        from sqlalchemy import text
+        db.execute(text("ALTER TABLE gincanas ADD COLUMN IF NOT EXISTS placar_oculto BOOLEAN DEFAULT FALSE NOT NULL;"))
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        _TABELA_GINCANA_VERIFICADA = True
+
+
+def _verificar_se_eh_admin(request: Optional[Request], db: Session) -> bool:
+    if not request:
+        return False
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return False
+    token = auth_header.split(" ")[1]
+    try:
+        from jose import jwt
+        from app.core.config import settings
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if not user_id:
+            return False
+        user = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
+        return bool(user and user.is_admin)
+    except Exception:
+        return False
+
 
 def _obter_ou_criar_gincana_ativa(db: Session, evento_id: Optional[int] = None) -> Gincana:
+    _garantir_colunas_gincana(db)
     query = db.query(Gincana).filter(Gincana.ativa == True)
     if evento_id is not None:
         query = query.filter(Gincana.evento_id == evento_id)
@@ -41,6 +79,7 @@ def _obter_ou_criar_gincana_ativa(db: Session, evento_id: Optional[int] = None) 
             titulo="Gincana Acamp Sinodal",
             evento_id=evento_id,
             ativa=True,
+            placar_oculto=False,
             nome_equipe_1="Equipe Verde",
             cor_equipe_1="#00B894",
             nome_equipe_2="Equipe Laranja",
@@ -53,7 +92,7 @@ def _obter_ou_criar_gincana_ativa(db: Session, evento_id: Optional[int] = None) 
     return gincana
 
 
-def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Optional[int] = None) -> GincanaDetalhesResponse:
+def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Optional[int] = None, is_admin: bool = False) -> GincanaDetalhesResponse:
     total_eq1 = (
         db.query(func.coalesce(func.sum(GincanaPonto.pontos), 0))
         .filter(GincanaPonto.gincana_id == gincana.id, GincanaPonto.equipe == 1)
@@ -220,16 +259,53 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Opt
         except Exception:
             pass
 
+    placar_oculto = bool(getattr(gincana, "placar_oculto", False))
+
+    if placar_oculto and not is_admin:
+        # Modo Mistério para público: protege pontuações reais contra DevTools
+        total_eq1_resp = 0
+        total_eq2_resp = 0
+        lider_resp = "misterio"
+        diferenca_resp = 0
+        total_geral_resp = 0
+        pct1_resp = 50.0
+        pct2_resp = 50.0
+        historico_resp = []
+        for p in historico:
+            historico_resp.append(
+                GincanaPontoResponse(
+                    id=p.id,
+                    equipe=p.equipe,
+                    equipe_nome=p.equipe_nome,
+                    equipe_cor=p.equipe_cor,
+                    titulo=p.titulo,
+                    descricao=p.descricao,
+                    pontos=0,
+                    usuario_nome=p.usuario_nome,
+                    created_at=p.created_at
+                )
+            )
+    else:
+        total_eq1_resp = total_eq1
+        total_eq2_resp = total_eq2
+        lider_resp = lider
+        diferenca_resp = abs(total_eq1 - total_eq2)
+        total_geral_resp = total_geral
+        pct1_resp = pct1
+        pct2_resp = pct2
+        historico_resp = historico
+
     return GincanaDetalhesResponse(
         id=gincana.id,
         titulo=gincana.titulo,
         evento_id=gincana.evento_id or target_evento_id,
         evento_titulo=evento_titulo,
+        placar_oculto=placar_oculto,
         equipe_1=EquipeInfo(
             numero=1,
             nome=gincana.nome_equipe_1,
             cor=gincana.cor_equipe_1,
-            pontos=total_eq1,
+            pontos=total_eq1_resp,
             total_quartos=len(quartos_eq1),
             total_vagas_quartos=vagas_eq1,
             total_ocupantes_quartos=ocup_eq1,
@@ -239,18 +315,18 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Opt
             numero=2,
             nome=gincana.nome_equipe_2,
             cor=gincana.cor_equipe_2,
-            pontos=total_eq2,
+            pontos=total_eq2_resp,
             total_quartos=len(quartos_eq2),
             total_vagas_quartos=vagas_eq2,
             total_ocupantes_quartos=ocup_eq2,
             quartos_nomes=quartos_eq2
         ),
-        lider=lider,
-        diferenca_pontos=abs(total_eq1 - total_eq2),
-        total_geral=total_geral,
-        porcentagem_eq1=pct1,
-        porcentagem_eq2=pct2,
-        historico=historico,
+        lider=lider_resp,
+        diferenca_pontos=diferenca_resp,
+        total_geral=total_geral_resp,
+        porcentagem_eq1=pct1_resp,
+        porcentagem_eq2=pct2_resp,
+        historico=historico_resp,
         atualizado_em=datetime.utcnow()
     )
 
@@ -261,26 +337,63 @@ def _montar_resposta_gincana(gincana: Gincana, db: Session, evento_id_param: Opt
 
 @router.get("/gincana/ativa", response_model=GincanaDetalhesResponse)
 def obter_gincana_ativa(
+    request: Request,
     evento_id: Optional[int] = Query(None, description="Filtrar por ID do Evento"),
     db: Session = Depends(get_db)
 ):
     """Retorna os dados e pontuações em tempo real da gincana ativa."""
     gincana = _obter_ou_criar_gincana_ativa(db, evento_id)
-    return _montar_resposta_gincana(gincana, db, evento_id_param=evento_id)
+    eh_admin = _verificar_se_eh_admin(request, db)
+    return _montar_resposta_gincana(gincana, db, evento_id_param=evento_id, is_admin=eh_admin)
 
 
 @router.get("/gincana/{gincana_id}", response_model=GincanaDetalhesResponse)
-def obter_gincana_por_id(gincana_id: int, db: Session = Depends(get_db)):
+def obter_gincana_por_id(
+    gincana_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """Retorna os dados de uma gincana específica."""
     gincana = db.query(Gincana).filter(Gincana.id == gincana_id).first()
     if not gincana:
         raise HTTPException(status_code=404, detail="Gincana não encontrada.")
-    return _montar_resposta_gincana(gincana, db)
+    eh_admin = _verificar_se_eh_admin(request, db)
+    return _montar_resposta_gincana(gincana, db, is_admin=eh_admin)
 
 
 # ==============================================================
 # Rotas Administrativas (protegidas com token de admin)
 # ==============================================================
+
+@router.get("/admin/gincana/ativa", response_model=GincanaDetalhesResponse)
+def obter_gincana_ativa_admin(
+    evento_id: Optional[int] = Query(None, description="Filtrar por ID do Evento"),
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("gincana"))
+):
+    """Retorna os dados completos da gincana ativa para administradores (sempre visível)."""
+    gincana = _obter_ou_criar_gincana_ativa(db, evento_id)
+    return _montar_resposta_gincana(gincana, db, evento_id_param=evento_id, is_admin=True)
+
+
+@router.put("/admin/gincana/{gincana_id}/visibilidade", response_model=GincanaDetalhesResponse)
+def atualizar_visibilidade_placar(
+    gincana_id: int,
+    req: GincanaVisibilidadeUpdate,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_permissao("gincana"))
+):
+    """Ativa ou desativa o modo mistério (placar oculto/borrado para o público)."""
+    _garantir_colunas_gincana(db)
+    gincana = db.query(Gincana).filter(Gincana.id == gincana_id).first()
+    if not gincana:
+        raise HTTPException(status_code=404, detail="Gincana não encontrada.")
+
+    gincana.placar_oculto = bool(req.placar_oculto)
+    db.commit()
+    db.refresh(gincana)
+    return _montar_resposta_gincana(gincana, db, is_admin=True)
+
 
 @router.put("/admin/gincana/{gincana_id}/equipes", response_model=GincanaDetalhesResponse)
 def atualizar_equipes_gincana(
@@ -307,7 +420,7 @@ def atualizar_equipes_gincana(
 
     db.commit()
     db.refresh(gincana)
-    return _montar_resposta_gincana(gincana, db)
+    return _montar_resposta_gincana(gincana, db, is_admin=True)
 
 
 @router.post("/admin/gincana/{gincana_id}/pontos", response_model=GincanaDetalhesResponse, status_code=status.HTTP_201_CREATED)
@@ -334,7 +447,7 @@ def lancar_pontos_tarefa(
     db.add(novo_ponto)
     db.commit()
 
-    return _montar_resposta_gincana(gincana, db)
+    return _montar_resposta_gincana(gincana, db, is_admin=True)
 
 
 @router.delete("/admin/gincana/pontos/{ponto_id}")
@@ -371,4 +484,4 @@ def zerar_pontuacao_gincana(
     db.commit()
     db.refresh(gincana)
 
-    return _montar_resposta_gincana(gincana, db)
+    return _montar_resposta_gincana(gincana, db, is_admin=True)

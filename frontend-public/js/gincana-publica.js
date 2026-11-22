@@ -3,6 +3,7 @@ let pontosAnterioresEq1 = null;
 let pontosAnterioresEq2 = null;
 let totalTarefasAnteriores = null;
 let pollingInterval = null;
+let estadoOcultoAnterior = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   carregarDadosGincana();
@@ -78,38 +79,88 @@ function atualizarInterface(data) {
   if (nomeEq1 && data.equipe_1) nomeEq1.textContent = data.equipe_1.nome;
   if (nomeEq2 && data.equipe_2) nomeEq2.textContent = data.equipe_2.nome;
 
+  const estaOculto = Boolean(data.placar_oculto);
+
+  // Notificar quando o placar for revelado após ter estado oculto
+  if (estadoOcultoAnterior === true && !estaOculto) {
+    dispararNotificacao('O Placar Oficial foi REVELADO!');
+  }
+  estadoOcultoAnterior = estaOculto;
+
+  // Banner de Sigilo
+  const bannerSigilo = document.getElementById('banner-sigilo-publico');
+  if (bannerSigilo) {
+    bannerSigilo.style.display = estaOculto ? 'flex' : 'none';
+  }
+
   // 4. Pontuações e Animação de Contador
   const elScore1 = document.getElementById('pontos-eq1');
   const elScore2 = document.getElementById('pontos-eq2');
+  const box1 = document.querySelector('#card-eq1 .score-display-box');
+  const box2 = document.querySelector('#card-eq2 .score-display-box');
 
-  const novoP1 = data.equipe_1 ? data.equipe_1.pontos : 0;
-  const novoP2 = data.equipe_2 ? data.equipe_2.pontos : 0;
-
-  if (pontosAnterioresEq1 === null) {
-    // Primeira carga
-    if (elScore1) elScore1.textContent = novoP1;
-    if (elScore2) elScore2.textContent = novoP2;
+  if (estaOculto) {
+    if (box1) {
+      box1.classList.add('score-oculto-blur');
+      if (!box1.querySelector('.score-sigilo-overlay')) {
+        const ov1 = document.createElement('div');
+        ov1.className = 'score-sigilo-overlay';
+        ov1.innerHTML = `<span class="score-sigilo-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Em Sigilo</span>`;
+        box1.appendChild(ov1);
+      }
+    }
+    if (box2) {
+      box2.classList.add('score-oculto-blur');
+      if (!box2.querySelector('.score-sigilo-overlay')) {
+        const ov2 = document.createElement('div');
+        ov2.className = 'score-sigilo-overlay';
+        ov2.innerHTML = `<span class="score-sigilo-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Em Sigilo</span>`;
+        box2.appendChild(ov2);
+      }
+    }
+    if (elScore1) elScore1.textContent = '8888';
+    if (elScore2) elScore2.textContent = '8888';
   } else {
-    // Detectar alteração na equipe 1
-    if (novoP1 !== pontosAnterioresEq1 && elScore1) {
-      animarNumero(elScore1, pontosAnterioresEq1, novoP1, 800);
-      destacarCard('card-eq1', elScore1);
-      if (novoP1 > pontosAnterioresEq1) {
-        dispararNotificacao(`${data.equipe_1.nome} marcou +${novoP1 - pontosAnterioresEq1} pts!`);
-      }
+    if (box1) {
+      box1.classList.remove('score-oculto-blur');
+      const ov1 = box1.querySelector('.score-sigilo-overlay');
+      if (ov1) ov1.remove();
     }
-    // Detectar alteração na equipe 2
-    if (novoP2 !== pontosAnterioresEq2 && elScore2) {
-      animarNumero(elScore2, pontosAnterioresEq2, novoP2, 800);
-      destacarCard('card-eq2', elScore2);
-      if (novoP2 > pontosAnterioresEq2) {
-        dispararNotificacao(`${data.equipe_2.nome} marcou +${novoP2 - pontosAnterioresEq2} pts!`);
-      }
+    if (box2) {
+      box2.classList.remove('score-oculto-blur');
+      const ov2 = box2.querySelector('.score-sigilo-overlay');
+      if (ov2) ov2.remove();
     }
-  }
 
-  pontosAnterioresEq1 = novoP1;
-  pontosAnterioresEq2 = novoP2;
+    const novoP1 = data.equipe_1 ? data.equipe_1.pontos : 0;
+    const novoP2 = data.equipe_2 ? data.equipe_2.pontos : 0;
+
+    if (pontosAnterioresEq1 === null) {
+      // Primeira carga
+      if (elScore1) elScore1.textContent = novoP1;
+      if (elScore2) elScore2.textContent = novoP2;
+    } else {
+      // Detectar alteração na equipe 1
+      if (novoP1 !== pontosAnterioresEq1 && elScore1) {
+        animarNumero(elScore1, pontosAnterioresEq1, novoP1, 800);
+        destacarCard('card-eq1', elScore1);
+        if (novoP1 > pontosAnterioresEq1) {
+          dispararNotificacao(`${data.equipe_1.nome} marcou +${novoP1 - pontosAnterioresEq1} pts!`);
+        }
+      }
+      // Detectar alteração na equipe 2
+      if (novoP2 !== pontosAnterioresEq2 && elScore2) {
+        animarNumero(elScore2, pontosAnterioresEq2, novoP2, 800);
+        destacarCard('card-eq2', elScore2);
+        if (novoP2 > pontosAnterioresEq2) {
+          dispararNotificacao(`${data.equipe_2.nome} marcou +${novoP2 - pontosAnterioresEq2} pts!`);
+        }
+      }
+    }
+
+    pontosAnterioresEq1 = novoP1;
+    pontosAnterioresEq2 = novoP2;
+  }
 
   // 5. Líder & Versus
   const card1 = document.getElementById('card-eq1');
@@ -124,42 +175,57 @@ function atualizarInterface(data) {
     badgeLider1.classList.remove('show');
     badgeLider2.classList.remove('show');
 
-    const svgThunder = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
-
-    if (data.lider === 1) {
-      card1.classList.add('is-winner');
-      badgeLider1.classList.add('show');
-      diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_1.nome} (+${data.diferenca_pontos} pts)</span>`;
-      diffBadge.style.color = '#F8FAFC';
-    } else if (data.lider === 2) {
-      card2.classList.add('is-winner');
-      badgeLider2.classList.add('show');
-      diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_2.nome} (+${data.diferenca_pontos} pts)</span>`;
-      diffBadge.style.color = '#F8FAFC';
+    if (estaOculto) {
+      diffBadge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFB703" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Apuração em Sigilo &bull; Disputa Ponto a Ponto</span>`;
+      diffBadge.style.color = '#FFD166';
     } else {
-      diffBadge.innerHTML = `${svgThunder}<span>Empate Técnico</span>`;
-      diffBadge.style.color = '#F8FAFC';
+      const svgThunder = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+
+      if (data.lider === 1) {
+        card1.classList.add('is-winner');
+        badgeLider1.classList.add('show');
+        diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_1.nome} (+${data.diferenca_pontos} pts)</span>`;
+        diffBadge.style.color = '#F8FAFC';
+      } else if (data.lider === 2) {
+        card2.classList.add('is-winner');
+        badgeLider2.classList.add('show');
+        diffBadge.innerHTML = `${svgThunder}<span>${data.equipe_2.nome} (+${data.diferenca_pontos} pts)</span>`;
+        diffBadge.style.color = '#F8FAFC';
+      } else {
+        diffBadge.innerHTML = `${svgThunder}<span>Empate Técnico</span>`;
+        diffBadge.style.color = '#F8FAFC';
+      }
     }
   }
 
   // 6. Barra de Disputa
+  const barTrack = document.querySelector('.dispute-bar-section .bar-track');
   const fill1 = document.getElementById('bar-fill-1');
   const fill2 = document.getElementById('bar-fill-2');
   const label1 = document.getElementById('bar-label-eq1');
   const label2 = document.getElementById('bar-label-eq2');
 
   if (fill1 && fill2 && label1 && label2 && data.equipe_1 && data.equipe_2) {
-    fill1.style.width = `${data.porcentagem_eq1}%`;
-    fill2.style.width = `${data.porcentagem_eq2}%`;
-    label1.textContent = `${data.equipe_1.nome} (${data.porcentagem_eq1}%)`;
-    label2.textContent = `${data.equipe_2.nome} (${data.porcentagem_eq2}%)`;
+    if (estaOculto) {
+      if (barTrack) barTrack.classList.add('modo-sigilo-bar');
+      fill1.style.width = '50%';
+      fill2.style.width = '50%';
+      label1.textContent = `${data.equipe_1.nome} (Em Apuração)`;
+      label2.textContent = `${data.equipe_2.nome} (Em Apuração)`;
+    } else {
+      if (barTrack) barTrack.classList.remove('modo-sigilo-bar');
+      fill1.style.width = `${data.porcentagem_eq1}%`;
+      fill2.style.width = `${data.porcentagem_eq2}%`;
+      label1.textContent = `${data.equipe_1.nome} (${data.porcentagem_eq1}%)`;
+      label2.textContent = `${data.equipe_2.nome} (${data.porcentagem_eq2}%)`;
+    }
   }
 
   // 7. Histórico de Tarefas
-  renderizarHistorico(data.historico);
+  renderizarHistorico(data.historico, estaOculto);
 }
 
-function renderizarHistorico(historico) {
+function renderizarHistorico(historico, estaOculto = false) {
   const container = document.getElementById('history-list');
   if (!container) return;
 
@@ -174,8 +240,8 @@ function renderizarHistorico(historico) {
     return;
   }
 
-  // Evitar re-renderização desnecessária do DOM se a quantidade e primeiro item forem idênticos
-  const hashAtual = `${historico.length}-${historico[0].id}-${historico[0].pontos}`;
+  // Evitar re-renderização desnecessária do DOM se a quantidade, primeiro item e estado oculto forem idênticos
+  const hashAtual = `${historico.length}-${historico[0].id}-${historico[0].pontos}-${estaOculto}`;
   if (container.dataset.lastHash === hashAtual) {
     return;
   }
@@ -187,6 +253,10 @@ function renderizarHistorico(historico) {
     const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const ptsTexto = item.pontos > 0 ? `+${item.pontos}` : `${item.pontos}`;
     const ptsCor = item.pontos >= 0 ? '#10B981' : '#EF4444';
+
+    const ptsHtml = estaOculto
+      ? `<div class="task-points sigilo-blur" style="color: #FFB703;">🔒 ??? pts</div>`
+      : `<div class="task-points" style="color: ${ptsCor};">${ptsTexto} pts</div>`;
 
     html += `
       <div class="task-item">
@@ -208,9 +278,7 @@ function renderizarHistorico(historico) {
             </p>
           </div>
         </div>
-        <div class="task-points" style="color: ${ptsCor};">
-          ${ptsTexto} pts
-        </div>
+        ${ptsHtml}
       </div>
     `;
   });

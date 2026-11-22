@@ -106,6 +106,7 @@ async def lifespan(app: FastAPI):
                     );
                 """))
                 conn.execute(text("ALTER TABLE gincana_pontos ADD COLUMN IF NOT EXISTS usuario_nome VARCHAR(150);"))
+                conn.execute(text("ALTER TABLE gincanas ADD COLUMN IF NOT EXISTS placar_oculto BOOLEAN DEFAULT FALSE NOT NULL;"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincanas_evento ON gincanas(evento_id);"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS idx_gincana_pontos_gincana ON gincana_pontos(gincana_id);"))
                 conn.execute(text("""
