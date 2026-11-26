@@ -171,7 +171,6 @@ function aplicarRestricoesPerfilNoEvento(user) {
     if (aba === 'eventos') permitido = temEventos;
     else if (aba === 'gincana') permitido = isGlobal || permissoes.includes('gincana');
     else if (aba === 'cantina') permitido = isGlobal || permissoes.includes('cantina');
-    else if (aba === 'achados') permitido = true;
     else if (aba === 'cineflix') permitido = true;
     else if (aba === 'configuracoes') permitido = isGlobal || permissoes.includes('configuracoes');
 
@@ -315,11 +314,6 @@ window.switchSubTab = function(tabId, btn) {
   // Se ativou a aba do Dashboard, carregar e redimensionar gráficos
   if (tabId === 'pane-dashboard') {
     carregarDashboardEvento();
-  }
-  if (tabId === 'pane-achados') {
-    if (typeof carregarAchadosEventoTab === 'function') {
-      carregarAchadosEventoTab();
-    }
   }
   if (tabId === 'pane-gratuidades') {
     if (typeof carregarGratuidadesEvento === 'function') {
@@ -7898,167 +7892,4 @@ window.baixarTodasImagensGratuidadesPNG = async function() {
   if (typeof showToast === 'function') {
     showToast(`Todas as ${total} imagens de check-in foram baixadas!`, 'success');
   }
-};
-
-
-
-// ==========================================
-// ABA: ACHADOS E PERDIDOS DO EVENTO
-// ==========================================
-let cacheAchadosEvento = [];
-let statusFiltroAchadosEv = 'TODOS';
-
-window.carregarAchadosEventoTab = async function () {
-  if (!selectedEventoId) return;
-
-  const grid = document.getElementById('ev-achados-grid');
-  if (grid) {
-    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">Carregando itens de achados e perdidos...</div>';
-  }
-
-  try {
-    const list = await API.request(`/admin/achados-perdidos?evento_id=${selectedEventoId}&status=${encodeURIComponent(statusFiltroAchadosEv)}`);
-    cacheAchadosEvento = list || [];
-
-    // Atualizar contadores
-    let tot = cacheAchadosEvento.length;
-    let disp = 0;
-    let reiv = 0;
-    let entr = 0;
-    cacheAchadosEvento.forEach(it => {
-      const st = (it.status || '').toUpperCase();
-      if (st === 'DISPONIVEL') disp++;
-      else if (st === 'REIVINDICADO') reiv++;
-      else if (st === 'ENTREGUE') entr++;
-    });
-
-    const elTot = document.getElementById('ev-kpi-achados-tot');
-    const elDisp = document.getElementById('ev-kpi-achados-disp');
-    const elReiv = document.getElementById('ev-kpi-achados-reiv');
-    const elEntr = document.getElementById('ev-kpi-achados-entr');
-
-    if (elTot) elTot.textContent = tot;
-    if (elDisp) elDisp.textContent = disp;
-    if (elReiv) elReiv.textContent = reiv;
-    if (elEntr) elEntr.textContent = entr;
-
-    filtrarAchadosEventoLocal();
-  } catch (err) {
-    if (grid) {
-      grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #DC2626;">Erro ao carregar itens: ${err.message || 'Falha de comunicação'}</div>`;
-    }
-  }
-};
-
-window.filtrarAchadosEventoTab = function (status, btn) {
-  statusFiltroAchadosEv = status;
-  document.querySelectorAll('.tab-achados-ev-btn').forEach(b => {
-    b.style.background = 'transparent';
-    b.style.color = '#64748B';
-    b.style.boxShadow = 'none';
-  });
-  if (btn) {
-    btn.style.background = '#FFFFFF';
-    btn.style.color = '#00363A';
-    btn.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
-  }
-  carregarAchadosEventoTab();
-};
-
-window.filtrarAchadosEventoLocal = function () {
-  const termo = (document.getElementById('ev-achados-busca')?.value || '').toLowerCase().trim();
-  let itens = cacheAchadosEvento;
-
-  if (termo) {
-    itens = cacheAchadosEvento.filter(it => {
-      const tit = (it.titulo || '').toLowerCase();
-      const loc = (it.local_encontrado || '').toLowerCase();
-      const desc = (it.descricao || '').toLowerCase();
-      const part = (it.reivindicado_por?.nome || '').toLowerCase();
-      return tit.includes(termo) || loc.includes(termo) || desc.includes(termo) || part.includes(termo);
-    });
-  }
-
-  renderizarAchadosEventoGrid(itens);
-};
-
-window.renderizarAchadosEventoGrid = function (itens) {
-  const grid = document.getElementById('ev-achados-grid');
-  if (!grid) return;
-
-  if (!itens || itens.length === 0) {
-    grid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: #FFFFFF; border-radius: 12px; border: 1px dashed var(--border-color);">
-        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1rem;">Nenhum item de achados e perdidos registrado para este evento.</p>
-        <button type="button" class="btn btn-primary" onclick="abrirModalNovoAchadoEvento()" style="background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%); border: none; font-weight: 700;">
-          Cadastrar Primeiro Item
-        </button>
-      </div>
-    `;
-    return;
-  }
-
-  grid.innerHTML = itens.map(it => {
-    const st = (it.status || 'DISPONIVEL').toUpperCase();
-    let badgeBg = '#00B894';
-    let badgeText = 'Aguardando Dono';
-
-    if (st === 'REIVINDICADO') {
-      badgeBg = '#FF7900';
-      badgeText = 'Reivindicado';
-    } else if (st === 'ENTREGUE') {
-      badgeBg = '#64748B';
-      badgeText = 'Entregue';
-    }
-
-    const fotoUrl = it.foto_url || 'img/logo.png';
-
-    let blocoReiv = '';
-    if (st === 'REIVINDICADO' && it.reivindicado_por) {
-      blocoReiv = `
-        <div style="background: #FFF7ED; border: 1px solid #FDBA74; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #9A3412;">
-          <strong>Reivindicado por:</strong> ${escapeHtml(it.reivindicado_por.nome)}
-          ${it.reivindicado_por.telefone ? `<br><strong>Contato:</strong> ${escapeHtml(it.reivindicado_por.telefone)}` : ''}
-          ${it.reivindicacao_mensagem ? `<div style="margin-top: 3px; font-style: italic;">"${escapeHtml(it.reivindicacao_mensagem)}"</div>` : ''}
-        </div>
-      `;
-    }
-
-    let blocoEntrega = '';
-    if (st === 'ENTREGUE') {
-      blocoEntrega = `
-        <div style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #475569;">
-          <strong>Entregue para:</strong> ${escapeHtml(it.entregue_para_nome || 'Participante')}
-        </div>
-      `;
-    }
-
-    return `
-      <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-        <div style="position: relative; height: 180px; background: #001E21; overflow: hidden;">
-          <span style="position: absolute; top: 10px; right: 10px; background: ${badgeBg}; color: #FFFFFF; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; text-transform: uppercase;">${badgeText}</span>
-          <img src="${escapeHtml(fotoUrl)}" alt="${escapeHtml(it.titulo)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='img/logo.png'">
-        </div>
-        <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
-          <h4 style="margin: 0; font-size: 1rem; font-weight: 800; color: var(--text-dark);">${escapeHtml(it.titulo)}</h4>
-          <div style="font-size: 0.8rem; color: var(--text-muted);">
-            ${it.local_encontrado ? `<div><strong>Local:</strong> ${escapeHtml(it.local_encontrado)}</div>` : ''}
-            ${it.data_encontrado ? `<div><strong>Quando:</strong> ${escapeHtml(it.data_encontrado)}</div>` : ''}
-          </div>
-          ${it.descricao ? `<div style="font-size: 0.82rem; color: #475569; background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.65rem;">${escapeHtml(it.descricao)}</div>` : ''}
-          ${blocoReiv}
-          ${blocoEntrega}
-          <div style="margin-top: auto; padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="achados-e-perdidos.html?evento_id=${selectedEventoId}" class="btn btn-outline" style="font-size: 0.78rem; padding: 0.35rem 0.65rem; text-decoration: none;" target="_blank">
-              Gerenciar Item &rarr;
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-};
-
-window.abrirModalNovoAchadoEvento = function () {
-  window.open(`achados-e-perdidos.html?evento_id=${selectedEventoId}`, '_blank');
 };
