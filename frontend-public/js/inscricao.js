@@ -35,7 +35,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const parcelasGroup = document.getElementById('parcelas-group');
   const paymentResult = document.getElementById('payment-result');
 
+  const STEP_TITLES = {
+    1: 'Identificação',
+    2: 'Dados da Inscrição',
+    3: 'Forma de Pagamento',
+    4: 'Confirmação'
+  };
+
   function atualizarStepProgressBar(passoAtivo) {
+    // Atualização Desktop
     for (let i = 1; i <= 4; i++) {
       const navItem = document.getElementById('step-nav-' + i);
       const navDiv = document.getElementById('step-div-' + i);
@@ -58,29 +66,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         navDiv.className = (i < passoAtivo) ? 'step-item-divider completed' : 'step-item-divider';
       }
     }
-  }
 
-  function atualizarStepProgressBar(passoAtivo) {
+    // Atualização Mobile
+    const mobBadge = document.getElementById('step-mobile-badge');
+    const mobTitle = document.getElementById('step-mobile-title');
+    if (mobBadge) mobBadge.textContent = 'Etapa ' + passoAtivo + ' de 4';
+    if (mobTitle) mobTitle.textContent = STEP_TITLES[passoAtivo] || '';
+
     for (let i = 1; i <= 4; i++) {
-      const navItem = document.getElementById('step-nav-' + i);
-      const navDiv = document.getElementById('step-div-' + i);
-      if (navItem) {
+      const seg = document.getElementById('step-mob-seg-' + i);
+      if (seg) {
         if (i < passoAtivo) {
-          navItem.className = 'step-item completed';
-          const numEl = navItem.querySelector('.step-item-number');
-          if (numEl) numEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+          seg.className = 'steps-mobile-segment completed';
         } else if (i === passoAtivo) {
-          navItem.className = 'step-item active';
-          const numEl = navItem.querySelector('.step-item-number');
-          if (numEl) numEl.textContent = i;
+          seg.className = 'steps-mobile-segment active';
         } else {
-          navItem.className = 'step-item';
-          const numEl = navItem.querySelector('.step-item-number');
-          if (numEl) numEl.textContent = i;
+          seg.className = 'steps-mobile-segment';
         }
-      }
-      if (navDiv) {
-        navDiv.className = (i < passoAtivo) ? 'step-item-divider completed' : 'step-item-divider';
       }
     }
   }

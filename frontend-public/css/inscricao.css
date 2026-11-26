@@ -1,24 +1,24 @@
 /* ==========================================================================
-   UMP EVENTOS — TELA DE INSCRIÇÃO REDESIGN
-   Estética Moderna, Minimalista e Sofisticada
-   Paleta: Azul Profundo, Navy, Azul Vibrante e Vidro Fosco (Glassmorphism)
-   Inspirado nas composições geométricas e glassmorphism das referências
+   UMP EVENTOS — TELA DE INSCRIÇÃO (DESIGN REFINADO & SUTIL)
+   Estética: Fundo Claro/Branco, Formas Geométricas Sutis Animadas,
+   Tipografia Perfeita e Responsividade Mobile Rigorosa (Zero Overflow).
    ========================================================================== */
 
 /* --- 1. BASE DA PÁGINA --- */
 body.inscricao-page {
-  background-color: #06122C;
-  color: #F8FAFC;
+  background-color: #F8FAFC;
+  color: #0F172A;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* --- 2. FUNDO GEOMÉTRICO EM CAMADAS (REFERÊNCIA IMAGEM 1) --- */
-.geometric-bg-container {
+/* --- 2. ELEMENTOS GRÁFICOS & FORMAS GEOMÉTRICAS SUTIS ANIMADAS --- */
+.subtle-geometric-bg {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -26,194 +26,210 @@ body.inscricao-page {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background: radial-gradient(circle at 75% 25%, #0B2B6F 0%, #061536 45%, #030A1A 100%);
+  background-color: #FFFFFF;
 }
 
-/* Imagem de base com textura diagonal suave */
-.geometric-bg-image {
+/* Padrão micro-grid extremamente sutil */
+.geo-grid-pattern {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  opacity: 0.65;
-  mix-blend-mode: overlay;
-  filter: contrast(1.15) brightness(0.95);
+  opacity: 0.45;
+  background-image: radial-gradient(rgba(21, 87, 214, 0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
-/* Facetas Geométricas Diagonais */
-.geometric-facet {
+/* Figura Geométrica 1: Polígono Angular Superior Direito */
+.geo-shape-1 {
   position: absolute;
-  pointer-events: none;
+  top: -8%;
+  right: -6%;
+  width: 520px;
+  height: 520px;
+  background: linear-gradient(135deg, rgba(21, 87, 214, 0.08) 0%, rgba(59, 130, 246, 0.03) 70%, transparent 100%);
+  clip-path: polygon(25% 0%, 100% 0%, 80% 100%, 0% 75%);
+  animation: floatGeo1 24s ease-in-out infinite alternate;
 }
 
-/* Grande plano diagonal superior direito (Azul elétrico para azul marinho) */
-.facet-1 {
-  top: -15%;
-  right: -10%;
-  width: 70vw;
-  height: 80vh;
-  background: linear-gradient(135deg, rgba(28, 124, 200, 0.45) 0%, rgba(13, 61, 125, 0.65) 60%, rgba(6, 18, 44, 0.9) 100%);
-  clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 75%);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  box-shadow: -20px 20px 60px rgba(0, 0, 0, 0.5);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* Faceta angular central esquerda (Azul profundo) */
-.facet-2 {
-  top: 25%;
-  left: -15%;
-  width: 75vw;
-  height: 70vh;
-  background: linear-gradient(45deg, rgba(2, 38, 96, 0.85) 0%, rgba(6, 62, 137, 0.5) 70%, transparent 100%);
-  clip-path: polygon(0% 20%, 75% 100%, 0% 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Faceta triangular inferior em Navy absoluto */
-.facet-3 {
-  bottom: -20%;
-  right: 5%;
-  width: 60vw;
-  height: 60vh;
-  background: linear-gradient(195deg, rgba(7, 31, 77, 0.8) 0%, rgba(3, 10, 26, 0.95) 80%);
-  clip-path: polygon(50% 0%, 100% 60%, 0% 100%);
-  box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* Linha de reflexo especular na divisão diagonal */
-.geometric-line {
+/* Figura Geométrica 2: Polígono Diagonal Inferior Esquerdo */
+.geo-shape-2 {
   position: absolute;
-  top: 20%;
-  left: 25%;
-  width: 80vw;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25) 40%, rgba(96, 165, 250, 0.4) 60%, transparent 95%);
-  transform: rotate(-25deg);
-  transform-origin: top left;
-  pointer-events: none;
+  bottom: -10%;
+  left: -8%;
+  width: 480px;
+  height: 480px;
+  background: linear-gradient(45deg, rgba(14, 165, 233, 0.07) 0%, rgba(99, 102, 241, 0.03) 80%, transparent 100%);
+  clip-path: polygon(0% 20%, 85% 0%, 100% 80%, 15% 100%);
+  animation: floatGeo2 28s ease-in-out infinite alternate;
 }
 
-/* Efeito Glow / Aura Laranja & Azul sutil no horizonte */
-.geometric-glow-1 {
+/* Figura Geométrica 3: Triângulo Translúcido Lateral */
+.geo-shape-3 {
   position: absolute;
-  top: 10%;
-  right: 15%;
-  width: 450px;
-  height: 450px;
+  top: 38%;
+  right: 4%;
+  width: 280px;
+  height: 280px;
+  background: linear-gradient(205deg, rgba(37, 99, 235, 0.05) 0%, transparent 80%);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  animation: floatGeo3 20s ease-in-out infinite alternate;
+}
+
+/* Brilho radial ambiente muito sutil */
+.geo-glow-spot {
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 550px;
+  height: 550px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(21, 87, 214, 0.04) 0%, transparent 70%);
   filter: blur(60px);
 }
 
-.geometric-glow-2 {
-  position: absolute;
-  bottom: 15%;
-  left: 10%;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
-  filter: blur(80px);
+@keyframes floatGeo1 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-24px, 30px) rotate(6deg); }
 }
 
-/* Textura Granulada / Grain Texture Sutilíssima */
-.geometric-grain-texture {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.055;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  mix-blend-mode: screen;
-  pointer-events: none;
+@keyframes floatGeo2 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(30px, -25px) rotate(-5deg); }
 }
 
-/* --- 3. NAVBAR GLASSMORPHIC --- */
-body.inscricao-page nav.navbar {
-  background: rgba(6, 18, 44, 0.75) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
+@keyframes floatGeo3 {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-18px, -20px) rotate(4deg); }
+}
+
+/* --- 3. NAVBAR ELEGANTE & COMPATÍVEL MOBILE --- */
+nav.navbar.inscricao-navbar {
   position: sticky;
   top: 0;
   z-index: 100;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(15, 40, 80, 0.04) !important;
+  height: 68px;
+  padding: 0 1.5rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-body.inscricao-page .navbar-brand,
-body.inscricao-page .brand {
-  color: #FFFFFF !important;
+.navbar-content {
+  max-width: 860px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+.brand-text {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
+  font-size: 1.25rem;
+  color: #0F172A;
   letter-spacing: -0.02em;
 }
 
-body.inscricao-page .nav-link {
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-body.inscricao-page .nav-link:hover {
-  color: #FFFFFF !important;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-body.inscricao-page #nav-user-area {
+.nav-btn {
   display: inline-flex;
   align-items: center;
-  background: rgba(37, 99, 235, 0.22);
-  border: 1px solid rgba(96, 165, 250, 0.35);
-  color: #93C5FD !important;
+  gap: 0.45rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-body.inscricao-page #nav-user-area:hover {
-  background: rgba(37, 99, 235, 0.38);
-  color: #FFFFFF !important;
+.nav-btn-outline {
+  color: #475569;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
 }
 
-/* --- 4. CONTAINER PRINCIPAL E STEP TRACKER --- */
+.nav-btn-outline:hover {
+  color: #1557D6;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+}
+
+.nav-btn-primary {
+  color: #1557D6;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+}
+
+.nav-btn-primary:hover {
+  color: #FFFFFF;
+  background: #1557D6;
+  border-color: #1557D6;
+}
+
+/* --- 4. CONTAINER PRINCIPAL --- */
 body.inscricao-page main.container {
   position: relative;
   z-index: 10;
-  max-width: 860px !important;
+  max-width: 840px !important;
   margin: 2rem auto 4rem auto;
   padding: 0 1.25rem;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* Barra de Etapas / Step Progress Tracker */
-.steps-progress-bar {
+/* --- 5. INDICADOR DE ETAPAS (DESKTOP E MOBILE DEDICADOS) --- */
+.steps-progress-container {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(15, 40, 80, 0.04);
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.5rem;
+}
+
+/* Versão Desktop */
+.steps-desktop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  margin-bottom: 2rem;
-  padding: 1rem 1.5rem;
-  background: rgba(6, 18, 44, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  position: relative;
-  z-index: 2;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.85rem;
+  color: #94A3B8;
+  font-size: 0.88rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .step-item-number {
@@ -225,193 +241,269 @@ body.inscricao-page main.container {
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.6);
-  transition: all 0.3s ease;
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+  color: #64748B;
+  transition: all 0.25s ease;
   font-variant-numeric: tabular-nums;
 }
 
 .step-item.active {
-  color: #FFFFFF;
+  color: #1557D6;
 }
 
 .step-item.active .step-item-number {
   background: #1557D6;
-  border-color: #60A5FA;
+  border-color: #1557D6;
   color: #FFFFFF;
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.7);
+  box-shadow: 0 2px 8px rgba(21, 87, 214, 0.35);
 }
 
 .step-item.completed {
-  color: #34D399;
+  color: #059669;
 }
 
 .step-item.completed .step-item-number {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: #34D399;
-  color: #34D399;
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #059669;
 }
 
 .step-item-divider {
   flex: 1;
   height: 2px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 0 1rem;
-  position: relative;
+  background: #E2E8F0;
+  margin: 0 0.85rem;
   border-radius: 1px;
+  transition: background 0.3s ease;
 }
 
 .step-item-divider.completed {
-  background: #34D399;
+  background: #10B981;
 }
 
-/* --- 5. CARDS TRANSLÚCIDOS (GLASSMORPHISM CARD SYSTEM) --- */
+/* Versão Mobile (Oculta no desktop) */
+.steps-mobile {
+  display: none;
+}
+
+.steps-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.steps-mobile-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1557D6;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.steps-mobile-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.steps-mobile-track {
+  display: flex;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.steps-mobile-segment {
+  flex: 1;
+  height: 4px;
+  border-radius: 9999px;
+  background: #E2E8F0;
+  transition: all 0.3s ease;
+}
+
+.steps-mobile-segment.active {
+  background: #1557D6;
+}
+
+.steps-mobile-segment.completed {
+  background: #10B981;
+}
+
+/* --- 6. CARDS CLAROS & MODERNOS --- */
 body.inscricao-page .card {
-  background: rgba(10, 28, 60, 0.65) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
-  border-radius: 20px !important;
-  padding: 2.25rem !important;
-  box-shadow: 0 24px 60px rgba(2, 10, 30, 0.65), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  color: #F8FAFC !important;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  padding: 2rem !important;
+  box-shadow: 0 4px 20px rgba(15, 40, 80, 0.05), 0 1px 3px rgba(15, 40, 80, 0.02) !important;
+  color: #0F172A !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
   transform: none !important;
 }
 
 body.inscricao-page .card:hover {
   transform: none !important;
-  box-shadow: 0 28px 70px rgba(2, 10, 30, 0.75), 0 6px 20px rgba(0, 0, 0, 0.35) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 30px rgba(15, 40, 80, 0.08) !important;
+  border-color: #CBD5E1 !important;
 }
 
 /* Banner de Usuário Ativo */
 body.inscricao-page #logged-user-banner {
-  background: rgba(16, 185, 129, 0.12) !important;
-  border: 1px solid rgba(52, 211, 153, 0.35) !important;
-  border-radius: 14px !important;
-  padding: 1rem 1.25rem !important;
+  background: #ECFDF5 !important;
+  border: 1px solid #A7F3D0 !important;
+  border-radius: 12px !important;
+  padding: 0.85rem 1.25rem !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
 
-body.inscricao-page #logged-user-msg {
-  color: #34D399 !important;
+.logged-user-msg {
+  color: #065F46 !important;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
-body.inscricao-page #logged-user-msg strong {
-  color: #FFFFFF;
+.logged-user-msg strong {
+  color: #047857;
+}
+
+.btn-change-user {
+  background: #FFFFFF !important;
+  border: 1px solid #A7F3D0 !important;
+  color: #065F46 !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 8px !important;
+  min-height: 34px !important;
+  white-space: nowrap !important;
+}
+
+.btn-change-user:hover {
+  background: #059669 !important;
+  color: #FFFFFF !important;
+  border-color: #059669 !important;
 }
 
 /* Card de Resumo do Evento */
 body.inscricao-page #event-summary {
-  background: rgba(10, 28, 60, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.32) !important;
-  border-radius: 20px !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
   overflow: hidden;
   padding: 0 !important;
 }
 
-.event-summary-inner {
-  padding: 1.75rem 2rem 2rem 2rem;
-}
-
 .event-banner-media {
   width: 100%;
-  height: 240px;
+  height: 220px;
   object-fit: cover;
   display: block;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.event-summary-inner {
+  padding: 1.5rem 1.75rem 1.75rem 1.75rem;
 }
 
 .event-title-main {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #0F172A;
   letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
 }
 
 .event-desc-main {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.95rem;
+  color: #64748B;
+  font-size: 0.92rem;
   line-height: 1.6;
   margin-bottom: 1.25rem;
 }
 
 .event-price-plate {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(21, 87, 214, 0.22);
-  border: 1px solid rgba(96, 165, 250, 0.4);
-  padding: 0.6rem 1.25rem;
-  border-radius: 12px;
-  color: #93C5FD;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  color: #475569;
   font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .event-price-value {
   font-size: 1.35rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: #1557D6;
   font-variant-numeric: tabular-nums;
 }
 
-/* --- 6. TÍTULOS E IDENTIFICAÇÃO DOS CAMPOS --- */
+/* --- 7. TÍTULOS E IDENTIFICAÇÃO DOS CAMPOS --- */
 body.inscricao-page .card-title {
   font-family: 'Plus Jakarta Sans', sans-serif !important;
-  font-size: 1.45rem !important;
+  font-size: 1.35rem !important;
   font-weight: 700 !important;
-  color: #FFFFFF !important;
+  color: #0F172A !important;
   letter-spacing: -0.01em !important;
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 0.4rem !important;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
 }
 
 body.inscricao-page .card-desc {
-  color: rgba(255, 255, 255, 0.75) !important;
-  font-size: 0.95rem !important;
-  line-height: 1.6 !important;
-  margin-bottom: 1.75rem !important;
+  color: #64748B !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  margin-bottom: 1.5rem !important;
 }
 
 body.inscricao-page .form-label {
   display: flex !important;
   align-items: center !important;
-  gap: 0.4rem !important;
-  color: #FFFFFF !important;
-  font-size: 0.88rem !important;
+  gap: 0.35rem !important;
+  color: #1E293B !important;
+  font-size: 0.85rem !important;
   font-weight: 600 !important;
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 0.45rem !important;
   letter-spacing: 0.01em !important;
 }
 
 body.inscricao-page .form-label .label-required {
-  color: #60A5FA;
+  color: #EF4444;
   font-weight: 700;
 }
 
 body.inscricao-page .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.35rem;
   position: relative;
 }
 
-/* --- 7. ESTILIZAÇÃO DOS CAMPOS (VIDRO FOSCO TRANSLÚCIDO) --- */
-/* Wrapper com ícone */
+/* --- 8. CAMPOS DE ENTRADA (FUNDO BRANCO, CONTRASTE PERFEITO) --- */
 .input-with-icon {
   position: relative;
   display: flex;
@@ -421,197 +513,155 @@ body.inscricao-page .form-group {
 
 .input-with-icon .input-icon {
   position: absolute;
-  left: 1rem;
+  left: 0.95rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  stroke: #64748B;
+  width: 17px;
+  height: 17px;
+  stroke: #94A3B8;
   fill: none;
   pointer-events: none;
-  transition: all 0.2s ease;
+  transition: stroke 0.2s ease;
   z-index: 2;
 }
 
-/* Campos de entrada: Fundo branco translúcido, texto escuro de alto contraste */
 body.inscricao-page .form-control {
   width: 100% !important;
-  min-height: 48px !important;
-  padding: 0.75rem 1rem !important;
+  min-height: 46px !important;
+  padding: 0.7rem 0.95rem !important;
   font-size: 0.95rem !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 500 !important;
-  color: #071936 !important;
-  background: rgba(255, 255, 255, 0.88) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  color: #0F172A !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.2s ease !important;
   outline: none !important;
   box-sizing: border-box !important;
 }
 
 .input-with-icon .form-control {
-  padding-left: 2.75rem !important;
+  padding-left: 2.65rem !important;
 }
 
-/* Placeholder elegante em tom azul-acinzentado */
 body.inscricao-page .form-control::placeholder {
-  color: #64748B !important;
+  color: #94A3B8 !important;
   font-weight: 400 !important;
-  opacity: 0.9 !important;
 }
 
-/* Estado Hover */
+/* Hover */
 body.inscricao-page .form-control:hover {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-color: rgba(255, 255, 255, 0.75) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  border-color: #94A3B8 !important;
 }
 
 .input-with-icon:hover .input-icon {
-  stroke: #334155;
+  stroke: #64748B;
 }
 
-/* Estado Focus */
+/* Focus */
 body.inscricao-page .form-control:focus {
   background: #FFFFFF !important;
-  border-color: #3B82F6 !important;
-  color: #041226 !important;
-  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.35), 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+  border-color: #1557D6 !important;
+  color: #0F172A !important;
+  box-shadow: 0 0 0 3px rgba(21, 87, 214, 0.15) !important;
 }
 
 .input-with-icon:focus-within .input-icon {
-  stroke: #1D68ED !important;
-  transform: translateY(-50%) scale(1.08);
+  stroke: #1557D6 !important;
 }
 
-/* Estado Preenchido e Válido */
-body.inscricao-page .form-control:not(:placeholder-shown) {
-  background: rgba(255, 255, 255, 0.94);
-}
-
-/* Estado Desabilitado */
-body.inscricao-page .form-control:disabled,
-body.inscricao-page .form-control[readonly] {
-  opacity: 0.65 !important;
-  cursor: not-allowed !important;
-  background: rgba(255, 255, 255, 0.4) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Select customizado com chevron SVG */
+/* Select */
 body.inscricao-page select.form-control {
   cursor: pointer !important;
   padding-right: 2.5rem !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
-  background-position: right 1rem center !important;
+  background-position: right 0.85rem center !important;
   background-size: 16px !important;
 }
 
-body.inscricao-page select.form-control option {
-  background: #FFFFFF !important;
-  color: #0F172A !important;
-  font-size: 0.95rem !important;
-  padding: 0.5rem !important;
-}
-
-/* --- 8. BOTÕES MODERNOS & DE AÇÃO --- */
+/* --- 9. BOTÕES DE AÇÃO HARMONIOSOS --- */
 body.inscricao-page .btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.6rem !important;
-  min-height: 48px !important;
-  padding: 0.75rem 1.75rem !important;
-  font-size: 0.98rem !important;
+  gap: 0.5rem !important;
+  min-height: 46px !important;
+  padding: 0.7rem 1.35rem !important;
+  font-size: 0.95rem !important;
   font-weight: 600 !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   cursor: pointer !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.2s ease !important;
   text-decoration: none !important;
   box-sizing: border-box !important;
+  white-space: nowrap !important;
 }
 
-/* Botão Primário: Gradiente Azul Vibrante com Brilho */
+/* Botão Primário */
 body.inscricao-page .btn-primary {
-  background: linear-gradient(135deg, #1D68ED 0%, #1557D6 100%) !important;
+  background: #1557D6 !important;
   color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 6px 20px rgba(21, 87, 214, 0.45) !important;
+  border: 1px solid #1557D6 !important;
+  box-shadow: 0 2px 8px rgba(21, 87, 214, 0.25) !important;
 }
 
 body.inscricao-page .btn-primary:hover {
-  background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px rgba(21, 87, 214, 0.6) !important;
+  background: #0B2B6F !important;
+  border-color: #0B2B6F !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(21, 87, 214, 0.35) !important;
 }
 
 body.inscricao-page .btn-primary:active {
   transform: translateY(0) !important;
-  box-shadow: 0 4px 14px rgba(21, 87, 214, 0.4) !important;
 }
 
-/* Botão Outline / Secundário: Vidro Fosco Translúcido */
+/* Botão Secundário / Outline */
 body.inscricao-page .btn-outline {
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  color: #FFFFFF !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #CBD5E1 !important;
+  color: #334155 !important;
 }
 
 body.inscricao-page .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.16) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  transform: translateY(-2px) !important;
-  color: #FFFFFF !important;
+  background: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+  color: #0F172A !important;
 }
 
-body.inscricao-page .btn-danger {
-  background: rgba(239, 68, 68, 0.2) !important;
-  border: 1px solid rgba(248, 113, 113, 0.4) !important;
-  color: #FCA5A5 !important;
-}
-
-body.inscricao-page .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.35) !important;
-  color: #FFFFFF !important;
-}
-
-/* Badges com Estética de Vidro */
+/* Badges */
 body.inscricao-page .badge {
   display: inline-flex !important;
   align-items: center !important;
   gap: 0.35rem !important;
-  padding: 0.35rem 0.85rem !important;
-  font-size: 0.78rem !important;
+  padding: 0.3rem 0.75rem !important;
+  font-size: 0.75rem !important;
   font-weight: 700 !important;
   border-radius: 9999px !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.04em !important;
 }
 
 body.inscricao-page .badge-success {
-  background: rgba(16, 185, 129, 0.2) !important;
-  border: 1px solid rgba(52, 211, 153, 0.4) !important;
-  color: #34D399 !important;
+  background: #D1FAE5 !important;
+  color: #065F46 !important;
+  border: 1px solid #A7F3D0 !important;
 }
 
 body.inscricao-page .badge-warning {
-  background: rgba(245, 158, 11, 0.2) !important;
-  border: 1px solid rgba(251, 191, 36, 0.4) !important;
-  color: #FBBF24 !important;
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border: 1px solid #FDE68A !important;
 }
 
-/* --- 9. ORGANIZAÇÃO EM GRID RESPONSIVO --- */
+/* --- 10. GRIDS RESPONSIVOS E CAMPOS DINÂMICOS --- */
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.25rem;
+  gap: 1rem;
   margin-bottom: 0;
 }
 
@@ -619,121 +669,137 @@ body.inscricao-page .badge-warning {
   grid-column: 1 / -1;
 }
 
-/* Seção de Dados Dinâmicos da Etapa 2 */
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.form-actions .btn-outline {
+  flex: 1;
+}
+
+.form-actions .btn-primary {
+  flex: 2;
+}
+
+/* Container de dados adicionais */
 body.inscricao-page #dynamic-fields-container {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  border-radius: 16px !important;
-  padding: 1.75rem !important;
-  margin-bottom: 2rem !important;
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 1.35rem !important;
+  margin-bottom: 1.75rem !important;
 }
 
 .dynamic-section-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #FFFFFF;
-  margin-bottom: 0.35rem;
+  color: #1557D6;
+  margin-bottom: 0.25rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .dynamic-section-desc {
-  font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+  color: #64748B;
+  margin-bottom: 1.15rem;
 }
 
 #dynamic-fields-list {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 1.25rem !important;
+  gap: 1rem !important;
 }
 
-/* Itens que devem ocupar largura total no grid dinâmico */
 .dyn-field-full {
   grid-column: 1 / -1;
 }
 
-/* Estado vazio dos campos dinâmicos */
 body.inscricao-page #no-fields-msg {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px dashed rgba(255, 255, 255, 0.25) !important;
-  border-radius: 14px !important;
-  padding: 2rem !important;
+  background: #F8FAFC !important;
+  border: 1px dashed #CBD5E1 !important;
+  border-radius: 12px !important;
+  padding: 1.75rem !important;
   text-align: center !important;
-  color: rgba(255, 255, 255, 0.75) !important;
-  margin-bottom: 1.75rem !important;
+  color: #64748B !important;
+  margin-bottom: 1.5rem !important;
 }
 
-/* --- 10. ESTILIZAÇÃO DO COMPONENTE DE IGREJA / PRESBITÉRIO --- */
+/* --- 11. DROPDOWN DE IGREJA / PRESBITÉRIO --- */
 .church-select-container {
   position: relative;
   width: 100%;
 }
 
 body.inscricao-page .church-search-input {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
-  background-position: right 1rem center !important;
+  background-position: right 0.85rem center !important;
   background-size: 16px !important;
-  padding-right: 2.75rem !important;
+  padding-right: 2.5rem !important;
 }
 
 body.inscricao-page .church-dropdown-menu {
   background: #FFFFFF !important;
-  border: 1.5px solid rgba(21, 87, 214, 0.25) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
-  max-height: 260px;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px rgba(15, 40, 80, 0.12) !important;
+  max-height: 250px;
   overflow-y: auto;
   z-index: 9999;
 }
 
 body.inscricao-page .church-dropdown-item {
-  color: #0F172A !important;
-  padding: 0.75rem 1rem !important;
+  color: #1E293B !important;
+  padding: 0.65rem 0.9rem !important;
   border-bottom: 1px solid #F1F5F9 !important;
-  transition: all 0.15s ease;
+  font-size: 0.9rem !important;
 }
 
 body.inscricao-page .church-dropdown-item:hover,
 body.inscricao-page .church-dropdown-item.active {
   background-color: #EFF6FF !important;
-  color: #1D68ED !important;
+  color: #1557D6 !important;
 }
 
 body.inscricao-page .church-dropdown-item .presb-tag {
-  background: #E2E8F0 !important;
-  color: #334155 !important;
+  background: #F1F5F9 !important;
+  color: #475569 !important;
   font-weight: 600;
-  border-radius: 6px;
-  padding: 2px 8px;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 0.75rem;
 }
 
 body.inscricao-page .church-status-hint {
-  color: #93C5FD;
+  color: #2563EB;
   font-size: 0.8rem;
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-/* --- 11. ETAPA 3: FORMA DE PAGAMENTO EM CARDS TRANSLÚCIDOS --- */
+/* --- 12. ETAPA 3: FORMA DE PAGAMENTO --- */
 .payment-option-card {
   display: flex !important;
   align-items: center !important;
-  gap: 1.15rem !important;
-  padding: 1.25rem 1.5rem !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
-  border-radius: 14px !important;
+  gap: 1rem !important;
+  padding: 1.15rem 1.25rem !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 12px !important;
   cursor: pointer !important;
-  color: #FFFFFF !important;
-  transition: all 0.22s ease !important;
+  color: #0F172A !important;
+  transition: all 0.2s ease !important;
 }
 
 .payment-option-card:hover {
-  background: rgba(255, 255, 255, 0.09) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
 }
 
 .payment-option-card input[type="radio"] {
@@ -741,7 +807,7 @@ body.inscricao-page .church-status-hint {
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  border: 2px solid #CBD5E1;
   border-radius: 50%;
   outline: none;
   cursor: pointer;
@@ -754,9 +820,9 @@ body.inscricao-page .church-status-hint {
 }
 
 .payment-option-card input[type="radio"]:checked {
-  border-color: #60A5FA;
-  background: #1D68ED;
-  box-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+  border-color: #1557D6;
+  background: #1557D6;
+  box-shadow: 0 0 0 3px rgba(21, 87, 214, 0.15);
 }
 
 .payment-option-card input[type="radio"]:checked::after {
@@ -768,132 +834,209 @@ body.inscricao-page .church-status-hint {
 }
 
 .payment-option-card:has(input[type="radio"]:checked) {
-  background: rgba(21, 87, 214, 0.22) !important;
-  border-color: #60A5FA !important;
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35) !important;
+  background: #EFF6FF !important;
+  border-color: #3B82F6 !important;
 }
 
 .payment-option-title {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 700;
-  color: #FFFFFF;
-  margin-bottom: 0.25rem;
+  color: #0F172A;
+  margin-bottom: 0.2rem;
 }
 
 .payment-option-desc {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  color: #64748B;
+  line-height: 1.4;
 }
 
 body.inscricao-page #parcelas-group {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  border-radius: 14px !important;
-  padding: 1.5rem !important;
-  margin-bottom: 1.75rem !important;
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  margin-bottom: 1.5rem !important;
 }
 
 /* Banner de Proposta de Triagem */
 #triagem-banner-msg {
-  background: rgba(245, 158, 11, 0.15) !important;
-  border: 1px solid rgba(251, 191, 36, 0.4) !important;
-  border-radius: 14px !important;
-  padding: 1.25rem !important;
+  background: #FFFBEB !important;
+  border: 1px solid #FCD34D !important;
+  border-radius: 12px !important;
+  padding: 1.15rem !important;
   margin-bottom: 1.5rem !important;
-  backdrop-filter: blur(12px) !important;
 }
 
-/* --- 12. ETAPA 4: RESULTADO DE PAGAMENTO --- */
+/* --- 13. ETAPA 4: RESULTADO DE PAGAMENTO --- */
 #payment-result {
-  color: #FFFFFF;
+  color: #0F172A;
 }
 
 #payment-result h3 {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #FFFFFF;
-  margin-bottom: 0.75rem;
+  color: #0F172A;
+  margin-bottom: 0.65rem;
 }
 
 #payment-result p {
-  color: rgba(255, 255, 255, 0.8);
+  color: #475569;
 }
 
-/* --- 13. FOOTER ELEGANTE --- */
+/* --- 14. FOOTER CLARO --- */
 body.inscricao-page footer {
   position: relative;
   z-index: 10;
   margin-top: auto;
-  padding: 2rem 1.5rem;
+  padding: 1.75rem 1.25rem;
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(6, 18, 44, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid #E2E8F0;
+  background: #FFFFFF;
 }
 
 body.inscricao-page footer p {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.88rem;
+  color: #64748B;
+  font-size: 0.85rem;
 }
 
-/* --- 14. RESPONSIVIDADE MOBILE ESTRITA (ZERO OVERFLOW) --- */
-@media (max-width: 768px) {
+/* ==========================================================================
+   15. RESPONSIVIDADE MOBILE RIGOROSA (ZERO OVERFLOW & ZERO DESAJUSTES)
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Navbar Compacta e Harmoniosa */
+  nav.navbar.inscricao-navbar {
+    height: 56px;
+    padding: 0 0.85rem !important;
+  }
+
+  .navbar-content {
+    gap: 0.5rem;
+  }
+
+  .brand-logo {
+    height: 30px;
+  }
+
+  .brand-text {
+    font-size: 1.05rem;
+  }
+
+  .nav-btn {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.78rem;
+    min-height: 32px;
+  }
+
+  /* Main Container */
   body.inscricao-page main.container {
-    padding: 0 1rem;
-    margin: 1.25rem auto 3rem auto;
+    padding: 0 0.85rem;
+    margin: 1rem auto 2.5rem auto;
   }
 
+  /* Cards */
   body.inscricao-page .card {
-    padding: 1.5rem 1.25rem !important;
-    border-radius: 16px !important;
+    padding: 1.25rem 1rem !important;
+    border-radius: 14px !important;
   }
 
-  .event-summary-inner {
-    padding: 1.25rem !important;
+  /* Etapas: Alterna para layout mobile perfeito */
+  .steps-progress-container {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
   }
 
-  .event-banner-media {
-    height: 180px;
-  }
-
-  .event-title-main {
-    font-size: 1.35rem;
-  }
-
-  /* Etapas em coluna ou simplificadas no mobile */
-  .steps-progress-bar {
-    padding: 0.85rem 1rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .step-item-title {
+  .steps-desktop {
     display: none;
   }
 
-  .step-item {
-    gap: 0;
+  .steps-mobile {
+    display: block;
   }
 
-  .step-item-divider {
-    margin: 0 0.5rem;
+  /* Banner de Usuário Ativo */
+  body.inscricao-page #logged-user-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem !important;
   }
 
-  /* Todos os grids passam para 1 coluna */
+  .btn-change-user {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Resumo do Evento */
+  .event-banner-media {
+    height: 160px;
+  }
+
+  .event-summary-inner {
+    padding: 1.15rem 1rem;
+  }
+
+  .event-title-main {
+    font-size: 1.25rem;
+  }
+
+  .event-price-plate {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .event-price-value {
+    font-size: 1.25rem;
+  }
+
+  /* Títulos dos Cards */
+  body.inscricao-page .card-title {
+    font-size: 1.15rem !important;
+  }
+
+  body.inscricao-page .card-desc {
+    font-size: 0.85rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  /* Grids: 1 Coluna única */
   .form-grid-2,
   #dynamic-fields-list {
     grid-template-columns: 1fr !important;
-    gap: 1rem !important;
+    gap: 0.85rem !important;
   }
 
-  /* Facetas simplificadas para não pesar nem cobrir */
-  .facet-1 {
-    width: 90vw;
-    height: 60vh;
-    opacity: 0.6;
+  body.inscricao-page #dynamic-fields-container {
+    padding: 1rem !important;
+    margin-bottom: 1.25rem !important;
   }
 
-  .facet-2 {
+  /* Botões de Ação no Mobile */
+  .form-actions {
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  body.inscricao-page .btn {
+    min-height: 44px !important;
+    padding: 0.65rem 0.85rem !important;
+    font-size: 0.88rem !important;
+  }
+
+  /* Oculta formas complexas no mobile para máxima fluidez */
+  .geo-shape-1 {
+    width: 260px;
+    height: 260px;
+    opacity: 0.5;
+  }
+
+  .geo-shape-2 {
+    display: none;
+  }
+
+  .geo-shape-3 {
     display: none;
   }
 }
