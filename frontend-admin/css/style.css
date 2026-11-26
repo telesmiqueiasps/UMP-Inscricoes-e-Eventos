@@ -1259,8 +1259,273 @@ tr:last-child td {
   justify-content: center;
 }
 
+/* ==========================================================================
+   Admin Login Modal — Estética Glassmorphism & Neumórfica (DESIGN.MD)
+   ========================================================================== */
 #login-modal {
-  background: rgba(15, 23, 42, 0.85);
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: #F0F4FA;
+  background-image: url('../img/background-login.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+}
+
+#login-modal .modal-content,
+#login-modal .auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1.5px solid rgba(255, 255, 255, 0.88);
+  border-radius: 32px;
+  padding: 2.75rem 2.25rem 2.25rem 2.25rem;
+  box-shadow: 
+    0 24px 50px -12px rgba(8, 45, 104, 0.2),
+    0 0 45px rgba(140, 200, 255, 0.4),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
+  animation: authCardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+@keyframes authCardEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#login-modal .auth-header {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+#login-modal .auth-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+#login-modal .auth-logo:hover {
+  transform: scale(1.04);
+}
+
+#login-modal .auth-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.65rem;
+  color: #103B78;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+#login-modal .auth-subtitle {
+  color: #52739F;
+  font-size: 0.92rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+  font-weight: 400;
+}
+
+#login-modal .auth-form-group {
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+#login-modal .auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+#login-modal .auth-input-icon {
+  position: absolute;
+  left: 1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  stroke: #1F4F9A;
+  fill: none;
+  pointer-events: none;
+  transition: stroke 0.2s ease;
+  z-index: 2;
+}
+
+#login-modal .auth-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 1.25rem 0 3rem;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  color: #082D68;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 9999px;
+  box-shadow: 
+    0 2px 6px rgba(8, 45, 104, 0.04),
+    inset 0 1px 2px rgba(8, 45, 104, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  box-sizing: border-box;
+}
+
+#login-modal .auth-input::placeholder {
+  color: #88A4C8;
+  font-weight: 400;
+}
+
+#login-modal .auth-input:hover {
+  background: #FFFFFF;
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 3px 10px rgba(8, 45, 104, 0.06);
+}
+
+#login-modal .auth-input:focus {
+  background: #FFFFFF;
+  border-color: #086BDA;
+  box-shadow: 0 0 0 3.5px rgba(8, 107, 218, 0.16);
+  color: #082D68;
+}
+
+#login-modal .auth-input-wrapper:focus-within .auth-input-icon {
+  stroke: #086BDA;
+}
+
+#login-modal .password-toggle-btn {
+  position: absolute;
+  right: 1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #88A4C8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 3;
+}
+
+#login-modal .password-toggle-btn:hover {
+  color: #086BDA;
+}
+
+#login-modal .auth-btn-primary {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(180deg, #1D68ED 0%, #086BDA 50%, #084BB8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 9999px;
+  color: #FFFFFF;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  box-shadow: 
+    0 8px 22px rgba(8, 107, 218, 0.38),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+}
+
+#login-modal .auth-btn-primary:hover {
+  transform: translateY(-1.5px);
+  filter: brightness(1.06);
+  box-shadow: 
+    0 12px 28px rgba(8, 107, 218, 0.48),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+#login-modal .auth-btn-primary:active {
+  transform: translateY(0);
+}
+
+#login-modal .auth-back-btn {
+  width: 100%;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  color: #52739F;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1.25rem;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+#login-modal .auth-back-btn:hover {
+  background: #FFFFFF;
+  color: #086BDA;
+  border-color: rgba(8, 107, 218, 0.3);
+}
+
+#login-modal #admin-login-error {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  border-radius: 12px;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  #login-modal .modal-content,
+  #login-modal .auth-card {
+    padding: 2rem 1.35rem 1.75rem 1.35rem;
+    border-radius: 26px;
+  }
+
+  #login-modal .auth-logo {
+    height: 52px;
+  }
+
+  #login-modal .auth-title {
+    font-size: 1.45rem;
+  }
+
+  #login-modal .auth-input {
+    height: 48px;
+    font-size: 0.92rem;
+  }
+
+  #login-modal .auth-btn-primary {
+    height: 48px;
+    font-size: 0.95rem;
+  }
 }
 
 .modal-content {
