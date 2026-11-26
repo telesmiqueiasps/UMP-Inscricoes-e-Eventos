@@ -39,6 +39,7 @@ def listar_eventos_publico(db: Session = Depends(get_db)):
             Inscricao.evento_id == ev.id,
             Inscricao.status != "CANCELADA"
         ).count()
+        ev.total_inscritos = total_inscritos
         ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
     return eventos
 
@@ -52,6 +53,7 @@ def obter_evento_publico(id: int, db: Session = Depends(get_db)):
         Inscricao.evento_id == evento.id,
         Inscricao.status != "CANCELADA"
     ).count()
+    evento.total_inscritos = total_inscritos
     evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 
@@ -91,6 +93,7 @@ def listar_eventos_admin(
             Inscricao.evento_id == ev.id,
             Inscricao.status != "CANCELADA"
         ).count()
+        ev.total_inscritos = total_inscritos
         ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
     return eventos
 
@@ -115,6 +118,7 @@ def criar_evento_admin(
     db.commit()
     db.refresh(db_evento)
     db_evento.vagas_restantes = db_evento.max_participantes
+    db_evento.total_inscritos = 0
     return db_evento
 
 
@@ -131,6 +135,7 @@ def obter_evento_admin(
         Inscricao.evento_id == evento.id,
         Inscricao.status != "CANCELADA"
     ).count()
+    evento.total_inscritos = total_inscritos
     evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 
@@ -165,6 +170,7 @@ def atualizar_evento_admin(
         Inscricao.evento_id == evento.id,
         Inscricao.status != "CANCELADA"
     ).count()
+    evento.total_inscritos = total_inscritos
     evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
     return evento
 

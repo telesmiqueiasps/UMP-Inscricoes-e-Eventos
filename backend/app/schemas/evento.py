@@ -70,6 +70,7 @@ class EventoUpdate(BaseModel):
 class EventoResponse(EventoBase):
     id: int
     vagas_restantes: Optional[int] = None
+    total_inscritos: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

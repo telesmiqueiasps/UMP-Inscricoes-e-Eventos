@@ -184,11 +184,31 @@ async function loadEventosTable() {
     }
     cardsContainer.innerHTML = eventos.map(ev => {
       const bannerUrl = ev.fotos ? ev.fotos.split(',')[0].trim() : '';
+      const totalInscritos = (ev.total_inscritos !== undefined && ev.total_inscritos !== null)
+        ? ev.total_inscritos
+        : (ev.max_participantes && ev.vagas_restantes !== null ? Math.max(0, ev.max_participantes - ev.vagas_restantes) : 0);
+      const vagasRestantes = ev.vagas_restantes !== null && ev.vagas_restantes !== undefined
+        ? ev.vagas_restantes
+        : (ev.max_participantes ? Math.max(0, ev.max_participantes - totalInscritos) : null);
+      const pctOcupacao = ev.max_participantes ? Math.min(100, Math.round((totalInscritos / ev.max_participantes) * 100)) : null;
+
       return `
         <div class="card" style="padding:0; overflow:hidden; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; transition: transform 0.2s, box-shadow 0.2s;" onclick="location.href='gerenciar-evento.html?evento_id=${ev.id}'" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none'; this.style.boxShadow='var(--shadow-sm)';">
           <!-- Imagem de Banner do Evento -->
           <div style="height: 160px; background: #EFF6FF; position: relative; overflow:hidden;">
             <img src="${bannerUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none';">
+            
+            <!-- Contador de Inscritos Flutuante na Imagem -->
+            <div style="position: absolute; top: 10px; left: 10px;">
+              <span class="badge" style="background: rgba(15, 23, 42, 0.82); color: #FFFFFF; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--radius-sm); box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #60A5FA;">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span><strong style="color: #FFFFFF; font-variant-numeric: tabular-nums;">${totalInscritos}</strong> ${totalInscritos === 1 ? 'Inscrito' : 'Inscritos'}</span>
+              </span>
+            </div>
+
+            <!-- Status do Evento -->
             <div style="position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
               <span class="badge ${ev.ativo ? 'badge-success' : 'badge-danger'}" style="font-size: 0.75rem;">
                 ${ev.ativo ? 'Ativo' : 'Inativo'}
@@ -201,22 +221,63 @@ async function loadEventosTable() {
           <!-- Detalhes do Evento -->
           <div style="padding: 1.5rem; flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;">
             <div>
-              <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--dark); line-height: 1.3;">
+              <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--dark); line-height: 1.3;">
                 ${ev.titulo}
               </h3>
-              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">
-                📍 Local: ${ev.local || 'A definir'}<br>
-                📅 Início: ${new Date(ev.data_inicio).toLocaleDateString('pt-BR')}<br>
-                👥 Vagas: ${ev.max_participantes ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} / ${ev.max_participantes}` : 'Ilimitadas'}
-              </p>
+              
+              <!-- Local e Data com Ícones SVG -->
+              <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 7px; font-size: 0.85rem; color: var(--text-muted);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color: var(--primary);"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${ev.local || 'Local a definir'}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 7px; font-size: 0.85rem; color: var(--text-muted);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color: var(--primary);"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span>Início: ${new Date(ev.data_inicio).toLocaleDateString('pt-BR')}</span>
+                </div>
+              </div>
+
+              <!-- Contador de Inscritos em Destaque -->
+              <div style="background: var(--light-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(21, 87, 214, 0.12); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <span style="display: block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); line-height: 1.1;">Inscritos no Evento</span>
+                      <div style="display: flex; align-items: baseline; gap: 4px;">
+                        <span style="font-size: 1.25rem; font-weight: 800; color: var(--dark); font-variant-numeric: tabular-nums; line-height: 1.2;">${totalInscritos}</span>
+                        ${ev.max_participantes ? `<span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">/ ${ev.max_participantes} vagas</span>` : '<span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">(Ilimitadas)</span>'}
+                      </div>
+                    </div>
+                  </div>
+                  ${ev.max_participantes ? `
+                    <div style="text-align: right;">
+                      <span style="display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); line-height: 1.1;">Restantes</span>
+                      <span style="font-size: 0.95rem; font-weight: 700; color: ${vagasRestantes > 0 ? '#10B981' : '#EF4444'}; font-variant-numeric: tabular-nums; line-height: 1.2;">
+                        ${vagasRestantes > 0 ? `${vagasRestantes}` : 'Esgotadas'}
+                      </span>
+                    </div>
+                  ` : ''}
+                </div>
+                ${ev.max_participantes ? `
+                  <div style="height: 4px; width: 100%; background: var(--border-color); border-radius: 999px; margin-top: 8px; overflow: hidden;" title="${pctOcupacao}% das vagas ocupadas">
+                    <div style="height: 100%; width: ${pctOcupacao}%; background: ${pctOcupacao >= 100 ? '#EF4444' : pctOcupacao >= 85 ? '#F59E0B' : 'var(--primary)'}; border-radius: 999px; transition: width 0.3s ease;"></div>
+                  </div>
+                ` : ''}
+              </div>
             </div>
             
             <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
               <span style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">
                 R$ ${parseFloat(ev.valor).toFixed(2).replace('.', ',')}
               </span>
-              <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.25rem;">
-                Gerenciar &rarr;
+              <span style="font-size: 0.85rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.35rem;">
+                <span>Gerenciar</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </span>
             </div>
           </div>
