@@ -17,7 +17,7 @@ body.inscricao-page {
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- 2. ELEMENTOS GRÁFICOS & FORMAS GEOMÉTRICAS SUTIS ANIMADAS --- */
+/* --- 2. ELEMENTOS GRÁFICOS & FUNDO COM IMAGEM DE REFERÊNCIA --- */
 .subtle-geometric-bg {
   position: fixed;
   inset: 0;
@@ -26,7 +26,21 @@ body.inscricao-page {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
-  background-color: #FFFFFF;
+  background-color: #F0F4FA;
+  background-image: url('../img/background-login.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.subtle-geometric-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* Padrão micro-grid extremamente sutil */
@@ -35,7 +49,7 @@ body.inscricao-page {
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.45;
+  opacity: 0.25;
   background-image: radial-gradient(rgba(21, 87, 214, 0.12) 1px, transparent 1px);
   background-size: 28px 28px;
 }
@@ -341,22 +355,29 @@ body.inscricao-page main.container {
   background: #10B981;
 }
 
-/* --- 6. CARDS CLAROS & MODERNOS --- */
+/* --- 6. CARDS TRANSLÚCIDOS & MODERNOS (DESIGN.MD) --- */
 body.inscricao-page .card {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
-  padding: 2rem !important;
-  box-shadow: 0 4px 20px rgba(15, 40, 80, 0.05), 0 1px 3px rgba(15, 40, 80, 0.02) !important;
-  color: #0F172A !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 28px !important;
+  padding: 2.25rem !important;
+  box-shadow: 
+    0 24px 48px -12px rgba(8, 45, 104, 0.14),
+    0 0 35px rgba(140, 200, 255, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  color: #103B78 !important;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease !important;
   transform: none !important;
 }
 
 body.inscricao-page .card:hover {
   transform: none !important;
-  box-shadow: 0 8px 30px rgba(15, 40, 80, 0.08) !important;
-  border-color: #CBD5E1 !important;
+  box-shadow: 
+    0 28px 56px -12px rgba(8, 45, 104, 0.18),
+    0 0 45px rgba(140, 200, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 1) !important;
 }
 
 /* Banner de Usuário Ativo */
@@ -527,23 +548,23 @@ body.inscricao-page .form-group {
 
 body.inscricao-page .form-control {
   width: 100% !important;
-  min-height: 46px !important;
-  padding: 0.7rem 0.95rem !important;
+  min-height: 50px !important;
+  padding: 0.75rem 1.25rem !important;
   font-size: 0.95rem !important;
   font-family: 'Inter', sans-serif !important;
   font-weight: 500 !important;
-  color: #0F172A !important;
-  background: #FFFFFF !important;
-  border: 1.5px solid #CBD5E1 !important;
-  border-radius: 10px !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  color: #082D68 !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 6px rgba(8, 45, 104, 0.04), inset 0 1px 2px rgba(8, 45, 104, 0.03) !important;
   transition: all 0.2s ease !important;
   outline: none !important;
   box-sizing: border-box !important;
 }
 
 .input-with-icon .form-control {
-  padding-left: 2.65rem !important;
+  padding-left: 2.85rem !important;
 }
 
 body.inscricao-page .form-control::placeholder {
@@ -582,19 +603,19 @@ body.inscricao-page select.form-control {
   background-size: 16px !important;
 }
 
-/* --- 9. BOTÕES DE AÇÃO HARMONIOSOS --- */
+/* --- 9. BOTÕES DE AÇÃO EM CÁPSULA (DESIGN.MD) --- */
 body.inscricao-page .btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.5rem !important;
-  min-height: 46px !important;
-  padding: 0.7rem 1.35rem !important;
+  gap: 0.55rem !important;
+  min-height: 48px !important;
+  padding: 0.75rem 1.6rem !important;
   font-size: 0.95rem !important;
   font-weight: 600 !important;
-  border-radius: 10px !important;
+  border-radius: 9999px !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.22s ease !important;
   text-decoration: none !important;
   box-sizing: border-box !important;
   white-space: nowrap !important;
@@ -602,17 +623,16 @@ body.inscricao-page .btn {
 
 /* Botão Primário */
 body.inscricao-page .btn-primary {
-  background: #1557D6 !important;
+  background: linear-gradient(180deg, #1D68ED 0%, #086BDA 50%, #084BB8 100%) !important;
   color: #FFFFFF !important;
-  border: 1px solid #1557D6 !important;
-  box-shadow: 0 2px 8px rgba(21, 87, 214, 0.25) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 8px 22px rgba(8, 107, 218, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
 }
 
 body.inscricao-page .btn-primary:hover {
-  background: #0B2B6F !important;
-  border-color: #0B2B6F !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px rgba(21, 87, 214, 0.35) !important;
+  filter: brightness(1.06) !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 12px 28px rgba(8, 107, 218, 0.45) !important;
 }
 
 body.inscricao-page .btn-primary:active {
@@ -621,12 +641,17 @@ body.inscricao-page .btn-primary:active {
 
 /* Botão Secundário / Outline */
 body.inscricao-page .btn-outline {
-  background: #FFFFFF !important;
-  border: 1.5px solid #CBD5E1 !important;
-  color: #334155 !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  color: #52739F !important;
+  border-radius: 9999px !important;
 }
 
 body.inscricao-page .btn-outline:hover {
+  background: #FFFFFF !important;
+  color: #086BDA !important;
+  border-color: rgba(8, 107, 218, 0.3) !important;
+}
   background: #F8FAFC !important;
   border-color: #94A3B8 !important;
   color: #0F172A !important;

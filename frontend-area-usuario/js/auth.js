@@ -85,18 +85,46 @@ function toggleAuthTab(tab) {
   const regBox = document.getElementById('box-register');
   const btnLogin = document.getElementById('tab-login-btn');
   const btnReg = document.getElementById('tab-reg-btn');
+  const titleEl = document.getElementById('auth-main-title');
+  const subtitleEl = document.getElementById('auth-main-subtitle');
 
   if (tab === 'login') {
-    loginBox.style.display = 'block';
-    regBox.style.display = 'none';
-    btnLogin.className = 'btn btn-primary';
-    btnReg.className = 'btn btn-outline';
+    if (loginBox) loginBox.style.display = 'block';
+    if (regBox) regBox.style.display = 'none';
+    if (btnLogin) {
+      btnLogin.className = 'auth-tab-btn active';
+      btnLogin.setAttribute('aria-selected', 'true');
+    }
+    if (btnReg) {
+      btnReg.className = 'auth-tab-btn';
+      btnReg.setAttribute('aria-selected', 'false');
+    }
+    if (titleEl) titleEl.textContent = 'Bem-vindo(a)!';
+    if (subtitleEl) subtitleEl.textContent = 'Faça login para continuar';
   } else {
-    loginBox.style.display = 'none';
-    regBox.style.display = 'block';
-    btnLogin.className = 'btn btn-outline';
-    btnReg.className = 'btn btn-primary';
+    if (loginBox) loginBox.style.display = 'none';
+    if (regBox) regBox.style.display = 'block';
+    if (btnLogin) {
+      btnLogin.className = 'auth-tab-btn';
+      btnLogin.setAttribute('aria-selected', 'false');
+    }
+    if (btnReg) {
+      btnReg.className = 'auth-tab-btn active';
+      btnReg.setAttribute('aria-selected', 'true');
+    }
+    if (titleEl) titleEl.textContent = 'Criar Conta';
+    if (subtitleEl) subtitleEl.textContent = 'Preencha seus dados para começar';
   }
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  btn.innerHTML = isPassword
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
 }
 
 function formatarCPF(value) {

@@ -6,95 +6,124 @@
   <title>Área do Participante - UMP Eventos</title>
   <link rel="icon" href="img/logo.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
+  <link rel="stylesheet" href="css/login-auth.css">
 </head>
-<body style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: var(--light-bg); padding: 2rem 1rem;">
+<body class="auth-page">
 
-  <main class="card" style="width: 100%; max-width: 440px; padding: 2.5rem;">
+  <!-- Cartão Translúcido de Autenticação -->
+  <main class="auth-card">
     
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <img src="img/logo.png" alt="Logo" style="height: 54px; object-fit: contain; margin-bottom: 0.5rem;" onerror="this.style.display='none';">
-      <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--primary);">Área do Participante</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">Acesse suas inscrições e parcelas</p>
+    <!-- Cabeçalho com Logo Oficial da Marca -->
+    <div class="auth-header">
+      <img src="img/logo.png" alt="UMP Eventos" class="auth-logo" onerror="this.style.display='none';">
+      <h1 class="auth-title" id="auth-main-title">Bem-vindo(a)!</h1>
+      <p class="auth-subtitle" id="auth-main-subtitle">Faça login para continuar</p>
     </div>
 
-    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-      <button id="tab-login-btn" class="btn btn-primary" style="flex: 1;" onclick="toggleAuthTab('login')">Entrar</button>
-      <button id="tab-reg-btn" class="btn btn-outline" style="flex: 1;" onclick="toggleAuthTab('register')">Cadastrar</button>
+    <!-- Alternador de Abas em Pílula (Segmented Control) -->
+    <div class="auth-tabs-pill" role="tablist">
+      <button id="tab-login-btn" class="auth-tab-btn active" role="tab" aria-selected="true" onclick="toggleAuthTab('login')">Entrar</button>
+      <button id="tab-reg-btn" class="auth-tab-btn" role="tab" aria-selected="false" onclick="toggleAuthTab('register')">Cadastrar</button>
     </div>
 
-    <!-- Form Login -->
+    <!-- Formulário de Login -->
     <div id="box-login">
       <form id="login-form">
-        <div class="form-group">
-          <label class="form-label">E-mail</label>
-          <input type="email" id="login-email" class="form-control" placeholder="seu@email.com" required>
+        <div class="auth-form-group">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="email" id="login-email" class="auth-input" placeholder="Usuário ou e-mail" required autocomplete="email">
+          </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 0.75rem;">
-          <label class="form-label">Senha</label>
-          <input type="password" id="login-senha" class="form-control" placeholder="******" required>
+        <div class="auth-form-group" style="margin-bottom: 0.85rem;">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="login-senha" class="auth-input" placeholder="Senha" required autocomplete="current-password" style="padding-right: 3rem;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-senha', this)" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
 
-        <div style="text-align: right; margin-top: -0.25rem; margin-bottom: 1.25rem;">
-          <a href="recuperar-senha.html" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Esqueceu a senha?</a>
+        <div style="text-align: right;">
+          <a href="recuperar-senha.html" class="auth-forgot-link">Esqueceu a senha?</a>
         </div>
 
-        <div id="login-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; font-weight: 500;"></div>
+        <div id="login-error" style="display: none;"></div>
 
-        <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-          Acessar Painel
+        <button type="submit" id="login-submit-btn" class="auth-btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>Entrar</span>
         </button>
+
+        <div class="auth-switch-link">
+          <span>Não tem uma conta?</span> <a onclick="toggleAuthTab('register')">Cadastre-se</a>
+        </div>
       </form>
     </div>
 
-    <!-- Form Cadastro -->
+    <!-- Formulário de Cadastro -->
     <div id="box-register" style="display: none;">
       <form id="register-form">
-        <div class="form-group">
-          <label class="form-label">Nome Completo</label>
-          <input type="text" id="reg-nome" class="form-control" required>
+        <div class="auth-form-group">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="reg-nome" class="auth-input" placeholder="Nome Completo" required autocomplete="name">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">E-mail</label>
-          <input type="email" id="reg-email" class="form-control" required>
+        <div class="auth-form-group">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <input type="email" id="reg-email" class="auth-input" placeholder="Seu E-mail" required autocomplete="email">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">CPF</label>
-          <input type="text" id="reg-cpf" class="form-control" placeholder="000.000.000-00" required pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$" title="Digite o CPF no formato 000.000.000-00">
+        <div class="auth-form-group">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <input type="text" id="reg-cpf" class="auth-input" placeholder="CPF (000.000.000-00)" required pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$" title="Digite o CPF no formato 000.000.000-00">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Telefone / WhatsApp</label>
-          <input type="text" id="reg-telefone" class="form-control" placeholder="(00) 00000-0000" required pattern="^\(\d{2}\)\s\d{5}-\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+        <div class="auth-form-group">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <input type="text" id="reg-telefone" class="auth-input" placeholder="Telefone / WhatsApp" required pattern="^\(\d{2}\)\s\d{5}-\d{4}$" title="Digite o telefone no formato (00) 00000-0000" autocomplete="tel">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Senha</label>
-          <input type="password" id="reg-senha" class="form-control" required>
+        <div class="auth-form-group" style="margin-bottom: 1.25rem;">
+          <div class="auth-input-wrapper">
+            <svg class="auth-input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="reg-senha" class="auth-input" placeholder="Crie uma Senha (mín. 6 caracteres)" required autocomplete="new-password" style="padding-right: 3rem;">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('reg-senha', this)" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-          Criar Minha Conta
+        <button type="submit" class="auth-btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span>Criar Minha Conta</span>
         </button>
+
+        <div class="auth-switch-link">
+          <span>Já tem uma conta?</span> <a onclick="toggleAuthTab('login')">Faça login</a>
+        </div>
       </form>
     </div>
 
-    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-      <button type="button" class="btn btn-outline" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 42px; font-weight: 500;" onclick="voltarParaSitePublico()">
-        <span>🌐</span> Voltar para o Site Público
-      </button>
-    </div>
+    <!-- Botão Retornar ao Site -->
+    <button type="button" class="auth-back-btn" onclick="voltarParaSitePublico()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Voltar para o Início</span>
+    </button>
 
   </main>
 
-  <footer style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+  <footer class="auth-footer">
     <p>&copy; 2026 UMP Eventos. Desenvolvido por Miquéias Teles. Todos os direitos reservados.</p>
   </footer>
 
