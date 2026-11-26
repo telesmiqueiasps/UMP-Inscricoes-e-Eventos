@@ -1268,6 +1268,11 @@ tr:last-child td {
   z-index: 99999;
   background-color: #F0F4FA;
   background-image: url('../img/background-login.png');
+  background-image: url('../img/background-login.webp');
+  background-image: image-set(
+    url('../img/background-login.webp') type('image/webp'),
+    url('../img/background-login.png') type('image/png')
+  );
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
