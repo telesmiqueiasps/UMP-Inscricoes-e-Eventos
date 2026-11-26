@@ -428,64 +428,79 @@ body.inscricao-page #logged-user-banner {
   border-color: #059669 !important;
 }
 
-/* Card de Resumo do Evento */
+/* Card de Resumo do Evento (Compacto: Apenas Título e Valor) */
 body.inscricao-page #event-summary {
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 20px !important;
   overflow: hidden;
-  padding: 0 !important;
+  padding: 1.35rem 1.75rem !important;
+  box-shadow: 
+    0 10px 25px -5px rgba(8, 45, 104, 0.06),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  margin-bottom: 1.75rem !important;
 }
 
-.event-banner-media {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  display: block;
-  border-bottom: 1px solid #F1F5F9;
-}
-
-.event-summary-inner {
-  padding: 1.5rem 1.75rem 1.75rem 1.75rem;
-}
-
-.event-title-main {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #0F172A;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.4rem;
-  line-height: 1.3;
-}
-
-.event-desc-main {
-  color: #64748B;
-  font-size: 0.92rem;
-  line-height: 1.6;
-  margin-bottom: 1.25rem;
-}
-
-.event-price-plate {
+.event-summary-compact {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  background: #F8FAFC;
-  border: 1px solid #E2E8F0;
-  padding: 0.75rem 1.25rem;
-  border-radius: 10px;
-  color: #475569;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.event-summary-info {
+  flex: 1 1 240px;
+}
+
+.event-summary-kicker {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1557D6;
+  margin-bottom: 0.25rem;
+}
+
+.event-title-main {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.event-price-plate {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(21, 87, 214, 0.08) 0%, rgba(21, 87, 214, 0.03) 100%);
+  border: 1px solid rgba(21, 87, 214, 0.18);
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+}
+
+.event-price-label {
+  font-size: 0.72rem;
   font-weight: 600;
-  font-size: 0.92rem;
+  color: #52739F;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .event-price-value {
-  font-size: 1.35rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: #1557D6;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 /* --- 7. TÍTULOS E IDENTIFICAÇÃO DOS CAMPOS --- */
@@ -530,21 +545,21 @@ body.inscricao-page .form-group {
 }
 
 /* --- 8. CAMPOS DE ENTRADA (FUNDO BRANCO, CONTRASTE PERFEITO) --- */
-.input-with-icon {
+body.inscricao-page .input-with-icon {
   position: relative;
   display: flex;
   align-items: center;
   width: 100%;
 }
 
-.input-with-icon .input-icon {
+body.inscricao-page .input-with-icon .input-icon {
   position: absolute;
-  left: 0.95rem;
+  left: 1.15rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 17px;
-  height: 17px;
-  stroke: #94A3B8;
+  width: 18px;
+  height: 18px;
+  stroke: #88A4C8;
   fill: none;
   pointer-events: none;
   transition: stroke 0.2s ease;
@@ -559,7 +574,7 @@ body.inscricao-page .form-control {
   font-family: 'Inter', sans-serif !important;
   font-weight: 500 !important;
   color: #082D68 !important;
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
   border-radius: 9999px !important;
   box-shadow: 0 2px 6px rgba(8, 45, 104, 0.04), inset 0 1px 2px rgba(8, 45, 104, 0.03) !important;
@@ -568,33 +583,60 @@ body.inscricao-page .form-control {
   box-sizing: border-box !important;
 }
 
-.input-with-icon .form-control {
-  padding-left: 2.85rem !important;
+body.inscricao-page .input-with-icon .form-control {
+  padding-left: 3.15rem !important;
+}
+
+body.inscricao-page .input-with-icon.has-password-toggle .form-control {
+  padding-right: 3.15rem !important;
+}
+
+body.inscricao-page .password-toggle-btn {
+  position: absolute;
+  right: 1.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #88A4C8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 3;
+}
+
+body.inscricao-page .password-toggle-btn:hover {
+  color: #1557D6;
 }
 
 body.inscricao-page .form-control::placeholder {
-  color: #94A3B8 !important;
+  color: #88A4C8 !important;
   font-weight: 400 !important;
 }
 
 /* Hover */
 body.inscricao-page .form-control:hover {
-  border-color: #94A3B8 !important;
+  border-color: rgba(255, 255, 255, 1) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 3px 10px rgba(8, 45, 104, 0.06) !important;
 }
 
-.input-with-icon:hover .input-icon {
-  stroke: #64748B;
+body.inscricao-page .input-with-icon:hover .input-icon {
+  stroke: #52739F;
 }
 
 /* Focus */
 body.inscricao-page .form-control:focus {
   background: #FFFFFF !important;
   border-color: #1557D6 !important;
-  color: #0F172A !important;
-  box-shadow: 0 0 0 3px rgba(21, 87, 214, 0.15) !important;
+  color: #082D68 !important;
+  box-shadow: 0 0 0 3.5px rgba(21, 87, 214, 0.16) !important;
 }
 
-.input-with-icon:focus-within .input-icon {
+body.inscricao-page .input-with-icon:focus-within .input-icon {
   stroke: #1557D6 !important;
 }
 
@@ -997,13 +1039,16 @@ body.inscricao-page footer p {
     justify-content: center;
   }
 
-  /* Resumo do Evento */
-  .event-banner-media {
-    height: 160px;
+  /* Resumo do Evento Compacto Mobile */
+  body.inscricao-page #event-summary {
+    padding: 1.15rem 1.15rem !important;
+    border-radius: 16px !important;
   }
 
-  .event-summary-inner {
-    padding: 1.15rem 1rem;
+  .event-summary-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
   }
 
   .event-title-main {
@@ -1011,10 +1056,12 @@ body.inscricao-page footer p {
   }
 
   .event-price-plate {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-    padding: 0.65rem 0.85rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.95rem;
   }
 
   .event-price-value {
