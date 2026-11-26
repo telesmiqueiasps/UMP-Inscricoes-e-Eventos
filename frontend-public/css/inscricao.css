@@ -1,0 +1,899 @@
+/* ==========================================================================
+   UMP EVENTOS — TELA DE INSCRIÇÃO REDESIGN
+   Estética Moderna, Minimalista e Sofisticada
+   Paleta: Azul Profundo, Navy, Azul Vibrante e Vidro Fosco (Glassmorphism)
+   Inspirado nas composições geométricas e glassmorphism das referências
+   ========================================================================== */
+
+/* --- 1. BASE DA PÁGINA --- */
+body.inscricao-page {
+  background-color: #06122C;
+  color: #F8FAFC;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- 2. FUNDO GEOMÉTRICO EM CAMADAS (REFERÊNCIA IMAGEM 1) --- */
+.geometric-bg-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(circle at 75% 25%, #0B2B6F 0%, #061536 45%, #030A1A 100%);
+}
+
+/* Imagem de base com textura diagonal suave */
+.geometric-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.65;
+  mix-blend-mode: overlay;
+  filter: contrast(1.15) brightness(0.95);
+}
+
+/* Facetas Geométricas Diagonais */
+.geometric-facet {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Grande plano diagonal superior direito (Azul elétrico para azul marinho) */
+.facet-1 {
+  top: -15%;
+  right: -10%;
+  width: 70vw;
+  height: 80vh;
+  background: linear-gradient(135deg, rgba(28, 124, 200, 0.45) 0%, rgba(13, 61, 125, 0.65) 60%, rgba(6, 18, 44, 0.9) 100%);
+  clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 75%);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  box-shadow: -20px 20px 60px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Faceta angular central esquerda (Azul profundo) */
+.facet-2 {
+  top: 25%;
+  left: -15%;
+  width: 75vw;
+  height: 70vh;
+  background: linear-gradient(45deg, rgba(2, 38, 96, 0.85) 0%, rgba(6, 62, 137, 0.5) 70%, transparent 100%);
+  clip-path: polygon(0% 20%, 75% 100%, 0% 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Faceta triangular inferior em Navy absoluto */
+.facet-3 {
+  bottom: -20%;
+  right: 5%;
+  width: 60vw;
+  height: 60vh;
+  background: linear-gradient(195deg, rgba(7, 31, 77, 0.8) 0%, rgba(3, 10, 26, 0.95) 80%);
+  clip-path: polygon(50% 0%, 100% 60%, 0% 100%);
+  box-shadow: 0 -15px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Linha de reflexo especular na divisão diagonal */
+.geometric-line {
+  position: absolute;
+  top: 20%;
+  left: 25%;
+  width: 80vw;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25) 40%, rgba(96, 165, 250, 0.4) 60%, transparent 95%);
+  transform: rotate(-25deg);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+/* Efeito Glow / Aura Laranja & Azul sutil no horizonte */
+.geometric-glow-1 {
+  position: absolute;
+  top: 10%;
+  right: 15%;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, transparent 70%);
+  filter: blur(60px);
+}
+
+.geometric-glow-2 {
+  position: absolute;
+  bottom: 15%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.2) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+/* Textura Granulada / Grain Texture Sutilíssima */
+.geometric-grain-texture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* --- 3. NAVBAR GLASSMORPHIC --- */
+body.inscricao-page nav.navbar {
+  background: rgba(6, 18, 44, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+body.inscricao-page .navbar-brand,
+body.inscricao-page .brand {
+  color: #FFFFFF !important;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+body.inscricao-page .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+}
+
+body.inscricao-page .nav-link:hover {
+  color: #FFFFFF !important;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.inscricao-page #nav-user-area {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(37, 99, 235, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  color: #93C5FD !important;
+}
+
+body.inscricao-page #nav-user-area:hover {
+  background: rgba(37, 99, 235, 0.38);
+  color: #FFFFFF !important;
+}
+
+/* --- 4. CONTAINER PRINCIPAL E STEP TRACKER --- */
+body.inscricao-page main.container {
+  position: relative;
+  z-index: 10;
+  max-width: 860px !important;
+  margin: 2rem auto 4rem auto;
+  padding: 0 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Barra de Etapas / Step Progress Tracker */
+.steps-progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 2rem;
+  padding: 1rem 1.5rem;
+  background: rgba(6, 18, 44, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  position: relative;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step-item-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-item.active {
+  color: #FFFFFF;
+}
+
+.step-item.active .step-item-number {
+  background: #1557D6;
+  border-color: #60A5FA;
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.7);
+}
+
+.step-item.completed {
+  color: #34D399;
+}
+
+.step-item.completed .step-item-number {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #34D399;
+  color: #34D399;
+}
+
+.step-item-divider {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 1rem;
+  position: relative;
+  border-radius: 1px;
+}
+
+.step-item-divider.completed {
+  background: #34D399;
+}
+
+/* --- 5. CARDS TRANSLÚCIDOS (GLASSMORPHISM CARD SYSTEM) --- */
+body.inscricao-page .card {
+  background: rgba(10, 28, 60, 0.65) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 20px !important;
+  padding: 2.25rem !important;
+  box-shadow: 0 24px 60px rgba(2, 10, 30, 0.65), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  color: #F8FAFC !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transform: none !important;
+}
+
+body.inscricao-page .card:hover {
+  transform: none !important;
+  box-shadow: 0 28px 70px rgba(2, 10, 30, 0.75), 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Banner de Usuário Ativo */
+body.inscricao-page #logged-user-banner {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border: 1px solid rgba(52, 211, 153, 0.35) !important;
+  border-radius: 14px !important;
+  padding: 1rem 1.25rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+body.inscricao-page #logged-user-msg {
+  color: #34D399 !important;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+body.inscricao-page #logged-user-msg strong {
+  color: #FFFFFF;
+}
+
+/* Card de Resumo do Evento */
+body.inscricao-page #event-summary {
+  background: rgba(10, 28, 60, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.32) !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.event-summary-inner {
+  padding: 1.75rem 2rem 2rem 2rem;
+}
+
+.event-banner-media {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-title-main {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.event-desc-main {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.event-price-plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(21, 87, 214, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  padding: 0.6rem 1.25rem;
+  border-radius: 12px;
+  color: #93C5FD;
+  font-weight: 600;
+}
+
+.event-price-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 6. TÍTULOS E IDENTIFICAÇÃO DOS CAMPOS --- */
+body.inscricao-page .card-title {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 1.45rem !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  letter-spacing: -0.01em !important;
+  margin-bottom: 0.5rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+body.inscricao-page .card-desc {
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 1.75rem !important;
+}
+
+body.inscricao-page .form-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.4rem !important;
+  color: #FFFFFF !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+body.inscricao-page .form-label .label-required {
+  color: #60A5FA;
+  font-weight: 700;
+}
+
+body.inscricao-page .form-group {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+/* --- 7. ESTILIZAÇÃO DOS CAMPOS (VIDRO FOSCO TRANSLÚCIDO) --- */
+/* Wrapper com ícone */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  stroke: #64748B;
+  fill: none;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+/* Campos de entrada: Fundo branco translúcido, texto escuro de alto contraste */
+body.inscricao-page .form-control {
+  width: 100% !important;
+  min-height: 48px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.95rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: #071936 !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.input-with-icon .form-control {
+  padding-left: 2.75rem !important;
+}
+
+/* Placeholder elegante em tom azul-acinzentado */
+body.inscricao-page .form-control::placeholder {
+  color: #64748B !important;
+  font-weight: 400 !important;
+  opacity: 0.9 !important;
+}
+
+/* Estado Hover */
+body.inscricao-page .form-control:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+}
+
+.input-with-icon:hover .input-icon {
+  stroke: #334155;
+}
+
+/* Estado Focus */
+body.inscricao-page .form-control:focus {
+  background: #FFFFFF !important;
+  border-color: #3B82F6 !important;
+  color: #041226 !important;
+  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.35), 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+}
+
+.input-with-icon:focus-within .input-icon {
+  stroke: #1D68ED !important;
+  transform: translateY(-50%) scale(1.08);
+}
+
+/* Estado Preenchido e Válido */
+body.inscricao-page .form-control:not(:placeholder-shown) {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+/* Estado Desabilitado */
+body.inscricao-page .form-control:disabled,
+body.inscricao-page .form-control[readonly] {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Select customizado com chevron SVG */
+body.inscricao-page select.form-control {
+  cursor: pointer !important;
+  padding-right: 2.5rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 16px !important;
+}
+
+body.inscricao-page select.form-control option {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  font-size: 0.95rem !important;
+  padding: 0.5rem !important;
+}
+
+/* --- 8. BOTÕES MODERNOS & DE AÇÃO --- */
+body.inscricao-page .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.6rem !important;
+  min-height: 48px !important;
+  padding: 0.75rem 1.75rem !important;
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Botão Primário: Gradiente Azul Vibrante com Brilho */
+body.inscricao-page .btn-primary {
+  background: linear-gradient(135deg, #1D68ED 0%, #1557D6 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 6px 20px rgba(21, 87, 214, 0.45) !important;
+}
+
+body.inscricao-page .btn-primary:hover {
+  background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 28px rgba(21, 87, 214, 0.6) !important;
+}
+
+body.inscricao-page .btn-primary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 4px 14px rgba(21, 87, 214, 0.4) !important;
+}
+
+/* Botão Outline / Secundário: Vidro Fosco Translúcido */
+body.inscricao-page .btn-outline {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+body.inscricao-page .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-2px) !important;
+  color: #FFFFFF !important;
+}
+
+body.inscricao-page .btn-danger {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border: 1px solid rgba(248, 113, 113, 0.4) !important;
+  color: #FCA5A5 !important;
+}
+
+body.inscricao-page .btn-danger:hover {
+  background: rgba(239, 68, 68, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+/* Badges com Estética de Vidro */
+body.inscricao-page .badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  padding: 0.35rem 0.85rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  border-radius: 9999px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+body.inscricao-page .badge-success {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+  color: #34D399 !important;
+}
+
+body.inscricao-page .badge-warning {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+  color: #FBBF24 !important;
+}
+
+/* --- 9. ORGANIZAÇÃO EM GRID RESPONSIVO --- */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 0;
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+/* Seção de Dados Dinâmicos da Etapa 2 */
+body.inscricao-page #dynamic-fields-container {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 16px !important;
+  padding: 1.75rem !important;
+  margin-bottom: 2rem !important;
+}
+
+.dynamic-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dynamic-section-desc {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.25rem;
+}
+
+#dynamic-fields-list {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1.25rem !important;
+}
+
+/* Itens que devem ocupar largura total no grid dinâmico */
+.dyn-field-full {
+  grid-column: 1 / -1;
+}
+
+/* Estado vazio dos campos dinâmicos */
+body.inscricao-page #no-fields-msg {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.25) !important;
+  border-radius: 14px !important;
+  padding: 2rem !important;
+  text-align: center !important;
+  color: rgba(255, 255, 255, 0.75) !important;
+  margin-bottom: 1.75rem !important;
+}
+
+/* --- 10. ESTILIZAÇÃO DO COMPONENTE DE IGREJA / PRESBITÉRIO --- */
+.church-select-container {
+  position: relative;
+  width: 100%;
+}
+
+body.inscricao-page .church-search-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 16px !important;
+  padding-right: 2.75rem !important;
+}
+
+body.inscricao-page .church-dropdown-menu {
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(21, 87, 214, 0.25) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+body.inscricao-page .church-dropdown-item {
+  color: #0F172A !important;
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  transition: all 0.15s ease;
+}
+
+body.inscricao-page .church-dropdown-item:hover,
+body.inscricao-page .church-dropdown-item.active {
+  background-color: #EFF6FF !important;
+  color: #1D68ED !important;
+}
+
+body.inscricao-page .church-dropdown-item .presb-tag {
+  background: #E2E8F0 !important;
+  color: #334155 !important;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+body.inscricao-page .church-status-hint {
+  color: #93C5FD;
+  font-size: 0.8rem;
+  margin-top: 0.4rem;
+}
+
+/* --- 11. ETAPA 3: FORMA DE PAGAMENTO EM CARDS TRANSLÚCIDOS --- */
+.payment-option-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.15rem !important;
+  padding: 1.25rem 1.5rem !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 14px !important;
+  cursor: pointer !important;
+  color: #FFFFFF !important;
+  transition: all 0.22s ease !important;
+}
+
+.payment-option-card:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.payment-option-card input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.payment-option-card input[type="radio"]:checked {
+  border-color: #60A5FA;
+  background: #1D68ED;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+}
+
+.payment-option-card input[type="radio"]:checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+}
+
+.payment-option-card:has(input[type="radio"]:checked) {
+  background: rgba(21, 87, 214, 0.22) !important;
+  border-color: #60A5FA !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35) !important;
+}
+
+.payment-option-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 0.25rem;
+}
+
+.payment-option-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+body.inscricao-page #parcelas-group {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 14px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.75rem !important;
+}
+
+/* Banner de Proposta de Triagem */
+#triagem-banner-msg {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+  border-radius: 14px !important;
+  padding: 1.25rem !important;
+  margin-bottom: 1.5rem !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* --- 12. ETAPA 4: RESULTADO DE PAGAMENTO --- */
+#payment-result {
+  color: #FFFFFF;
+}
+
+#payment-result h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 0.75rem;
+}
+
+#payment-result p {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* --- 13. FOOTER ELEGANTE --- */
+body.inscricao-page footer {
+  position: relative;
+  z-index: 10;
+  margin-top: auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(6, 18, 44, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body.inscricao-page footer p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.88rem;
+}
+
+/* --- 14. RESPONSIVIDADE MOBILE ESTRITA (ZERO OVERFLOW) --- */
+@media (max-width: 768px) {
+  body.inscricao-page main.container {
+    padding: 0 1rem;
+    margin: 1.25rem auto 3rem auto;
+  }
+
+  body.inscricao-page .card {
+    padding: 1.5rem 1.25rem !important;
+    border-radius: 16px !important;
+  }
+
+  .event-summary-inner {
+    padding: 1.25rem !important;
+  }
+
+  .event-banner-media {
+    height: 180px;
+  }
+
+  .event-title-main {
+    font-size: 1.35rem;
+  }
+
+  /* Etapas em coluna ou simplificadas no mobile */
+  .steps-progress-bar {
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .step-item-title {
+    display: none;
+  }
+
+  .step-item {
+    gap: 0;
+  }
+
+  .step-item-divider {
+    margin: 0 0.5rem;
+  }
+
+  /* Todos os grids passam para 1 coluna */
+  .form-grid-2,
+  #dynamic-fields-list {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Facetas simplificadas para não pesar nem cobrir */
+  .facet-1 {
+    width: 90vw;
+    height: 60vh;
+    opacity: 0.6;
+  }
+
+  .facet-2 {
+    display: none;
+  }
+}

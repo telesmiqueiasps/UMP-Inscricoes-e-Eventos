@@ -35,6 +35,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   const parcelasGroup = document.getElementById('parcelas-group');
   const paymentResult = document.getElementById('payment-result');
 
+  function atualizarStepProgressBar(passoAtivo) {
+    for (let i = 1; i <= 4; i++) {
+      const navItem = document.getElementById('step-nav-' + i);
+      const navDiv = document.getElementById('step-div-' + i);
+      if (navItem) {
+        if (i < passoAtivo) {
+          navItem.className = 'step-item completed';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === passoAtivo) {
+          navItem.className = 'step-item active';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.textContent = i;
+        } else {
+          navItem.className = 'step-item';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.textContent = i;
+        }
+      }
+      if (navDiv) {
+        navDiv.className = (i < passoAtivo) ? 'step-item-divider completed' : 'step-item-divider';
+      }
+    }
+  }
+
+  function atualizarStepProgressBar(passoAtivo) {
+    for (let i = 1; i <= 4; i++) {
+      const navItem = document.getElementById('step-nav-' + i);
+      const navDiv = document.getElementById('step-div-' + i);
+      if (navItem) {
+        if (i < passoAtivo) {
+          navItem.className = 'step-item completed';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === passoAtivo) {
+          navItem.className = 'step-item active';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.textContent = i;
+        } else {
+          navItem.className = 'step-item';
+          const numEl = navItem.querySelector('.step-item-number');
+          if (numEl) numEl.textContent = i;
+        }
+      }
+      if (navDiv) {
+        navDiv.className = (i < passoAtivo) ? 'step-item-divider completed' : 'step-item-divider';
+      }
+    }
+  }
+
   if (!eventoId) {
     showToast('Nenhum evento selecionado.', 'error');
     setTimeout(() => window.location.href = 'index.html', 2000);
@@ -483,7 +533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     banner.innerHTML = `
       <div style="color: #92400E; font-weight: 700; font-size: 1.05rem; margin-bottom: 0.25rem;">
-        ⏳ Proposta de inscrição em andamento
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Proposta de inscrição em andamento
       </div>
       <p style="color: #78350F; font-size: 0.88rem; margin-bottom: 0.75rem;">
         Identificamos que você iniciou o processo de inscrição para este evento anteriormente. Deseja retomar o pagamento?
@@ -527,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const infoAvisoHtml = `
       <div style="background: #EFF6FF; border: 1.5px solid #60A5FA; border-radius: var(--radius-md); padding: 1rem; margin-top: 1.5rem; text-align: left;">
-        <strong style="color: #1E40AF; display: block; margin-bottom: 0.25rem;">ℹ️ Confirmação da Vaga</strong>
+        <strong style="color: #1E40AF; display: block; margin-bottom: 0.25rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> Confirmação da Vaga</strong>
         <span style="font-size: 0.85rem; color: #1E3A8A;">Sua vaga e sua inscrição serão oficializadas no sistema assim que o pagamento (ou a 1ª parcela) for identificado pelo nosso sistema.</span>
       </div>
     `;
@@ -540,7 +590,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando Pagamento</div>
             <h3>Conclua seu pagamento Pix clicando no link abaixo:</h3>
             <a href="${pagamento.copia_cola_pix}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem; display: inline-block;">
-              💸 Pagar via Pix (InfinitePay)
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Pagar via Pix (InfinitePay)
             </a>
             ${pagamento.qr_code_pix ? `
               <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 1rem;">Ou escaneie o QR Code abaixo:</p>
@@ -576,7 +626,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="badge badge-warning" style="margin-bottom: 1rem;">Aguardando Pagamento</div>
           <h3>Clique no botão abaixo para concluir o pagamento via Pix ou Cartão:</h3>
           <a href="${pagamento.receipt_url}" target="_blank" class="btn btn-primary" style="margin: 1.5rem 0; font-size: 1.1rem;">
-            💳 Pagar na InfinitePay
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Pagar na InfinitePay
           </a>
           ${infoAvisoHtml}
           <br>
@@ -597,7 +647,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         qrHtml = `
           <div style="margin: 1.5rem 0; text-align: center;">
             <p style="font-weight: 600; font-size: 0.9rem; color: var(--text-color); margin-bottom: 0.5rem;">
-              📱 Escaneie o QR Code abaixo com a câmera do seu celular para ir ao checkout:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Escaneie o QR Code abaixo com a câmera do seu celular para ir ao checkout:
             </p>
             <img src="${qrCodeImg}" alt="QR Code 1ª Parcela" style="max-width: 210px; border: 1px solid #ddd; padding: 10px; border-radius: 12px; background: white;" />
           </div>
@@ -608,7 +658,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (checkoutUrl) {
         acoesHtml += `
           <a href="${checkoutUrl}" target="_blank" class="btn btn-primary" style="margin-bottom: 0.75rem; font-size: 1.05rem; width: 100%; display: block; padding: 0.85rem;">
-            💳 Pagar 1ª Parcela no Checkout (InfinitePay) &rarr;
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> Pagar 1ª Parcela no Checkout (InfinitePay)
           </a>
         `;
       }
@@ -616,7 +666,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (pdfUrl) {
         acoesHtml += `
           <a href="${pdfUrl}" target="_blank" class="btn btn-outline" style="margin-bottom: 0.75rem; font-size: 1rem; width: 100%; display: block; border-color: var(--primary); color: var(--primary); font-weight: 600; padding: 0.75rem;">
-            📄 Baixar Carnê / PDF da 1ª Parcela
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Baixar Carnê / PDF da 1ª Parcela
           </a>
         `;
       }
@@ -724,31 +774,40 @@ function renderDynamicFormFields() {
       case 'cpf':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">CPF *</label>
-            <input type="text" name="dyn_cpf" class="form-control dyn-input" placeholder="000.000.000-00" required pattern="^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$" title="Digite o CPF no formato 000.000.000-00">
+            <label class="form-label"><span>CPF</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              <input type="text" name="dyn_cpf" class="form-control dyn-input" placeholder="000.000.000-00" required pattern="^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$" title="Digite o CPF no formato 000.000.000-00">
+            </div>
           </div>
         `;
         break;
       case 'telefone':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Telefone / WhatsApp *</label>
-            <input type="text" name="dyn_telefone" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+            <label class="form-label"><span>Telefone / WhatsApp</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <input type="text" name="dyn_telefone" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+            </div>
           </div>
         `;
         break;
       case 'data_nascimento':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Data de Nascimento *</label>
-            <input type="date" name="dyn_data_nascimento" class="form-control dyn-input" required>
+            <label class="form-label"><span>Data de Nascimento</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="date" name="dyn_data_nascimento" class="form-control dyn-input" required>
+            </div>
           </div>
         `;
         break;
       case 'genero':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Gênero *</label>
+            <label class="form-label"><span>Gênero</span> <span class="label-required">*</span></label>
             <select name="dyn_genero" class="form-control dyn-input" required>
               <option value="">Selecione...</option>
               <option value="Masculino">Masculino</option>
@@ -760,7 +819,7 @@ function renderDynamicFormFields() {
       case 'tamanho_camiseta':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Tamanho da Camiseta *</label>
+            <label class="form-label"><span>Tamanho da Camiseta</span> <span class="label-required">*</span></label>
             <select name="dyn_tamanho_camiseta" class="form-control dyn-input" required>
               <option value="">Selecione...</option>
               <option value="PP">PP</option>
@@ -777,7 +836,7 @@ function renderDynamicFormFields() {
       case 'tipo_sanguineo':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Tipo Sanguíneo *</label>
+            <label class="form-label"><span>Tipo Sanguíneo</span> <span class="label-required">*</span></label>
             <select name="dyn_tipo_sanguineo" class="form-control dyn-input" required>
               <option value="">Selecione...</option>
               <option value="A+">A+</option>
@@ -794,42 +853,57 @@ function renderDynamicFormFields() {
         break;
       case 'alergias':
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Possui Alergias? (Se sim, descreva) *</label>
-            <input type="text" name="dyn_alergias" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Dipirona)" required>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Possui Alergias? (Se sim, descreva)</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <input type="text" name="dyn_alergias" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Dipirona)" required>
+            </div>
           </div>
         `;
         break;
       case 'medicamento_continuo':
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Toma algum Medicamento Contínuo? (Se sim, descreva) *</label>
-            <input type="text" name="dyn_medicamento_continuo" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Rivotril)" required>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Toma algum Medicamento Contínuo? (Se sim, descreva)</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <input type="text" name="dyn_medicamento_continuo" class="form-control dyn-input" placeholder="Ex: Não, ou Sim (Rivotril)" required>
+            </div>
           </div>
         `;
         break;
       case 'contato_emergencia':
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Contato de Emergência (Nome e Telefone) *</label>
-            <input type="text" name="dyn_contato_emergencia" class="form-control dyn-input" placeholder="Ex: Maria (Mãe) - (00) 00000-0000" required>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Contato de Emergência (Nome e Telefone)</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3"/></svg>
+              <input type="text" name="dyn_contato_emergencia" class="form-control dyn-input" placeholder="Ex: Maria (Mãe) - (00) 00000-0000" required>
+            </div>
           </div>
         `;
         break;
       case 'restricao_alimentar':
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Restrição Alimentar (Se houver, descreva) *</label>
-            <input type="text" name="dyn_restricao_alimentar" class="form-control dyn-input" placeholder="Ex: Nenhuma, ou Alergia a glúten" required>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Restrição Alimentar (Se houver, descreva)</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <input type="text" name="dyn_restricao_alimentar" class="form-control dyn-input" placeholder="Ex: Nenhuma, ou Alergia a glúten" required>
+            </div>
           </div>
         `;
         break;
       case 'igreja':
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Igreja / Congregação *</label>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Igreja / Congregação</span> <span class="label-required">*</span></label>
             <div class="church-select-container">
-              <input type="text" id="dyn-igreja-search" class="form-control church-search-input" placeholder="Digite para buscar ou selecione..." autocomplete="off">
+              <div class="input-with-icon">
+                <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 22V8a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M4 22h16"/><path d="M12 2v4"/><path d="M10 4h4"/><line x1="12" y1="11" x2="12" y2="15"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+                <input type="text" id="dyn-igreja-search" class="form-control church-search-input" placeholder="Digite para buscar ou selecione..." autocomplete="off">
+              </div>
               <input type="hidden" name="dyn_igreja" id="dyn-hidden-igreja" class="dyn-input" required>
               <div id="dyn-igreja-dropdown" class="church-dropdown-menu"></div>
             </div>
@@ -840,7 +914,7 @@ function renderDynamicFormFields() {
       case 'presbiterio':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Presbitério *</label>
+            <label class="form-label"><span>Presbitério</span> <span class="label-required">*</span></label>
             <select name="dyn_presbiterio" id="dyn-select-presbiterio" class="form-control dyn-input" required>
               <option value="">Selecione seu presbitério...</option>
             </select>
@@ -850,15 +924,18 @@ function renderDynamicFormFields() {
       case 'cidade':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Cidade *</label>
-            <input type="text" name="dyn_cidade" class="form-control dyn-input" placeholder="Sua cidade" required>
+            <label class="form-label"><span>Cidade</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <input type="text" name="dyn_cidade" class="form-control dyn-input" placeholder="Sua cidade" required>
+            </div>
           </div>
         `;
         break;
       case 'estado_civil':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Estado Civil *</label>
+            <label class="form-label"><span>Estado Civil</span> <span class="label-required">*</span></label>
             <select name="dyn_estado_civil" class="form-control dyn-input" required>
               <option value="">Selecione...</option>
               <option value="Solteiro(a)">Solteiro(a)</option>
@@ -872,24 +949,33 @@ function renderDynamicFormFields() {
       case 'nome_pastor':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Nome do seu Pastor *</label>
-            <input type="text" name="dyn_nome_pastor" class="form-control dyn-input" placeholder="Nome completo do pastor" required>
+            <label class="form-label"><span>Nome do seu Pastor</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" name="dyn_nome_pastor" class="form-control dyn-input" placeholder="Nome completo do pastor" required>
+            </div>
           </div>
         `;
         break;
       case 'contato_pastor':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Contato do seu Pastor *</label>
-            <input type="text" name="dyn_contato_pastor" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+            <label class="form-label"><span>Contato do seu Pastor</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <input type="text" name="dyn_contato_pastor" class="form-control dyn-input" placeholder="(00) 00000-0000" required pattern="^\\(\\d{2}\\)\\s\\d{5}-\\d{4}$" title="Digite o telefone no formato (00) 00000-0000">
+            </div>
           </div>
         `;
         break;
       case 'cargo_federacao':
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Cargo na Federação *</label>
-            <input type="text" name="dyn_cargo_federacao" class="form-control dyn-input" placeholder="Ex: Membro, Presidente..." required>
+            <label class="form-label"><span>Cargo na Federação</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+              <input type="text" name="dyn_cargo_federacao" class="form-control dyn-input" placeholder="Ex: Membro, Presidente..." required>
+            </div>
           </div>
         `;
         break;
@@ -897,9 +983,12 @@ function renderDynamicFormFields() {
         const startISO = (eventoAtual.data_inicio || '').split('T')[0];
         const endISO = (eventoAtual.data_fim || '').split('T')[0];
         fieldHTML = `
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Dia da sua chegada *</label>
-            <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
+          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+            <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
+            </div>
           </div>
         `;
         break;
@@ -1060,7 +1149,7 @@ function configurarSelecaoIgrejasEPresbiterios(
         <div class="church-dropdown-empty">
           Nenhuma igreja encontrada${presbFiltro ? ` no <strong>${presbFiltro}</strong>` : ''}.<br>
           <a href="javascript:void(0)" id="btn-selecionar-outra" style="color: var(--primary, #4f46e5); font-weight: 700; text-decoration: underline; margin-top: 0.4rem; display: inline-block;">
-            👉 Clique aqui para selecionar "Outra"
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Clique aqui para selecionar "Outra"
           </a>
         </div>
       `;
@@ -1109,7 +1198,7 @@ function configurarSelecaoIgrejasEPresbiterios(
     const presbNome = getPresbiterioNome(igreja);
     if (hintEl) {
       if (presbNome) {
-        hintEl.innerHTML = `<span style="color: #10b981; font-weight: 700;">✓</span> Vinculada ao <strong>${presbNome}</strong>`;
+        hintEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polyline points="20 6 9 17 4 12"/></svg> Vinculada ao <strong>${presbNome}</strong>`;
         hintEl.style.display = 'flex';
       } else {
         hintEl.style.display = 'none';
