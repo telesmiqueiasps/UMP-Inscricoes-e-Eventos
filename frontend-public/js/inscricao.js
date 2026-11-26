@@ -394,6 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Avançar para Etapa 3 (Pagamento)
       step2.style.display = 'none';
       step3.style.display = 'block';
+      atualizarStepProgressBar(3);
     });
   }
 
@@ -429,6 +430,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         step3.style.display = 'none';
         step4.style.display = 'block';
         if (loggedUserBanner) loggedUserBanner.style.display = 'none';
+        atualizarStepProgressBar(4);
 
         renderPaymentResult(pagamentoRes, formaPagamento);
         showToast('Resumo de pagamento gerado! Conclua o pagamento para confirmar sua vaga.', 'success');
@@ -452,6 +454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.voltarParaDados = function() {
     step3.style.display = 'none';
     step2.style.display = 'block';
+    atualizarStepProgressBar(2);
   };
 
   async function atualizarEstadoUsuario() {
@@ -475,13 +478,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user && token) {
       if (loggedUserBanner) {
         loggedUserBanner.style.display = 'flex';
-        const userIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-        loggedUserMsg.innerHTML = `${userIconSvg}Participante ativo: <strong>${user.nome}</strong> (${user.email})`;
+        const userIconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        loggedUserMsg.innerHTML = `
+          <div class="logged-user-content">
+            <span class="logged-user-icon">${userIconSvg}</span>
+            <div class="logged-user-details">
+              <span class="logged-user-name">Participante ativo: <strong>${user.nome}</strong></span>
+              <span class="logged-user-email">${user.email}</span>
+            </div>
+          </div>
+        `;
       }
       step1.style.display = 'none';
       step2.style.display = 'block';
       step3.style.display = 'none';
       step4.style.display = 'none';
+      atualizarStepProgressBar(2);
       renderDynamicFormFields();
 
       // Checar se possui triagem pendente
@@ -499,6 +511,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       step2.style.display = 'none';
       step3.style.display = 'none';
       step4.style.display = 'none';
+      atualizarStepProgressBar(1);
       
       // Resetar visibilidade dos formulários
       if (formEmailCheck) formEmailCheck.style.display = 'block';
@@ -558,6 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       step2.style.display = 'none';
       step3.style.display = 'block';
+      atualizarStepProgressBar(3);
     };
 
     window.ignorarTriagem = function() {
@@ -975,15 +989,52 @@ function renderDynamicFormFields() {
       case 'dias_estadia':
         const startISO = (eventoAtual.data_inicio || '').split('T')[0];
         const endISO = (eventoAtual.data_fim || '').split('T')[0];
-        fieldHTML = `
-          <div class="form-group dyn-field-full" style="margin-bottom: 0;">
-            <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
-            <div class="input-with-icon">
-              <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
+        
+        let optionsDias = '';
+        if (startISO && endISO) {
+          const sParts = startISO.split('-').map(Number);
+          const eParts = endISO.split('-').map(Number);
+          const cur = new Date(sParts[0], sParts[1] - 1, sParts[2]);
+          const end = new Date(eParts[0], eParts[1] - 1, eParts[2]);
+          
+          const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+          
+          while (cur <= end) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, '0');
+            const d = String(cur.getDate()).padStart(2, '0');
+            const isoVal = `${y}-${m}-${d}`;
+            const diaSemanaNome = diasSemana[cur.getDay()];
+            const diaFormatado = `${diaSemanaNome}, ${d}/${m}/${y}`;
+            optionsDias += `<option value="${isoVal}">${diaFormatado}</option>`;
+            cur.setDate(cur.getDate() + 1);
+          }
+        }
+
+        if (optionsDias) {
+          fieldHTML = `
+            <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+              <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
+              <div class="input-with-icon">
+                <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <select name="dyn_dias_estadia" class="form-control dyn-input" required>
+                  <option value="">Selecione o dia da chegada no evento...</option>
+                  ${optionsDias}
+                </select>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          fieldHTML = `
+            <div class="form-group dyn-field-full" style="margin-bottom: 0;">
+              <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
+              <div class="input-with-icon">
+                <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
+              </div>
+            </div>
+          `;
+        }
         break;
     }
 
