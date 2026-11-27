@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UMP Eventos — Plataforma de Inscrições da Sinodal UMP PB</title>
   <link rel="icon" href="img/logo.png" type="image/png">
+  <link rel="preload" as="image" href="img/background-login.webp" type="image/webp">
   <meta name="description" content="Plataforma de Inscrições da Sinodal UMP PB. Gerencie suas inscrições, escolha sua forma de pagamento preferida (Pix, Cartão InfinitePay ou Parcelado) e receba seus comprovantes na hora.">
   
   <!-- Google Fonts: Inter & Plus Jakarta Sans -->
@@ -14,9 +15,17 @@
   
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body class="home-page">
 
-  <!-- Top Sticky Navbar -->
+  <!-- Cenário Visual Fixo Permanente (Fundo Abstrato Azul e Branco) -->
+  <div class="fixed-abstract-stage" aria-hidden="true">
+    <div class="stage-bg-image"></div>
+    <div class="stage-gradient-mesh"></div>
+    <div class="stage-glow glow-top-left"></div>
+    <div class="stage-glow glow-bottom-right"></div>
+  </div>
+
+  <!-- Top Fixed Navbar Glassmorphism -->
   <header class="navbar-wrapper">
     <nav class="navbar-container" aria-label="Navegação Principal">
       <a href="index.html" class="navbar-brand" aria-label="UMP Eventos - Início">
@@ -31,7 +40,7 @@
         <li><a href="/admin/index.html" class="nav-item" target="_blank" rel="noopener noreferrer">Painel Admin</a></li>
         <li>
           <a href="#eventos-section" class="btn-navbar-cta">
-            <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="nav-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -44,7 +53,7 @@
 
       <!-- Mobile Hamburger Button -->
       <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir Menu de Navegação" aria-expanded="false" aria-controls="mobile-drawer">
-        <svg class="hamburger-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="hamburger-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
           <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -62,7 +71,7 @@
         <span class="navbar-brand-name">UMP Eventos</span>
       </div>
       <button class="drawer-close-btn" id="drawer-close-btn" aria-label="Fechar Menu">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
@@ -76,7 +85,7 @@
       </ul>
       <div class="drawer-cta-wrap">
         <a href="#eventos-section" class="btn-navbar-cta drawer-btn-events" id="drawer-btn-events">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -88,30 +97,17 @@
     </div>
   </aside>
 
-  <!-- Hero Section -->
+  <!-- Hero Section — Apresentação Artística & Fotos Integradas -->
   <section class="hero-section">
-    <!-- Abstract Background SVG Elements -->
-    <div class="hero-bg-shapes" aria-hidden="true">
-      <svg class="hero-shape hero-shape-1" viewBox="0 0 600 600" fill="none">
-        <circle cx="300" cy="300" r="280" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" />
-        <circle cx="300" cy="300" r="200" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
-        <circle cx="300" cy="300" r="120" stroke="rgba(56,189,248,0.12)" stroke-width="1.5" />
-      </svg>
-      <svg class="hero-shape hero-shape-2" viewBox="0 0 500 500" fill="none">
-        <path d="M50 250 C 150 100, 350 400, 450 250" stroke="rgba(255,255,255,0.07)" stroke-width="2" />
-        <path d="M10 200 C 120 80, 380 420, 490 200" stroke="rgba(56,189,248,0.08)" stroke-width="1.5" />
-      </svg>
-      <div class="hero-glow-dot dot-1"></div>
-      <div class="hero-glow-dot dot-2"></div>
-      <div class="hero-glow-dot dot-3"></div>
-    </div>
-
     <div class="hero-container">
-      <!-- Left Column: Content -->
+      
+      <!-- Lado Esquerdo: Conteúdo Textual & CTA -->
       <div class="hero-content">
         <div class="hero-eyebrow">
-          <span>BEM-VINDO AO UMP EVENTOS</span>
-          <span class="hero-eyebrow-line" aria-hidden="true"></span>
+          <span class="hero-eyebrow-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+            <span>BEM-VINDO AO UMP EVENTOS</span>
+          </span>
         </div>
         <h1 class="hero-title">
           Plataforma de Inscrições da<br>
@@ -136,39 +132,44 @@
         </div>
       </div>
 
-      <!-- Right Column: Banner Slider with Gradient Blend -->
+      <!-- Lado Direito: Fotografias da Mocidade Integradas ao Cenário com Máscara Gradual -->
       <div class="hero-media-wrapper">
-        <div class="hero-banner-card" id="hero-banner-slider" role="region" aria-label="Banners dos Eventos UMP">
-          <!-- Slides Wrapper -->
-          <div class="hero-banner-slides" id="hero-banner-slides">
+        <div class="hero-floating-stage" id="hero-banner-slider" role="region" aria-label="Fotografias dos Eventos UMP">
+          
+          <!-- Aura de luz suave que integra a foto ao fundo -->
+          <div class="hero-photo-glow" aria-hidden="true"></div>
+          
+          <!-- Slides com máscara elíptica de dissolução de bordas -->
+          <div class="hero-masked-slides" id="hero-banner-slides">
             <div class="banner-slide active" data-index="0">
               <img src="img/banner.png" alt="UMP Eventos - Juntos na Missão" class="hero-banner-image" fetchpriority="high">
             </div>
           </div>
 
-          <!-- Multi-stop Gradient Blend Overlay -->
-          <div class="hero-banner-overlay" aria-hidden="true"></div>
+          <!-- Tonalidade sutil para harmonização com a paleta azul -->
+          <div class="hero-photo-tint" aria-hidden="true"></div>
 
-          <!-- Controls & Dots -->
+          <!-- Controles Flutuantes e Minimalistas -->
           <div class="banner-slider-controls" id="banner-slider-controls" style="display: none;">
-            <button class="banner-ctrl-btn banner-ctrl-prev" id="banner-prev" aria-label="Banner anterior">
+            <button class="banner-ctrl-btn banner-ctrl-prev" id="banner-prev" aria-label="Foto anterior">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <div class="banner-slider-dots" id="banner-slider-dots"></div>
-            <button class="banner-ctrl-btn banner-ctrl-next" id="banner-next" aria-label="Próximo banner">
+            <button class="banner-ctrl-btn banner-ctrl-next" id="banner-next" aria-label="Próxima foto">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         </div>
       </div>
+
     </div>
   </section>
 
-  <!-- Featured Events Section -->
+  <!-- Seção de Eventos em Destaque -->
   <main class="events-section" id="eventos-section">
     <div class="events-container-wrapper">
       
-      <!-- Section Header -->
+      <!-- Cabeçalho da Seção -->
       <div class="section-header">
         <div class="section-tag">
           <span class="section-tag-dash" aria-hidden="true">—</span>
@@ -178,9 +179,9 @@
         <p class="section-subtitle">Selecione o evento desejado para realizar sua inscrição</p>
       </div>
 
-      <!-- Carousel / Events Viewport -->
+      <!-- Carrossel / Viewport dos Cards -->
       <div class="carousel-outer" id="carousel-outer">
-        <!-- Previous Button -->
+        <!-- Botão Anterior -->
         <button class="carousel-arrow carousel-prev" id="carousel-prev" aria-label="Evento Anterior">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="15 18 9 12 15 6"></polyline>
@@ -190,11 +191,11 @@
         <!-- Cards Viewport & Track -->
         <div class="carousel-viewport" id="carousel-viewport">
           <div class="events-carousel-track" id="events-container">
-            <!-- Skeleton Loading state will be rendered here immediately via public.js -->
+            <!-- Skeleton Shimmer Loading será injetado imediatamente via public.js -->
           </div>
         </div>
 
-        <!-- Next Button -->
+        <!-- Botão Próximo -->
         <button class="carousel-arrow carousel-next" id="carousel-next" aria-label="Próximo Evento">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -202,13 +203,13 @@
         </button>
       </div>
 
-      <!-- Carousel Pagination Dots -->
+      <!-- Paginação / Indicadores dos Eventos -->
       <div class="carousel-pagination" id="carousel-dots" role="tablist" aria-label="Navegação dos Eventos"></div>
 
     </div>
   </main>
 
-  <!-- Footer -->
+  <!-- Footer com Efeito Glassmorphic -->
   <footer class="site-footer">
     <div class="footer-container">
       <div class="footer-brand">
