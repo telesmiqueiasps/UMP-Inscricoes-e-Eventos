@@ -10,23 +10,99 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// Controle do Menu Mobile (Drawer 3 tracinhos)
-window.toggleMenuMobile = function () {
-  const sidebar = document.getElementById('main-sidebar');
-  const backdrop = document.getElementById('mobile-menu-backdrop');
-  if (!sidebar) return;
-  const isOpen = sidebar.classList.toggle('menu-open');
-  if (backdrop) {
-    if (isOpen) backdrop.classList.add('active');
-    else backdrop.classList.remove('active');
-  }
-};
+// Gestão do Drawer Mobile e Backdrop
+function setupMobileDrawer() {
+  const toggleBtn = document.getElementById('mobile-menu-toggle');
+  const drawer = document.getElementById('mobile-drawer') || document.getElementById('main-sidebar');
+  const backdrop = document.getElementById('drawer-backdrop') || document.getElementById('mobile-menu-backdrop');
+  const closeBtn = document.getElementById('drawer-close-btn');
+  const drawerLinks = document.querySelectorAll('.drawer-link, .sidebar-link');
 
-window.fecharMenuMobile = function () {
-  const sidebar = document.getElementById('main-sidebar');
-  const backdrop = document.getElementById('mobile-menu-backdrop');
-  if (sidebar) sidebar.classList.remove('menu-open');
-  if (backdrop) backdrop.classList.remove('active');
+  if (!drawer || !backdrop) return;
+
+  function openMenu() {
+    drawer.classList.add('active');
+    backdrop.classList.add('active');
+    document.body.classList.add('drawer-open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
+    drawer.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeMenu() {
+    drawer.classList.remove('active');
+    backdrop.classList.remove('active');
+    document.body.classList.remove('drawer-open');
+    if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+    drawer.setAttribute('aria-hidden', 'true');
+  }
+
+  window.toggleMenuMobile = function () {
+    if (drawer.classList.contains('active')) closeMenu();
+    else openMenu();
+  };
+  window.fecharMenuMobile = closeMenu;
+
+  if (toggleBtn) {
+    toggleBtn.onclick = null;
+    toggleBtn.addEventListener('click', window.toggleMenuMobile);
+  }
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+  backdrop.addEventListener('click', closeMenu);
+
+  drawerLinks.forEach(link => {
+    link.addEventListener('click', closeMenu);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('active')) {
+      closeMenu();
+    }
+  });
+}
+
+// Gestão de Máscara e Visualização do CPF
+let currentRawCpf = '';
+let isCpfRevealed = false;
+
+function maskCpf(raw) {
+  if (!raw) return 'Não informado';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `***.***.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  }
+  return '***.***.***-**';
+}
+
+function formatCpf(raw) {
+  if (!raw) return 'Não informado';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  }
+  return raw;
+}
+
+window.toggleCpfVisibility = function () {
+  isCpfRevealed = !isCpfRevealed;
+  const cpfDisplay = document.getElementById('cpf-display-val');
+  const btn = document.getElementById('btn-toggle-cpf');
+  if (cpfDisplay) {
+    cpfDisplay.textContent = isCpfRevealed ? formatCpf(currentRawCpf) : maskCpf(currentRawCpf);
+  }
+  if (btn) {
+    btn.setAttribute('aria-label', isCpfRevealed ? 'Ocultar CPF' : 'Mostrar CPF');
+    btn.innerHTML = isCpfRevealed ? `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+        <line x1="1" y1="23" x2="23" y2="1"/>
+      </svg>
+    ` : `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    `;
+  }
 };
 
 // Troca de Abas do Participante
@@ -39,7 +115,7 @@ window.switchTab = function (tabId) {
   const target = document.getElementById(tabId);
   if (target) target.style.display = 'block';
 
-  document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link, .drawer-link').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item-tab').forEach(el => el.classList.remove('active'));
 
   if (tabId === 'tab-painel') {
@@ -76,6 +152,8 @@ let activeEventKey = null; // Ex: "ins_12" ou "tr_5"
 let welcomeUser, userInfoCard, registrationCard, paymentsContainer;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  setupMobileDrawer();
+
   const token = API.getToken();
   if (!token) {
     window.location.href = 'login.html';
@@ -141,20 +219,46 @@ async function loadDashboard() {
       welcomeUser.textContent = `Olá, ${primeiroNome}!`;
     }
 
-    // 2. Dados Pessoais com botão Editar
+    // 2. Dados Pessoais com botão Editar e Máscara de CPF
     if (userInfoCard && data.usuario) {
+      currentRawCpf = data.usuario.cpf || '';
+      isCpfRevealed = false;
+      const maskedCpf = maskCpf(currentRawCpf);
+
       userInfoCard.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
           <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 0;">Meus Dados Pessoais</h3>
-          <button class="btn btn-outline btn-sm" onclick="openEditModal()">
+          <button type="button" class="btn btn-outline btn-sm btn-edit-profile" onclick="openEditModal()" aria-label="Editar meus dados">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
             <span>Editar</span>
           </button>
         </div>
-        <p style="margin-bottom: 0.35rem;"><strong>Nome:</strong> ${data.usuario.nome || 'Não informado'}</p>
-        <p style="margin-bottom: 0.35rem;"><strong>E-mail:</strong> ${data.usuario.email || 'Não informado'}</p>
-        <p style="margin-bottom: 0.35rem;"><strong>CPF:</strong> ${data.usuario.cpf || 'Não informado'}</p>
-        <p style="margin-bottom: 0.35rem;"><strong>Telefone:</strong> ${data.usuario.telefone || 'Não informado'}</p>
+        <div class="user-info-list">
+          <div class="user-info-item">
+            <span class="user-info-label">Nome Completo</span>
+            <span class="user-info-val">${escapeHtml(data.usuario.nome || 'Não informado')}</span>
+          </div>
+          <div class="user-info-item">
+            <span class="user-info-label">E-mail</span>
+            <span class="user-info-val" style="overflow-wrap: anywhere; word-break: break-word;">${escapeHtml(data.usuario.email || 'Não informado')}</span>
+          </div>
+          <div class="user-info-item">
+            <span class="user-info-label">CPF</span>
+            <div class="user-cpf-wrap">
+              <span class="user-info-val font-mono" id="cpf-display-val">${maskedCpf}</span>
+              <button type="button" class="btn-toggle-cpf" id="btn-toggle-cpf" onclick="toggleCpfVisibility()" aria-label="Mostrar CPF" title="Mostrar ou ocultar CPF">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="user-info-item">
+            <span class="user-info-label">Telefone / WhatsApp</span>
+            <span class="user-info-val">${escapeHtml(data.usuario.telefone || 'Não informado')}</span>
+          </div>
+        </div>
       `;
     }
 
@@ -891,7 +995,7 @@ function renderRecentPayments(pagamentos) {
           </button>`;
         }
         if (!isCancelled) {
-          actionBtns += `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm" style="text-decoration: none;">
+          actionBtns += `<a href="${pdfUrl}" target="_blank" class="btn btn-outline btn-sm btn-carne-pdf" style="text-decoration: none;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span>Carnê PDF</span>
           </a>`;
@@ -926,8 +1030,8 @@ function renderRecentPayments(pagamentos) {
 
       return `
         <div class="card">
-          <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Parcelamento (${pag.evento_titulo || 'Evento'})</h3>
-          <div class="table-responsive">
+          <h3 class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">Parcelamento (${escapeHtml(pag.evento_titulo || 'Evento')})</h3>
+          <div class="table-responsive installments-table">
             <table>
               <thead>
                 <tr>
@@ -941,7 +1045,7 @@ function renderRecentPayments(pagamentos) {
               <tbody>${parcelasRows}</tbody>
             </table>
           </div>
-          <div class="parcelas-mobile-list">
+          <div class="parcelas-mobile-list installments-cards">
             ${mobileCards}
           </div>
         </div>
