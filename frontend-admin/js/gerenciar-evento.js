@@ -5851,7 +5851,267 @@ function renderizarGraficosDashboard(stats) {
       `;
     }
   }
+
+  // Aplicar regras de visibilidade dos gráficos configuradas para este evento
+  aplicarConfigGraficosVisibilidade();
 }
+
+// ==========================================
+// --- SISTEMA DE PERSONALIZAÇÃO DE GRÁFICOS ---
+// ==========================================
+
+const DASH_CHARTS_CATALOG = [
+  {
+    id: 'lotacao-dias',
+    cardId: 'card-dash-lotacao-dias',
+    titulo: 'Lotação Diária por Gênero & Estadia',
+    descricao: 'Presença por dia e controle de vagas disponíveis no evento',
+    padrao: true,
+    categoria: 'Estadia & Vagas'
+  },
+  {
+    id: 'idade-menor-maior',
+    cardId: 'card-dash-idade-menor-maior',
+    titulo: 'Abaixo de 19 Anos vs 19+ Anos',
+    descricao: 'Divisão entre menores/jovens (<19) e participantes adultos',
+    padrao: true,
+    categoria: 'Demografia'
+  },
+  {
+    id: 'faixas-etarias',
+    cardId: 'card-dash-faixas-etarias',
+    titulo: 'Faixas Etárias dos Participantes',
+    descricao: 'Distribuição detalhada de participantes por grupos de idade',
+    padrao: true,
+    categoria: 'Demografia'
+  },
+  {
+    id: 'sexo',
+    cardId: 'card-dash-sexo',
+    titulo: 'Distribuição por Sexo',
+    descricao: 'Proporção entre participantes masculinos e femininos',
+    padrao: true,
+    categoria: 'Demografia'
+  },
+  {
+    id: 'estado-civil',
+    cardId: 'card-dash-estado-civil',
+    titulo: 'Estado Civil',
+    descricao: 'Solteiros, casados e outros perfis cadastrados',
+    padrao: true,
+    categoria: 'Demografia'
+  },
+  {
+    id: 'presbiterios',
+    cardId: 'card-dash-presbiterios',
+    titulo: 'Inscrições por Presbitério',
+    descricao: 'Origem por presbitério federado ou visitante',
+    padrao: true,
+    categoria: 'Origem & Igrejas'
+  },
+  {
+    id: 'igrejas',
+    cardId: 'card-dash-igrejas',
+    titulo: 'Inscrições por Igreja / Congregação',
+    descricao: 'Gráfico e ranking representativo das igrejas locais',
+    padrao: true,
+    categoria: 'Origem & Igrejas'
+  },
+  {
+    id: 'camisetas',
+    cardId: 'card-dash-camisetas',
+    titulo: 'Tamanhos de Camiseta',
+    descricao: 'Demanda de confecção e grade para os kits do evento',
+    padrao: true,
+    categoria: 'Logística'
+  },
+  {
+    id: 'status-inscricoes',
+    cardId: 'card-dash-status-inscricoes',
+    titulo: 'Status Geral das Inscrições',
+    descricao: 'Confirmadas, pendentes de pagamento e canceladas',
+    padrao: true,
+    categoria: 'Inscrições'
+  }
+];
+
+function obterConfigGraficosDashboard() {
+  if (!selectedEventoId) return {};
+  try {
+    const raw = localStorage.getItem('dash_charts_config_' + selectedEventoId);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (_) {}
+  
+  // Se não existir preferência salva para este evento, todos os padrão são true
+  const padrao = {};
+  DASH_CHARTS_CATALOG.forEach(c => {
+    padrao[c.id] = c.padrao;
+  });
+  return padrao;
+}
+
+function salvarConfigGraficosDashboard(config) {
+  if (!selectedEventoId) return;
+  try {
+    localStorage.setItem('dash_charts_config_' + selectedEventoId, JSON.stringify(config));
+  } catch (_) {}
+  aplicarConfigGraficosVisibilidade();
+}
+
+window.aplicarConfigGraficosVisibilidade = function() {
+  const config = obterConfigGraficosDashboard();
+  let totalOcultos = 0;
+  let totalAtivos = 0;
+
+  DASH_CHARTS_CATALOG.forEach(c => {
+    const cardEl = document.getElementById(c.cardId);
+    if (!cardEl) return;
+
+    // Se estiver explicitamente false, ocultar
+    const visivel = config[c.id] !== false;
+    if (visivel) {
+      cardEl.style.display = '';
+      totalAtivos++;
+    } else {
+      cardEl.style.display = 'none';
+      totalOcultos++;
+    }
+  });
+
+  // Atualizar badge no botão da barra de ferramentas
+  const badgeOcultos = document.getElementById('badge-graficos-ocultos');
+  if (badgeOcultos) {
+    if (totalOcultos > 0) {
+      badgeOcultos.style.display = 'inline-flex';
+      badgeOcultos.textContent = `${totalOcultos} oculto${totalOcultos > 1 ? 's' : ''}`;
+    } else {
+      badgeOcultos.style.display = 'none';
+    }
+  }
+
+  // Atualizar banner de aviso
+  const banner = document.getElementById('banner-graficos-ocultos');
+  const bannerTexto = document.getElementById('banner-graficos-ocultos-texto');
+  if (banner) {
+    if (totalOcultos > 0) {
+      banner.style.display = 'flex';
+      if (bannerTexto) {
+        bannerTexto.textContent = `Existem ${totalOcultos} gráfico${totalOcultos > 1 ? 's' : ''} ocultado${totalOcultos > 1 ? 's' : ''} nesta visualização (${totalAtivos} visíveis).`;
+      }
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+};
+
+window.ocultarGraficoDashboard = function(chartId, ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
+  const config = obterConfigGraficosDashboard();
+  config[chartId] = false;
+  salvarConfigGraficosDashboard(config);
+
+  const chartItem = DASH_CHARTS_CATALOG.find(c => c.id === chartId);
+  const nomeGrafico = chartItem ? chartItem.titulo : 'Gráfico';
+  showToast(`"${nomeGrafico}" ocultado do dashboard deste evento.`, 'info');
+};
+
+window.abrirModalPersonalizarGraficos = function() {
+  const modal = document.getElementById('modal-personalizar-graficos');
+  const listaContainer = document.getElementById('lista-toggles-graficos');
+  const contagemEl = document.getElementById('modal-personalizar-contagem');
+  if (!modal || !listaContainer) return;
+
+  const config = obterConfigGraficosDashboard();
+
+  let ativos = 0;
+  DASH_CHARTS_CATALOG.forEach(c => {
+    if (config[c.id] !== false) ativos++;
+  });
+
+  if (contagemEl) {
+    contagemEl.textContent = `${ativos} de ${DASH_CHARTS_CATALOG.length} gráficos ativos`;
+  }
+
+  // Renderizar itens
+  listaContainer.innerHTML = DASH_CHARTS_CATALOG.map(c => {
+    const isChecked = config[c.id] !== false;
+    return `
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 1rem; border: 1.5px solid ${isChecked ? '#93C5FD' : '#E2E8F0'}; border-radius: var(--radius-md); background: ${isChecked ? '#F0F7FF' : 'white'}; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-weight: 700; font-size: 0.92rem; color: #0F172A;">${c.titulo}</span>
+            <span class="badge" style="background: #E2E8F0; color: #475569; font-size: 0.68rem; font-weight: 600;">${c.categoria}</span>
+          </div>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">${c.descricao}</span>
+        </div>
+        <div style="display: flex; align-items: center;">
+          <input type="checkbox" class="cb-toggle-grafico" value="${c.id}" ${isChecked ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer; accent-color: #1D4ED8;" onchange="onToggleGraficoModalChange(this)">
+        </div>
+      </label>
+    `;
+  }).join('');
+
+  modal.style.display = 'flex';
+};
+
+window.onToggleGraficoModalChange = function(cb) {
+  const label = cb.closest('label');
+  if (label) {
+    if (cb.checked) {
+      label.style.borderColor = '#93C5FD';
+      label.style.background = '#F0F7FF';
+    } else {
+      label.style.borderColor = '#E2E8F0';
+      label.style.background = 'white';
+    }
+  }
+  const total = document.querySelectorAll('.cb-toggle-grafico').length;
+  const ativos = document.querySelectorAll('.cb-toggle-grafico:checked').length;
+  const contagemEl = document.getElementById('modal-personalizar-contagem');
+  if (contagemEl) {
+    contagemEl.textContent = `${ativos} de ${total} gráficos ativos`;
+  }
+};
+
+window.fecharModalPersonalizarGraficos = function() {
+  const modal = document.getElementById('modal-personalizar-graficos');
+  if (modal) modal.style.display = 'none';
+};
+
+window.fecharModalPersonalizarGraficosBackdrop = function(e) {
+  if (e.target && e.target.id === 'modal-personalizar-graficos') {
+    window.fecharModalPersonalizarGraficos();
+  }
+};
+
+window.marcarTodosGraficosModal = function(marcar) {
+  document.querySelectorAll('.cb-toggle-grafico').forEach(cb => {
+    cb.checked = marcar;
+    window.onToggleGraficoModalChange(cb);
+  });
+};
+
+window.salvarConfigGraficosModal = function() {
+  const config = {};
+  document.querySelectorAll('.cb-toggle-grafico').forEach(cb => {
+    config[cb.value] = cb.checked;
+  });
+  salvarConfigGraficosDashboard(config);
+  window.fecharModalPersonalizarGraficos();
+  showToast('Preferências de exibição dos gráficos salvas com sucesso!', 'success');
+};
+
+window.restaurarTodosGraficos = function() {
+  const config = {};
+  DASH_CHARTS_CATALOG.forEach(c => {
+    config[c.id] = true;
+  });
+  salvarConfigGraficosDashboard(config);
+  window.fecharModalPersonalizarGraficos();
+  showToast('Todos os gráficos foram restaurados no dashboard!', 'success');
+};
 
 window.imprimirResumoDashboard = function() {
   if (!dashboardStatsData) {
