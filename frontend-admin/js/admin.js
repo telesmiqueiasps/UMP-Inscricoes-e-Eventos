@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Usuário autenticado: assegurar que o modal de login permaneça oculto
+  const loginModal = document.getElementById('login-modal');
+  if (loginModal) {
+    loginModal.style.display = 'none';
+    loginModal.classList.remove('active');
+  }
+
   // 1. Aplicar restrições de imediato com o dado em cache
   if (user && user.perfil_acesso) {
     aplicarRestricoesPerfilAdmin(user);
@@ -156,6 +163,7 @@ window.handleAdminLogin = async function(e) {
     const modal = document.getElementById('login-modal');
     if (modal) {
       modal.style.display = 'none';
+      modal.classList.remove('active');
     }
 
     if (typeof showToast === 'function') {
@@ -203,6 +211,7 @@ function promptAdminLogin() {
   const modal = document.getElementById('login-modal');
   if (modal) {
     modal.style.display = 'flex';
+    modal.classList.add('active');
     const form = document.getElementById('admin-login-form');
     if (form) {
       form.onsubmit = window.handleAdminLogin;

@@ -1263,6 +1263,7 @@ tr:last-child td {
    Admin Login Modal — Estética Glassmorphism & Neumórfica (DESIGN.MD)
    ========================================================================== */
 #login-modal {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 99999;
@@ -1277,11 +1278,14 @@ tr:last-child td {
   background-position: center center;
   background-size: cover;
   background-attachment: fixed;
-  display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem 1rem;
   box-sizing: border-box;
+}
+
+#login-modal.active {
+  display: flex !important;
 }
 
 #login-modal .modal-content,
