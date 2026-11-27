@@ -2668,7 +2668,7 @@ body.home-page .drawer-btn-events {
   body.home-page .hero-section {
     overflow-x: hidden !important;
     padding-top: 100px !important;
-    padding-bottom: 40px !important;
+    padding-bottom: 0 !important;
     min-height: auto !important;
   }
 
@@ -2676,7 +2676,7 @@ body.home-page .drawer-btn-events {
     display: flex !important;
     flex-direction: column !important;
     text-align: center !important;
-    gap: 24px !important;
+    gap: 20px !important;
     position: relative !important;
   }
 
@@ -2691,14 +2691,20 @@ body.home-page .drawer-btn-events {
   }
 
   body.home-page .hero-title {
-    font-size: 2.25rem !important;
+    font-size: clamp(1.7rem, 7.2vw, 2.2rem) !important;
     line-height: 1.2 !important;
+    text-wrap: balance !important;
+  }
+
+  body.home-page .hero-title br {
+    display: none !important;
   }
 
   body.home-page .hero-description {
     margin-inline: auto !important;
     font-size: 1rem !important;
     margin-bottom: 1.75rem !important;
+    text-wrap: balance !important;
   }
 
   body.home-page .hero-actions {
@@ -2714,7 +2720,7 @@ body.home-page .drawer-btn-events {
     bottom: auto !important;
     width: 100vw !important;
     max-width: none !important;
-    height: clamp(300px, 85vw, 460px) !important;
+    height: clamp(340px, 95vw, 520px) !important;
     margin: 0 !important;
     margin-left: calc(50% - 50vw) !important;
     margin-right: calc(50% - 50vw) !important;
@@ -2747,7 +2753,7 @@ body.home-page .drawer-btn-events {
     overflow: visible !important;
   }
 
-  /* Máscara radial de dissolve sem arestas (foto com 116vw para fade lateral sair da tela) */
+  /* Máscara menos oval, mais 'larga' com fade vertical e lateral combinados */
   body.home-page .hero-masked-slides {
     position: absolute !important;
     top: 0 !important;
@@ -2760,16 +2766,18 @@ body.home-page .drawer-btn-events {
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    -webkit-mask-image: radial-gradient(ellipse farthest-side at 50% 50%,
-        #000 0%, #000 55%, rgba(0, 0, 0, 0.55) 78%, transparent 100%) !important;
-    mask-image: radial-gradient(ellipse farthest-side at 50% 50%,
-        #000 0%, #000 55%, rgba(0, 0, 0, 0.55) 78%, transparent 100%) !important;
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 22%, #000 72%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%) !important;
+    -webkit-mask-composite: source-in !important;
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, #000 22%, #000 72%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%) !important;
+    mask-composite: intersect !important;
     -webkit-mask-repeat: no-repeat !important;
     mask-repeat: no-repeat !important;
     -webkit-mask-size: 100% 100% !important;
     mask-size: 100% 100% !important;
-    -webkit-mask-composite: normal !important;
-    mask-composite: add !important;
   }
 
   /* Desativar o overlay horizontal de texto no mobile */
@@ -2777,13 +2785,19 @@ body.home-page .drawer-btn-events {
     display: none !important;
   }
 
-  /* Posição da foto para manter os rostos na área nítida central */
+  /* Tom azul mais forte e rostos no enquadramento (center 25%) */
   body.home-page .hero-photo,
   body.home-page .hero-banner-image {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    object-position: center 35% !important;
+    object-position: center 25% !important;
+    filter: grayscale(0.7) contrast(1.08) saturate(0.9) !important;
+  }
+
+  body.home-page .banner-slide::after {
+    background: linear-gradient(180deg, rgba(10, 70, 200, 0.5), rgba(0, 40, 140, 0.4)) !important;
+    mix-blend-mode: multiply !important;
   }
 
   /* Controles interativos no mobile */
@@ -2795,6 +2809,11 @@ body.home-page .drawer-btn-events {
     right: auto !important;
     transform: translateX(-50%) !important;
     z-index: 10 !important;
+  }
+
+  /* Reduzir o espaço entre o fim do hero e o início de Eventos em Destaque */
+  body.home-page .events-section {
+    padding-top: 20px !important;
   }
 
   body.home-page .event-card {
@@ -2831,11 +2850,11 @@ body.home-page .drawer-btn-events {
 
   body.home-page .hero-section {
     padding-top: 88px !important;
-    padding-bottom: 30px !important;
+    padding-bottom: 0 !important;
   }
 
-  body.home-page .hero-title {
-    font-size: 1.85rem !important;
+  body.home-page .events-section {
+    padding-top: 12px !important;
   }
 
   body.home-page .hero-description {
