@@ -40,21 +40,31 @@ window.switchTab = function (tabId) {
   if (target) target.style.display = 'block';
 
   document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item-tab').forEach(el => el.classList.remove('active'));
+
   if (tabId === 'tab-painel') {
     const el = document.getElementById('menu-painel');
     if (el) el.classList.add('active');
+    const elNav = document.getElementById('nav-tab-painel');
+    if (elNav) elNav.classList.add('active');
   } else if (tabId === 'tab-eventos') {
     const el = document.getElementById('menu-eventos');
     if (el) el.classList.add('active');
+    const elNav = document.getElementById('nav-tab-eventos');
+    if (elNav) elNav.classList.add('active');
   } else if (tabId === 'tab-oficinas') {
     const el = document.getElementById('menu-oficinas');
     if (el) el.classList.add('active');
+    const elNav = document.getElementById('nav-tab-oficinas');
+    if (elNav) elNav.classList.add('active');
     if (typeof window.carregarOficinasParticipante === 'function') {
       window.carregarOficinasParticipante();
     }
   } else if (tabId === 'tab-senha') {
     const el = document.getElementById('menu-senha');
     if (el) el.classList.add('active');
+    const elNav = document.getElementById('nav-tab-senha');
+    if (elNav) elNav.classList.add('active');
   }
 };
 
