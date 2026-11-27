@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Se não estiver logado ou não for administrador, solicitar login admin
   if (!token || !user || !user.is_admin) {
     const path = window.location.pathname;
-    const isIndex = path.endsWith('index.html') || path === '/' || path.endsWith('/');
+    const isIndex = path.endsWith('index.html') || path === '/' || path.endsWith('/') || path.endsWith('/admin') || path.endsWith('/admin/');
     if (!isIndex) {
       window.location.href = 'index.html';
       return;
@@ -27,9 +27,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       API.setUser(me);
       user = me;
       aplicarRestricoesPerfilAdmin(user);
+    } else {
+      throw new Error('Usuário sem acesso administrativo.');
     }
   } catch (err) {
     console.warn('Não foi possível sincronizar perfil do usuário com o servidor:', err);
+    if (err && (err.status === 401 || err.status === 403 || (err.message && err.message.toLowerCase().includes('sessão expirada')))) {
+      API.removeToken();
+      promptAdminLogin();
+      return;
+    }
     if (user) {
       aplicarRestricoesPerfilAdmin(user);
     }
@@ -93,65 +100,117 @@ function initMobileSidebarAdmin() {
   });
 }
 
+window.handleAdminLogin = async function(e) {
+  if (e) {
+    e.preventDefault();
+  }
+
+  const emailInput = document.getElementById('admin-email');
+  const senhaInput = document.getElementById('admin-senha');
+  const submitBtn = document.getElementById('admin-login-submit-btn');
+  const errorDiv = document.getElementById('admin-login-error');
+
+  const email = (emailInput?.value || '').trim();
+  const senha = senhaInput?.value || '';
+
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+    errorDiv.innerHTML = '';
+  }
+
+  if (!email || !senha) {
+    if (errorDiv) {
+      errorDiv.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Por favor, informe seu e-mail e sua senha de administrador.</span>
+        </div>
+      `;
+      errorDiv.style.display = 'block';
+    }
+    return;
+  }
+
+  const originalContent = submitBtn ? submitBtn.innerHTML : '<span>Entrar no Painel</span>';
+  if (submitBtn) {
+    submitBtn.innerHTML = `
+      <span class="spinner" style="display:inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem;"></span>
+      <span>Entrando...</span>
+    `;
+    submitBtn.disabled = true;
+  }
+
+  try {
+    const res = await API.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: email.toLowerCase(), senha })
+    });
+
+    if (!res || !res.user || !res.user.is_admin) {
+      throw new Error('Acesso restrito: este usuário não possui privilégios de administrador.');
+    }
+
+    API.setToken(res.access_token);
+    API.setUser(res.user);
+
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+
+    if (typeof showToast === 'function') {
+      showToast('Login realizado com sucesso!', 'success');
+    }
+
+    const perfil = (res.user.perfil_acesso || 'global').toLowerCase().trim();
+    if (perfil === 'gincana') {
+      window.location.href = 'gincana.html';
+    } else if (perfil === 'cantina') {
+      window.location.href = 'cantina.html';
+    } else {
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error('Erro na autenticação admin:', err);
+    let msg = 'E-mail ou senha incorretos. Por favor, tente novamente.';
+
+    if (err.message) {
+      if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('Load failed')) {
+        msg = 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet ou se o backend está ativo.';
+      } else {
+        msg = err.message;
+      }
+    }
+
+    if (errorDiv) {
+      errorDiv.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>${msg}</span>
+        </div>
+      `;
+      errorDiv.style.display = 'block';
+    }
+
+    if (submitBtn) {
+      submitBtn.innerHTML = originalContent;
+      submitBtn.disabled = false;
+    }
+  }
+};
+
 function promptAdminLogin() {
   const modal = document.getElementById('login-modal');
   if (modal) {
     modal.style.display = 'flex';
     const form = document.getElementById('admin-login-form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('admin-email').value;
-      const senha = document.getElementById('admin-senha').value;
-
-      const submitBtn = document.getElementById('admin-login-submit-btn');
-      const errorDiv = document.getElementById('admin-login-error');
-
-      // Reset state
-      if (errorDiv) {
-        errorDiv.style.display = 'none';
-        errorDiv.textContent = '';
-      }
-
-      let originalText = 'Entrar no Painel';
-      if (submitBtn) {
-        originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = `<span class="spinner" style="display:inline-block; width: 16px; height: 16px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem;"></span> Entrando...`;
-        submitBtn.disabled = true;
-      }
-
-      try {
-        const res = await API.request('/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({ email, senha })
-        });
-
-        if (!res.user.is_admin) {
-          throw new Error('Usuário não possui privilégios de administrador.');
-        }
-
-        API.setToken(res.access_token);
-        API.setUser(res.user);
-        modal.style.display = 'none';
-
-        const perfil = (res.user.perfil_acesso || 'global').toLowerCase().trim();
-        if (perfil === 'gincana') {
-          window.location.href = 'gincana.html';
-        } else if (perfil === 'cantina') {
-          window.location.href = 'cantina.html';
-        } else {
-          window.location.reload();
-        }
-      } catch (err) {
-        if (errorDiv) {
-          errorDiv.textContent = err.message || 'Credenciais de admin inválidas. Por favor, tente novamente.';
-          errorDiv.style.display = 'block';
-        }
-        if (submitBtn) {
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-        }
-      }
-    });
+    if (form) {
+      form.onsubmit = window.handleAdminLogin;
+    }
+    const emailInput = document.getElementById('admin-email');
+    if (emailInput && !emailInput.value) {
+      setTimeout(() => emailInput.focus(), 150);
+    }
   }
 }
 
