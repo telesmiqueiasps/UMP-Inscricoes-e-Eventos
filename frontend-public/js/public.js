@@ -653,24 +653,6 @@ class HeroBannerSliderController {
         dot.classList.toggle('active', idx === this.currentIndex);
       });
     }
-
-    // Atualização fluida do lema da UMP junto a cada foto
-    const mottoElem = document.getElementById('motto-badge-text');
-    if (mottoElem) {
-      const mottoPhrases = [
-        'Alegres na esperança',
-        'Fortes na fé',
-        'Dedicados no amor',
-        'Unidos no trabalho'
-      ];
-      mottoElem.style.opacity = '0';
-      mottoElem.style.transform = 'translateY(3px)';
-      setTimeout(() => {
-        mottoElem.textContent = mottoPhrases[this.currentIndex % mottoPhrases.length];
-        mottoElem.style.opacity = '1';
-        mottoElem.style.transform = 'translateY(0)';
-      }, 200);
-    }
   }
 
   next() {
