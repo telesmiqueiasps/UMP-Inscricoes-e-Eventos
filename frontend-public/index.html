@@ -17,6 +17,21 @@
 </head>
 <body class="home-page">
 
+  <!-- Filtro SVG Duotone Azul UMP (Converte sombras e fotos em tons de azul royal luminoso sem preto escuro) -->
+  <svg width="0" height="0" style="position: absolute; width: 0; height: 0; pointer-events: none; overflow: hidden;" aria-hidden="true">
+    <filter id="ump-blue-duotone" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0.2126 0.7152 0.0722 0 0
+                                           0.2126 0.7152 0.0722 0 0
+                                           0.2126 0.7152 0.0722 0 0
+                                           0      0      0      1 0"/>
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.04 0.12 0.88"/>
+        <feFuncG type="table" tableValues="0.20 0.48 0.94"/>
+        <feFuncB type="table" tableValues="0.55 0.88 1.00"/>
+      </feComponentTransfer>
+    </filter>
+  </svg>
+
   <!-- Cenário Visual Fixo Permanente (Fundo Abstrato Azul e Branco) -->
   <div class="fixed-abstract-stage" aria-hidden="true">
     <div class="stage-bg-image"></div>
@@ -114,8 +129,14 @@
           Plataforma de Inscrições da<br>
           Sinodal <span class="hero-title-highlight">UMP PB</span>
         </h1>
+        <div class="hero-motto-card">
+          <p class="hero-motto-text">
+            “Alegres na esperança, fortes na fé, dedicados no amor, unidos no trabalho.”
+          </p>
+          <span class="hero-motto-ref">MOTO OFICIAL DA UMP • RM 12:12</span>
+        </div>
         <p class="hero-description">
-          Gerencie suas inscrições, escolha sua forma de pagamento e participe dos eventos da nossa mocidade, construindo juntos uma igreja ainda mais forte.
+          Gerencie suas inscrições e participe das programações, acampamentos e congressos da nossa mocidade na Paraíba.
         </p>
         <div class="hero-actions">
           <a href="#eventos-section" class="btn-hero-cta" id="btn-hero-explore">
@@ -149,6 +170,14 @@
 
           <!-- Tonalidade sutil para harmonização com a paleta azul -->
           <div class="hero-photo-tint" aria-hidden="true"></div>
+
+          <!-- Badge animado com o lema da UMP que acompanha as fotos discretamente -->
+          <div class="hero-photo-motto-badge" id="hero-photo-motto-badge" aria-label="Lema da UMP">
+            <span class="motto-badge-dot" aria-hidden="true"></span>
+            <span class="motto-badge-label">MOTO UMP</span>
+            <span class="motto-badge-sep" aria-hidden="true">•</span>
+            <span class="motto-badge-text" id="motto-badge-text">Alegres na esperança</span>
+          </div>
 
           <!-- Controles Flutuantes e Minimalistas -->
           <div class="banner-slider-controls" id="banner-slider-controls" style="display: none;">
