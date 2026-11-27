@@ -145,14 +145,14 @@ function createEventCard(ev, index = 0) {
     } else {
       mediaHTML = `
         <div class="event-card-media">
-          <img class="event-card-img" src="${bannerUrl}" alt="${ev.titulo}" loading="lazy" onerror="this.src='img/banner.png';">
+          <img class="event-card-img" src="${bannerUrl}" alt="${ev.titulo}" loading="lazy" onerror="this.src='img/banner.webp';">
         </div>
       `;
     }
   } else {
     mediaHTML = `
       <div class="event-card-media">
-        <img class="event-card-img" src="img/banner.png" alt="${ev.titulo}" loading="lazy">
+        <img class="event-card-img" src="img/banner.webp" alt="${ev.titulo}" loading="lazy">
       </div>
     `;
   }
@@ -579,7 +579,7 @@ class HeroBannerSliderController {
     this.currentIndex = 0;
     this.timer = null;
     this.isPaused = false;
-    this.availableBanners = ['img/banner.png']; // Padrão garantido
+    this.availableBanners = ['img/banner.webp']; // Padrão garantido
     
     this.init();
   }
@@ -593,16 +593,16 @@ class HeroBannerSliderController {
   }
 
   discoverBanners() {
-    // Lista explícita dos banners existentes no projeto (evita erros 404 no console)
+    // Lista explícita dos banners em formato WebP otimizado (alta velocidade)
     this.availableBanners = [
-      'img/banner.png',
-      'img/banner1.png',
-      'img/banner2.png',
-      'img/banner3.png',
-      'img/banner4.png',
-      'img/banner5.png',
-      'img/banner6.png',
-      'img/banner7.png'
+      'img/banner.webp',
+      'img/banner1.webp',
+      'img/banner2.webp',
+      'img/banner3.webp',
+      'img/banner4.webp',
+      'img/banner5.webp',
+      'img/banner6.webp',
+      'img/banner7.webp'
     ];
   }
 
