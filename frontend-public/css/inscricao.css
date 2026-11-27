@@ -717,21 +717,27 @@ body.inscricao-page .church-status-hint {
 
 /* --- 12. ETAPA 3: FORMA DE PAGAMENTO --- */
 .payment-option-card {
-  display: flex !important;
-  align-items: center !important;
-  gap: 1rem !important;
-  padding: 1.15rem 1.25rem !important;
-  background: #FFFFFF !important;
-  border: 1.5px solid #E2E8F0 !important;
-  border-radius: 12px !important;
-  cursor: pointer !important;
-  color: #0F172A !important;
-  transition: all 0.2s ease !important;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #0F172A;
+  transition: all 0.2s ease;
+}
+
+.payment-option-card[hidden],
+.payment-option-card.hidden,
+.payment-option-card.is-hidden {
+  display: none !important;
 }
 
 .payment-option-card:hover {
-  background: #F8FAFC !important;
-  border-color: #CBD5E1 !important;
+  background: #F8FAFC;
+  border-color: #CBD5E1;
 }
 
 .payment-option-card input[type="radio"] {

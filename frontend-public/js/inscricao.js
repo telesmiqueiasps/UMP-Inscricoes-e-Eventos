@@ -260,22 +260,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   atualizarEstadoUsuario();
 
   // Configuração das formas de pagamento permitidas (Carnê vs InfinitePay)
-  const optionCardCarne = document.getElementById('option-card-carne');
-  if (optionCardCarne) {
+  function aplicarRegrasFormasPagamento() {
+    const optionCardCarne = document.getElementById('option-card-carne');
+    const radioCarne = document.querySelector('input[name="forma_pagamento"][value="PARCELADO"]');
+    const radioInfinite = document.querySelector('input[name="forma_pagamento"][value="INFINITEPAY"]');
+    
     if (eventoAtual && eventoAtual.permitir_carne === false) {
-      optionCardCarne.style.display = 'none';
-      const radioInfinite = document.querySelector('input[name="forma_pagamento"][value="INFINITEPAY"]');
-      if (radioInfinite) radioInfinite.checked = true;
-      if (parcelasGroup) parcelasGroup.style.display = 'none';
+      if (optionCardCarne) {
+        optionCardCarne.hidden = true;
+        optionCardCarne.classList.add('hidden');
+        optionCardCarne.style.setProperty('display', 'none', 'important');
+      }
+      if (radioCarne) {
+        radioCarne.disabled = true;
+        radioCarne.checked = false;
+      }
+      if (radioInfinite) {
+        radioInfinite.checked = true;
+      }
+      if (parcelasGroup) {
+        parcelasGroup.hidden = true;
+        parcelasGroup.style.setProperty('display', 'none', 'important');
+      }
     } else {
-      optionCardCarne.style.display = 'flex';
+      if (optionCardCarne) {
+        optionCardCarne.hidden = false;
+        optionCardCarne.classList.remove('hidden');
+        optionCardCarne.style.removeProperty('display');
+      }
+      if (radioCarne) {
+        radioCarne.disabled = false;
+      }
     }
   }
+
+  aplicarRegrasFormasPagamento();
 
   // Alternar visualização de parcelas no formulário de pagamento
   document.querySelectorAll('input[name="forma_pagamento"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
+      if (eventoAtual && eventoAtual.permitir_carne === false && e.target.value === 'PARCELADO') {
+        const radioInfinite = document.querySelector('input[name="forma_pagamento"][value="INFINITEPAY"]');
+        if (radioInfinite) radioInfinite.checked = true;
+        if (parcelasGroup) parcelasGroup.style.setProperty('display', 'none', 'important');
+        return;
+      }
       if (e.target.value === 'PARCELADO') {
+        parcelasGroup.hidden = false;
         parcelasGroup.style.display = 'block';
         window.recalcularDropdownParcelas();
       } else {
@@ -410,6 +441,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       // Avançar para Etapa 3 (Pagamento)
+      aplicarRegrasFormasPagamento();
       step2.style.display = 'none';
       step3.style.display = 'block';
       atualizarStepProgressBar(3);
@@ -580,7 +612,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (inp) inp.value = triagem.dados_extras[k];
         });
       }
-      if (triagem.forma_pagamento) {
+      aplicarRegrasFormasPagamento();
+      if (eventoAtual && eventoAtual.permitir_carne === false) {
+        const radioInfinite = document.querySelector('input[name="forma_pagamento"][value="INFINITEPAY"]');
+        if (radioInfinite) {
+          radioInfinite.checked = true;
+          radioInfinite.dispatchEvent(new Event('change'));
+        }
+      } else if (triagem.forma_pagamento) {
         const radio = document.querySelector(`input[name="forma_pagamento"][value="${triagem.forma_pagamento}"]`);
         if (radio) {
           radio.checked = true;
