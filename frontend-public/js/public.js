@@ -608,7 +608,7 @@ class HeroBannerSliderController {
   renderSlides() {
     this.slidesWrapper.innerHTML = this.availableBanners.map((src, idx) => `
       <div class="banner-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
-        <img src="${src}" alt="UMP Eventos - Destaque ${idx + 1}" class="hero-banner-image" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
+        <img src="${src}" alt="UMP Eventos - Destaque ${idx + 1}" class="hero-banner-image hero-photo" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
       </div>
     `).join('');
   }
