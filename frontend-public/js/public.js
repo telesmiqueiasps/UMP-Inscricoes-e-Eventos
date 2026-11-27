@@ -227,6 +227,7 @@ class EventsCarouselController {
   }
 
   init() {
+    this.container.classList.toggle('is-single', this.items.length === 1);
     this.updateControlsVisibility();
     this.renderDots();
     this.updatePosition();
@@ -236,7 +237,7 @@ class EventsCarouselController {
 
   updateControlsVisibility() {
     const perView = this.getCardsPerView();
-    const shouldShowControls = this.items.length > perView;
+    const shouldShowControls = this.items.length > perView && this.items.length > 1;
 
     if (this.prevBtn) {
       this.prevBtn.style.display = shouldShowControls ? 'flex' : 'none';
@@ -284,6 +285,11 @@ class EventsCarouselController {
   }
 
   updatePosition() {
+    if (this.items.length <= 1) {
+      this.container.style.transform = 'none';
+      return;
+    }
+
     const cards = this.container.querySelectorAll('.event-card');
     if (!cards || cards.length === 0) return;
 
