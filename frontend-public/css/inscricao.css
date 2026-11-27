@@ -6,7 +6,7 @@
 
 /* --- 1. BASE DA PÁGINA --- */
 body.inscricao-page {
-  background-color: #F8FAFC;
+  background-color: transparent;
   color: #0F172A;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
@@ -17,221 +17,35 @@ body.inscricao-page {
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- 2. ELEMENTOS GRÁFICOS & FUNDO COM IMAGEM DE REFERÊNCIA --- */
-.subtle-geometric-bg {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  background-color: #F0F4FA;
-  background-image: url('../img/background-login.png');
-  background-image: url('../img/background-login.webp');
-  background-image: image-set(
-    url('../img/background-login.webp') type('image/webp'),
-    url('../img/background-login.png') type('image/png')
-  );
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: cover;
-  background-attachment: fixed;
-}
-
-.subtle-geometric-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-
-/* Padrão micro-grid extremamente sutil */
-.geo-grid-pattern {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.25;
-  background-image: radial-gradient(rgba(21, 87, 214, 0.12) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
-
-/* Figura Geométrica 1: Polígono Angular Superior Direito */
-.geo-shape-1 {
-  position: absolute;
-  top: -8%;
-  right: -6%;
-  width: 520px;
-  height: 520px;
-  background: linear-gradient(135deg, rgba(21, 87, 214, 0.08) 0%, rgba(59, 130, 246, 0.03) 70%, transparent 100%);
-  clip-path: polygon(25% 0%, 100% 0%, 80% 100%, 0% 75%);
-  animation: floatGeo1 24s ease-in-out infinite alternate;
-}
-
-/* Figura Geométrica 2: Polígono Diagonal Inferior Esquerdo */
-.geo-shape-2 {
-  position: absolute;
-  bottom: -10%;
-  left: -8%;
-  width: 480px;
-  height: 480px;
-  background: linear-gradient(45deg, rgba(14, 165, 233, 0.07) 0%, rgba(99, 102, 241, 0.03) 80%, transparent 100%);
-  clip-path: polygon(0% 20%, 85% 0%, 100% 80%, 15% 100%);
-  animation: floatGeo2 28s ease-in-out infinite alternate;
-}
-
-/* Figura Geométrica 3: Triângulo Translúcido Lateral */
-.geo-shape-3 {
-  position: absolute;
-  top: 38%;
-  right: 4%;
-  width: 280px;
-  height: 280px;
-  background: linear-gradient(205deg, rgba(37, 99, 235, 0.05) 0%, transparent 80%);
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  animation: floatGeo3 20s ease-in-out infinite alternate;
-}
-
-/* Brilho radial ambiente muito sutil */
-.geo-glow-spot {
-  position: absolute;
-  top: 18%;
-  left: 22%;
-  width: 550px;
-  height: 550px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(21, 87, 214, 0.04) 0%, transparent 70%);
-  filter: blur(60px);
-}
-
-@keyframes floatGeo1 {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-24px, 30px) rotate(6deg); }
-}
-
-@keyframes floatGeo2 {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(30px, -25px) rotate(-5deg); }
-}
-
-@keyframes floatGeo3 {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-18px, -20px) rotate(4deg); }
-}
-
-/* --- 3. NAVBAR ELEGANTE & COMPATÍVEL MOBILE --- */
-nav.navbar.inscricao-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid #E2E8F0 !important;
-  box-shadow: 0 1px 3px rgba(15, 40, 80, 0.04) !important;
-  height: 68px;
-  padding: 0 1.5rem !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.navbar-content {
-  max-width: 860px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-
-.brand-logo {
-  height: 38px;
-  width: auto;
-  object-fit: contain;
-}
-
-.brand-text {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 800;
-  font-size: 1.25rem;
-  color: #0F172A;
-  letter-spacing: -0.02em;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.nav-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.5rem 0.95rem;
-  border-radius: 9999px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.nav-btn-outline {
-  color: #475569;
-  background: #F1F5F9;
-  border: 1px solid #E2E8F0;
-}
-
-.nav-btn-outline:hover {
-  color: #1557D6;
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-}
-
-.nav-btn-primary {
-  color: #1557D6;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
-}
-
-.nav-btn-primary:hover {
-  color: #FFFFFF;
-  background: #1557D6;
-  border-color: #1557D6;
-}
-
-/* --- 4. CONTAINER PRINCIPAL --- */
+/* --- 2. CONTAINER PRINCIPAL --- */
 body.inscricao-page main.container {
   position: relative;
   z-index: 10;
-  max-width: 840px !important;
-  margin: 2rem auto 4rem auto;
+  max-width: 860px !important;
+  margin: 110px auto 4rem auto;
   padding: 0 1.25rem;
   width: 100%;
   box-sizing: border-box;
+  flex: 1;
 }
 
-/* --- 5. INDICADOR DE ETAPAS (DESKTOP E MOBILE DEDICADOS) --- */
+@media (max-width: 991px) {
+  body.inscricao-page main.container {
+    margin-top: 86px;
+    margin-bottom: 2.5rem;
+  }
+}
+
+/* --- 3. INDICADOR DE ETAPAS (GLASSMORPHIC) --- */
 .steps-progress-container {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(15, 40, 80, 0.04);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 15px 35px -15px rgba(10, 70, 200, 0.2), 0 2px 8px rgba(10, 70, 200, 0.05);
   margin-bottom: 1.75rem;
-  padding: 1rem 1.5rem;
+  padding: 1.1rem 1.75rem;
 }
 
 /* Versão Desktop */
