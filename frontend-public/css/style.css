@@ -111,7 +111,7 @@ img, video {
 }
 
 /* --- 3. NAVBAR (Seção 5 da Especificação) --- */
-body:not(.home-page) .navbar-wrapper,
+body:not(.home-page):not(.event-details-page) .navbar-wrapper,
 nav.navbar {
   position: sticky;
   top: 0;
@@ -1943,7 +1943,9 @@ body.home-page {
 
 /* 3. Barra Superior Fixa (Navbar) Glassmorphic em Cápsula Flutuante */
 body.home-page .navbar-wrapper,
-body.home-page .navbar-wrapper.scrolled {
+body.home-page .navbar-wrapper.scrolled,
+body.event-details-page .navbar-wrapper,
+body.event-details-page .navbar-wrapper.scrolled {
   position: fixed !important;
   top: 16px !important;
   left: 0 !important;
@@ -1968,12 +1970,15 @@ body.home-page .navbar-wrapper.scrolled {
 }
 
 body.home-page .navbar-wrapper::before,
-body.home-page .navbar-wrapper::after {
+body.home-page .navbar-wrapper::after,
+body.event-details-page .navbar-wrapper::before,
+body.event-details-page .navbar-wrapper::after {
   content: none !important;
   display: none !important;
 }
 
-body.home-page .navbar-container {
+body.home-page .navbar-container,
+body.event-details-page .navbar-container {
   pointer-events: auto !important;
   max-width: 1180px !important;
   width: 100% !important;
@@ -1994,7 +1999,8 @@ body.home-page .navbar-container {
   box-sizing: border-box !important;
 }
 
-body.home-page .navbar-brand {
+body.home-page .navbar-brand,
+body.event-details-page .navbar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2002,18 +2008,21 @@ body.home-page .navbar-brand {
   user-select: none;
 }
 
-body.home-page .navbar-logo {
+body.home-page .navbar-logo,
+body.event-details-page .navbar-logo {
   height: 38px;
   width: auto;
   object-fit: contain;
   transition: transform 0.2s ease;
 }
 
-body.home-page .navbar-brand:hover .navbar-logo {
+body.home-page .navbar-brand:hover .navbar-logo,
+body.event-details-page .navbar-brand:hover .navbar-logo {
   transform: scale(1.04);
 }
 
-body.home-page .navbar-brand-name {
+body.home-page .navbar-brand-name,
+body.event-details-page .navbar-brand-name {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 800;
   font-size: 1.25rem;
@@ -2021,7 +2030,8 @@ body.home-page .navbar-brand-name {
   letter-spacing: -0.02em;
 }
 
-body.home-page .navbar-menu {
+body.home-page .navbar-menu,
+body.event-details-page .navbar-menu {
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -2030,7 +2040,8 @@ body.home-page .navbar-menu {
   padding: 0;
 }
 
-body.home-page .nav-item {
+body.home-page .nav-item,
+body.event-details-page .nav-item {
   font-family: 'Inter', sans-serif;
   font-size: 0.92rem;
   font-weight: 550;
@@ -2043,16 +2054,19 @@ body.home-page .nav-item {
   align-items: center;
 }
 
-body.home-page .nav-item:hover {
+body.home-page .nav-item:hover,
+body.event-details-page .nav-item:hover {
   color: #0066FF;
 }
 
-body.home-page .nav-item.active {
+body.home-page .nav-item.active,
+body.event-details-page .nav-item.active {
   color: #0066FF;
   font-weight: 700;
 }
 
-body.home-page .nav-item.active::after {
+body.home-page .nav-item.active::after,
+body.event-details-page .nav-item.active::after {
   content: '';
   position: absolute;
   bottom: 0px;
@@ -2065,7 +2079,8 @@ body.home-page .nav-item.active::after {
 }
 
 /* Botão "Ver Eventos" da Navbar */
-body.home-page .btn-navbar-cta {
+body.home-page .btn-navbar-cta,
+body.event-details-page .btn-navbar-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2081,13 +2096,15 @@ body.home-page .btn-navbar-cta {
   transition: all 0.22s ease !important;
 }
 
-body.home-page .btn-navbar-cta:hover {
+body.home-page .btn-navbar-cta:hover,
+body.event-details-page .btn-navbar-cta:hover {
   filter: brightness(1.08);
   transform: translateY(-1.5px);
   box-shadow: 0 6px 20px rgba(0, 102, 255, 0.45) !important;
 }
 
-body.home-page .btn-navbar-cta:active {
+body.home-page .btn-navbar-cta:active,
+body.event-details-page .btn-navbar-cta:active {
   transform: translateY(0);
 }
 
@@ -2649,7 +2666,8 @@ body.home-page .carousel-dot.active {
 }
 
 /* 7. Footer Glassmorphic */
-body.home-page .site-footer {
+body.home-page .site-footer,
+body.event-details-page .site-footer {
   background: rgba(255, 255, 255, 0.78) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
@@ -2661,13 +2679,15 @@ body.home-page .site-footer {
   z-index: 10;
 }
 
-body.home-page .footer-brand-name {
+body.home-page .footer-brand-name,
+body.event-details-page .footer-brand-name {
   color: #103B78;
   font-weight: 800;
 }
 
 /* 8. Menu Drawer Mobile Glassmorphism */
-body.home-page .mobile-drawer {
+body.home-page .mobile-drawer,
+body.event-details-page .mobile-drawer {
   background: rgba(255, 255, 255, 0.88) !important;
   backdrop-filter: blur(28px) !important;
   -webkit-backdrop-filter: blur(28px) !important;
@@ -2675,16 +2695,20 @@ body.home-page .mobile-drawer {
   box-shadow: -10px 0 35px rgba(8, 45, 104, 0.15) !important;
 }
 
-body.home-page .drawer-link {
+body.home-page .drawer-link,
+body.event-details-page .drawer-link {
   color: #103B78;
 }
 
 body.home-page .drawer-link:hover,
-body.home-page .drawer-link.active {
+body.home-page .drawer-link.active,
+body.event-details-page .drawer-link:hover,
+body.event-details-page .drawer-link.active {
   color: #086BDA;
 }
 
-body.home-page .drawer-btn-events {
+body.home-page .drawer-btn-events,
+body.event-details-page .drawer-btn-events {
   width: 100%;
   justify-content: center;
   padding: 12px 20px !important;
@@ -2693,7 +2717,9 @@ body.home-page .drawer-btn-events {
 /* 9. Responsividade Mobile Estrita (Zero Overflow) */
 @media (max-width: 991px) {
   body.home-page .navbar-wrapper,
-  body.home-page .navbar-wrapper.scrolled {
+  body.home-page .navbar-wrapper.scrolled,
+  body.event-details-page .navbar-wrapper,
+  body.event-details-page .navbar-wrapper.scrolled {
     top: 10px !important;
     padding: 0 12px !important;
     background: transparent !important;
@@ -2705,25 +2731,30 @@ body.home-page .drawer-btn-events {
     pointer-events: none !important;
   }
 
-  body.home-page .navbar-container {
+  body.home-page .navbar-container,
+  body.event-details-page .navbar-container {
     height: 56px !important;
     padding: 0 12px 0 16px !important;
     border-radius: 9999px !important;
   }
 
-  body.home-page .navbar-brand-name {
+  body.home-page .navbar-brand-name,
+  body.event-details-page .navbar-brand-name {
     font-size: 1.15rem !important;
   }
 
-  body.home-page .navbar-logo {
+  body.home-page .navbar-logo,
+  body.event-details-page .navbar-logo {
     height: 34px !important;
   }
 
-  body.home-page .navbar-menu {
+  body.home-page .navbar-menu,
+  body.event-details-page .navbar-menu {
     display: none !important;
   }
 
-  body.home-page .mobile-menu-toggle {
+  body.home-page .mobile-menu-toggle,
+  body.event-details-page .mobile-menu-toggle {
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -2893,7 +2924,9 @@ body.home-page .drawer-btn-events {
 
 @media (max-width: 640px) {
   body.home-page .navbar-wrapper,
-  body.home-page .navbar-wrapper.scrolled {
+  body.home-page .navbar-wrapper.scrolled,
+  body.event-details-page .navbar-wrapper,
+  body.event-details-page .navbar-wrapper.scrolled {
     top: 8px !important;
     padding: 0 8px !important;
     background: transparent !important;
@@ -2905,16 +2938,19 @@ body.home-page .drawer-btn-events {
     pointer-events: none !important;
   }
 
-  body.home-page .navbar-container {
+  body.home-page .navbar-container,
+  body.event-details-page .navbar-container {
     height: 52px !important;
     padding: 0 10px 0 14px !important;
   }
 
-  body.home-page .navbar-brand-name {
+  body.home-page .navbar-brand-name,
+  body.event-details-page .navbar-brand-name {
     font-size: 1.05rem !important;
   }
 
-  body.home-page .navbar-logo {
+  body.home-page .navbar-logo,
+  body.event-details-page .navbar-logo {
     height: 30px !important;
   }
 

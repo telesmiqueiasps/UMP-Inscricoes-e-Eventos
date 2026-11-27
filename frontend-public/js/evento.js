@@ -157,41 +157,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (isInscricoesEncerradas && ev.diarias_habilitadas) {
       if (badgeContainer) {
-        badgeContainer.innerHTML = `<span class="badge" style="background: #FAF5FF; color: #7E22CE; border: 1px solid #C084FC; font-size: 0.9rem; padding: 0.5rem 1rem; font-weight: 700;">Diárias Abertas</span>`;
+        badgeContainer.innerHTML = `<span class="badge-status-diaria">Diárias Abertas</span>`;
       }
       if (ctaContainer) {
         ctaContainer.style.display = 'none';
       }
     } else if (isInscricoesEncerradas) {
       if (badgeContainer) {
-        badgeContainer.innerHTML = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Inscrições Encerradas</span>`;
+        badgeContainer.innerHTML = `<span class="badge-status-closed">Inscrições Encerradas</span>`;
       }
       if (ctaContainer) {
         ctaContainer.innerHTML = `
-          <button class="btn btn-outline" style="width: 100%; border-color: #EF4444; color: #EF4444; cursor: not-allowed; font-size: 1.05rem; padding: 0.9rem;" disabled>
+          <button class="btn-event-disabled" disabled>
             Inscrições Integrais Encerradas
           </button>
         `;
       }
     } else if (isSoldOut) {
       if (badgeContainer) {
-        badgeContainer.innerHTML = `<span class="badge badge-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Vagas Esgotadas</span>`;
+        badgeContainer.innerHTML = `<span class="badge-status-closed">Vagas Esgotadas</span>`;
       }
       if (ctaContainer) {
         ctaContainer.innerHTML = `
-          <button class="btn btn-outline" style="width: 100%; border-color: #EF4444; color: #EF4444; cursor: not-allowed; font-size: 1.1rem; padding: 0.9rem;" disabled>
+          <button class="btn-event-disabled" disabled>
             Vagas Integrais Esgotadas
           </button>
         `;
       }
     } else {
       if (badgeContainer) {
-        badgeContainer.innerHTML = `<span class="badge badge-success" style="font-size: 0.9rem; padding: 0.5rem 1rem;">Inscrições Abertas</span>`;
+        badgeContainer.innerHTML = `<span class="badge-status-open">Inscrições Abertas</span>`;
       }
       if (ctaContainer) {
         ctaContainer.innerHTML = `
-          <a href="inscricao.html?evento_id=${ev.id}" class="btn btn-primary" style="width: 100%; text-align: center; display: block; font-size: 1.1rem; padding: 0.9rem;">
-            Garantir Minha Vaga &rarr;
+          <a href="inscricao.html?evento_id=${ev.id}" class="btn-event-cta">
+            <span>Garantir Minha Vaga</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
           </a>
         `;
       }
@@ -203,17 +206,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       diariaCtaContainer.style.display = 'block';
       diariaCtaContainer.innerHTML = `
-        <div style="background: #FAF5FF; border: 1.5px solid #C084FC; border-radius: var(--radius-md); padding: 1.25rem; text-align: center;">
+        <div style="background: rgba(250, 245, 255, 0.85); backdrop-filter: blur(12px); border: 1.5px solid #C084FC; border-radius: 20px; padding: 1.35rem; text-align: center; box-shadow: 0 4px 14px rgba(126, 34, 206, 0.08);">
           <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; color: #7E22CE; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
             <span>Participação por Diária</span>
           </div>
-          <p style="font-size: 0.88rem; color: #6B21A8; margin-bottom: 0.75rem; line-height: 1.4;">
+          <p style="font-size: 0.88rem; color: #6B21A8; margin-bottom: 0.85rem; line-height: 1.45;">
             Não vai participar de todos os dias? Adquira diárias avulsas para os dias que preferir.
             ${valorDiariaMin ? `<br><strong style="font-size: 0.95rem;">A partir de ${valorDiariaMin.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/dia</strong>` : ''}
           </p>
-          <a href="diaria.html?evento_id=${ev.id}" class="btn" style="width: 100%; display: block; text-align: center; background: #7E22CE; color: #FFFFFF; font-weight: 700; padding: 0.85rem 1rem; border-radius: var(--radius-md); text-decoration: none; box-shadow: 0 2px 4px rgba(126, 34, 206, 0.25);">
-            Comprar Diária &rarr;
+          <a href="diaria.html?evento_id=${ev.id}" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-align: center; background: linear-gradient(180deg, #9333EA 0%, #7E22CE 100%); color: #FFFFFF; font-weight: 700; font-size: 0.95rem; padding: 0.85rem 1.25rem; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 14px rgba(126, 34, 206, 0.3); transition: all 0.2s ease;">
+            <span>Comprar Diária</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </a>
         </div>
       `;
