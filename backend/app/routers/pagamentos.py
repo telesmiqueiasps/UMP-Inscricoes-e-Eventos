@@ -239,6 +239,11 @@ def processar_pagamento(
             db_pagamento.invoice_slug = result.get("invoice_slug")
 
     elif forma_pag == "PARCELADO":
+        if not getattr(inscricao.evento, "permitir_carne", True):
+            raise HTTPException(
+                status_code=400,
+                detail="A opção de parcelamento via carnê/boleto não está disponível para este evento."
+            )
         from datetime import datetime, date
         from app.services.parcelamento import calcular_max_parcelas
         

@@ -146,9 +146,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. Metadados
     document.getElementById('event-date').textContent = formatarIntervaloEvento(ev.data_inicio, ev.data_fim);
     document.getElementById('event-location').textContent = ev.local || 'A definir';
-    document.getElementById('event-vacancies').textContent = ev.max_participantes 
-      ? `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} vagas restantes (limite: ${ev.max_participantes})`
-      : 'Vagas ilimitadas';
+    
+    let textoVagas = 'Vagas ilimitadas';
+    if (ev.tipo_vagas === 'GENERO') {
+      const vm = ev.vagas_restantes_masculinas !== null ? `${ev.vagas_restantes_masculinas} masc. restantes` : '';
+      const vf = ev.vagas_restantes_femininas !== null ? `${ev.vagas_restantes_femininas} fem. restantes` : '';
+      textoVagas = [vm, vf].filter(Boolean).join(' • ') || 'Vagas divididas por gênero';
+    } else if (ev.max_participantes) {
+      textoVagas = `${ev.vagas_restantes !== null ? ev.vagas_restantes : ev.max_participantes} vagas restantes (limite: ${ev.max_participantes})`;
+    }
+    document.getElementById('event-vacancies').textContent = textoVagas;
 
     // 4. Badges e CTA
     const badgeContainer = document.getElementById('event-badge-container');

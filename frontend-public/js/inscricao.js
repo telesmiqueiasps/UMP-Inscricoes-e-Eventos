@@ -125,7 +125,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const isSoldOut = eventoAtual.max_participantes && eventoAtual.vagas_restantes === 0;
+    const isSoldOutGeral = eventoAtual.tipo_vagas !== 'GENERO' && eventoAtual.max_participantes && eventoAtual.vagas_restantes !== null && eventoAtual.vagas_restantes <= 0;
+    const isSoldOutGenero = eventoAtual.tipo_vagas === 'GENERO' && (
+      (eventoAtual.vagas_restantes_masculinas !== null && eventoAtual.vagas_restantes_masculinas <= 0) &&
+      (eventoAtual.vagas_restantes_femininas !== null && eventoAtual.vagas_restantes_femininas <= 0)
+    );
+    const isSoldOut = isSoldOutGeral || isSoldOutGenero;
     if (isSoldOut) {
       eventSummary.innerHTML = `
         <div style="text-align: center; padding: 2rem;">
@@ -253,6 +258,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 2. Atualizar UI baseada em login ativo
   atualizarEstadoUsuario();
+
+  // Configuração das formas de pagamento permitidas (Carnê vs InfinitePay)
+  const optionCardCarne = document.getElementById('option-card-carne');
+  if (optionCardCarne) {
+    if (eventoAtual && eventoAtual.permitir_carne === false) {
+      optionCardCarne.style.display = 'none';
+      const radioInfinite = document.querySelector('input[name="forma_pagamento"][value="INFINITEPAY"]');
+      if (radioInfinite) radioInfinite.checked = true;
+      if (parcelasGroup) parcelasGroup.style.display = 'none';
+    } else {
+      optionCardCarne.style.display = 'flex';
+    }
+  }
 
   // Alternar visualização de parcelas no formulário de pagamento
   document.querySelectorAll('input[name="forma_pagamento"]').forEach(radio => {
@@ -755,15 +773,11 @@ function renderDynamicFormFields() {
   const noFieldsMsg = document.getElementById('no-fields-msg');
   if (!listContainer || !container || !eventoAtual) return;
 
-  const fieldsStr = eventoAtual.campos_formulario;
-  if (!fieldsStr) {
-    container.style.display = 'none';
-    listContainer.innerHTML = '';
-    if (noFieldsMsg) noFieldsMsg.style.display = 'block';
-    return;
+  let fields = (eventoAtual.campos_formulario || '').split(',').map(f => f.trim()).filter(Boolean);
+  if (eventoAtual.tipo_vagas === 'GENERO' && !fields.includes('genero')) {
+    fields.unshift('genero');
   }
 
-  const fields = fieldsStr.split(',').filter(f => f.trim() !== '');
   if (fields.length === 0) {
     container.style.display = 'none';
     listContainer.innerHTML = '';
@@ -812,13 +826,31 @@ function renderDynamicFormFields() {
         `;
         break;
       case 'genero':
+        let mascOpt = '<option value="Masculino">Masculino</option>';
+        let femOpt = '<option value="Feminino">Feminino</option>';
+        if (eventoAtual.tipo_vagas === 'GENERO') {
+          if (eventoAtual.vagas_restantes_masculinas !== null) {
+            if (eventoAtual.vagas_restantes_masculinas <= 0) {
+              mascOpt = '<option value="Masculino" disabled>Masculino (Vagas Esgotadas)</option>';
+            } else {
+              mascOpt = `<option value="Masculino">Masculino (${eventoAtual.vagas_restantes_masculinas} vagas restantes)</option>`;
+            }
+          }
+          if (eventoAtual.vagas_restantes_femininas !== null) {
+            if (eventoAtual.vagas_restantes_femininas <= 0) {
+              femOpt = '<option value="Feminino" disabled>Feminino (Vagas Esgotadas)</option>';
+            } else {
+              femOpt = `<option value="Feminino">Feminino (${eventoAtual.vagas_restantes_femininas} vagas restantes)</option>`;
+            }
+          }
+        }
         fieldHTML = `
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label"><span>Gênero</span> <span class="label-required">*</span></label>
             <select name="dyn_genero" class="form-control dyn-input" required>
               <option value="">Selecione...</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Feminino">Feminino</option>
+              ${mascOpt}
+              ${femOpt}
             </select>
           </div>
         `;

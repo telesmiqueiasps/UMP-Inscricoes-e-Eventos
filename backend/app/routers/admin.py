@@ -30,17 +30,50 @@ from app.services.parcelamento import get_hoje_brasil
 router = APIRouter(tags=["Administração e Eventos"])
 
 
+def calcular_metricas_vagas(ev: Evento, db: Session) -> Evento:
+    inscricoes_ativas = db.query(Inscricao).filter(
+        Inscricao.evento_id == ev.id,
+        Inscricao.status != "CANCELADA"
+    ).all()
+
+    total_inscritos = len(inscricoes_ativas)
+    total_masc = 0
+    total_fem = 0
+
+    for ins in inscricoes_ativas:
+        ext = ins.dados_extras or {}
+        genero = (ext.get("genero") or ext.get("sexo") or "").strip().lower()
+        if genero.startswith("m"):
+            total_masc += 1
+        elif genero.startswith("f"):
+            total_fem += 1
+
+    ev.total_inscritos = total_inscritos
+    ev.total_inscritos_masculino = total_masc
+    ev.total_inscritos_feminino = total_fem
+
+    tipo = getattr(ev, "tipo_vagas", "GERAL") or "GERAL"
+    if tipo == "GENERO":
+        ev.vagas_restantes_masculinas = max(0, ev.vagas_masculinas - total_masc) if ev.vagas_masculinas is not None else None
+        ev.vagas_restantes_femininas = max(0, ev.vagas_femininas - total_fem) if ev.vagas_femininas is not None else None
+        if ev.vagas_masculinas is not None or ev.vagas_femininas is not None:
+            ev.vagas_restantes = (ev.vagas_restantes_masculinas or 0) + (ev.vagas_restantes_femininas or 0)
+        else:
+            ev.vagas_restantes = None
+    else:
+        ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes is not None else None
+        ev.vagas_restantes_masculinas = None
+        ev.vagas_restantes_femininas = None
+
+    return ev
+
+
 # --- Rota Pública para Listar Eventos Ativos ---
 @router.get("/eventos/publico", response_model=List[EventoResponse])
 def listar_eventos_publico(db: Session = Depends(get_db)):
     eventos = db.query(Evento).filter(Evento.ativo == True).order_by(Evento.data_inicio.asc()).all()
     for ev in eventos:
-        total_inscritos = db.query(Inscricao).filter(
-            Inscricao.evento_id == ev.id,
-            Inscricao.status != "CANCELADA"
-        ).count()
-        ev.total_inscritos = total_inscritos
-        ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
+        calcular_metricas_vagas(ev, db)
     return eventos
 
 
@@ -49,13 +82,7 @@ def obter_evento_publico(id: int, db: Session = Depends(get_db)):
     evento = db.query(Evento).filter(Evento.id == id, Evento.ativo == True).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado ou inativo.")
-    total_inscritos = db.query(Inscricao).filter(
-        Inscricao.evento_id == evento.id,
-        Inscricao.status != "CANCELADA"
-    ).count()
-    evento.total_inscritos = total_inscritos
-    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
-    return evento
+    return calcular_metricas_vagas(evento, db)
 
 
 # --- Painel Administrativo ---
@@ -89,12 +116,7 @@ def listar_eventos_admin(
 ):
     eventos = db.query(Evento).order_by(Evento.created_at.desc()).all()
     for ev in eventos:
-        total_inscritos = db.query(Inscricao).filter(
-            Inscricao.evento_id == ev.id,
-            Inscricao.status != "CANCELADA"
-        ).count()
-        ev.total_inscritos = total_inscritos
-        ev.vagas_restantes = (ev.max_participantes - total_inscritos) if ev.max_participantes else None
+        calcular_metricas_vagas(ev, db)
     return eventos
 
 
@@ -117,9 +139,7 @@ def criar_evento_admin(
     db.add(db_evento)
     db.commit()
     db.refresh(db_evento)
-    db_evento.vagas_restantes = db_evento.max_participantes
-    db_evento.total_inscritos = 0
-    return db_evento
+    return calcular_metricas_vagas(db_evento, db)
 
 
 @router.get("/admin/eventos/{id}", response_model=EventoResponse)
@@ -131,13 +151,7 @@ def obter_evento_admin(
     evento = db.query(Evento).filter(Evento.id == id).first()
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
-    total_inscritos = db.query(Inscricao).filter(
-        Inscricao.evento_id == evento.id,
-        Inscricao.status != "CANCELADA"
-    ).count()
-    evento.total_inscritos = total_inscritos
-    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
-    return evento
+    return calcular_metricas_vagas(evento, db)
 
 
 @router.put("/admin/eventos/{id}", response_model=EventoResponse)
@@ -166,13 +180,7 @@ def atualizar_evento_admin(
         ).update({"valor_total": evento.valor}, synchronize_session=False)
         db.commit()
     
-    total_inscritos = db.query(Inscricao).filter(
-        Inscricao.evento_id == evento.id,
-        Inscricao.status != "CANCELADA"
-    ).count()
-    evento.total_inscritos = total_inscritos
-    evento.vagas_restantes = (evento.max_participantes - total_inscritos) if evento.max_participantes else None
-    return evento
+    return calcular_metricas_vagas(evento, db)
 
 
 def deletar_fotos_supabase_task(fotos_str: Optional[str]):

@@ -16,6 +16,10 @@ class Evento(Base):
     local = Column(String(255), nullable=True)
     valor = Column(Numeric(10, 2), nullable=False)
     max_participantes = Column(Integer, nullable=True)
+    tipo_vagas = Column(String(20), default="GERAL", nullable=False)  # GERAL ou GENERO
+    vagas_masculinas = Column(Integer, nullable=True)
+    vagas_femininas = Column(Integer, nullable=True)
+    permitir_carne = Column(Boolean, default=True, nullable=False)
     max_parcelas = Column(Integer, default=1, nullable=False)
     ativo = Column(Boolean, default=True, nullable=False)
     inscricoes_encerradas = Column(Boolean, default=False, nullable=False)

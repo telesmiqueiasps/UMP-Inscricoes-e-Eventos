@@ -20,6 +20,53 @@ from datetime import datetime
 router = APIRouter(prefix="/inscricoes", tags=["Inscrições"])
 
 
+def validar_vagas_e_pagamento_evento(evento: Evento, dados_extras: dict, forma_pagamento: Optional[str], db: Session):
+    # 1. Validar forma de pagamento permitida
+    if forma_pagamento == "PARCELADO" and not getattr(evento, "permitir_carne", True):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A opção de parcelamento via carnê/boleto não está disponível para este evento."
+        )
+
+    # 2. Validar limite de vagas
+    tipo_vagas = getattr(evento, "tipo_vagas", "GERAL") or "GERAL"
+    inscricoes_ativas = db.query(Inscricao).filter(
+        Inscricao.evento_id == evento.id,
+        Inscricao.status != "CANCELADA"
+    ).all()
+
+    if tipo_vagas == "GENERO":
+        ext = dados_extras or {}
+        genero = (ext.get("genero") or ext.get("sexo") or "").strip().lower()
+        if not genero:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O preenchimento do campo Gênero é obrigatório para inscrição neste evento."
+            )
+
+        if genero.startswith("f"):
+            count_fem = sum(1 for ins in inscricoes_ativas if (ins.dados_extras or {}).get("genero", "").strip().lower().startswith("f") or (ins.dados_extras or {}).get("sexo", "").strip().lower().startswith("f"))
+            if evento.vagas_femininas is not None and count_fem >= evento.vagas_femininas:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Infelizmente as vagas femininas para este evento foram esgotadas."
+                )
+        elif genero.startswith("m"):
+            count_masc = sum(1 for ins in inscricoes_ativas if (ins.dados_extras or {}).get("genero", "").strip().lower().startswith("m") or (ins.dados_extras or {}).get("sexo", "").strip().lower().startswith("m"))
+            if evento.vagas_masculinas is not None and count_masc >= evento.vagas_masculinas:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Infelizmente as vagas masculinas para este evento foram esgotadas."
+                )
+    else:
+        if evento.max_participantes:
+            if len(inscricoes_ativas) >= evento.max_participantes:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Infelizmente as vagas para este evento foram esgotadas."
+                )
+
+
 @router.post("", response_model=InscricaoResponse, status_code=status.HTTP_201_CREATED)
 def criar_inscricao(
     inscricao_in: InscricaoCreate,
@@ -55,17 +102,8 @@ def criar_inscricao(
             detail="Você já possui uma inscrição ativa para este evento."
         )
 
-    # 3. Verificar limite de vagas (se houver)
-    if evento.max_participantes:
-        total_inscritos = db.query(Inscricao).filter(
-            Inscricao.evento_id == evento.id,
-            Inscricao.status != "CANCELADA"
-        ).count()
-        if total_inscritos >= evento.max_participantes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Infelizmente as vagas para este evento foram esgotadas."
-            )
+    # 3. Validar limite de vagas e formas de pagamento
+    validar_vagas_e_pagamento_evento(evento, inscricao_in.dados_extras, inscricao_in.forma_pagamento, db)
 
     # 4. Criar Inscrição
     db_inscricao = Inscricao(
@@ -153,6 +191,9 @@ def criar_ou_atualizar_triagem(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Você já possui uma inscrição realizada para este evento."
         )
+
+    # Validar vagas e forma de pagamento permitida
+    validar_vagas_e_pagamento_evento(evento, triagem_in.dados_extras, triagem_in.forma_pagamento, db)
 
     # 3. Tratar data da primeira parcela
     dt_primeira = None

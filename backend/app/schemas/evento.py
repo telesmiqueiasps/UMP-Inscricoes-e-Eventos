@@ -12,6 +12,10 @@ class EventoBase(BaseModel):
     local: Optional[str] = None
     valor: Decimal
     max_participantes: Optional[int] = None
+    tipo_vagas: Optional[str] = "GERAL"
+    vagas_masculinas: Optional[int] = None
+    vagas_femininas: Optional[int] = None
+    permitir_carne: Optional[bool] = True
     max_parcelas: int = 1
     ativo: bool = True
     inscricoes_encerradas: bool = False
@@ -33,6 +37,10 @@ class EventoCreate(BaseModel):
     local: Optional[str] = None
     valor: Optional[Decimal] = None
     max_participantes: Optional[int] = None
+    tipo_vagas: Optional[str] = "GERAL"
+    vagas_masculinas: Optional[int] = None
+    vagas_femininas: Optional[int] = None
+    permitir_carne: Optional[bool] = True
     max_parcelas: int = 1
     ativo: bool = True
     inscricoes_encerradas: bool = False
@@ -54,6 +62,10 @@ class EventoUpdate(BaseModel):
     local: Optional[str] = None
     valor: Optional[Decimal] = None
     max_participantes: Optional[int] = None
+    tipo_vagas: Optional[str] = None
+    vagas_masculinas: Optional[int] = None
+    vagas_femininas: Optional[int] = None
+    permitir_carne: Optional[bool] = None
     max_parcelas: Optional[int] = None
     ativo: Optional[bool] = None
     inscricoes_encerradas: Optional[bool] = None
@@ -70,7 +82,11 @@ class EventoUpdate(BaseModel):
 class EventoResponse(EventoBase):
     id: int
     vagas_restantes: Optional[int] = None
+    vagas_restantes_masculinas: Optional[int] = None
+    vagas_restantes_femininas: Optional[int] = None
     total_inscritos: Optional[int] = None
+    total_inscritos_masculino: Optional[int] = None
+    total_inscritos_feminino: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

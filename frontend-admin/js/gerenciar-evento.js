@@ -360,7 +360,36 @@ async function loadEventoInfo() {
     
     document.getElementById('ev-local').value = eventoAtual.local || '';
     document.getElementById('ev-valor').value = eventoAtual.valor;
-    document.getElementById('ev-max-part').value = eventoAtual.max_participantes || '';
+
+    // Configurações de Vagas
+    const tipoVagas = eventoAtual.tipo_vagas || 'GERAL';
+    if (tipoVagas === 'GENERO') {
+      const rGen = document.getElementById('ev-tipo-vagas-genero');
+      if (rGen) rGen.checked = true;
+    } else {
+      const rGer = document.getElementById('ev-tipo-vagas-geral');
+      if (rGer) rGer.checked = true;
+    }
+    const inpMax = document.getElementById('ev-max-part');
+    if (inpMax) inpMax.value = eventoAtual.max_participantes || '';
+    const inpMasc = document.getElementById('ev-vagas-masculinas');
+    if (inpMasc) inpMasc.value = eventoAtual.vagas_masculinas !== null && eventoAtual.vagas_masculinas !== undefined ? eventoAtual.vagas_masculinas : '';
+    const inpFem = document.getElementById('ev-vagas-femininas');
+    if (inpFem) inpFem.value = eventoAtual.vagas_femininas !== null && eventoAtual.vagas_femininas !== undefined ? eventoAtual.vagas_femininas : '';
+
+    if (typeof window.alternarModoVagasEdicao === 'function') {
+      window.alternarModoVagasEdicao();
+    }
+    if (typeof window.calcularTotalVagasGenero === 'function') {
+      window.calcularTotalVagasGenero();
+    }
+
+    // Configurações de Pagamento (Carnê / InfinitePay)
+    const cbCarne = document.getElementById('ev-permitir-carne');
+    if (cbCarne) {
+      cbCarne.checked = eventoAtual.permitir_carne !== false;
+    }
+
     document.getElementById('ev-ativo').checked = eventoAtual.ativo;
     const cbEncerradas = document.getElementById('ev-inscricoes-encerradas');
     if (cbEncerradas) {
@@ -2251,17 +2280,65 @@ window.atualizarBadgeStatusEdicao = function() {
   }
 };
 
+window.alternarModoVagasEdicao = function() {
+  const tipo = document.querySelector('input[name="ev_tipo_vagas"]:checked')?.value || 'GERAL';
+  const blocoGeral = document.getElementById('bloco-vagas-geral');
+  const blocoGenero = document.getElementById('bloco-vagas-genero');
+  if (tipo === 'GENERO') {
+    if (blocoGeral) blocoGeral.style.display = 'none';
+    if (blocoGenero) blocoGenero.style.display = 'block';
+    // Se vagas por gênero forem ativadas, garantir que o campo 'genero' esteja marcado
+    const cbGenero = document.querySelector('.ev-form-field[value="genero"]');
+    if (cbGenero && !cbGenero.checked) {
+      cbGenero.checked = true;
+    }
+  } else {
+    if (blocoGeral) blocoGeral.style.display = 'block';
+    if (blocoGenero) blocoGenero.style.display = 'none';
+  }
+};
+
+window.calcularTotalVagasGenero = function() {
+  const vm = parseInt(document.getElementById('ev-vagas-masculinas')?.value) || 0;
+  const vf = parseInt(document.getElementById('ev-vagas-femininas')?.value) || 0;
+  const total = vm + vf;
+  const resumo = document.getElementById('vagas-genero-resumo');
+  if (resumo) {
+    resumo.textContent = `Total combinado: ${total} vagas (${vm} masc. + ${vf} fem.)`;
+  }
+};
+
 // --- Salvar Alterações do Evento (Tab 3) ---
 window.salvarEvento = async function(e) {
   e.preventDefault();
-  const fieldsSelected = Array.from(document.querySelectorAll('.ev-form-field:checked')).map(cb => cb.value).join(',');
-  
+  const fieldsSelectedArray = Array.from(document.querySelectorAll('.ev-form-field:checked')).map(cb => cb.value);
+
   const fotosUrlsList = [];
   for (let i = 1; i <= 8; i++) {
     const val = document.getElementById(`ev-foto-${i}`).value.trim();
     if (val) fotosUrlsList.push(val);
   }
   const fotosUrls = fotosUrlsList.join(',');
+
+  const tipoVagas = document.querySelector('input[name="ev_tipo_vagas"]:checked')?.value || 'GERAL';
+  let vagasMasc = null;
+  let vagasFem = null;
+  let maxPart = null;
+
+  if (tipoVagas === 'GENERO') {
+    vagasMasc = parseInt(document.getElementById('ev-vagas-masculinas')?.value);
+    vagasFem = parseInt(document.getElementById('ev-vagas-femininas')?.value);
+    if (isNaN(vagasMasc)) vagasMasc = null;
+    if (isNaN(vagasFem)) vagasFem = null;
+    maxPart = (vagasMasc || 0) + (vagasFem || 0) || null;
+    if (!fieldsSelectedArray.includes('genero')) {
+      fieldsSelectedArray.push('genero');
+    }
+  } else {
+    maxPart = parseInt(document.getElementById('ev-max-part')?.value) || null;
+  }
+
+  const permitirCarne = document.getElementById('ev-permitir-carne') ? document.getElementById('ev-permitir-carne').checked : true;
 
   const payload = {
     titulo: document.getElementById('ev-titulo').value,
@@ -2270,10 +2347,14 @@ window.salvarEvento = async function(e) {
     data_fim: document.getElementById('ev-fim').value ? (document.getElementById('ev-fim').value.length === 16 ? document.getElementById('ev-fim').value + ":00" : document.getElementById('ev-fim').value) : null,
     local: document.getElementById('ev-local').value,
     valor: parseFloat(document.getElementById('ev-valor').value),
-    max_participantes: parseInt(document.getElementById('ev-max-part').value) || null,
+    tipo_vagas: tipoVagas,
+    vagas_masculinas: vagasMasc,
+    vagas_femininas: vagasFem,
+    max_participantes: maxPart,
+    permitir_carne: permitirCarne,
     ativo: document.getElementById('ev-ativo').checked,
     inscricoes_encerradas: Boolean(document.getElementById('ev-inscricoes-encerradas')?.checked),
-    campos_formulario: fieldsSelected || null,
+    campos_formulario: fieldsSelectedArray.join(',') || null,
     fotos: fotosUrls || null,
     whatsapp_grupo_link: document.getElementById('ev-whatsapp-link').value.trim() || null
   };

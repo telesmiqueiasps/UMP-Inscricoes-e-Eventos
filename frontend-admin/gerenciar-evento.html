@@ -1495,14 +1495,98 @@
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
-              <div class="form-group">
-                <label class="form-label">Link do Grupo do WhatsApp (Opcional)</label>
-                <input type="url" id="ev-whatsapp-link" class="form-control" placeholder="https://chat.whatsapp.com/...">
+            <div class="form-group">
+              <label class="form-label">Link do Grupo do WhatsApp (Opcional)</label>
+              <input type="url" id="ev-whatsapp-link" class="form-control" placeholder="https://chat.whatsapp.com/...">
+            </div>
+
+            <!-- Seção de Controle e Limite de Vagas -->
+            <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1rem; margin-bottom: 1.25rem;">
+              <div style="margin-bottom: 0.85rem;">
+                <label class="form-label" style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.45rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  <span>Controle e Limite de Vagas</span>
+                </label>
+                <span style="font-size: 0.82rem; color: var(--text-muted);">Defina se o limite de vagas será geral para todos ou separado por gênero (masculino e feminino).</span>
               </div>
-              <div class="form-group">
-                <label class="form-label">Máx. Vagas (Opcional)</label>
-                <input type="number" id="ev-max-part" class="form-control">
+
+              <!-- Seleção do Modo de Vagas -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; background: white;">
+                  <input type="radio" name="ev_tipo_vagas" id="ev-tipo-vagas-geral" value="GERAL" checked onchange="alternarModoVagasEdicao()">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #1E293B;">Vagas Gerais</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">Um único limite total compartilhado</div>
+                  </div>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1rem; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; background: white;">
+                  <input type="radio" name="ev_tipo_vagas" id="ev-tipo-vagas-genero" value="GENERO" onchange="alternarModoVagasEdicao()">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #1E293B;">Vagas por Gênero</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">Limites distintos para Homens e Mulheres</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Bloco Modo Geral -->
+              <div id="bloco-vagas-geral">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Total de Vagas Disponíveis (Opcional - deixe vazio para ilimitado)</label>
+                  <input type="number" min="1" id="ev-max-part" class="form-control" placeholder="Ex: 150">
+                </div>
+              </div>
+
+              <!-- Bloco Modo Gênero -->
+              <div id="bloco-vagas-genero" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2563EB;"></span>
+                      <span>Vagas Masculinas</span>
+                    </label>
+                    <input type="number" min="0" id="ev-vagas-masculinas" class="form-control" placeholder="Ex: 80" oninput="calcularTotalVagasGenero()">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.35rem;">
+                      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #DB2777;"></span>
+                      <span>Vagas Femininas</span>
+                    </label>
+                    <input type="number" min="0" id="ev-vagas-femininas" class="form-control" placeholder="Ex: 70" oninput="calcularTotalVagasGenero()">
+                  </div>
+                </div>
+                <div id="vagas-genero-resumo" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.65rem; font-weight: 600;">
+                  Total combinado: 0 vagas
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção de Formas de Pagamento Permitidas -->
+            <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-top: 1rem; margin-bottom: 1.25rem;">
+              <label class="form-label" style="font-weight: 700; color: #1E293B; font-size: 0.95rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.45rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <span>Formas de Pagamento Permitidas no Evento</span>
+              </label>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+                Configure quais opções de pagamento estarão disponíveis aos participantes no momento da inscrição:
+              </p>
+
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); cursor: default;">
+                  <input type="checkbox" id="ev-permitir-infinitepay" checked disabled style="margin-top: 0.25rem;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #1E293B;">Pix ou Cartão (InfinitePay)</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">Pagamento à vista via Pix ou no cartão pelo checkout da InfinitePay. (Padrão e sempre ativo)</div>
+                  </div>
+                </label>
+
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer;">
+                  <input type="checkbox" id="ev-permitir-carne" checked style="margin-top: 0.25rem;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #1E293B;">Habilitar Pagamento Parcelado via Carnê / Mensalidades (Pix Mensal)</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">Gera carnê com parcelas mensais. Desmarque esta opção se deseja que este evento receba <strong>apenas Pix/Cartão via InfinitePay</strong>.</div>
+                  </div>
+                </label>
               </div>
             </div>
 

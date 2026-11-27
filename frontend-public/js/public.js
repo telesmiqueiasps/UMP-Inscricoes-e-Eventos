@@ -71,7 +71,12 @@ function createEventCard(ev, index = 0) {
   const dataFormatada = (dataInicio === dataFim || !dataFim) ? dataInicio : `${dataInicio} a ${dataFim}`;
 
   // Status dinâmico
-  const isSoldOut = ev.max_participantes && ev.vagas_restantes !== null && ev.vagas_restantes <= 0;
+  const isSoldOutGeral = ev.tipo_vagas !== 'GENERO' && ev.max_participantes && ev.vagas_restantes !== null && ev.vagas_restantes <= 0;
+  const isSoldOutGenero = ev.tipo_vagas === 'GENERO' && (
+    (ev.vagas_restantes_masculinas !== null && ev.vagas_restantes_masculinas <= 0) &&
+    (ev.vagas_restantes_femininas !== null && ev.vagas_restantes_femininas <= 0)
+  );
+  const isSoldOut = isSoldOutGeral || isSoldOutGenero;
   const isAtivo = ev.ativo !== false;
   const isInscricoesEncerradas = Boolean(ev.inscricoes_encerradas);
 
@@ -119,7 +124,11 @@ function createEventCard(ev, index = 0) {
 
   // Vagas
   let vagasTexto = 'Ilimitadas';
-  if (ev.max_participantes) {
+  if (ev.tipo_vagas === 'GENERO') {
+    const vm = ev.vagas_restantes_masculinas !== null ? `${ev.vagas_restantes_masculinas} masc.` : '';
+    const vf = ev.vagas_restantes_femininas !== null ? `${ev.vagas_restantes_femininas} fem.` : '';
+    vagasTexto = [vm, vf].filter(Boolean).join(' • ') || 'Por gênero';
+  } else if (ev.max_participantes) {
     if (ev.vagas_restantes !== null) {
       vagasTexto = `${ev.vagas_restantes} restantes`;
     } else {
