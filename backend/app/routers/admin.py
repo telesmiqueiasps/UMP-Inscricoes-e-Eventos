@@ -561,10 +561,129 @@ def obter_dashboard_stats_evento(
     total_diarias = len(diarias)
     diarias_confirmadas = sum(1 for d in diarias if d.status == "CONFIRMADA")
 
+    # Cálculo da Lotação Diária por Gênero & Estadia
+    dias_semana_pt = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+    lotacao_dias_map = {}
+    
+    dt_inicio = evento.data_inicio
+    dt_fim = evento.data_fim
+    
+    if dt_inicio and dt_fim:
+        d_cur = dt_inicio.date() if hasattr(dt_inicio, "date") else dt_inicio
+        d_end = dt_fim.date() if hasattr(dt_fim, "date") else dt_fim
+        if isinstance(d_cur, str):
+            try:
+                from datetime import datetime as dt_cls
+                d_cur = dt_cls.fromisoformat(d_cur.split("T")[0]).date()
+            except Exception:
+                d_cur = None
+        if isinstance(d_end, str):
+            try:
+                from datetime import datetime as dt_cls
+                d_end = dt_cls.fromisoformat(d_end.split("T")[0]).date()
+            except Exception:
+                d_end = None
+                
+        if d_cur and d_end and d_cur <= d_end:
+            from datetime import timedelta
+            temp_date = d_cur
+            while temp_date <= d_end:
+                iso_key = temp_date.strftime("%Y-%m-%d")
+                lotacao_dias_map[iso_key] = {
+                    "data": iso_key,
+                    "dia_formatado": temp_date.strftime("%d/%m"),
+                    "dia_semana": dias_semana_pt[temp_date.weekday()],
+                    "total": 0,
+                    "masculino": 0,
+                    "feminino": 0,
+                    "outro": 0,
+                    "diaristas": 0
+                }
+                temp_date += timedelta(days=1)
+
+    dias_totais_evento = list(lotacao_dias_map.keys())
+
+    for ins in inscricoes_analise:
+        if ins.status == "CANCELADA" and status_filtro != "CANCELADA":
+            continue
+        ext = extrair_extras(ins)
+        sexo = get_campo(ext, "genero", "sexo")
+        g_key = "masculino" if (sexo and sexo.strip().lower().startswith("m")) else ("feminino" if (sexo and sexo.strip().lower().startswith("f")) else "outro")
+        
+        dias_val = get_campo(ext, "dias_estadia")
+        dias_participante = []
+        if dias_val:
+            if isinstance(dias_val, list):
+                dias_participante = [str(d).strip().split("T")[0] for d in dias_val]
+            else:
+                dias_participante = [p.strip().split("T")[0] for p in str(dias_val).split(",") if p.strip()]
+        
+        if not dias_participante:
+            dias_participante = dias_totais_evento
+            
+        for dia_k in dias_participante:
+            matched_key = dia_k if dia_k in lotacao_dias_map else None
+            if not matched_key and "/" in dia_k:
+                parts = dia_k.split("/")
+                if len(parts) == 3 and len(parts[2]) == 4:
+                    alt_iso = f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
+                    if alt_iso in lotacao_dias_map:
+                        matched_key = alt_iso
+            if matched_key:
+                lotacao_dias_map[matched_key]["total"] += 1
+                lotacao_dias_map[matched_key][g_key] += 1
+
+    # Adicionar Diaristas se confirmadas
+    for dia_ins in diarias:
+        if dia_ins.status == "CONFIRMADA":
+            dias_selec = dia_ins.dias_selecionados
+            if isinstance(dias_selec, list):
+                for d_str in dias_selec:
+                    d_iso = str(d_str).strip().split("T")[0]
+                    if d_iso in lotacao_dias_map:
+                        lotacao_dias_map[d_iso]["total"] += 1
+                        lotacao_dias_map[d_iso]["diaristas"] += 1
+                        lotacao_dias_map[d_iso]["outro"] += 1
+
+    tipo_vagas = evento.tipo_vagas or "GERAL"
+    vagas_masc = evento.vagas_masculinas
+    vagas_fem = evento.vagas_femininas
+    max_part = evento.max_participantes
+
+    lista_lotacao_dias = []
+    for iso_k in sorted(lotacao_dias_map.keys()):
+        item = lotacao_dias_map[iso_k]
+        if tipo_vagas == "GENERO" and vagas_masc is not None and vagas_fem is not None:
+            disp_masc = max(0, vagas_masc - item["masculino"])
+            disp_fem = max(0, vagas_fem - item["feminino"])
+            disp_total = disp_masc + disp_fem
+            cap_total = vagas_masc + vagas_fem
+        elif max_part is not None:
+            disp_total = max(0, max_part - item["total"])
+            disp_masc = None
+            disp_fem = None
+            cap_total = max_part
+        else:
+            disp_total = None
+            disp_masc = None
+            disp_fem = None
+            cap_total = None
+            
+        item["vagas_disponiveis"] = disp_total
+        item["vagas_disponiveis_masculino"] = disp_masc
+        item["vagas_disponiveis_feminino"] = disp_fem
+        item["capacidade_total"] = cap_total
+        item["capacidade_masculino"] = vagas_masc
+        item["capacidade_feminino"] = vagas_fem
+        item["tipo_vagas"] = tipo_vagas
+        item["taxa_ocupacao"] = round((item["total"] / cap_total * 100), 1) if cap_total and cap_total > 0 else None
+        lista_lotacao_dias.append(item)
+
     return {
         "evento_id": evento_id,
         "evento_titulo": evento.titulo,
         "status_filtro": status_filtro or "TODOS",
+        "lotacao_dias": lista_lotacao_dias,
         "total_geral": total_geral,
         "total_analisado": len(inscricoes_analise),
         "status_resumo": {

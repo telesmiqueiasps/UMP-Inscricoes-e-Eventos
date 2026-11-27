@@ -301,6 +301,29 @@
         <!-- Grid de Gráficos -->
         <div class="dash-charts-grid">
           
+          <!-- Gráfico Lotação Diária por Gênero & Estadia (Novo) -->
+          <div class="chart-card chart-card-span-2" id="card-dash-lotacao-dias">
+            <div class="chart-card-header">
+              <div>
+                <div class="chart-card-title">Lotação Diária por Gênero & Estadia</div>
+                <div class="chart-card-subtitle">Controle de participantes presentes por dia e identificação de vagas disponíveis</div>
+              </div>
+              <div class="chart-icon-box" style="background: #EFF6FF; color: #1D4ED8;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+              </div>
+            </div>
+            <div class="chart-canvas-container" style="height: 320px;">
+              <canvas id="chart-lotacao-dias"></canvas>
+            </div>
+            <!-- Grid de Cards de Vagas por Dia -->
+            <div id="grid-vagas-por-dia" style="margin-top: 1.25rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+              <!-- Preenchido via JavaScript -->
+            </div>
+            <div class="chart-card-footer" id="footer-lotacao-dias-resumo">
+              <span>Carregando dados de lotação...</span>
+            </div>
+          </div>
+          
           <!-- Gráfico 1: Abaixo de 19 Anos vs 19+ Anos (Donut) -->
           <div class="chart-card">
             <div class="chart-card-header">
@@ -1665,7 +1688,7 @@
                   <input type="checkbox" class="ev-form-field" value="cargo_federacao"> Cargo na Federação
                 </label>
                 <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                  <input type="checkbox" class="ev-form-field" value="dias_estadia"> Dia da sua chegada
+                  <input type="checkbox" class="ev-form-field" value="dias_estadia"> Dias de Estadia / Presença
                 </label>
               </div>
             </div>

@@ -433,6 +433,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
+      // Validação do campo dias de estadia se estiver presente
+      const hiddenDias = document.getElementById('input-dias-estadia-hidden');
+      if (hiddenDias && !hiddenDias.value.trim()) {
+        const aviso = document.getElementById('dias-estadia-aviso');
+        if (aviso) aviso.style.display = 'block';
+        showToast('Por favor, selecione ao menos um dia de presença no evento.', 'error');
+        hiddenDias.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
       // Coletar campos dinâmicos e salvar localmente
       dadosExtrasSalvos = {};
       document.querySelectorAll('.dyn-input').forEach(input => {
@@ -1061,7 +1071,7 @@ function renderDynamicFormFields() {
         const startISO = (eventoAtual.data_inicio || '').split('T')[0];
         const endISO = (eventoAtual.data_fim || '').split('T')[0];
         
-        let optionsDias = '';
+        let diasEvento = [];
         if (startISO && endISO) {
           const sParts = startISO.split('-').map(Number);
           const eParts = endISO.split('-').map(Number);
@@ -1076,32 +1086,62 @@ function renderDynamicFormFields() {
             const d = String(cur.getDate()).padStart(2, '0');
             const isoVal = `${y}-${m}-${d}`;
             const diaSemanaNome = diasSemana[cur.getDay()];
-            const diaFormatado = `${diaSemanaNome}, ${d}/${m}/${y}`;
-            optionsDias += `<option value="${isoVal}">${diaFormatado}</option>`;
+            const diaFormatado = `${d}/${m}`;
+            diasEvento.push({
+              iso: isoVal,
+              labelDia: diaFormatado,
+              labelSemana: diaSemanaNome
+            });
             cur.setDate(cur.getDate() + 1);
           }
         }
 
-        if (optionsDias) {
+        if (diasEvento.length > 0) {
+          const cardsHTML = diasEvento.map(d => `
+            <label class="dia-estadia-card" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem 0.85rem; border: 1.5px solid #E2E8F0; border-radius: 10px; background: white; cursor: pointer; transition: all 0.2s ease;">
+              <input type="checkbox" class="cb-dia-estadia" value="${d.iso}" style="width: 18px; height: 18px; cursor: pointer; accent-color: #1557D6;" onchange="window.atualizarDiasEstadiaSelecionados()">
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 0.88rem; font-weight: 700; color: #0F172A;">${d.labelDia}</span>
+                <span style="font-size: 0.76rem; color: #64748B;">${d.labelSemana}</span>
+              </div>
+            </label>
+          `).join('');
+
           fieldHTML = `
             <div class="form-group dyn-field-full" style="margin-bottom: 0;">
-              <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
-              <div class="input-with-icon">
-                <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <select name="dyn_dias_estadia" class="form-control dyn-input" required>
-                  <option value="">Selecione o dia da chegada no evento...</option>
-                  ${optionsDias}
-                </select>
+              <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                  <label class="form-label" style="margin-bottom: 0.15rem;">
+                    <span>Dias de Estadia / Presença no Evento</span>
+                    <span class="label-required">*</span>
+                  </label>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">Marque os dias em que você estará presente no evento:</span>
+                </div>
+                <div style="display: flex; gap: 0.4rem;">
+                  <button type="button" class="btn btn-outline" style="font-size: 0.76rem; padding: 0.3rem 0.65rem; min-height: 32px;" onclick="window.toggleTodosDiasEstadia(true)">
+                    Todos os dias
+                  </button>
+                  <button type="button" class="btn btn-outline" style="font-size: 0.76rem; padding: 0.3rem 0.65rem; min-height: 32px;" onclick="window.toggleTodosDiasEstadia(false)">
+                    Limpar
+                  </button>
+                </div>
               </div>
+
+              <input type="hidden" name="dyn_dias_estadia" id="input-dias-estadia-hidden" class="dyn-input" required>
+
+              <div class="dias-estadia-grid" id="dias-estadia-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.65rem;">
+                ${cardsHTML}
+              </div>
+              <div id="dias-estadia-aviso" style="font-size: 0.78rem; color: #DC2626; margin-top: 0.4rem; display: none;">Selecione pelo menos um dia de presença no evento.</div>
             </div>
           `;
         } else {
           fieldHTML = `
             <div class="form-group dyn-field-full" style="margin-bottom: 0;">
-              <label class="form-label"><span>Dia da sua chegada</span> <span class="label-required">*</span></label>
+              <label class="form-label"><span>Dias de Estadia / Presença</span> <span class="label-required">*</span></label>
               <div class="input-with-icon">
                 <svg class="input-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <input type="date" name="dyn_dias_estadia" class="form-control dyn-input" min="${startISO}" max="${endISO}" required>
+                <input type="text" name="dyn_dias_estadia" class="form-control dyn-input" placeholder="Ex: Todos os dias, ou 13/02 a 15/02..." required>
               </div>
             </div>
           `;
@@ -1146,7 +1186,63 @@ function renderDynamicFormFields() {
     const foneInput = document.querySelector('input[name="dyn_telefone"]');
     if (foneInput) foneInput.value = user.telefone || '';
   }
+
+  // Inicialização e pré-seleção dos Dias de Estadia
+  const cbsDias = document.querySelectorAll('.cb-dia-estadia');
+  if (cbsDias.length > 0) {
+    const diasSalvosStr = (typeof dadosExtrasSalvos !== 'undefined' && dadosExtrasSalvos && dadosExtrasSalvos.dias_estadia)
+      ? String(dadosExtrasSalvos.dias_estadia)
+      : '';
+    if (diasSalvosStr) {
+      const diasArr = diasSalvosStr.split(',').map(s => s.trim());
+      cbsDias.forEach(cb => {
+        cb.checked = diasArr.includes(cb.value) || diasArr.includes(cb.value.split('-').reverse().join('/'));
+      });
+    } else {
+      // Padrão: pré-marcar todos os dias do evento
+      cbsDias.forEach(cb => { cb.checked = true; });
+    }
+    window.atualizarDiasEstadiaSelecionados();
+  }
 }
+
+window.atualizarDiasEstadiaSelecionados = function() {
+  const hiddenInput = document.getElementById('input-dias-estadia-hidden');
+  const aviso = document.getElementById('dias-estadia-aviso');
+  if (!hiddenInput) return;
+
+  const checkboxes = document.querySelectorAll('.cb-dia-estadia');
+  const selecionados = [];
+
+  checkboxes.forEach(cb => {
+    const card = cb.closest('.dia-estadia-card');
+    if (cb.checked) {
+      selecionados.push(cb.value);
+      if (card) {
+        card.style.borderColor = '#1557D6';
+        card.style.background = '#EFF6FF';
+      }
+    } else {
+      if (card) {
+        card.style.borderColor = '#E2E8F0';
+        card.style.background = '#FFFFFF';
+      }
+    }
+  });
+
+  hiddenInput.value = selecionados.join(', ');
+  if (selecionados.length > 0 && aviso) {
+    aviso.style.display = 'none';
+  }
+};
+
+window.toggleTodosDiasEstadia = function(marcarTodos = true) {
+  const checkboxes = document.querySelectorAll('.cb-dia-estadia');
+  checkboxes.forEach(cb => {
+    cb.checked = marcarTodos;
+  });
+  window.atualizarDiasEstadiaSelecionados();
+};
 
 function carregarPresbiteriosSelect(selectEl, valorPreSelecionado = '') {
   if (!selectEl) return;

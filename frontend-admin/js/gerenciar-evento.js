@@ -1121,7 +1121,7 @@ window.abrirModalInscricaoDetalhes = function(id) {
   if (deveExibirCampo('dias_estadia')) {
     itensLogisticaHTML += `
       <div class="ficha-item">
-        <span class="ficha-item-label">Dia da Chegada / Estadia</span>
+        <span class="ficha-item-label">Dias de Estadia / Presença</span>
         <span class="ficha-item-valor">${extras.dias_estadia || '-'}</span>
       </div>
     `;
@@ -1449,7 +1449,7 @@ window.copiarFichaInscrito = function(id) {
   }
 
   if (deveExibir('tamanho_camiseta')) linhas.push(`Camiseta: ${extras.tamanho_camiseta || '-'}`);
-  if (deveExibir('dias_estadia')) linhas.push(`Dia Chegada: ${extras.dias_estadia || '-'}`);
+  if (deveExibir('dias_estadia')) linhas.push(`Dias Estadia: ${extras.dias_estadia || '-'}`);
 
   linhas.push(`----------------------------------------`);
   linhas.push(`Código Check-in: ${ins.codigo_checkin || 'N/A'}`);
@@ -1524,7 +1524,7 @@ window.imprimirFichaInscrito = function(id) {
 
   let subLogistica = '';
   if (deveExibir('tamanho_camiseta')) subLogistica += `<div class="field"><span class="field-label">Camiseta</span><span class="field-val">${extras.tamanho_camiseta || '-'}</span></div>`;
-  if (deveExibir('dias_estadia')) subLogistica += `<div class="field"><span class="field-label">Dia Chegada</span><span class="field-val">${extras.dias_estadia || '-'}</span></div>`;
+  if (deveExibir('dias_estadia')) subLogistica += `<div class="field"><span class="field-label">Dias Estadia</span><span class="field-val">${extras.dias_estadia || '-'}</span></div>`;
   subLogistica += `
     <div class="field"><span class="field-label">Cód. Check-in</span><span class="field-val">${ins.codigo_checkin || '-'}</span></div>
     <div class="field"><span class="field-label">Valor Total</span><span class="field-val">${valorTotalFmt}</span></div>
@@ -2401,7 +2401,7 @@ function formatarLabelCampo(field) {
     nome_pastor: 'Nome Pastor',
     contato_pastor: 'Contato Pastor',
     cargo_federacao: 'Cargo Federação',
-    dias_estadia: 'Dia da chegada'
+    dias_estadia: 'Dias de Estadia'
   };
   return map[field] || field.toUpperCase();
 }
@@ -4859,8 +4859,114 @@ function calcularStatsInscricoesLocal(lista, statusFiltro) {
     igrejas: topIgrejas,
     presbiterios: topPresb,
     camisetas: camisetasContagem,
-    formas_pagamento: {}
+    formas_pagamento: {},
+    lotacao_dias: calcularLotacaoDiasLocal(filtradas, eventoAtual)
   };
+}
+
+function calcularLotacaoDiasLocal(filtradas, evento) {
+  if (!evento || !evento.data_inicio || !evento.data_fim) return [];
+  const diasSemanaPt = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+  const map = {};
+
+  try {
+    const startParts = evento.data_inicio.split('T')[0].split('-').map(Number);
+    const endParts = evento.data_fim.split('T')[0].split('-').map(Number);
+    const cur = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+    const end = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+
+    while (cur <= end) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, '0');
+      const d = String(cur.getDate()).padStart(2, '0');
+      const isoKey = `${y}-${m}-${d}`;
+      const diaSemanaIdx = (cur.getDay() + 6) % 7;
+      map[isoKey] = {
+        data: isoKey,
+        dia_formatado: `${d}/${m}`,
+        dia_semana: diasSemanaPt[diaSemanaIdx] || '',
+        total: 0,
+        masculino: 0,
+        feminino: 0,
+        outro: 0,
+        diaristas: 0
+      };
+      cur.setDate(cur.getDate() + 1);
+    }
+  } catch (_) {
+    return [];
+  }
+
+  const chavesDias = Object.keys(map);
+  if (chavesDias.length === 0) return [];
+
+  (filtradas || []).forEach(ins => {
+    if ((ins.status || '').toUpperCase() === 'CANCELADA') return;
+    const ext = ins.dados_extras || {};
+    const sexo = String(ext.genero || ext.sexo || '').toLowerCase().trim();
+    const gKey = sexo.startsWith('m') ? 'masculino' : (sexo.startsWith('f') ? 'feminino' : 'outro');
+
+    let diasVal = ext.dias_estadia;
+    let diasPart = [];
+    if (diasVal) {
+      if (Array.isArray(diasVal)) {
+        diasPart = diasVal.map(d => String(d).trim().split('T')[0]);
+      } else {
+        diasPart = String(diasVal).split(',').map(s => s.trim().split('T')[0]).filter(Boolean);
+      }
+    }
+    if (!diasPart || diasPart.length === 0) {
+      diasPart = chavesDias;
+    }
+
+    diasPart.forEach(diaK => {
+      let matched = map[diaK] ? diaK : null;
+      if (!matched && diaK.includes('/')) {
+        const p = diaK.split('/');
+        if (p.length === 3 && p[2].length === 4) {
+          const alt = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+          if (map[alt]) matched = alt;
+        }
+      }
+      if (matched && map[matched]) {
+        map[matched].total++;
+        map[matched][gKey]++;
+      }
+    });
+  });
+
+  const tipoVagas = evento.tipo_vagas || 'GERAL';
+  const vagasMasc = evento.vagas_masculinas;
+  const vagasFem = evento.vagas_femininas;
+  const maxPart = evento.max_participantes;
+
+  return Object.keys(map).sort().map(k => {
+    const item = map[k];
+    let dispTotal = null;
+    let dispMasc = null;
+    let dispFem = null;
+    let capTotal = null;
+
+    if (tipoVagas === 'GENERO' && vagasMasc !== null && vagasFem !== null) {
+      dispMasc = Math.max(0, (vagasMasc || 0) - item.masculino);
+      dispFem = Math.max(0, (vagasFem || 0) - item.feminino);
+      dispTotal = dispMasc + dispFem;
+      capTotal = (vagasMasc || 0) + (vagasFem || 0);
+    } else if (maxPart !== null && maxPart !== undefined) {
+      dispTotal = Math.max(0, maxPart - item.total);
+      capTotal = maxPart;
+    }
+
+    item.vagas_disponiveis = dispTotal;
+    item.vagas_disponiveis_masculino = dispMasc;
+    item.vagas_disponiveis_feminino = dispFem;
+    item.capacidade_total = capTotal;
+    item.capacidade_masculino = vagasMasc;
+    item.capacidade_feminino = vagasFem;
+    item.tipo_vagas = tipoVagas;
+    item.taxa_ocupacao = capTotal ? Math.round((item.total / capTotal) * 100) : null;
+    return item;
+  });
 }
 
 function atualizarKPICardsDashboard(stats, filtroStatus) {
@@ -5042,6 +5148,164 @@ function renderizarGraficosDashboard(stats) {
     cornerRadius: 8,
     boxPadding: 4
   };
+
+  // -------------------------------------------------------------
+  // 0. Gráfico Lotação Diária por Gênero & Estadia (Novo)
+  // -------------------------------------------------------------
+  const ctxLotacao = document.getElementById('chart-lotacao-dias')?.getContext('2d');
+  const lotacaoLista = stats.lotacao_dias || [];
+  const cardLotacao = document.getElementById('card-dash-lotacao-dias');
+  const footerLotacao = document.getElementById('footer-lotacao-dias-resumo');
+  const gridVagasDia = document.getElementById('grid-vagas-por-dia');
+
+  if (ctxLotacao && lotacaoLista.length > 0) {
+    if (cardLotacao) cardLotacao.style.display = 'block';
+
+    const labels = lotacaoLista.map(d => `${d.dia_formatado} (${d.dia_semana ? d.dia_semana.substring(0, 3) : ''})`);
+    const dataMasc = lotacaoLista.map(d => d.masculino || 0);
+    const dataFem = lotacaoLista.map(d => d.feminino || 0);
+    const dataOutros = lotacaoLista.map(d => (d.outro || 0) + (d.diaristas || 0));
+
+    const datasets = [
+      {
+        label: 'Homens',
+        data: dataMasc,
+        backgroundColor: '#1D4ED8',
+        hoverBackgroundColor: '#1E40AF',
+        borderRadius: 4,
+        stack: 'lotacao'
+      },
+      {
+        label: 'Mulheres',
+        data: dataFem,
+        backgroundColor: '#DB2777',
+        hoverBackgroundColor: '#BE185D',
+        borderRadius: 4,
+        stack: 'lotacao'
+      }
+    ];
+
+    if (dataOutros.some(v => v > 0)) {
+      datasets.push({
+        label: 'Outros / Diaristas',
+        data: dataOutros,
+        backgroundColor: '#94A3B8',
+        hoverBackgroundColor: '#64748B',
+        borderRadius: 4,
+        stack: 'lotacao'
+      });
+    }
+
+    chartInstances.lotacaoDias = new Chart(ctxLotacao, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { boxWidth: 12, font: { size: 12, weight: '600' } }
+          },
+          tooltip: {
+            ...pluginTooltip,
+            callbacks: {
+              afterBody: function(context) {
+                const idx = context[0]?.dataIndex;
+                if (idx !== undefined && lotacaoLista[idx]) {
+                  const d = lotacaoLista[idx];
+                  const linhas = [
+                    `Total Presente: ${d.total}${d.capacidade_total ? ` / ${d.capacidade_total}` : ''}`
+                  ];
+                  if (d.vagas_disponiveis !== null && d.vagas_disponiveis !== undefined) {
+                    if (d.tipo_vagas === 'GENERO') {
+                      linhas.push(`Vagas Livres: ${d.vagas_disponiveis} (${d.vagas_disponiveis_masculino || 0} masc. / ${d.vagas_disponiveis_feminino || 0} fem.)`);
+                    } else {
+                      linhas.push(`Vagas Livres: ${d.vagas_disponiveis}`);
+                    }
+                  }
+                  return linhas;
+                }
+                return [];
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        }
+      }
+    });
+
+    // Renderizar Cards de Vagas por Dia
+    if (gridVagasDia) {
+      gridVagasDia.innerHTML = lotacaoLista.map(d => {
+        let badgeHtml = '';
+        let infoVagasHtml = '';
+
+        if (d.vagas_disponiveis !== null && d.vagas_disponiveis !== undefined) {
+          if (d.vagas_disponiveis <= 0) {
+            badgeHtml = `<span class="badge" style="background: #FEE2E2; color: #B91C1C; font-weight: 700; font-size: 0.72rem;">Esgotado</span>`;
+            infoVagasHtml = `<div style="font-size: 0.75rem; color: #DC2626; font-weight: 700; margin-top: 0.2rem;">Lotação máxima atingida</div>`;
+          } else {
+            badgeHtml = `<span class="badge" style="background: #DCFCE7; color: #15803D; font-weight: 700; font-size: 0.72rem;">${d.vagas_disponiveis} livres</span>`;
+            if (d.tipo_vagas === 'GENERO') {
+              infoVagasHtml = `<div style="font-size: 0.74rem; color: #15803D; font-weight: 600; margin-top: 0.2rem;">Vagas: <strong>${d.vagas_disponiveis_masculino || 0} masc.</strong> / <strong>${d.vagas_disponiveis_feminino || 0} fem.</strong></div>`;
+            } else {
+              infoVagasHtml = `<div style="font-size: 0.74rem; color: #15803D; font-weight: 600; margin-top: 0.2rem;"><strong>${d.vagas_disponiveis}</strong> vagas disponíveis</div>`;
+            }
+          }
+        } else {
+          badgeHtml = `<span class="badge" style="background: #EFF6FF; color: #1D4ED8; font-weight: 700; font-size: 0.72rem;">Sem limite</span>`;
+          infoVagasHtml = `<div style="font-size: 0.74rem; color: #64748B; margin-top: 0.2rem;">Inscrições ilimitadas</div>`;
+        }
+
+        return `
+          <div style="background: #F8FAFC; border: 1.5px solid var(--border-color); border-radius: 8px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.3rem;">
+              <div>
+                <div style="font-weight: 800; font-size: 0.92rem; color: #0F172A;">${d.dia_formatado}</div>
+                <div style="font-size: 0.74rem; color: #64748B; font-weight: 600;">${d.dia_semana}</div>
+              </div>
+              ${badgeHtml}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 0.2rem;">
+              <span style="font-size: 0.75rem; color: #64748B;">Lotação Presente:</span>
+              <span style="font-size: 1rem; font-weight: 800; color: #0F172A;">${d.total} ${d.capacidade_total ? `<span style="font-size: 0.72rem; color: #64748B; font-weight: 500;">/ ${d.capacidade_total}</span>` : ''}</span>
+            </div>
+
+            <div style="display: flex; gap: 0.35rem; font-size: 0.74rem; background: white; padding: 0.25rem 0.45rem; border-radius: 6px; border: 1px solid #E2E8F0;">
+              <span style="color: #1D4ED8; font-weight: 700;">${d.masculino} masc.</span>
+              <span style="color: #CBD5E1;">•</span>
+              <span style="color: #DB2777; font-weight: 700;">${d.feminino} fem.</span>
+              ${d.diaristas > 0 ? `<span style="color: #CBD5E1;">•</span><span style="color: #7C3AED; font-weight: 600;">${d.diaristas} diár.</span>` : ''}
+            </div>
+
+            ${infoVagasHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    if (footerLotacao) {
+      const diasComVaga = lotacaoLista.filter(d => d.vagas_disponiveis === null || d.vagas_disponiveis > 0).length;
+      footerLotacao.innerHTML = `<span>Lotação distribuída por dia • <strong>${diasComVaga} de ${lotacaoLista.length} dias</strong> com vagas disponíveis</span>`;
+    }
+  } else if (cardLotacao) {
+    cardLotacao.style.display = 'none';
+  }
 
   // -------------------------------------------------------------
   // 1. Gráfico Abaixo de 19 Anos vs 19+ Anos (Donut)
