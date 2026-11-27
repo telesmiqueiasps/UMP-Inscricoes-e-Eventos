@@ -2037,7 +2037,7 @@ body.home-page .hero-section {
   min-height: calc(100vh - 100px);
   display: flex;
   align-items: center;
-  overflow: visible;
+  overflow: hidden !important;
   z-index: 10;
 }
 
@@ -2046,11 +2046,15 @@ body.home-page .hero-container {
   width: 100%;
   margin: 0 auto;
   padding-inline: 24px;
-  display: grid;
-  grid-template-columns: 1fr 1.22fr;
-  align-items: center;
-  gap: 36px;
+  position: static;
   box-sizing: border-box;
+}
+
+body.home-page .hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+  animation: heroFadeSlideUp 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 body.home-page .hero-eyebrow {
@@ -2136,65 +2140,79 @@ body.home-page .btn-hero-cta:hover .hero-arrow-icon {
   transform: translateX(4px);
 }
 
-/* 5. Palco de Fotografias Flutuantes em Forma Geométrica Abstrata */
+/* 5. Slider de Fotos Integrado ao Fundo com Dissolve Gradiente (Sem Bordas / Sem Formas) */
 body.home-page .hero-media-wrapper {
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 62%;
+  z-index: 0;
+  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 body.home-page .hero-floating-stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-width: 780px;
-  height: 520px;
-  border-radius: 0;
+  height: 100%;
+  border-radius: 0 !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  overflow: visible;
-}
-
-/* Brilho suave difuso atrás da forma geométrica */
-body.home-page .hero-abstract-glow {
-  position: absolute;
-  inset: -15px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, rgba(56, 189, 248, 0.28) 0%, rgba(0, 102, 255, 0.12) 48%, transparent 72%);
-  filter: blur(45px);
+  overflow: hidden;
   pointer-events: none;
-  z-index: 1;
 }
 
-/* Forma geométrica abstrata moderna que envolve as fotos com acabamento refinado */
+/* Desativação de brilho ou moldura anterior */
+body.home-page .hero-abstract-glow {
+  display: none !important;
+}
+
+/* Neutralização da forma abstrata oval (mantida sem estilos nem bordas) */
 body.home-page .hero-abstract-shape {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 2;
-  border-radius: 44% 56% 62% 38% / 42% 46% 54% 58%;
+  z-index: 1;
+  border-radius: 0 !important;
+  clip-path: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 2px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 
-    0 24px 60px -12px rgba(8, 45, 104, 0.16),
-    0 0 35px rgba(56, 189, 248, 0.22),
-    inset 0 1px 2px rgba(255, 255, 255, 0.95);
 }
 
+/* Máscara de dissolução contínua nas quatro bordas (elimina rebarbas e contornos) */
 body.home-page .hero-masked-slides {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
   background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0%, #000 35%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 78%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0%, #000 35%, #000 82%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 78%, transparent 100%);
+  mask-composite: intersect;
 }
 
+/* Slides empilhados com transição suave exclusiva de opacidade */
 body.home-page .banner-slide {
   position: absolute;
   inset: 0;
@@ -2202,19 +2220,42 @@ body.home-page .banner-slide {
   height: 100%;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 900ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1.2s ease;
   background: transparent !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
 }
 
 body.home-page .banner-slide.active {
   opacity: 1;
   visibility: visible;
+  z-index: 1;
 }
 
-/* Fotos com nitidez total, sem filtros, passando dentro da forma com o corte sugerido */
+/* Tonalização azul UMP (duotone) multiplicada suavemente sobre a fotografia */
+body.home-page .banner-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(10, 70, 200, 0.45), rgba(0, 40, 140, 0.25));
+  mix-blend-mode: multiply;
+  z-index: 2;
+}
+
+/* Segundo overlay sutil para transição impecável com o texto à esquerda */
+body.home-page .banner-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(245, 248, 252, 0.7) 0%, transparent 40%);
+  z-index: 3;
+}
+
+/* Fotografia nítida, com duotone e proporção que valoriza rostos e momentos */
 body.home-page .hero-photo,
 body.home-page .hero-banner-image {
   width: 100%;
@@ -2222,30 +2263,54 @@ body.home-page .hero-banner-image {
   object-fit: cover;
   object-position: center 30%;
   display: block;
-  border-radius: 0;
+  border-radius: 0 !important;
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
-  filter: none !important;
+  filter: grayscale(0.35) contrast(1.05) saturate(0.9);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 
-  -webkit-mask-image:
-    linear-gradient(
-      to right,
-      transparent 0%,
-      black 20%,
-      black 75%,
-      transparent 100%
-    ),
-    linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 15%,
-      black 75%,
-      transparent 100%
-    );
+/* Controles Flutuantes do Slider com Pointer Events Ativos */
+body.home-page .banner-slider-controls {
+  pointer-events: auto !important;
+  position: absolute;
+  bottom: 24px;
+  right: 32px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 18px rgba(10, 37, 64, 0.08);
+}
 
-  -webkit-mask-composite: source-in;
-  mask-composite: intersect;
+body.home-page .banner-ctrl-btn {
+  color: #0A2540;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+body.home-page .banner-ctrl-btn:hover {
+  background: rgba(0, 102, 255, 0.12);
+  color: #0066FF;
+}
+
+body.home-page .banner-dot {
+  background-color: rgba(10, 37, 64, 0.25);
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+body.home-page .banner-dot.active {
+  background-color: #0066FF;
+  width: 18px;
 }
 
 /* Removido qualquer filtro de tonalidade */
@@ -2587,9 +2652,14 @@ body.home-page .drawer-btn-events {
   }
 
   body.home-page .hero-container {
-    grid-template-columns: 1fr !important;
-    gap: 32px !important;
+    display: flex !important;
+    flex-direction: column !important;
     text-align: center !important;
+    gap: 24px !important;
+  }
+
+  body.home-page .hero-content {
+    max-width: 100% !important;
   }
 
   body.home-page .hero-eyebrow-text {
@@ -2611,14 +2681,43 @@ body.home-page .drawer-btn-events {
     justify-content: center !important;
   }
 
-  body.home-page .hero-floating-stage {
+  body.home-page .hero-media-wrapper {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
     height: 320px !important;
-    max-width: 500px !important;
+    margin-top: 1.5rem !important;
+    pointer-events: auto !important;
+    justify-content: center !important;
+  }
+
+  body.home-page .hero-floating-stage {
+    position: relative !important;
+    height: 320px !important;
+    max-width: 520px !important;
     margin-inline: auto !important;
+    pointer-events: auto !important;
   }
 
   body.home-page .hero-abstract-shape {
-    border-radius: 36px 64px 36px 54px;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  body.home-page .hero-masked-slides {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%) !important;
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%) !important;
+    -webkit-mask-composite: normal !important;
+    mask-composite: add !important;
+  }
+
+  body.home-page .banner-slider-controls {
+    bottom: 12px !important;
+    right: 50% !important;
+    transform: translateX(50%) !important;
   }
 
   body.home-page .event-card {
@@ -2666,13 +2765,20 @@ body.home-page .drawer-btn-events {
     font-size: 0.95rem !important;
   }
 
+  body.home-page .hero-media-wrapper {
+    height: 260px !important;
+    margin-top: 1rem !important;
+  }
+
   body.home-page .hero-floating-stage {
-    height: 250px !important;
+    height: 260px !important;
     max-width: 100% !important;
   }
 
   body.home-page .hero-abstract-shape {
-    border-radius: 28px 48px 28px 40px;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   body.home-page .section-title {

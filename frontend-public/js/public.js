@@ -578,6 +578,7 @@ class HeroBannerSliderController {
 
     this.currentIndex = 0;
     this.timer = null;
+    this.isPaused = false;
     this.availableBanners = ['img/banner.png']; // Padrão garantido
     
     this.init();
@@ -608,7 +609,7 @@ class HeroBannerSliderController {
   renderSlides() {
     this.slidesWrapper.innerHTML = this.availableBanners.map((src, idx) => `
       <div class="banner-slide ${idx === 0 ? 'active' : ''}" data-index="${idx}">
-        <img src="${src}" alt="UMP Eventos - Destaque ${idx + 1}" class="hero-banner-image hero-photo" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}>
+        <img src="${src}" alt="UMP Eventos - Destaque ${idx + 1}" class="hero-banner-image hero-photo" ${idx === 0 ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'}>
       </div>
     `).join('');
   }
@@ -623,7 +624,7 @@ class HeroBannerSliderController {
 
     if (this.dotsContainer) {
       this.dotsContainer.innerHTML = this.availableBanners.map((_, idx) => `
-        <button class="banner-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Ir para banner ${idx + 1}"></button>
+        <button class="banner-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}" aria-label="Ir para foto ${idx + 1}"></button>
       `).join('');
 
       this.dotsContainer.querySelectorAll('.banner-dot').forEach(dot => {
@@ -636,11 +637,25 @@ class HeroBannerSliderController {
     }
   }
 
+  preloadImage(index) {
+    const total = this.availableBanners.length;
+    if (total <= 1) return;
+    const targetIdx = (index + total) % total;
+    const src = this.availableBanners[targetIdx];
+    if (src) {
+      const img = new Image();
+      img.src = src;
+    }
+  }
+
   goToSlide(index) {
     const total = this.availableBanners.length;
     if (total <= 1) return;
 
     this.currentIndex = (index + total) % total;
+
+    // Pré-carregar imagem subsequente para transição sem latência
+    this.preloadImage(this.currentIndex + 1);
 
     const slides = this.slidesWrapper.querySelectorAll('.banner-slide');
     slides.forEach((slide, idx) => {
@@ -666,7 +681,11 @@ class HeroBannerSliderController {
   startAutoplay() {
     this.stopAutoplay();
     if (this.availableBanners.length <= 1) return;
-    this.timer = setInterval(() => this.next(), 5500);
+    this.timer = setInterval(() => {
+      if (!this.isPaused && document.visibilityState === 'visible') {
+        this.next();
+      }
+    }, 5000);
   }
 
   stopAutoplay() {
@@ -696,14 +715,31 @@ class HeroBannerSliderController {
       });
     }
 
-    this.container.addEventListener('mouseenter', () => this.stopAutoplay());
-    this.container.addEventListener('mouseleave', () => this.startAutoplay());
+    // Pausar no hover e retomar ao sair
+    this.container.addEventListener('mouseenter', () => { this.isPaused = true; });
+    this.container.addEventListener('mouseleave', () => { this.isPaused = false; });
+
+    // Pausar no focusin e retomar no focusout
+    this.container.addEventListener('focusin', () => { this.isPaused = true; });
+    this.container.addEventListener('focusout', () => { this.isPaused = false; });
+
+    // Pausar quando a aba estiver em segundo plano (visibilitychange)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.stopAutoplay();
+      } else {
+        this.startAutoplay();
+      }
+    });
+
+    // Pré-carregar o próximo slide após inicialização
+    this.preloadImage(1);
 
     // Suporte touch
     let touchStartX = 0;
     this.container.addEventListener('touchstart', (e) => {
       touchStartX = e.touches[0].clientX;
-      this.stopAutoplay();
+      this.isPaused = true;
     }, { passive: true });
 
     this.container.addEventListener('touchend', (e) => {
@@ -712,7 +748,8 @@ class HeroBannerSliderController {
         if (diffX > 0) this.next();
         else this.prev();
       }
-      this.startAutoplay();
+      this.isPaused = false;
+      this.resetAutoplay();
     }, { passive: true });
   }
 }
