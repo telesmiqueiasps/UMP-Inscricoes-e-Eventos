@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
 :root {
+  --navbar-h: 62px;
+  --navbar-top: 16px;
   --color-primary: #1557D6;
   --color-primary-dark: #0B2B6F;
   --color-primary-light: #3B82F6;
@@ -460,7 +462,7 @@ select:focus-visible,
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 104px;
+  padding-top: calc(var(--navbar-top) + var(--navbar-h) + 2rem); /* 110px no desktop */
   padding-bottom: 60px;
   padding-inline: 24px;
   box-sizing: border-box;
@@ -470,7 +472,7 @@ select:focus-visible,
 
 @media (max-width: 900px) {
   .main-content {
-    padding-top: 88px !important;
+    padding-top: 96px !important;
     padding-inline: 14px !important;
     padding-bottom: 40px !important;
   }
@@ -483,7 +485,7 @@ select:focus-visible,
   -webkit-backdrop-filter: blur(24px);
   border: 1.5px solid rgba(255, 255, 255, 0.95);
   border-radius: 24px;
-  padding: 1.5rem 1.75rem;
+  padding: 28px 1.75rem 1.5rem 1.75rem;
   box-shadow: 0 10px 30px -4px rgba(0, 45, 110, 0.08);
   margin-bottom: 1.5rem;
 }
@@ -698,12 +700,29 @@ select:focus-visible,
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  align-items: start;
+  align-items: stretch;
   gap: 1.5rem;
 }
 
+#registration-card,
 #user-info-card {
-  align-self: start;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px -4px rgba(0, 45, 110, 0.08), 0 2px 8px rgba(0, 45, 110, 0.04);
+}
+
+#user-info-card::before,
+#user-info-card::after,
+#registration-card::before,
+#registration-card::after {
+  content: none !important;
+  display: none !important;
 }
 
 .user-info-list {
@@ -831,7 +850,7 @@ select:focus-visible,
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  margin-top: 1rem !important;
+  margin-top: auto !important;
 }
 
 .card {
@@ -1657,7 +1676,7 @@ tr:last-child td {
 
 @media (max-width: 640px) {
   .main-content {
-    padding-top: 88px !important;
+    padding-top: 96px !important;
     padding-inline: 14px !important;
   }
 
@@ -1678,7 +1697,7 @@ tr:last-child td {
 
 @media (max-width: 480px) {
   .main-content {
-    padding-top: 88px !important;
+    padding-top: 96px !important;
     padding-inline: 14px !important;
   }
 
